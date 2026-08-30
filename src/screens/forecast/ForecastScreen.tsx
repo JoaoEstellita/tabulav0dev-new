@@ -681,7 +681,9 @@ export default function ForecastScreen() {
   const aView = useTourAnchor('forecast.view')
   const aEvents = useTourAnchor('forecast.events')
   useTourScroller('Forecast', useCallback((y: number) => forecastScrollRef.current?.scrollTo({ y, animated: true }), []))
+  const forecastViewRef = useRef<'momento' | 'grafico' | 'calendario'>('grafico')
   const buildForecastTour = useCallback(() => {
+    if (forecastViewRef.current === 'momento') return [] // tour de previsão não faz sentido no Momento Certo
     const fl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
     return [
       { id: 'forecast.period', title: fl('Horizonte', 'Horizon', 'Horizonte', 'Orizzonte'),
@@ -740,7 +742,8 @@ export default function ForecastScreen() {
   const [areaSummaryOpen, setAreaSummaryOpen] = useState(false)
   // Menu da aba: Momento Certo | Gráfico | Calendário. Default 'grafico' por ora;
   // vira 'momento' quando o motor (F1 backend) entrar.
-  const [forecastView, setForecastView] = useState<'momento' | 'grafico' | 'calendario'>('grafico')
+  const [forecastView, setForecastView] = useState<'momento' | 'grafico' | 'calendario'>('momento')
+  forecastViewRef.current = forecastView
   const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)

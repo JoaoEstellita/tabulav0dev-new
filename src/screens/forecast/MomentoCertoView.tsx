@@ -1,80 +1,132 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { getMomento, type MomentoIntention, type MomentoWindow, type MomentoReason } from '../../services/MomentoService'
 
 /**
- * Momento Certo — astrologia eletiva pessoal ("quando agir"). ETAPA 1: casca +
- * teaser (o motor de ranqueamento de janelas entra na F1 do backend). Escolhe a
- * intenção; a lista de janelas vem depois. Grátis vê teaser + Assinar (opção A).
+ * Momento Certo — astrologia eletiva pessoal ("quando agir"). Escolhe a intenção
+ * e mostra as melhores janelas (dias) ranqueadas pelo motor. Premium.
  */
-const C = { bg: '#0F0F23', card: '#1C1C1E', card2: '#24242e', line: 'rgba(255,255,255,0.10)', gold: '#FFD700', tx: '#EDEBF7', dim: '#9aa2b8' }
-
-export type Intention = 'amor' | 'carreira' | 'decisao' | 'conversa'
+const C = { bg: '#0F0F23', card: '#1C1C1E', card2: '#24242e', line: 'rgba(255,255,255,0.10)', gold: '#FFD700', good: '#3ecf8e', tx: '#EDEBF7', dim: '#9aa2b8' }
+const PLANET: Record<string, { g: string; pt: string; en: string; es: string; it: string }> = {
+  sun: { g: '☉', pt: 'Sol', en: 'Sun', es: 'Sol', it: 'Sole' }, moon: { g: '☽', pt: 'Lua', en: 'Moon', es: 'Luna', it: 'Luna' },
+  mercury: { g: '☿', pt: 'Mercúrio', en: 'Mercury', es: 'Mercurio', it: 'Mercurio' }, venus: { g: '♀', pt: 'Vênus', en: 'Venus', es: 'Venus', it: 'Venere' },
+  mars: { g: '♂', pt: 'Marte', en: 'Mars', es: 'Marte', it: 'Marte' }, jupiter: { g: '♃', pt: 'Júpiter', en: 'Jupiter', es: 'Jupiter', it: 'Giove' },
+  saturn: { g: '♄', pt: 'Saturno', en: 'Saturn', es: 'Saturno', it: 'Saturno' }, uranus: { g: '♅', pt: 'Urano', en: 'Uranus', es: 'Urano', it: 'Urano' },
+  neptune: { g: '♆', pt: 'Netuno', en: 'Neptune', es: 'Neptuno', it: 'Nettuno' }, pluto: { g: '♇', pt: 'Plutão', en: 'Pluto', es: 'Pluton', it: 'Plutone' },
+}
 
 export default function MomentoCertoView({ premium }: { premium: boolean }) {
   const navigation = useNavigation<any>()
+  const { user } = useAuth()
   const { language } = useAppLanguage()
-  const tl = (pt: string, en: string, es: string, it: string) =>
-    ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it } as any)[language] || pt
-  const [intention, setIntention] = useState<Intention>('amor')
+  const lang = language as 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
+  const tl = (pt: string, en: string, es: string, it: string) => ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it }[lang] || pt)
+  const [intention, setIntention] = useState<MomentoIntention>('amor')
+  const [loading, setLoading] = useState(false)
+  const [windows, setWindows] = useState<MomentoWindow[] | null>(null)
 
-  const INTENTIONS: { k: Intention; icon: string; label: string }[] = [
+  const INTENTIONS: { k: MomentoIntention; icon: string; label: string }[] = [
     { k: 'amor', icon: 'heart', label: tl('Amor', 'Love', 'Amor', 'Amore') },
     { k: 'carreira', icon: 'briefcase', label: tl('Carreira', 'Career', 'Carrera', 'Carriera') },
     { k: 'decisao', icon: 'compass', label: tl('Decisão', 'Decision', 'Decision', 'Decisione') },
     { k: 'conversa', icon: 'chatbubbles', label: tl('Conversa', 'Talk', 'Conversacion', 'Conversazione') },
   ]
 
+  useEffect(() => {
+    if (!premium || !user?.uid) return
+    setLoading(true); setWindows(null)
+    getMomento(user.uid, intention).then((r) => setWindows(r.windows)).finally(() => setLoading(false))
+  }, [premium, user?.uid, intention])
+
+  const planetName = (k: string) => (PLANET[k] ? PLANET[k][lang === 'pt-BR' ? 'pt' : lang === 'es-ES' ? 'es' : lang === 'it-IT' ? 'it' : 'en'] : k)
+  const targetLabel = (t: string | null) => {
+    if (!t) return ''
+    const m = /^casa(\d+)$/.exec(t)
+    if (m) return tl(`casa ${m[1]}`, `house ${m[1]}`, `casa ${m[1]}`, `casa ${m[1]}`)
+    return planetName(t)
+  }
+  const reasonLine = (r: MomentoReason) => `${PLANET[r.planet]?.g || ''} ${planetName(r.planet)} ${r.aspect || ''} ${targetLabel(r.target)}`.replace(/\s+/g, ' ').trim()
+
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso + 'T12:00:00')
+    return d.toLocaleDateString(lang, { weekday: 'short', day: '2-digit', month: 'short' })
+  }
+  const scoreColor = (s: number) => (s >= 70 ? C.good : s >= 50 ? C.gold : C.dim)
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <View style={s.hero}>
         <Text style={s.heroKicker}>⭐ {tl('MOMENTO CERTO', 'RIGHT MOMENT', 'MOMENTO JUSTO', 'MOMENTO GIUSTO')}</Text>
         <Text style={s.heroTitle}>{tl('Quando agir', 'When to act', 'Cuando actuar', 'Quando agire')}</Text>
-        <Text style={s.heroSub}>{tl('Escolha uma intenção e veja as melhores janelas — dia e hora — em que o céu te apoia para aquilo.', 'Pick an intention and see the best windows — day and time — when the sky supports you for it.', 'Elige una intencion y ve las mejores ventanas — dia y hora — en que el cielo te apoya.', 'Scegli un\'intenzione e vedi le finestre migliori — giorno e ora — in cui il cielo ti sostiene.')}</Text>
+        <Text style={s.heroSub}>{tl('Escolha uma intenção e veja os melhores dias — em que o céu te apoia para aquilo.', 'Pick an intention and see the best days — when the sky supports you for it.', 'Elige una intencion y ve los mejores dias — cuando el cielo te apoya.', 'Scegli un\'intenzione e vedi i giorni migliori — quando il cielo ti sostiene.')}</Text>
       </View>
 
-      <Text style={s.label}>{tl('Sua intenção', 'Your intention', 'Tu intencion', 'La tua intenzione')}</Text>
       <View style={s.grid}>
         {INTENTIONS.map((it) => {
           const on = intention === it.k
           return (
             <TouchableOpacity key={it.k} style={[s.card, on && s.cardOn]} activeOpacity={0.85} onPress={() => setIntention(it.k)}>
-              <Ionicons name={it.icon as any} size={22} color={on ? '#0F0F23' : C.gold} />
+              <Ionicons name={it.icon as any} size={20} color={on ? '#0F0F23' : C.gold} />
               <Text style={[s.cardTx, on && s.cardTxOn]}>{it.label}</Text>
             </TouchableOpacity>
           )
         })}
       </View>
 
-      {premium ? (
-        <View style={s.soon}>
-          <Ionicons name="sparkles-outline" size={26} color={C.gold} />
-          <Text style={s.soonTx}>{tl('Em breve: as melhores janelas para agir, calculadas do seu mapa.', 'Coming soon: the best windows to act, computed from your chart.', 'Pronto: las mejores ventanas para actuar, desde tu carta.', 'A breve: le migliori finestre per agire, dalla tua carta.')}</Text>
-        </View>
-      ) : (
+      {!premium ? (
         <TouchableOpacity style={s.paywall} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
           <Text style={s.paywallTitle}>{tl('Recurso Premium', 'Premium feature', 'Funcion Premium', 'Funzione Premium')}</Text>
-          <Text style={s.paywallSub}>{tl('Descubra o momento certo para amor, carreira e decisões. Assine para desbloquear.', 'Discover the right moment for love, career and decisions. Subscribe to unlock.', 'Descubre el momento justo para amor, carrera y decisiones. Suscribete.', 'Scopri il momento giusto per amore, carriera e decisioni. Abbonati.')}</Text>
+          <Text style={s.paywallSub}>{tl('Descubra os melhores dias para amor, carreira e decisões. Assine para desbloquear.', 'Discover the best days for love, career and decisions. Subscribe to unlock.', 'Descubre los mejores dias para amor, carrera y decisiones. Suscribete.', 'Scopri i giorni migliori per amore, carriera e decisioni. Abbonati.')}</Text>
           <View style={s.paywallCta}><Text style={s.paywallCtaTx}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text></View>
         </TouchableOpacity>
+      ) : loading ? (
+        <ActivityIndicator color={C.gold} style={{ marginTop: 30 }} />
+      ) : !windows || windows.length === 0 ? (
+        <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas fortes no período. Tente outra intenção.', 'No strong windows in this period. Try another intention.', 'Sin ventanas fuertes en el periodo. Prueba otra intencion.', 'Nessuna finestra forte nel periodo. Prova un\'altra intenzione.')}</Text></View>
+      ) : (
+        <View style={{ marginTop: 18, gap: 10 }}>
+          <Text style={s.label}>{tl('Melhores dias', 'Best days', 'Mejores dias', 'Giorni migliori')}</Text>
+          {windows.map((w, i) => (
+            <View key={w.dateISO + i} style={s.win}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
+                {w.reasons.map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
+                {w.cautions.map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {reasonLine(c)}</Text>)}
+              </View>
+              <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
+                <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
+              </View>
+            </View>
+          ))}
+          <Text style={s.disclaimer}>{tl('Leitura orientativa, não determinista. As janelas apoiam — a escolha é sua.', 'Guidance, not fate. Windows support you — the choice is yours.', 'Orientativo, no determinista. Las ventanas apoyan — la eleccion es tuya.', 'Indicativo, non deterministico. Le finestre sostengono — la scelta e tua.')}</Text>
+        </View>
       )}
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  hero: { marginBottom: 18 },
+  hero: { marginBottom: 16 },
   heroKicker: { color: C.gold, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
   heroTitle: { color: C.tx, fontSize: 24, fontWeight: '900', marginTop: 4 },
-  heroSub: { color: C.dim, fontSize: 14, lineHeight: 20, marginTop: 8 },
-  label: { color: C.tx, fontSize: 14, fontWeight: '800', marginBottom: 10 },
+  heroSub: { color: C.dim, fontSize: 13.5, lineHeight: 19, marginTop: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  card: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
+  card: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 13 },
   cardOn: { backgroundColor: C.gold, borderColor: C.gold },
-  cardTx: { color: C.tx, fontSize: 14.5, fontWeight: '700' },
+  cardTx: { color: C.tx, fontSize: 14, fontWeight: '700' },
   cardTxOn: { color: '#0F0F23', fontWeight: '800' },
+  label: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  win: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
+  winDate: { color: C.tx, fontSize: 15, fontWeight: '800', textTransform: 'capitalize' },
+  winReason: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 3 },
+  winCaution: { color: C.gold, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
+  ring: { width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
+  ringTx: { fontSize: 16, fontWeight: '900' },
+  disclaimer: { color: C.dim, fontSize: 11.5, fontStyle: 'italic', marginTop: 8, lineHeight: 16 },
   soon: { alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 24, marginTop: 22 },
   soonTx: { color: C.dim, fontSize: 14, textAlign: 'center', lineHeight: 20 },
   paywall: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,215,0,0.4)', padding: 20, marginTop: 22, alignItems: 'center' },
