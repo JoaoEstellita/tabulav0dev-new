@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Share, Linking } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Switch, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getMomento, type MomentoIntention, type MomentoWindow, type MomentoReason } from '../../services/MomentoService'
+import { getMomento, setMomentoAlert, type MomentoIntention, type MomentoWindow, type MomentoReason } from '../../services/MomentoService'
 
 /**
  * Momento Certo — astrologia eletiva pessoal ("quando agir"). Escolhe a intenção
@@ -29,6 +29,8 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
   const [loading, setLoading] = useState(false)
   const [windows, setWindows] = useState<MomentoWindow[] | null>(null)
   const [detail, setDetail] = useState<MomentoWindow | null>(null)
+  const [alertOn, setAlertOn] = useState(false)
+  const [alertBusy, setAlertBusy] = useState(false)
 
   const INTENTIONS: { k: MomentoIntention; icon: string; label: string }[] = [
     { k: 'amor', icon: 'heart', label: tl('Amor', 'Love', 'Amor', 'Amore') },
@@ -44,8 +46,16 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
   useEffect(() => {
     if (!premium || !user?.uid) return
     setLoading(true); setWindows(null)
-    getMomento(user.uid, intention).then((r) => setWindows(r.windows)).finally(() => setLoading(false))
+    getMomento(user.uid, intention).then((r) => { setWindows(r.windows); setAlertOn(r.alertEnabled === true) }).finally(() => setLoading(false))
   }, [premium, user?.uid, intention])
+
+  const toggleAlert = async (value: boolean) => {
+    if (!user?.uid || alertBusy) return
+    setAlertOn(value); setAlertBusy(true) // otimista
+    const ok = await setMomentoAlert(user.uid, intention, value)
+    if (!ok && value) setAlertOn(false) // falhou ao ligar → reverte
+    setAlertBusy(false)
+  }
 
   const planetName = (k: string) => (PLANET[k] ? PLANET[k][lang === 'pt-BR' ? 'pt' : lang === 'es-ES' ? 'es' : lang === 'it-IT' ? 'it' : 'en'] : k)
   const targetLabel = (t: string | null) => {
@@ -71,11 +81,6 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
 
   const intentionLabel = INTENTIONS.find((x) => x.k === intention)?.label || ''
   const winTitle = tl('Momento Certo', 'Right Moment', 'Momento Justo', 'Momento Giusto') + ' · ' + intentionLabel
-  const shareWindow = (w: MomentoWindow) => {
-    const hour = w.hourFromISO && w.hourToISO ? ` ${fmtHour(w.hourFromISO)}–${fmtHour(w.hourToISO)}` : ''
-    const why = w.reasons.length ? ' — ' + w.reasons.map(reasonLine).join('; ') : ''
-    Share.share({ message: `${winTitle}: ${fmtDate(w.dateISO)}${hour}${why}` }).catch(() => {})
-  }
   const addToCalendar = (w: MomentoWindow) => {
     const dt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
     let dates: string
@@ -138,6 +143,13 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
               <Ionicons name="chevron-forward" size={16} color={C.dim} />
             </TouchableOpacity>
           ))}
+          <View style={s.alertRow}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.alertTitle}>🔔 {tl('Avise-me quando abrir', 'Alert me when it opens', 'Avisame cuando se abra', 'Avvisami quando si apre')}</Text>
+              <Text style={s.alertSub}>{tl('Um push quando uma janela forte desta intenção estiver chegando.', 'A push when a strong window for this intention is near.', 'Un aviso cuando una ventana fuerte de esta intencion se acerque.', 'Una notifica quando una finestra forte di questa intenzione si avvicina.')}</Text>
+            </View>
+            <Switch value={alertOn} onValueChange={toggleAlert} disabled={alertBusy} trackColor={{ true: C.good, false: C.line }} thumbColor="#fff" />
+          </View>
           <Text style={s.disclaimer}>{tl('Leitura orientativa, não determinista. As janelas apoiam — a escolha é sua.', 'Guidance, not fate. Windows support you — the choice is yours.', 'Orientativo, no determinista. Las ventanas apoyan — la eleccion es tuya.', 'Indicativo, non deterministico. Le finestre sostengono — la scelta e tua.')}</Text>
         </View>
       )}
@@ -191,6 +203,9 @@ const s = StyleSheet.create({
   winCaution: { color: C.gold, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   ring: { width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   ringTx: { fontSize: 16, fontWeight: '900' },
+  alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card2, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14, marginTop: 4 },
+  alertTitle: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  alertSub: { color: C.dim, fontSize: 12.5, lineHeight: 17, marginTop: 3 },
   disclaimer: { color: C.dim, fontSize: 11.5, fontStyle: 'italic', marginTop: 8, lineHeight: 16 },
   soon: { alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 24, marginTop: 22 },
   soonTx: { color: C.dim, fontSize: 14, textAlign: 'center', lineHeight: 20 },
