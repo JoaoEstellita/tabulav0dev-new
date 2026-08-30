@@ -29,6 +29,7 @@ import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { auth } from '../config/firebase'
 import { ensureStatusPolicyLoaded, getStatusPolicySnapshot } from '../services/status/StatusPolicyService'
 import { resolveNatalPlanetAspectText } from '../utils/natalInterpretation'
+import MomentoAreaCard from './MomentoAreaCard'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
@@ -630,7 +631,8 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
   const { width: viewportWidth } = useWindowDimensions()
   const isCompactViewport = viewportWidth <= 430
-  const [filtersExpanded, setFiltersExpanded] = React.useState(!isCompactViewport)
+  // Filtros SEMPRE fechados por padrão (não ocupar espaço); abre só no clique.
+  const [filtersExpanded, setFiltersExpanded] = React.useState(false)
   const [detailView, setDetailView] = React.useState<{
     title: string
     directText: string
@@ -698,9 +700,7 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
         if (parsed.sortMode === 'impact' || parsed.sortMode === 'recent') {
           setSelectedSortMode(parsed.sortMode)
         }
-        if (typeof parsed.filtersExpanded === 'boolean') {
-          setFiltersExpanded(parsed.filtersExpanded)
-        }
+        // filtersExpanded NÃO é restaurado: abre sempre fechado por padrão.
         if (typeof parsed.strongOnly === 'boolean') {
           setStrongOnly(parsed.strongOnly)
         }
@@ -3300,6 +3300,9 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
               scrollOffsetYRef.current = event.nativeEvent.contentOffset.y
             }}
           >
+            <View style={{ paddingHorizontal: 16 }}>
+              <MomentoAreaCard areaKey={String(areaData.name || '').toLowerCase()} />
+            </View>
             {renderScoreComponentsSection()}
             {renderTransitsSection()}
             {renderMetricLevelsSection()}

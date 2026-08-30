@@ -19,13 +19,15 @@ const PLANET: Record<string, { g: string; pt: string; en: string; es: string; it
   neptune: { g: '♆', pt: 'Netuno', en: 'Neptune', es: 'Neptuno', it: 'Nettuno' }, pluto: { g: '♇', pt: 'Plutão', en: 'Pluto', es: 'Pluton', it: 'Plutone' },
 }
 
-export default function MomentoCertoView({ premium }: { premium: boolean }) {
+export default function MomentoCertoView({ premium, initialIntention }: { premium: boolean; initialIntention?: MomentoIntention }) {
   const navigation = useNavigation<any>()
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const lang = language as 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
   const tl = (pt: string, en: string, es: string, it: string) => ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it }[lang] || pt)
-  const [intention, setIntention] = useState<MomentoIntention>('amor')
+  const [intention, setIntention] = useState<MomentoIntention>(initialIntention || 'amor')
+  // Chegou de um card de área (deep-link com intenção) → seleciona ela.
+  useEffect(() => { if (initialIntention) setIntention(initialIntention) }, [initialIntention])
   const [loading, setLoading] = useState(false)
   const [windows, setWindows] = useState<MomentoWindow[] | null>(null)
   const [detail, setDetail] = useState<MomentoWindow | null>(null)

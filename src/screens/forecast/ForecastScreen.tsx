@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import MomentoCertoView from './MomentoCertoView'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { Calendar, LocaleConfig } from 'react-native-calendars'
 import ForecastEphemerisChart from '../../components/ForecastEphemerisChart'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -744,6 +744,10 @@ export default function ForecastScreen() {
   // vira 'momento' quando o motor (F1 backend) entrar.
   const [forecastView, setForecastView] = useState<'momento' | 'grafico' | 'calendario'>('momento')
   forecastViewRef.current = forecastView
+  // Deep-link de um card de área: preseleciona a intenção e força o modo Momento.
+  const route = useRoute() as any
+  const momentoIntention = route?.params?.momentoIntention as any
+  useEffect(() => { if (momentoIntention) setForecastView('momento') }, [momentoIntention])
   const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
@@ -1527,7 +1531,7 @@ export default function ForecastScreen() {
       </View>
 
       {forecastView === 'momento' ? (
-        <MomentoCertoView premium={isPremium} />
+        <MomentoCertoView premium={isPremium} initialIntention={momentoIntention} />
       ) : (
       <>
       <View style={styles.periodRow} {...aPeriod}>
