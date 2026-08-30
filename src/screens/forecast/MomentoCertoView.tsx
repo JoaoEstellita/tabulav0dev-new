@@ -58,9 +58,12 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
   }
 
   const planetName = (k: string) => (PLANET[k] ? PLANET[k][lang === 'pt-BR' ? 'pt' : lang === 'es-ES' ? 'es' : lang === 'it-IT' ? 'it' : 'en'] : k)
+  const ANGLE_LABEL: Record<string, string> = { ASC: 'Asc', DSC: 'Desc', MC: 'MC', IC: 'IC' }
   const targetLabel = (t: string | null) => {
     if (!t) return ''
-    const m = /^casa(\d+)$/.exec(t)
+    const a = /^angle:(\w+)$/.exec(t)
+    if (a) return ANGLE_LABEL[a[1]] || a[1]
+    const m = /^casa(\d+)$/.exec(t) // legado — não deve mais ocorrer
     if (m) return tl(`casa ${m[1]}`, `house ${m[1]}`, `casa ${m[1]}`, `casa ${m[1]}`)
     return planetName(t)
   }
