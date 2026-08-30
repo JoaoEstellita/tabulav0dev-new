@@ -571,14 +571,14 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
         {showTransits ? (
           transitPlanets.length >= 1 && natalPlanets.length >= 1 && tnAspectsWithNodes.length > 0 ? (
             <View style={styles.aspectGridWrap}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <Text style={styles.aspectGridTitle}>
+              <View style={{ alignSelf: 'stretch', height: 30, justifyContent: 'center', marginBottom: 6 }}>
+                <Text style={[styles.aspectGridTitle, { textAlign: 'center', marginBottom: 0, paddingHorizontal: 46 }]}>
                   {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
                 </Text>
                 {onOpenTransits ? (
-                  <TouchableOpacity onPress={onOpenTransits} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button"
+                  <TouchableOpacity style={styles.gridBookBtn} onPress={onOpenTransits} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button"
                     accessibilityLabel={tl('Abrir trânsitos completos', 'Open full transits', 'Abrir transitos completos', 'Apri transiti completi')}>
-                    <Ionicons name="book-outline" size={15} color="#8b8fa8" />
+                    <Ionicons name="book" size={14} color="#0F0F23" />
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -709,6 +709,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#222836',
     paddingVertical: 10,
+  },
+  gridBookBtn: {
+    position: 'absolute',
+    right: 8,
+    top: 1,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
   },
   aspectGridTitle: {
     color: '#8892a4',
