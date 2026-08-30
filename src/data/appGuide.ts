@@ -235,4 +235,175 @@ export const APP_GUIDE: GuideTab[] = [
       },
     ],
   },
+  {
+    key: 'match',
+    icon: 'heart',
+    label: L('Match', 'Match', 'Match', 'Match'),
+    intro: L(
+      'Descubra com quem você combina — afinidade real por sinastria.',
+      'Discover who you match with — real affinity from synastry.',
+      'Descubre con quien combinas — afinidad real por sinastria.',
+      'Scopri con chi combini — affinita reale dalla sinastria.'),
+    entries: [
+      {
+        icon: 'albums-outline',
+        title: L('Descobrir (baralho)', 'Discover (deck)', 'Descubrir (mazo)', 'Scopri (mazzo)'),
+        body: L(
+          'Um card por vez, ordenado por afinidade e proximidade. Use ✖️ passar, 🤝 pedir amizade ou ❤️ dar Match. Match mútuo libera o contato.',
+          'One card at a time, ranked by affinity and distance. Use ✖️ pass, 🤝 ask friendship or ❤️ Match. A mutual Match opens contact.',
+          'Una tarjeta a la vez, por afinidad y cercania. Usa ✖️ pasar, 🤝 pedir amistad o ❤️ dar Match. El Match mutuo abre el contacto.',
+          'Una card alla volta, per affinita e vicinanza. Usa ✖️ passa, 🤝 chiedi amicizia o ❤️ Match. Il Match reciproco apre il contatto.'),
+      },
+      {
+        icon: 'analytics-outline',
+        title: L('Afinidade e sinastria', 'Affinity and synastry', 'Afinidad y sinastria', 'Affinita e sinastria'),
+        body: L(
+          'No card, "ver aspectos" mostra o que flui e o que atrita, a roda de sinastria e a grade completa (se a pessoa deixou aberta).',
+          'On the card, "see aspects" shows what flows and what clashes, the synastry wheel and the full grid (if the person left it open).',
+          'En la tarjeta, "ver aspectos" muestra lo que fluye y lo que roza, la rueda de sinastria y la grilla completa (si la persona la dejo abierta).',
+          'Nella card, "vedi aspetti" mostra cosa scorre e cosa attrita, la ruota di sinastria e la griglia completa (se la persona l\'ha lasciata aperta).'),
+      },
+      {
+        icon: 'options-outline',
+        title: L('Filtros e busca', 'Filters and search', 'Filtros y busqueda', 'Filtri e ricerca'),
+        body: L(
+          'Filtre por cidade, idade, distância e interesses. Em "Buscar" você acha alguém pelo nome.',
+          'Filter by city, age, distance and interests. Under "Search" you find someone by name.',
+          'Filtra por ciudad, edad, distancia e intereses. En "Buscar" encuentras a alguien por nombre.',
+          'Filtra per citta, eta, distanza e interessi. In "Cerca" trovi qualcuno per nome.'),
+      },
+      {
+        icon: 'people-circle-outline',
+        title: L('Conexões', 'Connections', 'Conexiones', 'Connessioni'),
+        body: L(
+          'Seus matches 💘 e amizades 🤝 ficam aqui. Em cada um: ver a sinastria, abrir o WhatsApp ou criar um grupo com a pessoa.',
+          'Your matches 💘 and friends 🤝 live here. On each: view synastry, open WhatsApp or create a group with them.',
+          'Tus matches 💘 y amistades 🤝 estan aqui. En cada uno: ver la sinastria, abrir WhatsApp o crear un grupo con la persona.',
+          'I tuoi match 💘 e amicizie 🤝 sono qui. Su ognuno: vedi la sinastria, apri WhatsApp o crea un gruppo con la persona.'),
+      },
+      {
+        icon: 'create-outline',
+        title: L('Seu perfil do Match', 'Your Match profile', 'Tu perfil del Match', 'Il tuo profilo Match'),
+        body: L(
+          'Em "Perfil": fotos, interesses, bio, gênero e preferência. Ali também ficam os controles de privacidade (busca, baralho e sinastria visível).',
+          'Under "Profile": photos, interests, bio, gender and preference. Privacy controls (search, deck and synastry visibility) are there too.',
+          'En "Perfil": fotos, intereses, bio, genero y preferencia. Ahi tambien estan los controles de privacidad (busqueda, mazo y sinastria visible).',
+          'In "Profilo": foto, interessi, bio, genere e preferenza. Li ci sono anche i controlli di privacy (ricerca, mazzo e sinastria visibile).'),
+      },
+    ],
+  },
+  {
+    key: 'previsoes',
+    icon: 'calendar',
+    label: L('Previsões', 'Forecast', 'Pronostico', 'Previsioni'),
+    intro: L(
+      'O que vem pela frente — seus trânsitos dos próximos dias e semanas.',
+      'What is ahead — your transits for the coming days and weeks.',
+      'Lo que viene — tus transitos de los proximos dias y semanas.',
+      'Cosa arriva — i tuoi transiti dei prossimi giorni e settimane.'),
+    entries: [
+      {
+        icon: 'time-outline',
+        title: L('Janela de tempo', 'Time window', 'Ventana de tiempo', 'Finestra temporale'),
+        body: L(
+          'Escolha ver por dia ou por semana para olhar mais perto ou mais longe.',
+          'Choose a daily or weekly view to look closer or further ahead.',
+          'Elige ver por dia o por semana para mirar mas cerca o mas lejos.',
+          'Scegli la vista giornaliera o settimanale per guardare piu vicino o piu lontano.'),
+      },
+      {
+        icon: 'filter-outline',
+        title: L('Filtro por área', 'Filter by area', 'Filtro por area', 'Filtro per area'),
+        body: L(
+          'Toque numa das 8 áreas para focar. Cada área mostra o movimento e o nível de atenção do período.',
+          'Tap one of the 8 areas to focus. Each area shows the movement and attention level for the period.',
+          'Toca una de las 8 areas para enfocar. Cada area muestra el movimiento y el nivel de atencion del periodo.',
+          'Tocca una delle 8 aree per concentrarti. Ogni area mostra il movimento e il livello di attenzione del periodo.'),
+      },
+      {
+        icon: 'trending-up-outline',
+        title: L('Eventos e trânsitos', 'Events and transits', 'Eventos y transitos', 'Eventi e transiti'),
+        body: L(
+          'Cada card traz um trânsito com a data, a intensidade e o que ele tende a mexer.',
+          'Each card shows a transit with its date, intensity and what it tends to stir.',
+          'Cada tarjeta trae un transito con la fecha, la intensidad y lo que tiende a mover.',
+          'Ogni card porta un transito con data, intensita e cosa tende a smuovere.'),
+      },
+      {
+        icon: 'hourglass-outline',
+        title: L('Timing', 'Timing', 'Timing', 'Tempistica'),
+        body: L(
+          'Cada evento diz "hoje", "em X dias" ou "há X dias" — para você se preparar na hora certa.',
+          'Each event says "today", "in X days" or "X days ago" — so you can prepare at the right time.',
+          'Cada evento dice "hoy", "en X dias" o "hace X dias" — para prepararte en el momento justo.',
+          'Ogni evento dice "oggi", "tra X giorni" o "X giorni fa" — cosi ti prepari al momento giusto.'),
+      },
+    ],
+  },
+  {
+    key: 'config',
+    icon: 'settings',
+    label: L('Ajustes', 'Settings', 'Ajustes', 'Impostazioni'),
+    intro: L(
+      'Ajuste o app do seu jeito — dados, notificações, plano e privacidade.',
+      'Set the app your way — data, notifications, plan and privacy.',
+      'Ajusta la app a tu manera — datos, notificaciones, plan y privacidad.',
+      'Regola l\'app come vuoi — dati, notifiche, piano e privacy.'),
+    entries: [
+      {
+        icon: 'calendar-number-outline',
+        title: L('Dados de nascimento e mapa', 'Birth data and chart', 'Datos de nacimiento y mapa', 'Dati di nascita e mappa'),
+        body: L(
+          'Corrija data, hora e local de nascimento, recalcule o mapa natal e escolha o sistema de casas.',
+          'Fix birth date, time and place, recalculate the natal chart and choose the house system.',
+          'Corrige fecha, hora y lugar de nacimiento, recalcula la carta natal y elige el sistema de casas.',
+          'Correggi data, ora e luogo di nascita, ricalcola la carta natale e scegli il sistema delle case.'),
+      },
+      {
+        icon: 'notifications-outline',
+        title: L('Notificações', 'Notifications', 'Notificaciones', 'Notifiche'),
+        body: L(
+          'Escolha o que recebe e quando: status do dia, alertas de grupo e lembretes.',
+          'Choose what you get and when: daily status, group alerts and reminders.',
+          'Elige que recibes y cuando: estado del dia, alertas de grupo y recordatorios.',
+          'Scegli cosa ricevi e quando: stato del giorno, avvisi di gruppo e promemoria.'),
+      },
+      {
+        icon: 'card-outline',
+        title: L('Assinatura', 'Subscription', 'Suscripcion', 'Abbonamento'),
+        body: L(
+          'Veja seu plano, o que os recursos premium liberam e gerencie a cobrança.',
+          'See your plan, what premium features unlock and manage billing.',
+          'Ve tu plan, que desbloquean las funciones premium y gestiona el cobro.',
+          'Vedi il piano, cosa sbloccano le funzioni premium e gestisci la fatturazione.'),
+      },
+      {
+        icon: 'logo-whatsapp',
+        title: L('Astrólogo no WhatsApp', 'Astrologer on WhatsApp', 'Astrologo en WhatsApp', 'Astrologo su WhatsApp'),
+        body: L(
+          'Ative e gerencie o atendimento por WhatsApp direto daqui.',
+          'Turn on and manage the WhatsApp assistant right from here.',
+          'Activa y gestiona la atencion por WhatsApp desde aqui.',
+          'Attiva e gestisci l\'assistenza WhatsApp da qui.'),
+      },
+      {
+        icon: 'language-outline',
+        title: L('Idioma', 'Language', 'Idioma', 'Lingua'),
+        body: L(
+          'Troque o idioma do app entre português, inglês, espanhol e italiano.',
+          'Switch the app language among Portuguese, English, Spanish and Italian.',
+          'Cambia el idioma de la app entre portugues, ingles, espanol e italiano.',
+          'Cambia la lingua dell\'app tra portoghese, inglese, spagnolo e italiano.'),
+      },
+      {
+        icon: 'help-buoy-outline',
+        title: L('Ajuda e este guia', 'Help and this guide', 'Ayuda y esta guia', 'Aiuto e questa guida'),
+        body: L(
+          'Reabra este guia quando quiser, veja o FAQ, fale com o suporte ou mande feedback.',
+          'Reopen this guide anytime, read the FAQ, contact support or send feedback.',
+          'Reabre esta guia cuando quieras, ve el FAQ, contacta soporte o envia feedback.',
+          'Riapri questa guida quando vuoi, leggi il FAQ, contatta il supporto o invia feedback.'),
+      },
+    ],
+  },
 ]
