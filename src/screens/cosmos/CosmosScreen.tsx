@@ -250,6 +250,7 @@ export default function CosmosScreen() {
   const scrollRef = useRef<ScrollView>(null)
   const anchorsRef = useRef<Record<string, any>>({})
   const aSystem = useTourAnchor('cosmos.system')
+  const aModes = useTourAnchor('cosmos.modes')
   const aWheel = useTourAnchor('cosmos.wheel')
   useTourScroller('Cosmos', useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const [showTop, setShowTop] = useState(false)
@@ -515,23 +516,26 @@ export default function CosmosScreen() {
 
   // Tour guiado da aba Mapa — percorre cada parte, trocando o modo sozinho (onEnter).
   const buildCosmosTour = useCallback(() => ([
-    { id: 'cosmos.system', title: tl('Escolha o mapa', 'Choose the chart', 'Elige el mapa', 'Scegli la mappa'),
-      body: tl('No topo você alterna Ocidental × Védico e entre Natal, Trânsitos, Retorno Solar e Retorno Lunar. Vamos passar por cada um.', 'At the top you switch Western vs Vedic and among Natal, Transits, Solar and Lunar Return. Let\'s go through each.', 'Arriba cambias Occidental vs Vedico y entre Natal, Transitos, Retorno Solar y Lunar. Vamos a ver cada uno.', 'In alto passi tra Occidentale e Vedico e tra Natale, Transiti, Ritorno Solare e Lunare. Vediamoli uno a uno.'),
+    { id: 'cosmos.system', title: tl('Ocidental ou Védico', 'Western or Vedic', 'Occidental o Vedico', 'Occidentale o Vedico'),
+      body: tl('Aqui você alterna entre a astrologia ocidental e a védica (indiana). Vamos começar pela ocidental.', 'Here you switch between Western and Vedic (Indian) astrology. Let\'s start with Western.', 'Aqui cambias entre astrologia occidental y vedica (india). Empecemos por la occidental.', 'Qui passi tra astrologia occidentale e vedica (indiana). Iniziamo dall\'occidentale.'),
+      onEnter: () => { setMapMode('western') } },
+    { id: 'cosmos.modes', title: tl('Escolha a visão', 'Choose the view', 'Elige la vista', 'Scegli la vista'),
+      body: tl('Nesta barra você escolhe Natal, Trânsitos, Retorno Solar ou Retorno Lunar. Vamos passar por cada uma.', 'On this bar you pick Natal, Transits, Solar or Lunar Return. Let\'s go through each.', 'En esta barra eliges Natal, Transitos, Retorno Solar o Lunar. Vamos a ver cada una.', 'In questa barra scegli Natale, Transiti, Ritorno Solare o Lunare. Vediamole una a una.'),
       onEnter: () => { setMapMode('western') } },
     { id: 'cosmos.wheel', title: tl('Mapa Natal', 'Natal Chart', 'Carta Natal', 'Carta Natale'),
-      body: tl('Sua roda de nascimento: planetas, casas e aspectos. Toque em qualquer aspecto (linhas no centro) ou na grade para a interpretação. Pontos como Lilith, nódulos e a Parte da Fortuna também estão aqui.', 'Your birth wheel: planets, houses and aspects. Tap any aspect (center lines) or the grid for the reading. Points like Lilith, nodes and Part of Fortune are here too.', 'Tu rueda de nacimiento: planetas, casas y aspectos. Toca cualquier aspecto (lineas del centro) o la grilla para la lectura. Puntos como Lilith, nodos y la Parte de la Fortuna tambien estan aqui.', 'La tua ruota di nascita: pianeti, case e aspetti. Tocca un aspetto (linee al centro) o la griglia per la lettura. Punti come Lilith, nodi e la Parte della Fortuna sono qui.'),
+      body: tl('Sua roda de nascimento: planetas, casas e aspectos. Toque em qualquer aspecto (linhas no centro) OU numa célula da grade de aspectos para ler a interpretação. Pontos como Lilith, nódulos e a Parte da Fortuna também estão aqui.', 'Your birth wheel: planets, houses and aspects. Tap any aspect (center lines) OR a cell in the aspect grid to read the interpretation. Points like Lilith, nodes and Part of Fortune are here too.', 'Tu rueda de nacimiento: planetas, casas y aspectos. Toca cualquier aspecto (lineas del centro) O una celda de la grilla de aspectos para leer la interpretacion. Puntos como Lilith, nodos y la Parte de la Fortuna tambien estan aqui.', 'La tua ruota di nascita: pianeti, case e aspetti. Tocca un aspetto (linee al centro) O una cella della griglia per leggere l\'interpretazione. Punti come Lilith, nodi e la Parte della Fortuna sono qui.'),
       onEnter: () => { setMapMode('western'); setWestMode('natal') } },
     { id: 'cosmos.wheel', title: tl('Trânsitos do dia', 'Daily transits', 'Transitos del dia', 'Transiti del giorno'),
-      body: tl('A bi-roda dos trânsitos de agora sobre o seu natal, com a grade de aspectos. Toque numa célula da grade para a leitura daquele trânsito.', 'The bi-wheel of current transits over your natal, with the aspect grid. Tap a grid cell for that transit\'s reading.', 'La bi-rueda de los transitos de ahora sobre tu natal, con la grilla. Toca una celda para la lectura de ese transito.', 'La doppia ruota dei transiti attuali sul natale, con la griglia. Tocca una cella per la lettura di quel transito.'),
+      body: tl('A bi-roda dos trânsitos de agora sobre o seu natal, com a grade de aspectos. Toque num aspecto na roda ou numa célula da grade para a leitura daquele trânsito.', 'The bi-wheel of current transits over your natal, with the aspect grid. Tap an aspect on the wheel or a grid cell for that transit\'s reading.', 'La bi-rueda de los transitos de ahora sobre tu natal, con la grilla. Toca un aspecto en la rueda o una celda para la lectura de ese transito.', 'La doppia ruota dei transiti attuali sul natale, con la griglia. Tocca un aspetto sulla ruota o una cella per la lettura di quel transito.'),
       onEnter: () => { setMapMode('western'); setWestMode('transitos') } },
-    { id: 'cosmos.system', title: tl('Retorno Solar', 'Solar Return', 'Retorno Solar', 'Ritorno Solare'),
-      body: tl('O mapa do seu ano astrológico, a partir do aniversário — com a data e a hora exatas do retorno. Recurso para assinantes.', 'The chart of your astrological year, from your birthday — with the exact date and time of the return. A subscriber feature.', 'El mapa de tu ano astrologico, desde el cumpleanos — con la fecha y hora exactas del retorno. Funcion para suscriptores.', 'La mappa del tuo anno astrologico, dal compleanno — con data e ora esatte del ritorno. Funzione per abbonati.'),
+    { id: 'cosmos.modes', title: tl('Retorno Solar', 'Solar Return', 'Retorno Solar', 'Ritorno Solare'),
+      body: tl('Toque em "Solar" para o mapa do seu ano astrológico, a partir do aniversário — com a data e a hora exatas do retorno. Recurso para assinantes.', 'Tap "Solar" for your astrological year chart, from your birthday — with the exact date and time of the return. A subscriber feature.', 'Toca "Solar" para el mapa de tu ano astrologico, desde el cumpleanos — con la fecha y hora exactas del retorno. Funcion para suscriptores.', 'Tocca "Solar" per la mappa del tuo anno astrologico, dal compleanno — con data e ora esatte del ritorno. Funzione per abbonati.'),
       onEnter: () => { setMapMode('western'); setWestMode('solar') } },
-    { id: 'cosmos.system', title: tl('Retorno Lunar', 'Lunar Return', 'Retorno Lunar', 'Ritorno Lunare'),
-      body: tl('O mapa do mês, quando a Lua volta ao ponto de nascimento — com a data e a hora exatas. Tema do ciclo mensal.', 'The chart of the month, when the Moon returns to your birth point — with the exact date and time. The monthly cycle theme.', 'El mapa del mes, cuando la Luna vuelve a tu punto de nacimiento — con fecha y hora exactas. El tema del ciclo mensual.', 'La mappa del mese, quando la Luna torna al punto di nascita — con data e ora esatte. Il tema del ciclo mensile.'),
+    { id: 'cosmos.modes', title: tl('Retorno Lunar', 'Lunar Return', 'Retorno Lunar', 'Ritorno Lunare'),
+      body: tl('Toque em "Lunar" para o mapa do mês, quando a Lua volta ao ponto de nascimento — com a data e a hora exatas. Tema do ciclo mensal.', 'Tap "Lunar" for the month chart, when the Moon returns to your birth point — with the exact date and time. The monthly cycle theme.', 'Toca "Lunar" para el mapa del mes, cuando la Luna vuelve a tu punto de nacimiento — con fecha y hora exactas. El tema del ciclo mensual.', 'Tocca "Lunar" per la mappa del mese, quando la Luna torna al punto di nascita — con data e ora esatte. Il tema del ciclo mensile.'),
       onEnter: () => { setMapMode('western'); setWestMode('lunar') } },
     { id: 'cosmos.system', title: tl('Mapa Védico', 'Vedic Chart', 'Carta Vedica', 'Carta Vedica'),
-      body: tl('Seu mapa no sistema indiano (sideral): signos, casas e o Guna. Uma outra lente sobre o mesmo céu.', 'Your chart in the Indian (sidereal) system: signs, houses and Guna. Another lens on the same sky.', 'Tu carta en el sistema indio (sideral): signos, casas y Guna. Otra lente sobre el mismo cielo.', 'La tua carta nel sistema indiano (siderale): segni, case e Guna. Un\'altra lente sullo stesso cielo.'),
+      body: tl('Toque em "Védico" para ver seu mapa no sistema indiano (sideral): signos, casas e o Guna. Uma outra lente sobre o mesmo céu.', 'Tap "Vedic" to see your chart in the Indian (sidereal) system: signs, houses and Guna. Another lens on the same sky.', 'Toca "Vedico" para ver tu carta en el sistema indio (sideral): signos, casas y Guna. Otra lente sobre el mismo cielo.', 'Tocca "Vedico" per la tua carta nel sistema indiano (siderale): segni, case e Guna. Un\'altra lente sullo stesso cielo.'),
       onEnter: () => { setMapMode('vedic') },
       onExit: () => { setMapMode('western'); setWestMode('natal') } },
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -649,7 +653,7 @@ export default function CosmosScreen() {
         ) : (
           <>
             {/* Sub-toggle: roda natal pura vs bi-roda (trânsitos de agora sobre o natal). */}
-            <View style={styles.modeToggle}>
+            <View style={styles.modeToggle} {...aModes}>
               <TouchableOpacity style={[styles.modeBtn, westMode === 'natal' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('natal')}>
                 <Text style={[styles.modeBtnText, westMode === 'natal' && styles.modeBtnTextActive]}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
               </TouchableOpacity>
