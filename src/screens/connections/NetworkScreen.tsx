@@ -14,6 +14,7 @@ import { getMyMatches, getMyProfile, setDeckVisible as setDeckVisibleApi, setSha
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
+import { useTourAnchor, useTabTour } from '../../tour/TourProvider'
 import SynastryModal from '../../components/SynastryModal'
 
 const WELCOME_KEY = 'network_welcome_seen_v1'
@@ -40,6 +41,11 @@ export default function NetworkScreen() {
   // Gate: a Rede/Match é para assinante ATIVO ou TRIAL; grátis vê o paywall.
   const gated = !isAdmin && !subscription?.active && !trialActive
   const [showTour, setShowTour] = useState(false)
+  // Tour holofote da aba Match (só assinante; grátis vê o carrossel de venda no paywall)
+  const aMenu = useTourAnchor('match.menu')
+  const aDiscover = useTourAnchor('match.discover')
+  const aConnections = useTourAnchor('match.connections')
+  const aProfile = useTourAnchor('match.profile')
   const [showList, setShowList] = useState(false)
   const [matches, setMatches] = useState<MatchRow[]>([])
   const [deckVisible, setDeckVis] = useState(true)
@@ -63,6 +69,20 @@ export default function NetworkScreen() {
   }
 
   const [page, setPage] = useState<Page>('discover')
+  const buildMatchTour = useCallback(() => {
+    if (gated) return [] // grátis: sem holofote (o carrossel do paywall explica)
+    return [
+      { id: 'match.menu', title: tl('As 3 seções', 'The 3 sections', 'Las 3 secciones', 'Le 3 sezioni'),
+        body: tl('Descobrir (o baralho), Conexões (seus matches e amizades) e Perfil (seu card e a privacidade). Vamos ver cada uma.', 'Discover (the deck), Connections (your matches and friends) and Profile (your card and privacy). Let\'s see each.', 'Descubrir (el mazo), Conexiones (tus matches y amistades) y Perfil (tu tarjeta y privacidad). Veamos cada una.', 'Scopri (il mazzo), Connessioni (i tuoi match e amicizie) e Profilo (la tua card e privacy). Vediamole.') },
+      { id: 'match.discover', onEnter: () => setPage('discover'), title: tl('Descobrir', 'Discover', 'Descubrir', 'Scopri'),
+        body: tl('Um card por vez, por afinidade e proximidade. ✖️ passar, 🤝 pedir amizade, ❤️ dar Match. Toque em "ver aspectos" pra roda e grade de sinastria. Use Filtros e Buscar no topo.', 'One card at a time, by affinity and distance. ✖️ pass, 🤝 ask friendship, ❤️ Match. Tap "see aspects" for the synastry wheel and grid. Use Filters and Search at the top.', 'Una tarjeta a la vez, por afinidad y cercania. ✖️ pasar, 🤝 pedir amistad, ❤️ dar Match. Toca "ver aspectos" para la rueda y grilla. Usa Filtros y Buscar arriba.', 'Una card alla volta, per affinita e vicinanza. ✖️ passa, 🤝 amicizia, ❤️ Match. Tocca "vedi aspetti" per ruota e griglia. Usa Filtri e Cerca in alto.') },
+      { id: 'match.connections', onEnter: () => setPage('connections'), title: tl('Conexões', 'Connections', 'Conexiones', 'Connessioni'),
+        body: tl('Seus matches 💘 e amizades 🤝. Em cada um você pode ver a sinastria, abrir o WhatsApp ou criar um grupo com a pessoa.', 'Your matches 💘 and friends 🤝. On each you can view the synastry, open WhatsApp or create a group with them.', 'Tus matches 💘 y amistades 🤝. En cada uno puedes ver la sinastria, abrir WhatsApp o crear un grupo.', 'I tuoi match 💘 e amicizie 🤝. Su ognuno puoi vedere la sinastria, aprire WhatsApp o creare un gruppo.') },
+      { id: 'match.profile', onEnter: () => setPage('profile'), onExit: () => setPage('discover'), title: tl('Seu perfil', 'Your profile', 'Tu perfil', 'Il tuo profilo'),
+        body: tl('Fotos, interesses, bio, gênero e preferência. E a privacidade: aparecer na busca, aparecer no baralho e deixar sua roda de sinastria visível.', 'Photos, interests, bio, gender and preference. And privacy: appear in search, appear in the deck and keep your synastry wheel visible.', 'Fotos, intereses, bio, genero y preferencia. Y la privacidad: aparecer en la busqueda, en el mazo y dejar tu rueda visible.', 'Foto, interessi, bio, genere e preferenza. E la privacy: apparire nella ricerca, nel mazzo e lasciare la ruota visibile.') },
+    ]
+  }, [gated, language]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { openTour: openMatchTour } = useTabTour('tour_seen_match', 'Network', buildMatchTour)
   const [items, setItems] = useState<Connection[]>([])
   const [people, setPeople] = useState<PublicProfile[]>([])
   const [loading, setLoading] = useState(true)
@@ -250,7 +270,7 @@ export default function NetworkScreen() {
 
   // Guia de introdução ao Match: abre no 1º acesso; reabrível pelo botão de ajuda.
   useEffect(() => {
-    AsyncStorage.getItem(MATCH_TOUR_KEY).then((v) => { if (!v) setShowTour(true) }).catch(() => {})
+    AsyncStorage.getItem(MATCH_TOUR_KEY).then(() => { /* 1º acesso agora é o tour holofote (useTabTour) */ }).catch(() => {})
   }, [])
   const closeTour = () => { setShowTour(false); AsyncStorage.setItem(MATCH_TOUR_KEY, '1').catch(() => {}) }
   useEffect(() => {
@@ -288,7 +308,7 @@ export default function NetworkScreen() {
       <View style={st.head}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text style={st.title}>Mat<Text style={{ color: C.magenta }}>ch</Text></Text>
-          <TouchableOpacity onPress={() => setShowTour(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={openMatchTour} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="help-circle-outline" size={20} color={C.faint} />
           </TouchableOpacity>
         </View>
@@ -312,7 +332,7 @@ export default function NetworkScreen() {
       ) : null}
 
       {/* Segmented */}
-      <View style={st.seg}>
+      <View style={st.seg} {...aMenu}>
         <TouchableOpacity style={[st.segBtn, page === 'discover' && st.segOn]} onPress={() => setPage('discover')}>
           <Text style={[st.segTx, page === 'discover' && st.segTxOn]}>{tl('Descobrir', 'Discover', 'Descubrir', 'Scopri')}</Text>
         </TouchableOpacity>
@@ -328,15 +348,15 @@ export default function NetworkScreen() {
       {loading && !items.length && !people.length ? (
         <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
       ) : page === 'discover' ? (
-        <View style={st.pad}>
+        <View style={st.pad} {...aDiscover}>
           {/* Só o baralho de swipe. A busca por nome abre pelo botão "Buscar". */}
           <DiscoverDeck onOpenList={() => setShowList(true)} onGoProfile={() => setPage('profile')} />
         </View>
       ) : page === 'profile' ? (
-        <NetworkProfileEditor />
+        <View {...aProfile}><NetworkProfileEditor /></View>
       ) : (
         /* ===== MATCH (conexões + pedidos) ===== */
-        <View style={st.pad}>
+        <View style={st.pad} {...aConnections}>
           {matches.length ? (
             <>
               <SectionLabel>{tl('Seus Matches 💘', 'Your Matches 💘', 'Tus Matches 💘', 'I tuoi Match 💘')}</SectionLabel>
