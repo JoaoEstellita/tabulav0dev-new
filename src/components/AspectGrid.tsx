@@ -239,11 +239,11 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginLeft: 4 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
               <Text style={{ color: ROW_TONE, fontSize: 13 }}>●</Text>
-              <Text style={{ color: "#9aa2b8", fontSize: 11 }}>trânsito (linha)</Text>
+              <Text style={{ color: "#9aa2b8", fontSize: 11 }}>trânsito (esquerda)</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
               <Text style={{ color: COL_TONE, fontSize: 13 }}>●</Text>
-              <Text style={{ color: "#9aa2b8", fontSize: 11 }}>natal (coluna)</Text>
+              <Text style={{ color: "#9aa2b8", fontSize: 11 }}>natal (topo)</Text>
             </View>
           </View>
         }

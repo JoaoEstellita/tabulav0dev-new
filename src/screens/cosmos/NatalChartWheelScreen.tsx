@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import Svg, { Circle, Line, Path, Text as SvgText, G } from 'react-native-svg'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -148,6 +149,9 @@ type ChartContentProps = {
    */
   onSelectTransitAspect?: (cellId: string) => void
   onSelectNatalAspect?: (a: { planet1: string; planet2: string; type: string }) => void
+  /** Se fornecido, mostra um ícone de livro ao lado do título "Trânsitos sobre o natal"
+   * que abre o modo standalone (Trânsitos Pessoais: importantes/longos/progressões). */
+  onOpenTransits?: () => void
 }
 
 /**
@@ -157,7 +161,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   // Modal de interpretação do aspecto clicado na grade — abre no lugar, sem rolar.
@@ -567,9 +571,17 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
         {showTransits ? (
           transitPlanets.length >= 1 && natalPlanets.length >= 1 && tnAspectsWithNodes.length > 0 ? (
             <View style={styles.aspectGridWrap}>
-              <Text style={styles.aspectGridTitle}>
-                {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Text style={styles.aspectGridTitle}>
+                  {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
+                </Text>
+                {onOpenTransits ? (
+                  <TouchableOpacity onPress={onOpenTransits} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button"
+                    accessibilityLabel={tl('Abrir trânsitos completos', 'Open full transits', 'Abrir transitos completos', 'Apri transiti completi')}>
+                    <Ionicons name="book-outline" size={15} color="#8b8fa8" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
               <AspectGrid cross rowPlanets={transitGridPoints} colPlanets={natalGridPoints} aspects={tnAspectsWithNodes} onSelectCell={openTransitAspectModal} />
             </View>
           ) : null

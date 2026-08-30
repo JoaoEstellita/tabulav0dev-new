@@ -753,7 +753,7 @@ export default function CosmosScreen() {
             ) : (
             <>
             <View {...aWheel}>
-            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
+            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} onOpenTransits={() => (navigation as any).navigate('PersonalTransits')} />
             </View>
 
             {westMode === 'transitos' ? (

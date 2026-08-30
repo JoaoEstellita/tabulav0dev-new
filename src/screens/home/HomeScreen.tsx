@@ -552,7 +552,7 @@ export default function HomeScreen() {
           <AnimatedMount>
             <View style={styles.section}>
               {wheelReady ? (
-                <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
+                <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} onOpenTransits={() => navigation.navigate('PersonalTransits')} />
               ) : (
                 // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
                 // interações, pra não travar a abertura da Home. Não pula o layout.
