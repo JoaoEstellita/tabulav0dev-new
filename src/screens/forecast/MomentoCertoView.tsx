@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Share, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
@@ -28,6 +28,7 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
   const [intention, setIntention] = useState<MomentoIntention>('amor')
   const [loading, setLoading] = useState(false)
   const [windows, setWindows] = useState<MomentoWindow[] | null>(null)
+  const [detail, setDetail] = useState<MomentoWindow | null>(null)
 
   const INTENTIONS: { k: MomentoIntention; icon: string; label: string }[] = [
     { k: 'amor', icon: 'heart', label: tl('Amor', 'Love', 'Amor', 'Amore') },
@@ -63,6 +64,27 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
   }
   // Faixa de hora (instante UTC) formatada no fuso do aparelho.
   const fmtHour = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
+
+  const intentionLabel = INTENTIONS.find((x) => x.k === intention)?.label || ''
+  const winTitle = tl('Momento Certo', 'Right Moment', 'Momento Justo', 'Momento Giusto') + ' · ' + intentionLabel
+  const shareWindow = (w: MomentoWindow) => {
+    const hour = w.hourFromISO && w.hourToISO ? ` ${fmtHour(w.hourFromISO)}–${fmtHour(w.hourToISO)}` : ''
+    const why = w.reasons.length ? ' — ' + w.reasons.map(reasonLine).join('; ') : ''
+    Share.share({ message: `${winTitle}: ${fmtDate(w.dateISO)}${hour}${why}` }).catch(() => {})
+  }
+  const addToCalendar = (w: MomentoWindow) => {
+    const dt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+    let dates: string
+    if (w.hourFromISO && w.hourToISO) dates = `${dt(w.hourFromISO)}/${dt(w.hourToISO)}`
+    else {
+      const d = w.dateISO.replace(/-/g, '')
+      const nx = new Date(w.dateISO + 'T00:00:00Z'); nx.setUTCDate(nx.getUTCDate() + 1)
+      dates = `${d}/${nx.toISOString().slice(0, 10).replace(/-/g, '')}`
+    }
+    const details = w.reasons.map(reasonLine).join('. ')
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(winTitle)}&dates=${dates}&details=${encodeURIComponent(details)}`
+    Linking.openURL(url).catch(() => {})
+  }
   const scoreColor = (s: number) => (s >= 70 ? C.good : s >= 50 ? C.gold : C.dim)
 
   return (
@@ -99,7 +121,7 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
         <View style={{ marginTop: 18, gap: 10 }}>
           <Text style={s.label}>{tl('Melhores dias', 'Best days', 'Mejores dias', 'Giorni migliori')}</Text>
           {windows.map((w, i) => (
-            <View key={w.dateISO + i} style={s.win}>
+            <TouchableOpacity key={w.dateISO + i} style={s.win} activeOpacity={0.85} onPress={() => setDetail(w)}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
                 {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
@@ -109,11 +131,43 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
               <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
                 <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
               </View>
-            </View>
+              <Ionicons name="chevron-forward" size={16} color={C.dim} />
+            </TouchableOpacity>
           ))}
           <Text style={s.disclaimer}>{tl('Leitura orientativa, não determinista. As janelas apoiam — a escolha é sua.', 'Guidance, not fate. Windows support you — the choice is yours.', 'Orientativo, no determinista. Las ventanas apoyan — la eleccion es tuya.', 'Indicativo, non deterministico. Le finestre sostengono — la scelta e tua.')}</Text>
         </View>
       )}
+
+      {/* Detalhe da janela + ações */}
+      <Modal visible={!!detail} transparent animationType="slide" onRequestClose={() => setDetail(null)}>
+        <View style={s.sheetBack}>
+          <View style={s.sheet}>
+            {detail ? (
+              <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={s.sheetTitle}>{intentionLabel}</Text>
+                  <TouchableOpacity onPress={() => setDetail(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color={C.dim} /></TouchableOpacity>
+                </View>
+                <Text style={s.sheetDate}>{fmtDate(detail.dateISO)}</Text>
+                {detail.hourFromISO && detail.hourToISO ? <Text style={s.sheetHour}>🕐 {fmtHour(detail.hourFromISO)}–{fmtHour(detail.hourToISO)}</Text> : null}
+                <View style={{ marginTop: 12 }}>
+                  {detail.reasons.map((r, j) => <Text key={'dr' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
+                  {detail.cautions.map((c, j) => <Text key={'dc' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+                  <TouchableOpacity style={[s.act, { backgroundColor: C.gold }]} onPress={() => detail && addToCalendar(detail)}>
+                    <Ionicons name="calendar-outline" size={16} color="#0F0F23" /><Text style={s.actTx}>{tl('Calendário', 'Calendar', 'Calendario', 'Calendario')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[s.act, { backgroundColor: C.card2, borderWidth: 1, borderColor: C.line }]} onPress={() => detail && shareWindow(detail)}>
+                    <Ionicons name="share-social-outline" size={16} color={C.tx} /><Text style={[s.actTx, { color: C.tx }]}>{tl('Compartilhar', 'Share', 'Compartir', 'Condividi')}</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={s.disclaimer}>{tl('Orientativo, não determinista. A escolha é sua.', 'Guidance, not fate. The choice is yours.', 'Orientativo, no determinista. La eleccion es tuya.', 'Indicativo, non deterministico. La scelta e tua.')}</Text>
+              </>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }
@@ -144,4 +198,11 @@ const s = StyleSheet.create({
   paywallSub: { color: C.dim, fontSize: 13.5, lineHeight: 19, textAlign: 'center', marginTop: 8 },
   paywallCta: { marginTop: 16, backgroundColor: C.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 26 },
   paywallCtaTx: { color: '#0F0F23', fontWeight: '800', fontSize: 14 },
+  sheetBack: { flex: 1, backgroundColor: 'rgba(8,6,18,0.7)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: C.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: 1, borderColor: C.line, padding: 20, paddingBottom: 34 },
+  sheetTitle: { color: C.gold, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+  sheetDate: { color: C.tx, fontSize: 22, fontWeight: '900', marginTop: 6, textTransform: 'capitalize' },
+  sheetHour: { color: C.good, fontSize: 15, fontWeight: '800', marginTop: 4 },
+  act: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
+  actTx: { color: '#0F0F23', fontSize: 14, fontWeight: '800' },
 })
