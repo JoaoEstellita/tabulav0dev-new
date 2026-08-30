@@ -513,12 +513,27 @@ export default function CosmosScreen() {
   const cardTitle = (f: FeatureCard) => tl(f.titlePt, f.titleEn, f.titleEs, f.titleIt)
   const cardDesc = (f: FeatureCard) => tl(f.descPt, f.descEn, f.descEs, f.descIt)
 
-  // Tour guiado da aba Mapa
+  // Tour guiado da aba Mapa — percorre cada parte, trocando o modo sozinho (onEnter).
   const buildCosmosTour = useCallback(() => ([
     { id: 'cosmos.system', title: tl('Escolha o mapa', 'Choose the chart', 'Elige el mapa', 'Scegli la mappa'),
-      body: tl('Alterne Ocidental × Védico e entre Natal, Trânsitos, Retorno Solar e Retorno Lunar. A visão abaixo muda conforme a escolha.', 'Switch Western vs Vedic and among Natal, Transits, Solar and Lunar Return. The view below changes with your choice.', 'Cambia Occidental vs Vedico y entre Natal, Transitos, Retorno Solar y Lunar. La vista de abajo cambia segun la eleccion.', 'Passa tra Occidentale e Vedico e tra Natale, Transiti, Ritorno Solare e Lunare. La vista sotto cambia con la scelta.') },
-    { id: 'cosmos.wheel', title: tl('A sua roda', 'Your wheel', 'Tu rueda', 'La tua ruota'),
-      body: tl('Planetas, casas e aspectos. Toque em qualquer aspecto (linhas no centro) ou na grade para a interpretação. Pontos como Lilith, nódulos e a Parte da Fortuna também aparecem aqui.', 'Planets, houses and aspects. Tap any aspect (center lines) or the grid for the interpretation. Points like Lilith, nodes and Part of Fortune are here too.', 'Planetas, casas y aspectos. Toca cualquier aspecto (lineas del centro) o la grilla para la interpretacion. Puntos como Lilith, nodos y la Parte de la Fortuna tambien estan aqui.', 'Pianeti, case e aspetti. Tocca un aspetto (linee al centro) o la griglia per l\'interpretazione. Punti come Lilith, nodi e la Parte della Fortuna sono qui.') },
+      body: tl('No topo você alterna Ocidental × Védico e entre Natal, Trânsitos, Retorno Solar e Retorno Lunar. Vamos passar por cada um.', 'At the top you switch Western vs Vedic and among Natal, Transits, Solar and Lunar Return. Let\'s go through each.', 'Arriba cambias Occidental vs Vedico y entre Natal, Transitos, Retorno Solar y Lunar. Vamos a ver cada uno.', 'In alto passi tra Occidentale e Vedico e tra Natale, Transiti, Ritorno Solare e Lunare. Vediamoli uno a uno.'),
+      onEnter: () => { setMapMode('western') } },
+    { id: 'cosmos.wheel', title: tl('Mapa Natal', 'Natal Chart', 'Carta Natal', 'Carta Natale'),
+      body: tl('Sua roda de nascimento: planetas, casas e aspectos. Toque em qualquer aspecto (linhas no centro) ou na grade para a interpretação. Pontos como Lilith, nódulos e a Parte da Fortuna também estão aqui.', 'Your birth wheel: planets, houses and aspects. Tap any aspect (center lines) or the grid for the reading. Points like Lilith, nodes and Part of Fortune are here too.', 'Tu rueda de nacimiento: planetas, casas y aspectos. Toca cualquier aspecto (lineas del centro) o la grilla para la lectura. Puntos como Lilith, nodos y la Parte de la Fortuna tambien estan aqui.', 'La tua ruota di nascita: pianeti, case e aspetti. Tocca un aspetto (linee al centro) o la griglia per la lettura. Punti come Lilith, nodi e la Parte della Fortuna sono qui.'),
+      onEnter: () => { setMapMode('western'); setWestMode('natal') } },
+    { id: 'cosmos.wheel', title: tl('Trânsitos do dia', 'Daily transits', 'Transitos del dia', 'Transiti del giorno'),
+      body: tl('A bi-roda dos trânsitos de agora sobre o seu natal, com a grade de aspectos. Toque numa célula da grade para a leitura daquele trânsito.', 'The bi-wheel of current transits over your natal, with the aspect grid. Tap a grid cell for that transit\'s reading.', 'La bi-rueda de los transitos de ahora sobre tu natal, con la grilla. Toca una celda para la lectura de ese transito.', 'La doppia ruota dei transiti attuali sul natale, con la griglia. Tocca una cella per la lettura di quel transito.'),
+      onEnter: () => { setMapMode('western'); setWestMode('transitos') } },
+    { id: 'cosmos.system', title: tl('Retorno Solar', 'Solar Return', 'Retorno Solar', 'Ritorno Solare'),
+      body: tl('O mapa do seu ano astrológico, a partir do aniversário — com a data e a hora exatas do retorno. Recurso para assinantes.', 'The chart of your astrological year, from your birthday — with the exact date and time of the return. A subscriber feature.', 'El mapa de tu ano astrologico, desde el cumpleanos — con la fecha y hora exactas del retorno. Funcion para suscriptores.', 'La mappa del tuo anno astrologico, dal compleanno — con data e ora esatte del ritorno. Funzione per abbonati.'),
+      onEnter: () => { setMapMode('western'); setWestMode('solar') } },
+    { id: 'cosmos.system', title: tl('Retorno Lunar', 'Lunar Return', 'Retorno Lunar', 'Ritorno Lunare'),
+      body: tl('O mapa do mês, quando a Lua volta ao ponto de nascimento — com a data e a hora exatas. Tema do ciclo mensal.', 'The chart of the month, when the Moon returns to your birth point — with the exact date and time. The monthly cycle theme.', 'El mapa del mes, cuando la Luna vuelve a tu punto de nacimiento — con fecha y hora exactas. El tema del ciclo mensual.', 'La mappa del mese, quando la Luna torna al punto di nascita — con data e ora esatte. Il tema del ciclo mensile.'),
+      onEnter: () => { setMapMode('western'); setWestMode('lunar') } },
+    { id: 'cosmos.system', title: tl('Mapa Védico', 'Vedic Chart', 'Carta Vedica', 'Carta Vedica'),
+      body: tl('Seu mapa no sistema indiano (sideral): signos, casas e o Guna. Uma outra lente sobre o mesmo céu.', 'Your chart in the Indian (sidereal) system: signs, houses and Guna. Another lens on the same sky.', 'Tu carta en el sistema indio (sideral): signos, casas y Guna. Otra lente sobre el mismo cielo.', 'La tua carta nel sistema indiano (siderale): segni, case e Guna. Un\'altra lente sullo stesso cielo.'),
+      onEnter: () => { setMapMode('vedic') },
+      onExit: () => { setMapMode('western'); setWestMode('natal') } },
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
   const { openTour: openCosmosTour } = useTabTour('tour_seen_cosmos', 'Cosmos', buildCosmosTour)
 

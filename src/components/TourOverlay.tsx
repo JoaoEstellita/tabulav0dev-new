@@ -18,17 +18,19 @@ export default function TourOverlay() {
     ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it } as any)[language] || pt
   const [rect, setRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const timers = useRef<any[]>([])
-  const enteredRef = useRef<string | null>(null)
+  const enteredIdxRef = useRef<number | null>(null)
 
   const step = active ? steps[index] : null
 
-  // onEnter/onExit dos passos (ex.: abrir/fechar um modal de demonstração)
+  // onEnter/onExit dos passos (ex.: trocar o modo do mapa, abrir um modal). Chaveado
+  // por índice (passos podem repetir o mesmo id de âncora).
   useEffect(() => {
-    const prevStep = steps.find((x) => x.id === enteredRef.current)
-    if (prevStep && prevStep.id !== step?.id) { try { prevStep.onExit?.() } catch { /* noop */ } }
-    if (step) { try { step.onEnter?.() } catch { /* noop */ } enteredRef.current = step.id }
-    else { enteredRef.current = null }
-  }, [step?.id, active]) // eslint-disable-line react-hooks/exhaustive-deps
+    const prevIdx = enteredIdxRef.current
+    const curIdx = active ? index : null
+    if (prevIdx != null && prevIdx !== curIdx && steps[prevIdx]) { try { steps[prevIdx].onExit?.() } catch { /* noop */ } }
+    if (step) { try { step.onEnter?.() } catch { /* noop */ } enteredIdxRef.current = index }
+    else { enteredIdxRef.current = null }
+  }, [index, active]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     timers.current.forEach(clearTimeout)
@@ -54,7 +56,7 @@ export default function TourOverlay() {
     }
     timers.current.push(setTimeout(() => attempt(0), 420))
     return () => { timers.current.forEach(clearTimeout); timers.current = [] }
-  }, [step?.id, active]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [index, active]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!step) return null
 
