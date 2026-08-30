@@ -110,6 +110,12 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
     Linking.openURL(url).catch(() => {})
   }
   const scoreColor = (s: number) => (s >= 70 ? C.good : s >= 50 ? C.gold : C.dim)
+  const scoreBand = (s: number) => (
+    s >= 70 ? tl('Momento forte', 'Strong window', 'Momento fuerte', 'Momento forte')
+      : s >= 55 ? tl('Momento bom', 'Good window', 'Momento bueno', 'Buon momento')
+        : s >= 40 ? tl('Momento neutro', 'Neutral window', 'Momento neutro', 'Momento neutro')
+          : tl('Momento fraco', 'Weak window', 'Momento debil', 'Momento debole')
+  )
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
@@ -153,8 +159,9 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
                 <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
                 <Text style={s.winHuman}>{humanLine(intention)}</Text>
                 {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
-                {w.reasons.map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
-                {w.cautions.map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
+                {w.reasons.slice(0, 2).map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
+                {w.cautions.slice(0, 1).map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
+                {w.reasons.length + w.cautions.length > 3 ? <Text style={s.winMore}>{tl('ver mais', 'see more', 'ver mas', 'vedi altro')} ›</Text> : null}
               </View>
               <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
                 <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
@@ -183,11 +190,22 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
                   <Text style={s.sheetTitle}>{intentionLabel}</Text>
                   <TouchableOpacity onPress={() => setDetail(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color={C.dim} /></TouchableOpacity>
                 </View>
-                <Text style={s.sheetDate}>{fmtDate(detail.dateISO)}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <Text style={s.sheetDate}>{fmtDate(detail.dateISO)}</Text>
+                  <View style={[s.bandTag, { borderColor: scoreColor(detail.score) }]}><Text style={[s.bandTx, { color: scoreColor(detail.score) }]}>{scoreBand(detail.score)} · {detail.score}</Text></View>
+                </View>
                 <Text style={s.winHuman}>{humanLine(intention)}</Text>
-                {detail.hourFromISO && detail.hourToISO ? <Text style={s.sheetHour}>🕐 {fmtHour(detail.hourFromISO)}–{fmtHour(detail.hourToISO)}</Text> : null}
-                <View style={{ marginTop: 12 }}>
+                {detail.hourFromISO && detail.hourToISO ? (
+                  <>
+                    <Text style={s.sheetHour}>🕐 {fmtHour(detail.hourFromISO)}–{fmtHour(detail.hourToISO)}</Text>
+                    <Text style={s.hourNote}>{tl('Hora planetária ideal — um reforço, não obrigatória.', 'Ideal planetary hour — a boost, not a must.', 'Hora planetaria ideal — un refuerzo, no obligatoria.', 'Ora planetaria ideale — un rinforzo, non obbligatoria.')}</Text>
+                  </>
+                ) : null}
+                <View style={{ marginTop: 14 }}>
+                  <Text style={s.legend}>✨ {tl('a favor', 'in favor', 'a favor', 'a favore')}   ·   ⚠️ {tl('atenção', 'caution', 'atencion', 'attenzione')}</Text>
+                  {detail.reasons.length ? <Text style={s.groupTitle}>{tl('O que apoia', 'What supports', 'Lo que apoya', 'Cosa sostiene')}</Text> : null}
                   {detail.reasons.map((r, j) => <Text key={'dr' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
+                  {detail.cautions.length ? <Text style={s.groupTitle}>{tl('O que pesar', 'What to weigh', 'Que sopesar', 'Cosa valutare')}</Text> : null}
                   {detail.cautions.map((c, j) => <Text key={'dc' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
                 </View>
                 <View style={{ marginTop: 20 }}>
@@ -223,6 +241,12 @@ const s = StyleSheet.create({
   winHour: { color: C.good, fontSize: 13, fontWeight: '800', marginTop: 3 },
   winReason: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 3 },
   winCaution: { color: C.gold, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
+  winMore: { color: C.gold, fontSize: 12, fontWeight: '800', marginTop: 5 },
+  bandTag: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  bandTx: { fontSize: 12, fontWeight: '900' },
+  hourNote: { color: C.dim, fontSize: 11.5, fontStyle: 'italic', marginTop: 2 },
+  legend: { color: C.dim, fontSize: 12, marginBottom: 8 },
+  groupTitle: { color: C.tx, fontSize: 12.5, fontWeight: '800', marginTop: 10, marginBottom: 1, textTransform: 'uppercase', letterSpacing: 0.4 },
   ring: { width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   ringTx: { fontSize: 16, fontWeight: '900' },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card2, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14, marginTop: 4 },
