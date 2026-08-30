@@ -11,6 +11,7 @@ import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import { translate, type AppLanguage } from '../../i18n/appI18n'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
@@ -671,6 +672,28 @@ export default function ForecastScreen() {
         : 'en-US'
     LocaleConfig.defaultLocale = locale
   }, [language])
+
+  // Tour guiado da aba Previsões
+  const forecastScrollRef = useRef<any>(null)
+  const aPeriod = useTourAnchor('forecast.period')
+  const aSummary = useTourAnchor('forecast.summary')
+  const aView = useTourAnchor('forecast.view')
+  const aEvents = useTourAnchor('forecast.events')
+  useTourScroller('Forecast', useCallback((y: number) => forecastScrollRef.current?.scrollTo({ y, animated: true }), []))
+  const buildForecastTour = useCallback(() => {
+    const fl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
+    return [
+      { id: 'forecast.period', title: fl('Horizonte', 'Horizon', 'Horizonte', 'Orizzonte'),
+        body: fl('Escolha quantos dias olhar à frente (7, 30…). Planos maiores liberam horizontes mais longos.', 'Choose how many days to look ahead (7, 30…). Higher plans unlock longer horizons.', 'Elige cuantos dias mirar adelante (7, 30…). Planes mayores desbloquean horizontes mas largos.', 'Scegli quanti giorni guardare avanti (7, 30…). I piani superiori sbloccano orizzonti piu lunghi.') },
+      { id: 'forecast.summary', title: fl('Resumo por área', 'Area summary', 'Resumen por area', 'Riepilogo per area'),
+        body: fl('Toque para abrir: mostra como cada uma das 8 áreas tende a ficar no período e o trânsito que mais pesa. "Linha do tempo" abre a visão completa.', 'Tap to open: shows how each of the 8 areas tends to be over the period and the strongest transit. "Timeline" opens the full view.', 'Toca para abrir: muestra como tiende cada una de las 8 areas en el periodo y el transito que mas pesa. "Linea de tiempo" abre la vista completa.', 'Tocca per aprire: mostra come tende ognuna delle 8 aree nel periodo e il transito piu forte. "Linea del tempo" apre la vista completa.') },
+      { id: 'forecast.view', title: fl('Gráfico ou calendário', 'Chart or calendar', 'Grafico o calendario', 'Grafico o calendario'),
+        body: fl('Veja a intensidade dos dias em gráfico ou num calendário. Toque num dia para focar nos trânsitos dele.', 'See each day\'s intensity as a chart or a calendar. Tap a day to focus on its transits.', 'Ve la intensidad de los dias en grafico o calendario. Toca un dia para enfocar sus transitos.', 'Vedi l\'intensita dei giorni in grafico o calendario. Tocca un giorno per i suoi transiti.') },
+      { id: 'forecast.events', title: fl('Eventos e timing', 'Events and timing', 'Eventos y timing', 'Eventi e tempistica'),
+        body: fl('Cada card é um trânsito com a intensidade e o que ele tende a mexer. O timing diz "hoje", "em X dias" ou "há X dias" — para você se preparar na hora certa.', 'Each card is a transit with its intensity and what it tends to stir. The timing says "today", "in X days" or "X days ago" — so you prepare at the right time.', 'Cada tarjeta es un transito con su intensidad y lo que tiende a mover. El timing dice "hoy", "en X dias" o "hace X dias" — para prepararte en el momento justo.', 'Ogni card e un transito con la sua intensita e cosa tende a smuovere. La tempistica dice "oggi", "tra X giorni" o "X giorni fa" — cosi ti prepari al momento giusto.') },
+    ]
+  }, [language])
+  const { openTour: openForecastTour } = useTabTour('tour_seen_forecast', 'Forecast', buildForecastTour)
   const resolveScoreLabel = useCallback(
     (score: number | null) => {
       if (typeof score !== 'number') return '--'
@@ -1481,7 +1504,10 @@ export default function ForecastScreen() {
           />
       )}
 
-      <View style={styles.periodRow}>
+      <View style={styles.periodRow} {...aPeriod}>
+        <TouchableOpacity onPress={openForecastTour} style={{ padding: 6, marginRight: 4 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="help-circle-outline" size={20} color="#FFD700" />
+        </TouchableOpacity>
         <View style={styles.periodButtonsWrap}>
           {PERIODS.map((days) => {
             const locked = days > maxDaysAllowed
@@ -1563,10 +1589,10 @@ export default function ForecastScreen() {
       )}
 
       {!loading && !error && data && (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView ref={forecastScrollRef} contentContainerStyle={styles.content}>
           {/* Resumo por área (Amor/Saúde/...) — de volta ao topo, mas COLAPSÁVEL:
               fechado por padrão pra não empurrar o gráfico; abre ao tocar. */}
-          <View style={styles.areaSummarySection}>
+          <View style={styles.areaSummarySection} {...aSummary}>
             <View style={styles.areaSummaryHeaderRow}>
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}
@@ -1640,7 +1666,7 @@ export default function ForecastScreen() {
               </>
             )}
           </View>
-          <View style={styles.calendarWrapper}>
+          <View style={styles.calendarWrapper} {...aView}>
             {/* Toggle Gráfico | Calendário (gráfico é a visão principal) */}
             <View style={styles.forecastViewToggle}>
               <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'grafico' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('grafico')}>
@@ -1697,7 +1723,7 @@ export default function ForecastScreen() {
               </View>
             )}
           </View>
-          <View style={styles.dayPanel}>
+          <View style={styles.dayPanel} {...aEvents}>
             <View style={styles.dayTitleRow}>
               <View style={styles.dayNavColLeft}>
                 <TouchableOpacity

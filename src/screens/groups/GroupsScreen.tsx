@@ -234,6 +234,8 @@ export default function GroupsScreen() {
   // Tour guiado (holofote)
   const tourScrollRef = useRef<any>(null)
   const aGroupTabs = useTourAnchor('groups.tabs')
+  const aStatus = useTourAnchor('groups.status')
+  const aMembers = useTourAnchor('groups.members')
   const aSynastry = useTourAnchor('groups.synastry')
   useTourScroller('Groups', useCallback((y: number) => tourScrollRef.current?.scrollTo({ y, animated: true }), []))
   const buildGroupsTour = useCallback(() => {
@@ -241,6 +243,10 @@ export default function GroupsScreen() {
     return [
       { id: 'groups.tabs', title: gl('Seus grupos', 'Your groups', 'Tus grupos', 'I tuoi gruppi'),
         body: gl('A barra lista seus grupos (toque para trocar). No grid você vê todos de uma vez; no "+" cria/entra, convida, cria um perfil de monitoramento ou encontra usuários do app.', 'The bar lists your groups (tap to switch). The grid shows them all at once; under "+" you create/join, invite, add a managed profile or find app users.', 'La barra lista tus grupos (toca para cambiar). La cuadricula los muestra todos; en el "+" creas/entras, invitas, agregas un perfil de seguimiento o encuentras usuarios.', 'La barra elenca i gruppi (tocca per cambiare). La griglia li mostra tutti; nel "+" crei/entri, inviti, aggiungi un profilo monitorato o trovi utenti.') },
+      { id: 'groups.status', title: gl('Panorama do grupo', 'Group overview', 'Panorama del grupo', 'Panoramica del gruppo'),
+        body: gl('O "Status geral" resume quantas áreas do grupo estão críticas ou favoráveis hoje; o "Resumo dos membros" mostra a média e o ponto mais frágil de cada um. É aqui que os alertas do grupo nascem.', 'The "General status" sums up how many of the group\'s areas are critical or favorable today; the "Member summary" shows each one\'s average and weakest point. Group alerts come from here.', 'El "Estado general" resume cuantas areas del grupo estan criticas o favorables hoy; el "Resumen de miembros" muestra el promedio y el punto mas fragil de cada uno. Los alertas del grupo nacen aqui.', 'Lo "Stato generale" riassume quante aree del gruppo sono critiche o favorevoli oggi; il "Riepilogo membri" mostra la media e il punto piu fragile di ognuno. Gli avvisi del gruppo nascono qui.') },
+      { id: 'groups.members', title: gl('Membros', 'Members', 'Miembros', 'Membri'),
+        body: gl('Cada membro mostra o status do dia (quem compartilha). Em "Ver mapa completo" você abre a roda natal dele; em "Conectar" você pede amizade. Quem não tem o app pode entrar como perfil de monitoramento.', 'Each member shows the daily status (those who share). "View full chart" opens their natal wheel; "Connect" sends a friend request. People without the app can be added as managed profiles.', 'Cada miembro muestra el estado del dia (quien comparte). En "Ver mapa completo" abres su rueda natal; en "Conectar" pides amistad. Quien no tiene la app puede entrar como perfil de seguimiento.', 'Ogni membro mostra lo stato del giorno (chi condivide). In "Vedi mappa completa" apri la sua ruota natale; in "Connetti" chiedi amicizia. Chi non ha l\'app puo entrare come profilo monitorato.') },
       { id: 'groups.synastry', title: gl('Sinastria do grupo', 'Group synastry', 'Sinastria del grupo', 'Sinastria del gruppo'),
         body: gl('Cruza todas as duplas e o "você × membro". Toque numa dupla para abrir a roda de sinastria, a grade de aspectos, o % de afinidade e o Guna Milan (védico).', 'It crosses every pair and "you vs member". Tap a pair to open the synastry wheel, aspect grid, affinity % and Guna Milan (Vedic).', 'Cruza todas las parejas y "tu vs miembro". Toca una pareja para la rueda de sinastria, la grilla, el % de afinidad y el Guna Milan (vedico).', 'Incrocia tutte le coppie e "tu vs membro". Tocca una coppia per la ruota, la griglia, il % di affinita e il Guna Milan (vedico).') },
     ]
@@ -2155,7 +2161,7 @@ export default function GroupsScreen() {
               </View>
             </View>
 
-            <View style={styles.groupSummaryCard}>
+            <View style={styles.groupSummaryCard} {...aStatus}>
               <View style={styles.groupSummaryHeader}>
                 <Text style={styles.sectionTitle}>{tr('groups.section.generalStatus', 'Status geral')}</Text>
                 <View style={styles.groupSummaryCounters}>
@@ -2203,7 +2209,7 @@ export default function GroupsScreen() {
               )}
             </View>
 
-            <View style={styles.membersSection}>
+            <View style={styles.membersSection} {...aMembers}>
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>{tr('groups.section.members', 'Membros')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
