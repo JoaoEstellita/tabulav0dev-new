@@ -36,6 +36,7 @@ import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import HomeHeader from '../../components/HomeHeader'
 import NotificationOptInBanner from '../../components/NotificationOptInBanner'
 import MatchInviteCard from './MatchInviteCard'
+import HomeCollectiveGrid from './HomeCollectiveGrid'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
@@ -598,6 +599,9 @@ export default function HomeScreen() {
             </AnimatedMount>
             </View>
           )}
+
+        {/* Tr\u00E2nsitos coletivos (o c\u00E9u de agora) \u2014 grade + livro pra lista completa */}
+        <HomeCollectiveGrid />
 
         {/* Espa\u00E7amento final */}
         <View style={styles.bottomSpacing} />

@@ -1411,7 +1411,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           title: `${translatePlanetName(comparison.name)} • ${tl('Trânsito Coletivo', 'Collective Transit', 'Tránsito Colectivo', 'Transito Collettivo')}`,
                           subtitle: `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
                           short: unified.shortText,
-                          long: unified.modalBody,
+                          // Coletivo = leitura do céu (não pessoal): sem o sufixo "sua Casa X".
+                          long: unified.shortText,
                           keywords: unified.keywords,
                         })
                       }}
