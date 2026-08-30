@@ -17,6 +17,7 @@ import ShareCardModal, { type ShareCardData } from '../../components/ShareCardMo
 import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
+import { useTourAnchor, useTourScroller } from '../../tour/TourProvider'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
 import { VedicProfileContent } from './VedicProfileContent'
@@ -248,6 +249,8 @@ export default function CosmosScreen() {
   // âncora DOM como a Home faz — é web-only e colidiria com os IDs de lá.
   const scrollRef = useRef<ScrollView>(null)
   const anchorsRef = useRef<Record<string, any>>({})
+  const aSystem = useTourAnchor('cosmos.system')
+  useTourScroller('Cosmos', useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const [showTop, setShowTop] = useState(false)
   const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
@@ -608,7 +611,7 @@ export default function CosmosScreen() {
             grau, casa, aspectos e regências. Na tela /mapa standalone ela continua. */}
 
         {/* Toggle Ocidental ↔ Védico — troca a visão do Mapa (só desta aba). */}
-        <View style={styles.modeToggle}>
+        <View style={styles.modeToggle} {...aSystem}>
           <TouchableOpacity style={[styles.modeBtn, mapMode === 'western' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('western')}>
             <Text style={[styles.modeBtnText, mapMode === 'western' && styles.modeBtnTextActive]}>{tl('Ocidental', 'Western', 'Occidental', 'Occidentale')}</Text>
           </TouchableOpacity>

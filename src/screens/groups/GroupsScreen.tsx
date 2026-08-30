@@ -48,6 +48,7 @@ import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from "../../astro/synastry"
 import SynastryWheel from "../../components/SynastryWheel"
 import AspectGrid from "../../components/AspectGrid"
+import { useTourAnchor, useTourScroller } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
 import { searchProfiles, type PublicProfile } from "../../services/DiscoveryService"
@@ -230,6 +231,11 @@ export default function GroupsScreen() {
   const [createWithUser, setCreateWithUser] = useState<{ uid: string; name: string | null } | null>(null)
   const createWithHandledRef = useRef<string | null>(null)
   const pendingInviteGroupRef = useRef<string | null>(null)
+  // Tour guiado (holofote)
+  const tourScrollRef = useRef<any>(null)
+  const aGroupTabs = useTourAnchor('groups.tabs')
+  const aSynastry = useTourAnchor('groups.synastry')
+  useTourScroller('Groups', useCallback((y: number) => tourScrollRef.current?.scrollTo({ y, animated: true }), []))
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [feedFilter, setFeedFilter] = useState<"all" | "messages" | "alerts">("all")
   const [groupOrder, setGroupOrder] = useState<string[]>([])
@@ -2040,11 +2046,12 @@ export default function GroupsScreen() {
   return (
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
       <ScrollView
+        ref={tourScrollRef}
         style={styles.scrollView}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={loadUserGroups} />}
       >
         {/* Header com seletor de grupos */}
-        <View style={styles.header}>
+        <View style={styles.header} {...aGroupTabs}>
           <View style={styles.headerTopRow}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupSelector}>
               {(groups || []).map((group) => (
@@ -2354,7 +2361,7 @@ export default function GroupsScreen() {
             </View>
 
             {selectedGroup && !synastryMineMissing && (synastryLoading || Object.keys(synastryByMember).length > 0) ? (
-              <View style={styles.synastrySection}>
+              <View style={styles.synastrySection} {...aSynastry}>
                 <View style={styles.synastryHeader}>
                   <Ionicons name="git-compare-outline" size={18} color="#FFD700" />
                   <Text style={styles.synastryTitle}>{tr('groups.synastry.title', 'Sinastria')}</Text>

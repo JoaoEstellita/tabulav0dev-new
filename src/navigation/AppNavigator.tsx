@@ -4,6 +4,9 @@ import { Dimensions, Platform, View } from "react-native"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { DefaultTheme, NavigationContainer, getStateFromPath as defaultGetStateFromPath, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
+import { TourProvider } from "../tour/TourProvider"
+import TourOverlay from "../components/TourOverlay"
+import TourAutoStart from "../tour/TourAutoStart"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
@@ -258,6 +261,8 @@ function MainTabs() {
   const { t } = useAppLanguage()
 
   return (
+    <TourProvider>
+    <View style={{ flex: 1 }}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
@@ -359,6 +364,10 @@ function MainTabs() {
         )}
       </Tab.Screen>
     </Tab.Navigator>
+    <TourOverlay />
+    <TourAutoStart />
+    </View>
+    </TourProvider>
   )
 }
 

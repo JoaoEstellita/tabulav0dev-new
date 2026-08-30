@@ -39,10 +39,7 @@ import MatchInviteCard from './MatchInviteCard'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
-import AppGuideModal from '../../components/AppGuideModal'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-
-const APP_GUIDE_KEY = 'app_guide_seen_v1'
+import { useTourAnchor, useTourScroller } from '../../tour/TourProvider'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
 // Web-only effects (no-op on native)
@@ -156,13 +153,12 @@ export default function HomeScreen() {
     if (natal) scrollToWheelAnchor(`planet:${natal}`)
   }, [scrollToWheelAnchor])
   const [showTop, setShowTop] = useState(false)
-  // Guia do app: abre no 1º acesso; depois fica acessível em Configurações.
-  const [guideVisible, setGuideVisible] = useState(false)
-  useEffect(() => {
-    AsyncStorage.getItem(APP_GUIDE_KEY).then((v) => {
-      if (!v) { setGuideVisible(true); AsyncStorage.setItem(APP_GUIDE_KEY, '1').catch(() => {}) }
-    }).catch(() => {})
-  }, [])
+  // Âncoras do tour guiado (holofote) — destacam os recursos reais.
+  const aHeader = useTourAnchor('home.header')
+  const aAreas = useTourAnchor('home.areas')
+  const aWheel = useTourAnchor('home.wheel')
+  const aTransits = useTourAnchor('home.transits')
+  useTourScroller('Home', React.useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
@@ -488,10 +484,12 @@ export default function HomeScreen() {
         }
       >
         {/* Header */}
-        <HomeHeader
-          sunSign={natalSunSign}
-          moonSign={natalMoonSign}
-        />
+        <View {...aHeader}>
+          <HomeHeader
+            sunSign={natalSunSign}
+            moonSign={natalMoonSign}
+          />
+        </View>
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <NotificationOptInBanner />
@@ -501,6 +499,7 @@ export default function HomeScreen() {
 
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
+          <View {...aAreas}>
           <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.lifeAreasGrid}>
@@ -517,6 +516,7 @@ export default function HomeScreen() {
               </View>
             </View>
           </AnimatedMount>
+          </View>
         )}
 
 
@@ -531,6 +531,7 @@ export default function HomeScreen() {
 
         {/* Céu de hoje: roda natal + trânsitos */}
         {transitData && (
+          <View {...aWheel}>
           <AnimatedMount>
             <View style={styles.section}>
               {wheelReady ? (
@@ -542,6 +543,7 @@ export default function HomeScreen() {
               )}
             </View>
           </AnimatedMount>
+          </View>
         )}
 
         {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
@@ -556,6 +558,7 @@ export default function HomeScreen() {
         {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
           transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
+            <View {...aTransits}>
             <AnimatedMount>
               <View style={styles.section}>
                 <TransitComparisonCard
@@ -576,6 +579,7 @@ export default function HomeScreen() {
                 />
               </View>
             </AnimatedMount>
+            </View>
           )}
 
         {/* Espa\u00E7amento final */}
@@ -605,8 +609,6 @@ export default function HomeScreen() {
         astrologyData={transitData?.currentTransits}
         astrologyDataFallback={backendCurrentTransits}
       />
-
-      <AppGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} />
 
       {/* Banners flutuantes: descoberta do agente + instalação do PWA */}
       <WhatsAppAgentBanner />
