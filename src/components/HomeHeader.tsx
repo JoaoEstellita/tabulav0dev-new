@@ -28,9 +28,11 @@ interface HomeHeaderProps {
   moonSign?: string
   unreadCount?: number
   onPressBell?: () => void
+  moonAnchor?: object // âncora do tour (envolve a Lua)
+  onPressHelp?: () => void // abre o guia da aba (botão "?")
 }
 
-export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPressBell }: HomeHeaderProps) {
+export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPressBell, moonAnchor, onPressHelp }: HomeHeaderProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
@@ -135,7 +137,14 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
             ) : null}
           </TouchableOpacity>
         ) : null}
-        <MoonPhaseButton userReady={!!user} signGlyph={currentMoonSignGlyph()} />
+        {onPressHelp ? (
+          <TouchableOpacity onPress={onPressHelp} style={styles.helpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
+          </TouchableOpacity>
+        ) : null}
+        <View {...(moonAnchor || {})}>
+          <MoonPhaseButton userReady={!!user} signGlyph={currentMoonSignGlyph()} />
+        </View>
       </View>
     </View>
   )
@@ -215,6 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  helpBtn: { width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center', marginRight: 2 },
   bellBadge: {
     position: 'absolute',
     top: 4,

@@ -39,7 +39,7 @@ import MatchInviteCard from './MatchInviteCard'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
-import { useTourAnchor, useTourScroller } from '../../tour/TourProvider'
+import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
 // Web-only effects (no-op on native)
@@ -155,10 +155,27 @@ export default function HomeScreen() {
   const [showTop, setShowTop] = useState(false)
   // Âncoras do tour guiado (holofote) — destacam os recursos reais.
   const aHeader = useTourAnchor('home.header')
+  const aMoon = useTourAnchor('home.moon')
   const aAreas = useTourAnchor('home.areas')
   const aWheel = useTourAnchor('home.wheel')
   const aTransits = useTourAnchor('home.transits')
+  const aNotif = useTourAnchor('home.notif')
   useTourScroller('Home', React.useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
+  const buildHomeTour = React.useCallback(() => ([
+    { id: 'home.header', title: tl('Seu topo astrológico', 'Your astro header', 'Tu encabezado astral', 'La tua intestazione'),
+      body: tl('Aqui ficam seu Sol, Lua e Ascendente (↑). Toque na foto para trocá-la.', 'Here are your Sun, Moon and Ascendant (↑). Tap the photo to change it.', 'Aqui estan tu Sol, Luna y Ascendente (↑). Toca la foto para cambiarla.', 'Qui ci sono Sole, Luna e Ascendente (↑). Tocca la foto per cambiarla.') },
+    { id: 'home.moon', title: tl('Dados da Lua', 'Moon data', 'Datos de la Luna', 'Dati della Luna'),
+      body: tl('Toque na Lua para ver a fase de hoje, o signo e os dados lunares.', 'Tap the Moon to see today\'s phase, sign and lunar data.', 'Toca la Luna para ver la fase de hoy, el signo y los datos lunares.', 'Tocca la Luna per la fase di oggi, il segno e i dati lunari.') },
+    { id: 'home.areas', title: tl('8 Áreas da vida', '8 Life areas', '8 Areas de la vida', '8 Aree della vita'),
+      body: tl('Cada card mostra como o céu de hoje mexe numa parte da sua vida. Toque num card para abrir a leitura completa — com os trânsitos que influenciam e conselhos.', 'Each card shows how today\'s sky affects a part of your life. Tap a card to open the full reading — with the transits at play and advice.', 'Cada tarjeta muestra como el cielo de hoy afecta una parte de tu vida. Toca una tarjeta para la lectura completa — con los transitos que influyen y consejos.', 'Ogni card mostra come il cielo di oggi tocca una parte della tua vita. Tocca una card per la lettura completa — coi transiti in gioco e consigli.') },
+    { id: 'home.wheel', title: tl('Céu de hoje (roda)', 'Today\'s sky (wheel)', 'Cielo de hoy (rueda)', 'Cielo di oggi (ruota)'),
+      body: tl('A roda cruza seu mapa natal com os trânsitos de agora. Toque em qualquer aspecto para ler o que ele ativa.', 'The wheel overlays your natal chart with current transits. Tap any aspect to read what it activates.', 'La rueda cruza tu carta natal con los transitos de ahora. Toca cualquier aspecto para leer que activa.', 'La ruota incrocia la tua carta natale coi transiti attuali. Tocca un aspetto per leggere cosa attiva.') },
+    { id: 'home.transits', title: tl('Comparação de trânsitos', 'Transit comparison', 'Comparacion de transitos', 'Confronto transiti'),
+      body: tl('Planeta a planeta, o que cada trânsito ativa. Toque numa célula da grade para a leitura daquele aspecto.', 'Planet by planet, what each transit activates. Tap a grid cell for that aspect\'s reading.', 'Planeta a planeta, que activa cada transito. Toca una celda de la grilla para la lectura de ese aspecto.', 'Pianeta per pianeta, cosa attiva ogni transito. Tocca una cella della griglia per la lettura di quell\'aspetto.') },
+    { id: 'home.notif', title: tl('Notificações', 'Notifications', 'Notificaciones', 'Notifiche'),
+      body: tl('Ative para receber o status do dia direto no seu celular.', 'Turn on to get your daily status on your phone.', 'Activa para recibir el estado del dia en tu telefono.', 'Attiva per ricevere lo stato del giorno sul telefono.') },
+  ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { openTour: openHomeTour } = useTabTour('tour_seen_home', 'Home', buildHomeTour)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
@@ -488,11 +505,13 @@ export default function HomeScreen() {
           <HomeHeader
             sunSign={natalSunSign}
             moonSign={natalMoonSign}
+            moonAnchor={aMoon}
+            onPressHelp={openHomeTour}
           />
         </View>
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
-        <NotificationOptInBanner />
+        <View {...aNotif}><NotificationOptInBanner /></View>
 
         {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
         <MatchInviteCard />

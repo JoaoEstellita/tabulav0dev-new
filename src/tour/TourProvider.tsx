@@ -1,33 +1,35 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { View, type LayoutChangeEvent } from 'react-native'
+import { useFocusEffect } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-// Tour guiado (holofote). DOIS contextos:
-//  - Registry: refs de âncoras/scrollers — valor ESTÁVEL (não muda), então as
-//    telas que só registram âncora (Home/Cosmos/Grupos) NÃO re-renderizam a cada
-//    passo do tour.
-//  - State: active/steps/index + controles — muda; só o Overlay e quem controla.
+// Tour guiado (holofote) POR ABA. DOIS contextos:
+//  - Registry (ESTÁVEL): refs de âncoras/scrollers + start/stop. As telas que só
+//    registram âncora ou iniciam o tour NÃO re-renderizam a cada passo.
+//  - State (muda): active/steps/index + next/prev — só o Overlay consome.
 
 export type TourTab = 'Home' | 'Cosmos' | 'Groups' | 'Network' | 'Forecast' | 'Settings'
-export type TourStep = { id: string; tab: TourTab; title: string; body: string; hint?: string }
+export type TourStep = {
+  id: string
+  title: string
+  body: string
+  onEnter?: () => void // executa ao ativar o passo (ex.: abrir um modal de demo)
+  onExit?: () => void  // executa ao sair do passo (ex.: fechar o modal)
+}
 
 type AnchorInfo = { y: number; h: number; ref: React.RefObject<View | null> }
 type Registry = {
   anchors: React.MutableRefObject<Record<string, AnchorInfo>>
   scrollers: React.MutableRefObject<Partial<Record<TourTab, (y: number) => void>>>
+  activeTab: React.MutableRefObject<TourTab | null>
   registerScroller: (tab: TourTab, fn: (y: number) => void) => void
-}
-type TourState = {
-  active: boolean
-  steps: TourStep[]
-  index: number
-  start: (steps: TourStep[]) => void
-  next: () => void
-  prev: () => void
+  start: (steps: TourStep[], tab?: TourTab) => void
   stop: () => void
 }
+type TourState = { active: boolean; steps: TourStep[]; index: number; next: () => void; prev: () => void }
 
 const RegistryCtx = createContext<Registry | null>(null)
-const StateCtx = createContext<(TourState & Registry) | null>(null)
+const StateCtx = createContext<TourState | null>(null)
 
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const [active, setActive] = useState(false)
@@ -35,16 +37,19 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const [index, setIndex] = useState(0)
   const anchors = useRef<Record<string, AnchorInfo>>({})
   const scrollers = useRef<Partial<Record<TourTab, (y: number) => void>>>({})
+  const activeTab = useRef<TourTab | null>(null)
+  const stepsRef = useRef<TourStep[]>([])
+  stepsRef.current = steps
 
   const registerScroller = useCallback((tab: TourTab, fn: (y: number) => void) => { scrollers.current[tab] = fn }, [])
-  const registry = useMemo<Registry>(() => ({ anchors, scrollers, registerScroller }), [registerScroller])
-
-  const start = useCallback((s: TourStep[]) => { if (!s.length) return; setSteps(s); setIndex(0); setActive(true) }, [])
+  const start = useCallback((s: TourStep[], tab?: TourTab) => { if (!s?.length) return; activeTab.current = tab ?? null; setSteps(s); setIndex(0); setActive(true) }, [])
   const stop = useCallback(() => { setActive(false); setIndex(0) }, [])
-  const next = useCallback(() => setIndex((i) => { const n = i + 1; if (n >= steps.length) { setActive(false); return 0 } return n }), [steps.length])
+  const next = useCallback(() => setIndex((i) => { const n = i + 1; if (n >= stepsRef.current.length) { setActive(false); return 0 } return n }), [])
   const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), [])
 
-  const state = useMemo(() => ({ active, steps, index, start, next, prev, stop, ...registry }), [active, steps, index, start, next, prev, stop, registry])
+  // Registry NUNCA muda de referência (tudo stable) → sem re-render nas telas.
+  const registry = useMemo<Registry>(() => ({ anchors, scrollers, activeTab, registerScroller, start, stop }), [registerScroller, start, stop])
+  const state = useMemo<TourState>(() => ({ active, steps, index, next, prev }), [active, steps, index, next, prev])
 
   return (
     <RegistryCtx.Provider value={registry}>
@@ -53,15 +58,20 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-/** Controle + estado do tour (Overlay e quem inicia). */
-export function useTour() {
+/** Estado do tour (só o Overlay). */
+export function useTourState() {
   const c = useContext(StateCtx)
-  if (!c) throw new Error('useTour fora do TourProvider')
+  if (!c) throw new Error('useTourState fora do TourProvider')
+  return c
+}
+/** Controles + registro (estável) — não re-renderiza com o passo. */
+export function useTourControls() {
+  const c = useContext(RegistryCtx)
+  if (!c) throw new Error('useTourControls fora do TourProvider')
   return c
 }
 
-/** Marca um elemento como âncora: espalhe {...useTourAnchor('id')} num <View>.
- * Só usa o Registry estável — não re-renderiza quando o passo do tour muda. */
+/** Marca um elemento como âncora: espalhe {...useTourAnchor('id')} num <View>. */
 export function useTourAnchor(id: string) {
   const c = useContext(RegistryCtx)
   const ref = useRef<View | null>(null)
@@ -78,4 +88,24 @@ export function useTourScroller(tab: TourTab, scrollTo: (y: number) => void) {
   const c = useContext(RegistryCtx)
   const reg = c?.registerScroller
   React.useEffect(() => { reg?.(tab, scrollTo) }, [reg, tab, scrollTo])
+}
+
+/** Tour da ABA: dispara no 1º foco (uma vez) e devolve openTour para o botão "?". */
+export function useTabTour(storageKey: string, tab: TourTab, buildSteps: () => TourStep[]) {
+  const { start } = useTourControls()
+  const buildRef = useRef(buildSteps)
+  buildRef.current = buildSteps
+  const openTour = useCallback(() => start(buildRef.current(), tab), [start, tab])
+  useFocusEffect(useCallback(() => {
+    let alive = true
+    const timer = setTimeout(() => {
+      AsyncStorage.getItem(storageKey).then((v) => {
+        if (!alive || v) return
+        AsyncStorage.setItem(storageKey, '1').catch(() => {})
+        if (alive) start(buildRef.current(), tab)
+      }).catch(() => {})
+    }, 800)
+    return () => { alive = false; clearTimeout(timer) }
+  }, [storageKey, tab, start]))
+  return { openTour }
 }

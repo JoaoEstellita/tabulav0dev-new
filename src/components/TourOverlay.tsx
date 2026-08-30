@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
 import { useAppLanguage } from '../hooks/useAppLanguage'
-import { useTour } from '../tour/TourProvider'
+import { useTourState, useTourControls } from '../tour/TourProvider'
 
 // Desenha o holofote: escurece a tela com 4 retângulos ao redor de um "buraco"
 // sobre a âncora real + um balão explicando. Orquestra: navega até a aba do passo,
@@ -12,28 +11,35 @@ const GOLD = '#FFD700'
 const PAD = 8 // folga do buraco ao redor do elemento
 
 export default function TourOverlay() {
-  const { active, steps, index, anchors, scrollers, next, prev, stop } = useTour()
-  const navigation = useNavigation<any>()
+  const { active, steps, index, next, prev } = useTourState()
+  const { anchors, scrollers, activeTab, stop } = useTourControls()
   const { language } = useAppLanguage()
   const tl = (pt: string, en: string, es: string, it: string) =>
     ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it } as any)[language] || pt
   const [rect, setRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const timers = useRef<any[]>([])
+  const enteredRef = useRef<string | null>(null)
 
   const step = active ? steps[index] : null
+
+  // onEnter/onExit dos passos (ex.: abrir/fechar um modal de demonstração)
+  useEffect(() => {
+    const prevStep = steps.find((x) => x.id === enteredRef.current)
+    if (prevStep && prevStep.id !== step?.id) { try { prevStep.onExit?.() } catch { /* noop */ } }
+    if (step) { try { step.onEnter?.() } catch { /* noop */ } enteredRef.current = step.id }
+    else { enteredRef.current = null }
+  }, [step?.id, active]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     timers.current.forEach(clearTimeout)
     timers.current = []
     if (!step) { setRect(null); return }
     setRect(null)
-    // 1) navega até a aba do passo (tab aninhada dentro de "Tabs")
-    try { navigation.navigate('Tabs', { screen: step.tab }) } catch { /* noop */ }
-    // 2) rola até a âncora e mede (com re-tentativas — o elemento pode montar depois)
+    // rola até a âncora e mede (com re-tentativas — o elemento pode montar depois)
     const attempt = (n: number) => {
       const a = anchors.current[step.id]
-      const scroller = scrollers.current[step.tab]
       if (a) {
+        const scroller = (activeTab.current && scrollers.current[activeTab.current]) || Object.values(scrollers.current)[0]
         if (scroller && a.y > 0) { try { scroller(Math.max(0, a.y - 90)) } catch { /* noop */ } }
         const node = a.ref.current as any
         if (node && node.measureInWindow) {
@@ -46,7 +52,7 @@ export default function TourOverlay() {
       }
       if (n < 6) timers.current.push(setTimeout(() => attempt(n + 1), 260))
     }
-    timers.current.push(setTimeout(() => attempt(0), 380))
+    timers.current.push(setTimeout(() => attempt(0), 420))
     return () => { timers.current.forEach(clearTimeout); timers.current = [] }
   }, [step?.id, active]) // eslint-disable-line react-hooks/exhaustive-deps
 

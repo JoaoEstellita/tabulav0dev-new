@@ -48,7 +48,7 @@ import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from "../../astro/synastry"
 import SynastryWheel from "../../components/SynastryWheel"
 import AspectGrid from "../../components/AspectGrid"
-import { useTourAnchor, useTourScroller } from "../../tour/TourProvider"
+import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
 import { searchProfiles, type PublicProfile } from "../../services/DiscoveryService"
@@ -236,6 +236,16 @@ export default function GroupsScreen() {
   const aGroupTabs = useTourAnchor('groups.tabs')
   const aSynastry = useTourAnchor('groups.synastry')
   useTourScroller('Groups', useCallback((y: number) => tourScrollRef.current?.scrollTo({ y, animated: true }), []))
+  const buildGroupsTour = useCallback(() => {
+    const gl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
+    return [
+      { id: 'groups.tabs', title: gl('Seus grupos', 'Your groups', 'Tus grupos', 'I tuoi gruppi'),
+        body: gl('A barra lista seus grupos (toque para trocar). No grid você vê todos de uma vez; no "+" cria/entra, convida, cria um perfil de monitoramento ou encontra usuários do app.', 'The bar lists your groups (tap to switch). The grid shows them all at once; under "+" you create/join, invite, add a managed profile or find app users.', 'La barra lista tus grupos (toca para cambiar). La cuadricula los muestra todos; en el "+" creas/entras, invitas, agregas un perfil de seguimiento o encuentras usuarios.', 'La barra elenca i gruppi (tocca per cambiare). La griglia li mostra tutti; nel "+" crei/entri, inviti, aggiungi un profilo monitorato o trovi utenti.') },
+      { id: 'groups.synastry', title: gl('Sinastria do grupo', 'Group synastry', 'Sinastria del grupo', 'Sinastria del gruppo'),
+        body: gl('Cruza todas as duplas e o "você × membro". Toque numa dupla para abrir a roda de sinastria, a grade de aspectos, o % de afinidade e o Guna Milan (védico).', 'It crosses every pair and "you vs member". Tap a pair to open the synastry wheel, aspect grid, affinity % and Guna Milan (Vedic).', 'Cruza todas las parejas y "tu vs miembro". Toca una pareja para la rueda de sinastria, la grilla, el % de afinidad y el Guna Milan (vedico).', 'Incrocia tutte le coppie e "tu vs membro". Tocca una coppia per la ruota, la griglia, il % di affinita e il Guna Milan (vedico).') },
+    ]
+  }, [language])
+  const { openTour: openGroupsTour } = useTabTour('tour_seen_groups', 'Groups', buildGroupsTour)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [feedFilter, setFeedFilter] = useState<"all" | "messages" | "alerts">("all")
   const [groupOrder, setGroupOrder] = useState<string[]>([])
@@ -2068,6 +2078,9 @@ export default function GroupsScreen() {
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
+              <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupsTour}>
+                <Ionicons name="help-circle-outline" size={18} color="#FFD700" />
+              </TouchableOpacity>
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={() => setShowAllGroups(true)}>
                   <Ionicons name="grid-outline" size={17} color="#FFD700" />

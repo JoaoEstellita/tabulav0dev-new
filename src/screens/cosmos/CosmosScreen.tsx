@@ -17,7 +17,7 @@ import ShareCardModal, { type ShareCardData } from '../../components/ShareCardMo
 import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
-import { useTourAnchor, useTourScroller } from '../../tour/TourProvider'
+import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
 import { VedicProfileContent } from './VedicProfileContent'
@@ -250,6 +250,7 @@ export default function CosmosScreen() {
   const scrollRef = useRef<ScrollView>(null)
   const anchorsRef = useRef<Record<string, any>>({})
   const aSystem = useTourAnchor('cosmos.system')
+  const aWheel = useTourAnchor('cosmos.wheel')
   useTourScroller('Cosmos', useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const [showTop, setShowTop] = useState(false)
   const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
@@ -512,6 +513,15 @@ export default function CosmosScreen() {
   const cardTitle = (f: FeatureCard) => tl(f.titlePt, f.titleEn, f.titleEs, f.titleIt)
   const cardDesc = (f: FeatureCard) => tl(f.descPt, f.descEn, f.descEs, f.descIt)
 
+  // Tour guiado da aba Mapa
+  const buildCosmosTour = useCallback(() => ([
+    { id: 'cosmos.system', title: tl('Escolha o mapa', 'Choose the chart', 'Elige el mapa', 'Scegli la mappa'),
+      body: tl('Alterne Ocidental × Védico e entre Natal, Trânsitos, Retorno Solar e Retorno Lunar. A visão abaixo muda conforme a escolha.', 'Switch Western vs Vedic and among Natal, Transits, Solar and Lunar Return. The view below changes with your choice.', 'Cambia Occidental vs Vedico y entre Natal, Transitos, Retorno Solar y Lunar. La vista de abajo cambia segun la eleccion.', 'Passa tra Occidentale e Vedico e tra Natale, Transiti, Ritorno Solare e Lunare. La vista sotto cambia con la scelta.') },
+    { id: 'cosmos.wheel', title: tl('A sua roda', 'Your wheel', 'Tu rueda', 'La tua ruota'),
+      body: tl('Planetas, casas e aspectos. Toque em qualquer aspecto (linhas no centro) ou na grade para a interpretação. Pontos como Lilith, nódulos e a Parte da Fortuna também aparecem aqui.', 'Planets, houses and aspects. Tap any aspect (center lines) or the grid for the interpretation. Points like Lilith, nodes and Part of Fortune are here too.', 'Planetas, casas y aspectos. Toca cualquier aspecto (lineas del centro) o la grilla para la interpretacion. Puntos como Lilith, nodos y la Parte de la Fortuna tambien estan aqui.', 'Pianeti, case e aspetti. Tocca un aspetto (linee al centro) o la griglia per l\'interpretazione. Punti come Lilith, nodi e la Parte della Fortuna sono qui.') },
+  ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { openTour: openCosmosTour } = useTabTour('tour_seen_cosmos', 'Cosmos', buildCosmosTour)
+
   const handleCardPress = (f: FeatureCard) => {
     // "Em breve" tem prioridade: não leva ao paywall (a feature ainda não existe).
     if (!f.available) return
@@ -570,6 +580,9 @@ export default function CosmosScreen() {
       >
         {/* Hero */}
         <View style={styles.hero}>
+          <TouchableOpacity onPress={openCosmosTour} style={{ position: 'absolute', top: 4, right: 12, padding: 6, zIndex: 2 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
+          </TouchableOpacity>
           <Text style={styles.heroTitle}>✦ {tl('Mapa', 'Chart', 'Mapa', 'Mappa')}</Text>
           {loading && natalPlanets.length === 0 ? (
             <StarLoader size={20} color="#FFD700" />
@@ -720,7 +733,9 @@ export default function CosmosScreen() {
               )
             ) : (
             <>
+            <View {...aWheel}>
             <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
+            </View>
 
             {westMode === 'transitos' ? (
               <>

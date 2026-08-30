@@ -6,7 +6,6 @@ import { DefaultTheme, NavigationContainer, getStateFromPath as defaultGetStateF
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { TourProvider } from "../tour/TourProvider"
 import TourOverlay from "../components/TourOverlay"
-import TourAutoStart from "../tour/TourAutoStart"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
@@ -365,7 +364,6 @@ function MainTabs() {
       </Tab.Screen>
     </Tab.Navigator>
     <TourOverlay />
-    <TourAutoStart />
     </View>
     </TourProvider>
   )
