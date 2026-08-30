@@ -2,7 +2,9 @@ import { backendFetch } from './backend/client'
 
 // Momento Certo (eletiva pessoal). Janelas ranqueadas por intenção.
 export type MomentoReason = { planet: string; aspect: string | null; target: string | null }
-export type MomentoWindow = { dateISO: string; score: number; reasons: MomentoReason[]; cautions: MomentoReason[] }
+// Bandeira de regra clássica (F2a): Lua vazia / retrógrado.
+export type MomentoFlag = { code: 'moonVoid' | 'retro'; planet?: string }
+export type MomentoWindow = { dateISO: string; score: number; reasons: MomentoReason[]; cautions: (MomentoReason | MomentoFlag)[] }
 export type MomentoIntention = 'amor' | 'carreira' | 'decisao' | 'conversa'
 export type MomentoResult = { windows: MomentoWindow[]; gated?: boolean; error?: string }
 

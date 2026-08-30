@@ -50,6 +50,12 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
     return planetName(t)
   }
   const reasonLine = (r: MomentoReason) => `${PLANET[r.planet]?.g || ''} ${planetName(r.planet)} ${r.aspect || ''} ${targetLabel(r.target)}`.replace(/\s+/g, ' ').trim()
+  // Bandeira de regra clássica → texto próprio (Lua vazia / retrógrado).
+  const cautionLine = (c: any): string => {
+    if (c && c.code === 'moonVoid') return tl('Lua fora de curso (evite começar algo novo)', 'Void-of-course Moon (avoid starting anything new)', 'Luna fuera de curso (evita empezar algo nuevo)', 'Luna fuori corso (evita di iniziare qualcosa)')
+    if (c && c.code === 'retro') return `${planetName(c.planet)} ${tl('retrógrado', 'retrograde', 'retrogrado', 'retrogrado')}`
+    return reasonLine(c)
+  }
 
   const fmtDate = (iso: string) => {
     const d = new Date(iso + 'T12:00:00')
@@ -95,7 +101,7 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
                 {w.reasons.map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
-                {w.cautions.map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {reasonLine(c)}</Text>)}
+                {w.cautions.map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
               </View>
               <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
                 <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
