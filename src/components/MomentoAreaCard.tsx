@@ -64,15 +64,16 @@ export default function MomentoAreaCard({ areaKey }: { areaKey: string }) {
           <Text style={s.sub}><Text style={s.subStrong}>{fmt(best.dateISO)}</Text> · {band(best.score)} ({best.score})</Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+      <Ionicons name="chevron-forward" size={16} color="#B8860B" />
     </TouchableOpacity>
   )
 }
 
+// Vive dentro do modal de status (fundo CLARO) → texto escuro p/ contraste.
 const s = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,215,0,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', paddingVertical: 11, paddingHorizontal: 12, marginTop: 10 },
-  icon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,215,0,0.14)', alignItems: 'center', justifyContent: 'center' },
-  title: { color: '#FFD700', fontSize: 13.5, fontWeight: '800' },
-  sub: { color: '#B9BAD6', fontSize: 12.5, marginTop: 1 },
-  subStrong: { color: '#EDEBF7', fontWeight: '800', textTransform: 'capitalize' },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF7D9', borderRadius: 12, borderWidth: 1, borderColor: '#E4C64D', paddingVertical: 11, paddingHorizontal: 12, marginTop: 10 },
+  icon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FBE9A8', alignItems: 'center', justifyContent: 'center' },
+  title: { color: '#8A6D00', fontSize: 13.5, fontWeight: '800' },
+  sub: { color: '#5A5A66', fontSize: 12.5, marginTop: 1 },
+  subStrong: { color: '#1C1C2E', fontWeight: '800', textTransform: 'capitalize' },
 })
