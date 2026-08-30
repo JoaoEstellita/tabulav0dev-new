@@ -227,8 +227,12 @@ export default function NetworkScreen() {
       : <View style={[st.avatar, st.avatarFb, { width: size, height: size, borderRadius: size / 2 }, ring && st.avatarRing]}><Text style={[st.avatarInit, { fontSize: size * 0.4 }]}>{initial(name)}</Text></View>
   )
 
-  const openPerson = (p: { uid: string; name: string | null; photo: string | null; sun: string | null; moon: string | null; asc: string | null; city: string | null }) =>
+  const openPerson = (p: { uid: string; name: string | null; photo: string | null; sun: string | null; moon: string | null; asc: string | null; city: string | null }) => {
+    // Fecha o modal de busca ANTES de navegar — senão o perfil abre ATRÁS dele
+    // e o usuário só vê ao fechar a busca (bug reportado).
+    setShowList(false)
     navigation.navigate('PersonProfile', { uid: p.uid, displayName: p.name, photoURL: p.photo, sunSign: p.sun, moonSign: p.moon, ascSign: p.asc, city: p.city })
+  }
 
   const PersonCard = ({ uid, name, photo, sun, moon, asc, city }: { uid: string; name: string | null; photo: string | null; sun: string | null; moon: string | null; asc: string | null; city: string | null }) => {
     const already = connectedUids.has(uid) || sentIds.has(uid)
