@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, InteractionManager, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import MomentoCertoView from './MomentoCertoView'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
@@ -737,7 +738,9 @@ export default function ForecastScreen() {
   // Seção "Resumo por área" no topo é colapsável (padrão fechada) para não empurrar
   // o gráfico pra baixo — abre ao tocar no cabeçalho.
   const [areaSummaryOpen, setAreaSummaryOpen] = useState(false)
-  const [forecastView, setForecastView] = useState<'calendario' | 'grafico'>('grafico')
+  // Menu da aba: Momento Certo | Gráfico | Calendário. Default 'grafico' por ora;
+  // vira 'momento' quando o motor (F1 backend) entrar.
+  const [forecastView, setForecastView] = useState<'momento' | 'grafico' | 'calendario'>('grafico')
   const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
@@ -1504,6 +1507,26 @@ export default function ForecastScreen() {
           />
       )}
 
+      {/* Menu da aba Previsões: Momento Certo | Gráfico | Calendário */}
+      <View style={styles.topMenu}>
+        {([
+          ['momento', tr('forecast.tab.moment', 'Momento Certo')],
+          ['grafico', tr('forecast.view.graph', 'Gráfico')],
+          ['calendario', tr('forecast.view.calendar', 'Calendário')],
+        ] as const).map(([k, lbl]) => {
+          const on = forecastView === k
+          return (
+            <TouchableOpacity key={k} style={[styles.topMenuBtn, on && styles.topMenuBtnActive]} activeOpacity={0.85} onPress={() => setForecastView(k)}>
+              <Text style={[styles.topMenuText, on && styles.topMenuTextActive]} numberOfLines={1}>{lbl}</Text>
+            </TouchableOpacity>
+          )
+        })}
+      </View>
+
+      {forecastView === 'momento' ? (
+        <MomentoCertoView premium={isPremium} />
+      ) : (
+      <>
       <View style={styles.periodRow} {...aPeriod}>
         <TouchableOpacity onPress={openForecastTour} style={{ padding: 6, marginRight: 4 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="help-circle-outline" size={20} color="#FFD700" />
@@ -1667,16 +1690,6 @@ export default function ForecastScreen() {
             )}
           </View>
           <View style={styles.calendarWrapper} {...aView}>
-            {/* Toggle Gráfico | Calendário (gráfico é a visão principal) */}
-            <View style={styles.forecastViewToggle}>
-              <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'grafico' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('grafico')}>
-                <Text style={[styles.forecastViewText, forecastView === 'grafico' && styles.forecastViewTextActive]}>{tr('forecast.view.graph', 'Gráfico')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'calendario' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('calendario')}>
-                <Text style={[styles.forecastViewText, forecastView === 'calendario' && styles.forecastViewTextActive]}>{tr('forecast.view.calendar', 'Calendário')}</Text>
-              </TouchableOpacity>
-            </View>
-
             {forecastView === 'grafico' ? (
               <ForecastEphemerisChart
                 events={(data?.events as any) || []}
@@ -1794,6 +1807,8 @@ export default function ForecastScreen() {
             </TouchableOpacity>
           )}
         </ScrollView>
+      )}
+      </>
       )}
       {(() => {
         const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
@@ -2100,6 +2115,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
   },
+  topMenu: {
+    flexDirection: 'row',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    padding: 4,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  topMenuBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 9, borderRadius: 10 },
+  topMenuBtnActive: { backgroundColor: '#FFD700' },
+  topMenuText: { color: '#B9BAD6', fontSize: 13, fontWeight: '700' },
+  topMenuTextActive: { color: '#0F0F23', fontWeight: '800' },
   forecastViewToggle: {
     flexDirection: 'row',
     alignSelf: 'center',
