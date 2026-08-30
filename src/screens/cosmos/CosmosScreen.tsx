@@ -602,34 +602,9 @@ export default function CosmosScreen() {
           <TouchableOpacity onPress={openCosmosTour} style={{ position: 'absolute', top: 4, right: 12, padding: 6, zIndex: 2 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
           </TouchableOpacity>
+          {/* Trio Sol/Lua/Asc + subtítulo removidos: já vivem no Home; aqui eram
+              redundantes e roubavam espaço do próprio Mapa (pedido João). */}
           <Text style={styles.heroTitle}>✦ {tl('Mapa', 'Chart', 'Mapa', 'Mappa')}</Text>
-          {loading && natalPlanets.length === 0 ? (
-            <StarLoader size={20} color="#FFD700" />
-          ) : (
-            <View style={styles.heroSigns}>
-              {sunSign ? (
-                <View style={styles.heroSign}>
-                  <Text style={styles.heroSignSymbol}>{PLANET_SYMBOLS.Sun}</Text>
-                  <Text style={styles.heroSignText}>{getSignSymbol(sunSign)} {sunSign}</Text>
-                </View>
-              ) : null}
-              {moonSign ? (
-                <View style={styles.heroSign}>
-                  <Text style={styles.heroSignSymbol}>{PLANET_SYMBOLS.Moon}</Text>
-                  <Text style={styles.heroSignText}>{getSignSymbol(moonSign)} {moonSign}</Text>
-                </View>
-              ) : null}
-              {ascSign ? (
-                <View style={styles.heroSign}>
-                  <Text style={styles.heroSignSymbol}>↑</Text>
-                  <Text style={styles.heroSignText}>{getSignSymbol(ascSign)} {ascSign}</Text>
-                </View>
-              ) : null}
-            </View>
-          )}
-          <Text style={styles.heroSub}>
-            {tl('Seu espaço astrológico', 'Your astrological space', 'Tu espacio astrológico', 'Il tuo spazio astrologico')}
-          </Text>
         </View>
 
         {/* Mapa natal e Perfil completo embutidos: a aba se chama "Mapa" e agora
