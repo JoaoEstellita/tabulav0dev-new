@@ -79,6 +79,18 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
   // Faixa de hora (instante UTC) formatada no fuso do aparelho.
   const fmtHour = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
 
+  // Frase humana por intenção — o resumo acolhedor acima do jargão técnico.
+  const humanLine = (k: MomentoIntention): string => (({
+    amor: tl('Dia leve pra se abrir e se aproximar.', 'A light day to open up and get closer.', 'Un dia ligero para abrirte y acercarte.', 'Un giorno leggero per aprirti e avvicinarti.'),
+    carreira: tl('Bom para dar um passo profissional.', 'Good to take a career step.', 'Bueno para dar un paso profesional.', 'Buono per fare un passo di carriera.'),
+    decisao: tl('Mente clara pra decidir.', 'A clear mind to decide.', 'Mente clara para decidir.', 'Mente lucida per decidere.'),
+    conversa: tl('Abertura pra aquela conversa.', 'Openness for that talk.', 'Apertura para esa conversacion.', 'Apertura per quella conversazione.'),
+    saude: tl('Bom pra cuidar de você.', 'Good to take care of yourself.', 'Bueno para cuidarte.', 'Buono per prenderti cura di te.'),
+    viagem: tl('Céu a favor de se mover.', 'The sky favors moving.', 'El cielo favorece moverte.', 'Il cielo favorisce il muoverti.'),
+    lancar: tl('Bom pra começar algo novo.', 'Good to start something new.', 'Bueno para empezar algo nuevo.', 'Buono per iniziare qualcosa.'),
+    contrato: tl('Terreno firme pra fechar.', 'Solid ground to close a deal.', 'Terreno firme para cerrar.', 'Terreno solido per chiudere.'),
+  } as Record<MomentoIntention, string>)[k] || '')
+
   const intentionLabel = INTENTIONS.find((x) => x.k === intention)?.label || ''
   const winTitle = tl('Momento Certo', 'Right Moment', 'Momento Justo', 'Momento Giusto') + ' · ' + intentionLabel
   const addToCalendar = (w: MomentoWindow) => {
@@ -123,7 +135,10 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
           <View style={s.paywallCta}><Text style={s.paywallCtaTx}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text></View>
         </TouchableOpacity>
       ) : loading ? (
-        <ActivityIndicator color={C.gold} style={{ marginTop: 30 }} />
+        <View style={{ marginTop: 30, alignItems: 'center', gap: 10 }}>
+          <ActivityIndicator color={C.gold} />
+          <Text style={s.loadHint}>{tl('Montando as melhores janelas para você…', 'Building your best windows…', 'Montando tus mejores ventanas…', 'Sto costruendo le tue finestre migliori…')}</Text>
+        </View>
       ) : !windows || windows.length === 0 ? (
         <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas fortes no período. Tente outra intenção.', 'No strong windows in this period. Try another intention.', 'Sin ventanas fuertes en el periodo. Prueba otra intencion.', 'Nessuna finestra forte nel periodo. Prova un\'altra intenzione.')}</Text></View>
       ) : (
@@ -133,6 +148,7 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
             <TouchableOpacity key={w.dateISO + i} style={s.win} activeOpacity={0.85} onPress={() => setDetail(w)}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
+                <Text style={s.winHuman}>{humanLine(intention)}</Text>
                 {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
                 {w.reasons.map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
                 {w.cautions.map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
@@ -165,6 +181,7 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
                   <TouchableOpacity onPress={() => setDetail(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color={C.dim} /></TouchableOpacity>
                 </View>
                 <Text style={s.sheetDate}>{fmtDate(detail.dateISO)}</Text>
+                <Text style={s.winHuman}>{humanLine(intention)}</Text>
                 {detail.hourFromISO && detail.hourToISO ? <Text style={s.sheetHour}>🕐 {fmtHour(detail.hourFromISO)}–{fmtHour(detail.hourToISO)}</Text> : null}
                 <View style={{ marginTop: 12 }}>
                   {detail.reasons.map((r, j) => <Text key={'dr' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
@@ -198,6 +215,8 @@ const s = StyleSheet.create({
   label: { color: C.tx, fontSize: 14, fontWeight: '800' },
   win: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
   winDate: { color: C.tx, fontSize: 15, fontWeight: '800', textTransform: 'capitalize' },
+  winHuman: { color: C.tx, fontSize: 13.5, fontWeight: '700', lineHeight: 18, marginTop: 3 },
+  loadHint: { color: C.dim, fontSize: 13, textAlign: 'center' },
   winHour: { color: C.good, fontSize: 13, fontWeight: '800', marginTop: 3 },
   winReason: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 3 },
   winCaution: { color: C.gold, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
