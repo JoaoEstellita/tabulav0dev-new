@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePlanet } from '../../utils/astro/pt'
+import { nextSignIngress } from '../../astro/nextIngress'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 const NATURE = {
@@ -31,6 +32,19 @@ export default function CollectiveTransitsScreen() {
   const ingresses = (transitData?.currentTransits?.planetComparisons || [])
     .map((p: any) => ({ planet: p?.name, retro: !!p?.current?.isRetrograde, ...signInfoFromLongitude(p?.current?.longitude, language) }))
     .filter((x: any) => x.planet && x.planet !== 'Ascendant' && x.planet !== 'Midheaven')
+
+  // Próximo ingresso EXATO de cada planeta (cálculo real; memo por mount/posições).
+  const ingressSig = ingresses.map((p: any) => `${p.planet}${Math.floor(p.deg)}`).join('|')
+  const nextIng = React.useMemo(() => {
+    const now = new Date()
+    const out: Record<string, { date: Date; signIdx: number } | null> = {}
+    for (const p of ingresses) { try { out[p.planet] = nextSignIngress(p.planet, now) } catch { out[p.planet] = null } }
+    return out
+  }, [ingressSig]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fmtIngressDate = (d: Date) => {
+    try { return d.toLocaleDateString(language, { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return '' }
+  }
 
   const fmtDate = (a: any) => {
     const iso = a?.window?.exact || a?.window?.start
@@ -75,8 +89,12 @@ export default function CollectiveTransitsScreen() {
                 <View style={s.metaRow}>
                   {p.retro ? <Text style={[s.natTag, { color: '#FCA5A5', borderColor: '#FCA5A5' }]}>{tl('retrógrado', 'retrograde', 'retrogrado', 'retrogrado')}</Text> : null}
                   {p.deg < 2 ? <Text style={[s.natTag, { color: '#FFD700', borderColor: '#FFD700' }]}>{tl('ingresso recente', 'recent ingress', 'ingreso reciente', 'ingresso recente')}</Text> : null}
-                  {!p.retro && p.deg >= 2 ? <Text style={s.date}>{tl('no signo', 'in sign', 'en el signo', 'nel segno')}</Text> : null}
                 </View>
+                {nextIng[p.planet] ? (
+                  <Text style={s.nextIng}>
+                    → {tl('entra em', 'enters', 'entra en', 'entra in')} {signInfoFromLongitude(nextIng[p.planet]!.signIdx * 30 + 1, language).glyph} {signInfoFromLongitude(nextIng[p.planet]!.signIdx * 30 + 1, language).name} · {fmtIngressDate(nextIng[p.planet]!.date)}
+                  </Text>
+                ) : null}
               </View>
             </View>
           ))}
@@ -97,4 +115,5 @@ const s = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   natTag: { fontSize: 11, fontWeight: '800', borderWidth: 1, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
   date: { color: '#9aa2b8', fontSize: 12, textTransform: 'capitalize' },
+  nextIng: { color: '#C7C9E0', fontSize: 12.5, marginTop: 6, lineHeight: 17 },
 })

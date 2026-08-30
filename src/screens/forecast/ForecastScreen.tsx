@@ -676,6 +676,7 @@ export default function ForecastScreen() {
 
   // Tour guiado da aba Previsões
   const forecastScrollRef = useRef<any>(null)
+  const aMenu = useTourAnchor('forecast.menu')
   const aPeriod = useTourAnchor('forecast.period')
   const aSummary = useTourAnchor('forecast.summary')
   const aView = useTourAnchor('forecast.view')
@@ -684,7 +685,10 @@ export default function ForecastScreen() {
   const forecastViewRef = useRef<'momento' | 'grafico' | 'calendario'>('grafico')
   const buildForecastTour = useCallback(() => {
     const fl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
+    const menuStep = { id: 'forecast.menu', title: fl('Três modos', 'Three modes', 'Tres modos', 'Tre modi'),
+      body: fl('Esta aba tem três visões: Momento Certo (os melhores dias para agir), Gráfico (a intensidade dos seus dias) e Calendário. Toque para alternar.', 'This tab has three views: Right Moment (best days to act), Chart (your days\' intensity) and Calendar. Tap to switch.', 'Esta pestana tiene tres vistas: Momento Justo (mejores dias para actuar), Grafico (intensidad de tus dias) y Calendario. Toca para alternar.', 'Questa scheda ha tre viste: Momento Giusto (giorni migliori per agire), Grafico (intensita dei giorni) e Calendario. Tocca per alternare.') }
     if (forecastViewRef.current === 'momento') return [
+      menuStep,
       { id: 'momento.intentions', title: fl('Escolha a intenção', 'Pick your intention', 'Elige la intencion', 'Scegli l\'intenzione'),
         body: fl('Toque no que você quer fazer — amor, carreira, uma decisão, uma conversa… O céu é lido para AQUILO, não em geral.', 'Tap what you want to do — love, career, a decision, a talk… The sky is read for THAT, not in general.', 'Toca lo que quieres hacer — amor, carrera, una decision, una conversacion… El cielo se lee para ESO, no en general.', 'Tocca cosa vuoi fare — amore, carriera, una decisione, una conversazione… Il cielo e letto per QUELLO, non in generale.') },
       { id: 'momento.windows', title: fl('Os melhores dias', 'The best days', 'Los mejores dias', 'I giorni migliori'),
@@ -693,6 +697,7 @@ export default function ForecastScreen() {
         body: fl('Ative para receber um aviso quando uma boa janela desta intenção estiver chegando — assim você não perde o timing.', 'Turn it on to get a heads-up when a good window for this intention is near — so you don\'t miss the timing.', 'Activalo para recibir un aviso cuando una buena ventana de esta intencion se acerque — asi no pierdes el timing.', 'Attivalo per ricevere un avviso quando una buona finestra di questa intenzione si avvicina — cosi non perdi il momento.') },
     ]
     return [
+      menuStep,
       { id: 'forecast.period', title: fl('Horizonte', 'Horizon', 'Horizonte', 'Orizzonte'),
         body: fl('Escolha quantos dias olhar à frente (7, 30…). Planos maiores liberam horizontes mais longos.', 'Choose how many days to look ahead (7, 30…). Higher plans unlock longer horizons.', 'Elige cuantos dias mirar adelante (7, 30…). Planes mayores desbloquean horizontes mas largos.', 'Scegli quanti giorni guardare avanti (7, 30…). I piani superiori sbloccano orizzonti piu lunghi.') },
       { id: 'forecast.summary', title: fl('Resumo por área', 'Area summary', 'Resumen por area', 'Riepilogo per area'),
@@ -1522,7 +1527,7 @@ export default function ForecastScreen() {
       )}
 
       {/* Menu da aba Previsões: Momento Certo | Gráfico | Calendário */}
-      <View style={styles.topMenu}>
+      <View style={styles.topMenu} {...aMenu}>
         {([
           ['momento', tr('forecast.tab.moment', 'Momento Certo')],
           ['grafico', tr('forecast.view.graph', 'Gráfico')],
