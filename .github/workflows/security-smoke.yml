@@ -27,8 +27,9 @@ jobs:
           cache: npm
 
       # firebase-tools (emulator de test:rules) passou a exigir Java 21+.
-      # Sem este step o runner usa um JDK < 21 e o test:rules falha em segundos.
+      # Só fora de push (o emulador é o step mais lento; poupa minutos de Actions).
       - name: Setup Java
+        if: ${{ github.event_name != 'push' }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -37,6 +38,7 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      # ── Núcleo RÁPIDO: roda SEMPRE (inclusive push) — feedback imediato, sem Java ──
       - name: Typecheck
         run: npx tsc --noEmit
 
@@ -46,15 +48,18 @@ jobs:
       - name: Marketing tests
         run: npx vitest run scripts/marketing/lib/__tests__/ --pool=forks
 
+      # ── PESADO: só fora de push (PR, semanal, manual) — poupa minutos de Actions ──
       - name: RC smoke
-        if: ${{ env.RC_SMOKE_KEY != '' }}
+        if: ${{ github.event_name != 'push' && env.RC_SMOKE_KEY != '' }}
         run: npm run smoke:rc
         env:
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ env.RC_SMOKE_KEY }}
 
       - name: Firestore rules tests
+        if: ${{ github.event_name != 'push' }}
         run: npm run test:rules
 
       - name: NPM audit (prod deps, high+)
+        if: ${{ github.event_name != 'push' }}
         continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
