@@ -39,6 +39,10 @@ import MatchInviteCard from './MatchInviteCard'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
+import AppGuideModal from '../../components/AppGuideModal'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const APP_GUIDE_KEY = 'app_guide_seen_v1'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
 // Web-only effects (no-op on native)
@@ -152,6 +156,13 @@ export default function HomeScreen() {
     if (natal) scrollToWheelAnchor(`planet:${natal}`)
   }, [scrollToWheelAnchor])
   const [showTop, setShowTop] = useState(false)
+  // Guia do app: abre no 1º acesso; depois fica acessível em Configurações.
+  const [guideVisible, setGuideVisible] = useState(false)
+  useEffect(() => {
+    AsyncStorage.getItem(APP_GUIDE_KEY).then((v) => {
+      if (!v) { setGuideVisible(true); AsyncStorage.setItem(APP_GUIDE_KEY, '1').catch(() => {}) }
+    }).catch(() => {})
+  }, [])
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
@@ -594,6 +605,8 @@ export default function HomeScreen() {
         astrologyData={transitData?.currentTransits}
         astrologyDataFallback={backendCurrentTransits}
       />
+
+      <AppGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} />
 
       {/* Banners flutuantes: descoberta do agente + instalação do PWA */}
       <WhatsAppAgentBanner />

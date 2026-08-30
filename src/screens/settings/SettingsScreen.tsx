@@ -28,6 +28,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage';
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
+import AppGuideModal from '../../components/AppGuideModal';
 import WhatsAppInput from '../../components/WhatsAppInput';
 // Removidos itens de preview e comparativos da Configuracao (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
@@ -73,6 +74,7 @@ export default function SettingsScreen() {
   };
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [houseSystem, setHouseSystem] = useState<HouseSystem>(DEFAULT_HOUSE_SYSTEM);
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -248,6 +250,14 @@ export default function SettingsScreen() {
           icon: 'planet-outline',
           type: 'button',
           onPress: () => handleRecalcNatal(),
+        },
+        {
+          id: 'app_guide',
+          title: tr('settings.item.guide.title', 'Guia do app'),
+          subtitle: tr('settings.item.guide.subtitle', 'Todos os recursos, aba por aba'),
+          icon: 'book',
+          type: 'button',
+          onPress: () => setShowGuide(true),
         },
         {
           id: 'faq',
@@ -1690,6 +1700,7 @@ export default function SettingsScreen() {
 
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
+      <AppGuideModal visible={showGuide} onClose={() => setShowGuide(false)} />
     </SafeAreaView>
   );
 }
