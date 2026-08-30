@@ -7,10 +7,10 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { listConnections, respondConnection, shareWhatsapp, blockConnection, removeConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
-import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
+import { listPeople, ensureSelfDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 import NetworkProfileEditor from './NetworkProfileEditor'
 import DiscoverDeck from './DiscoverDeck'
-import { getMyMatches, getMyProfile, setDeckVisible as setDeckVisibleApi, setShareChart as setShareChartApi, type MatchRow } from '../../services/DiscoveryService'
+import { getMyMatches, type MatchRow } from '../../services/DiscoveryService'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
@@ -48,25 +48,7 @@ export default function NetworkScreen() {
   const aProfile = useTourAnchor('match.profile')
   const [showList, setShowList] = useState(false)
   const [matches, setMatches] = useState<MatchRow[]>([])
-  const [deckVisible, setDeckVis] = useState(true)
-  const [togglingDeck, setTogglingDeck] = useState(false)
-  const [shareOpen, setShareOpen] = useState(true)
-  const [togglingShare, setTogglingShare] = useState(false)
-  useEffect(() => {
-    getMyProfile().then((r) => {
-      if (r.gated) return
-      setDeckVis(!r.deckHidden)
-      setShareOpen((r.profile as any)?.shareChart !== false)
-    }).catch(() => {})
-  }, [])
-  const toggleDeck = async (v: boolean) => {
-    setTogglingDeck(true); setDeckVis(v)
-    try { await setDeckVisibleApi(v) } catch { setDeckVis(!v) } finally { setTogglingDeck(false) }
-  }
-  const toggleShare = async (v: boolean) => {
-    setTogglingShare(true); setShareOpen(v)
-    try { await setShareChartApi(v) } catch { setShareOpen(!v) } finally { setTogglingShare(false) }
-  }
+  // Privacidade (buscável/baralho/roda) migrou pro editor de Perfil.
 
   const [page, setPage] = useState<Page>('discover')
   const buildMatchTour = useCallback(() => {
@@ -89,8 +71,6 @@ export default function NetworkScreen() {
   const [busy, setBusy] = useState<string | null>(null)
   const [shareOnAccept, setShareOnAccept] = useState<Set<string>>(new Set())
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
-  const [visible, setVisible] = useState(true)
-  const [togglingVisible, setTogglingVisible] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
   const [justConnected, setJustConnected] = useState<{ uid: string; name: string | null } | null>(null)
   // busca
@@ -103,13 +83,12 @@ export default function NetworkScreen() {
     // getMatches NÃO entra aqui de propósito: custa ~300 leituras + o cálculo de
     // sinastria de todo o pool. Só é preciso na tela Matches (Pro), não a cada
     // abertura da Rede — o card abaixo é só um acesso.
-    const [conns, self, ppl] = await Promise.all([
+    const [conns, , ppl] = await Promise.all([
       listConnections().catch(() => ({ connections: [] as Connection[] })),
-      ensureSelfDiscoverable().catch(() => ({ discoverable: true, published: false })),
+      ensureSelfDiscoverable().catch(() => ({ discoverable: true, published: false })), // side-effect: publica meu perfil na vitrine
       listPeople(force).catch(() => [] as PublicProfile[]),
     ])
     setItems(conns.connections)
-    setVisible(self.discoverable)
     setPeople(ppl)
     setLoading(false)
   }, [])
@@ -208,11 +187,6 @@ export default function NetworkScreen() {
     setBusy(null)
   }
 
-  const toggleVisible = async (next: boolean) => {
-    setTogglingVisible(true); setVisible(next)
-    try { await setDiscoverable(next) } catch { setVisible(!next) }
-    setTogglingVisible(false)
-  }
 
   const doSearch = async () => {
     const t = term.trim()
