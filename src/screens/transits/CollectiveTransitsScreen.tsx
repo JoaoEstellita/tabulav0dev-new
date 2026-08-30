@@ -3,6 +3,8 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePlanet } from '../../utils/astro/pt'
 import { nextSignIngress } from '../../astro/nextIngress'
+import { retrogradeStatus } from '../../astro/retrogrades'
+import type { Planet } from '../../astro/planets'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 const NATURE = {
@@ -45,6 +47,12 @@ export default function CollectiveTransitsScreen() {
   const fmtIngressDate = (d: Date) => {
     try { return d.toLocaleDateString(language, { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return '' }
   }
+
+  // Retrógrados dos planetas que o público acompanha (memo por mount).
+  const retros = React.useMemo(() => {
+    const track: Planet[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
+    return retrogradeStatus(track, new Date())
+  }, [])
 
   const fmtDate = (a: any) => {
     const iso = a?.window?.exact || a?.window?.start
@@ -95,6 +103,30 @@ export default function CollectiveTransitsScreen() {
                     → {tl('entra em', 'enters', 'entra en', 'entra in')} {signInfoFromLongitude(nextIng[p.planet]!.signIdx * 30 + 1, language).glyph} {signInfoFromLongitude(nextIng[p.planet]!.signIdx * 30 + 1, language).name} · {fmtIngressDate(nextIng[p.planet]!.date)}
                   </Text>
                 ) : null}
+              </View>
+            </View>
+          ))}
+        </>
+      ) : null}
+
+      {retros.length ? (
+        <>
+          <Text style={[s.title, { fontSize: 17, marginTop: 22 }]}>℞ {tl('Retrógrados', 'Retrogrades', 'Retrógrados', 'Retrogradi')}</Text>
+          <Text style={s.sub}>{tl('Quando um planeta parece andar pra trás — momento de rever, não de estrear.', 'When a planet appears to move backward — time to review, not to launch.', 'Cuando un planeta parece ir hacia atras — momento de revisar, no de estrenar.', 'Quando un pianeta sembra andare indietro — momento di rivedere, non di lanciare.')}</Text>
+          {retros.map((r, i) => (
+            <View key={'retro' + i} style={s.card}>
+              <View style={[s.bar, { backgroundColor: r.currentlyRetro ? '#FCA5A5' : '#6B7280' }]} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.cardTitle}>{translatePlanet(r.planet)}</Text>
+                <View style={s.metaRow}>
+                  {r.currentlyRetro ? (
+                    <Text style={[s.natTag, { color: '#FCA5A5', borderColor: '#FCA5A5' }]}>{tl('retrógrado agora', 'retrograde now', 'retrógrado ahora', 'retrogrado ora')}</Text>
+                  ) : (
+                    <Text style={s.date}>{tl('direto', 'direct', 'directo', 'diretto')}</Text>
+                  )}
+                  {r.currentlyRetro && r.end ? <Text style={s.date}>{tl('até', 'until', 'hasta', 'fino a')} {fmtIngressDate(r.end)}</Text> : null}
+                  {!r.currentlyRetro && r.start ? <Text style={s.date}>{tl('próximo', 'next', 'próximo', 'prossimo')} {fmtIngressDate(r.start)}{r.end ? ` → ${fmtIngressDate(r.end)}` : ''}</Text> : null}
+                </View>
               </View>
             </View>
           ))}

@@ -6,6 +6,8 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePlanet } from '../../utils/astro/pt'
 import { nextNewMoon, nextFullMoon, soonestIngress } from '../../astro/skyEvents'
+import { currentlyRetrograde, nextRetrograde } from '../../astro/retrogrades'
+import type { Planet } from '../../astro/planets'
 
 // Grade de "Trânsitos coletivos" no fim da Home: o céu de agora (aspectos entre
 // planetas, iguais pra todo mundo). Botão-livro → lista completa (CollectiveTransits).
@@ -38,7 +40,10 @@ export default function HomeCollectiveGrid() {
   const events = React.useMemo(() => {
     const now = new Date()
     const nm = nextNewMoon(now); const fm = nextFullMoon(now); const ing = soonestIngress(now)
-    return { newMoon: nm, fullMoon: fm, ingress: ing }
+    const TRACK: Planet[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+    const retroNow = currentlyRetrograde(TRACK, now)
+    const merc = retroNow.includes('Mercury') ? null : nextRetrograde('Mercury', now)
+    return { newMoon: nm, fullMoon: fm, ingress: ing, retroNow, mercRetro: merc }
   }, [])
 
   if (!list.length && !ingresses.length) return null
@@ -69,6 +74,8 @@ export default function HomeCollectiveGrid() {
           {events.newMoon ? <Text style={s.event}>🌑 {tl('Nova', 'New', 'Nueva', 'Nuova')} {shortDate(events.newMoon)}</Text> : null}
           {events.fullMoon ? <Text style={s.event}>🌕 {tl('Cheia', 'Full', 'Llena', 'Piena')} {shortDate(events.fullMoon)}</Text> : null}
           {events.ingress && ingSign ? <Text style={s.event}>⏭ {translatePlanet(events.ingress.planet)} {ingSign.glyph} {shortDate(events.ingress.date)}</Text> : null}
+          {events.retroNow.length ? <Text style={[s.event, s.eventRetro]}>℞ {events.retroNow.map((p) => translatePlanet(p)).join(', ')}</Text> : null}
+          {events.mercRetro?.start ? <Text style={s.event}>℞ {tl('próx. Mercúrio R', 'next Mercury Rx', 'próx. Mercurio R', 'pross. Mercurio R')} {shortDate(events.mercRetro.start)}</Text> : null}
         </View>
       ) : null}
 
@@ -114,6 +121,7 @@ const s = StyleSheet.create({
   sub: { color: '#9aa2b8', fontSize: 12, marginTop: 3, marginBottom: 10 },
   events: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   event: { color: '#EDEBF7', fontSize: 12, fontWeight: '700', backgroundColor: '#1F1F3D', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 8, paddingVertical: 4, textTransform: 'capitalize' },
+  eventRetro: { color: '#FCA5A5', borderColor: 'rgba(252,165,165,0.4)' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cell: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1F1F3D', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', paddingVertical: 10, paddingHorizontal: 10 },
   dot: { width: 8, height: 8, borderRadius: 4 },
