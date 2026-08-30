@@ -5,6 +5,7 @@ import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePla
 import { nextSignIngress } from '../../astro/nextIngress'
 import { retrogradeStatus } from '../../astro/retrogrades'
 import type { Planet } from '../../astro/planets'
+import { upcomingEclipses, houseFromCusps } from '../../astro/eclipses'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 const NATURE = {
@@ -53,6 +54,14 @@ export default function CollectiveTransitsScreen() {
     const track: Planet[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
     return retrogradeStatus(track, new Date())
   }, [])
+
+  const eclipses = React.useMemo(() => upcomingEclipses(new Date(), 4), [])
+  const natalCusps: number[] | null = (() => {
+    const nh: any = (transitData as any)?.currentTransits?.natalHouses
+    if (Array.isArray(nh) && nh.length >= 12) return nh
+    if (Array.isArray(nh?.cusps) && nh.cusps.length >= 12) return nh.cusps
+    return null
+  })()
 
   const fmtDate = (a: any) => {
     const iso = a?.window?.exact || a?.window?.start
@@ -130,6 +139,32 @@ export default function CollectiveTransitsScreen() {
               </View>
             </View>
           ))}
+        </>
+      ) : null}
+
+      {eclipses.length ? (
+        <>
+          <Text style={[s.title, { fontSize: 17, marginTop: 22 }]}>🌘 {tl('Eclipses à frente', 'Upcoming eclipses', 'Eclipses próximos', 'Eclissi in arrivo')}</Text>
+          <Text style={s.sub}>{tl('Portais de virada. O signo é do céu; a casa é sua — onde o eclipse mexe na sua vida.', 'Turning-point portals. The sign is the sky\'s; the house is yours — where the eclipse stirs your life.', 'Portales de cambio. El signo es del cielo; la casa es tuya — donde el eclipse mueve tu vida.', 'Portali di svolta. Il segno e del cielo; la casa e tua — dove l\'eclissi muove la tua vita.')}</Text>
+          {eclipses.map((e, i) => {
+            const sign = signInfoFromLongitude(e.longitude, language)
+            const house = natalCusps ? houseFromCusps(e.longitude, natalCusps) : null
+            const isSolar = e.type === 'solar'
+            const typeLabel = isSolar ? tl('Eclipse solar', 'Solar eclipse', 'Eclipse solar', 'Eclissi solare') : tl('Eclipse lunar', 'Lunar eclipse', 'Eclipse lunar', 'Eclissi lunare')
+            return (
+              <View key={'ecl' + i} style={s.card}>
+                <View style={[s.bar, { backgroundColor: isSolar ? '#FDE68A' : '#C7C9E0' }]} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={s.cardTitle}>{isSolar ? '🌑' : '🌕'} {typeLabel} · {sign.glyph} {sign.name} {Math.floor(e.longitude % 30)}°</Text>
+                  <View style={s.metaRow}>
+                    <Text style={s.date}>{fmtIngressDate(e.date)}</Text>
+                    <Text style={[s.natTag, { color: '#9aa2b8', borderColor: '#4a4a55' }]}>{e.kind}</Text>
+                    {house ? <Text style={[s.natTag, { color: '#FFD700', borderColor: '#FFD700' }]}>{tl('sua Casa', 'your House', 'tu Casa', 'tua Casa')} {house}</Text> : null}
+                  </View>
+                </View>
+              </View>
+            )
+          })}
         </>
       ) : null}
     </ScrollView>

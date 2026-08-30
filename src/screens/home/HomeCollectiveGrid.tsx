@@ -8,6 +8,7 @@ import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePla
 import { nextNewMoon, nextFullMoon, soonestIngress } from '../../astro/skyEvents'
 import { currentlyRetrograde, nextRetrograde } from '../../astro/retrogrades'
 import type { Planet } from '../../astro/planets'
+import { upcomingEclipses } from '../../astro/eclipses'
 
 // Grade de "Trânsitos coletivos" no fim da Home: o céu de agora (aspectos entre
 // planetas, iguais pra todo mundo). Botão-livro → lista completa (CollectiveTransits).
@@ -43,7 +44,8 @@ export default function HomeCollectiveGrid() {
     const TRACK: Planet[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
     const retroNow = currentlyRetrograde(TRACK, now)
     const merc = retroNow.includes('Mercury') ? null : nextRetrograde('Mercury', now)
-    return { newMoon: nm, fullMoon: fm, ingress: ing, retroNow, mercRetro: merc }
+    const ecl = upcomingEclipses(now, 1)[0] || null
+    return { newMoon: nm, fullMoon: fm, ingress: ing, retroNow, mercRetro: merc, eclipse: ecl }
   }, [])
 
   if (!list.length && !ingresses.length) return null
@@ -76,6 +78,7 @@ export default function HomeCollectiveGrid() {
           {events.ingress && ingSign ? <Text style={s.event}>⏭ {translatePlanet(events.ingress.planet)} {ingSign.glyph} {shortDate(events.ingress.date)}</Text> : null}
           {events.retroNow.length ? <Text style={[s.event, s.eventRetro]}>℞ {events.retroNow.map((p) => translatePlanet(p)).join(', ')}</Text> : null}
           {events.mercRetro?.start ? <Text style={s.event}>℞ {tl('próx. Mercúrio R', 'next Mercury Rx', 'próx. Mercurio R', 'pross. Mercurio R')} {shortDate(events.mercRetro.start)}</Text> : null}
+          {events.eclipse ? <Text style={s.event}>{events.eclipse.type === 'solar' ? '🌑' : '🌕'} {tl('Eclipse', 'Eclipse', 'Eclipse', 'Eclissi')} {signInfoFromLongitude(events.eclipse.longitude, language).glyph} {shortDate(events.eclipse.date)}</Text> : null}
         </View>
       ) : null}
 
