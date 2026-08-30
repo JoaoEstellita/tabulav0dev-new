@@ -1,9 +1,12 @@
 name: Security Smoke
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # push/pull_request desativados enquanto o billing do GitHub Actions está
+  # bloqueado (o job nem INICIA → falha em ~3s com steps vazios, X vermelho a cada
+  # commit, sem relação com o código). Reativar quando o cartão/limite regularizar.
+  # push:
+  #   branches: [main]
+  # pull_request:
   schedule:
     - cron: "15 7 * * 1"
   workflow_dispatch:
