@@ -2650,7 +2650,7 @@ export default function GroupsScreen() {
               findSearching ? <ActivityIndicator color="#FFD700" style={{ marginVertical: 16 }} /> :
                 findResults.length ? findResults.map((p) => {
                   const sent = friendSent.has(p.uid)
-                  const trio = [p.sunSign ? `☉ ${p.sunSign}` : '', p.moonSign ? `☽ ${p.moonSign}` : '', p.ascSign ? `ASC ${p.ascSign}` : ''].filter(Boolean).join('  ')
+                  const trio = [p.sunSign ? `☉ ${p.sunSign}` : '', p.moonSign ? `☽ ${p.moonSign}` : '', p.ascSign ? `↑ ${p.ascSign}` : ''].filter(Boolean).join('  ')
                   return (
                     <View key={p.uid} style={styles.findRow}>
                       <TouchableOpacity

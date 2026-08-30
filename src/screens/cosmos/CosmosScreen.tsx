@@ -42,6 +42,14 @@ function getSignSymbol(sign: string): string {
   return SIGN_SYMBOLS[sign] || ''
 }
 
+// Data + hora exata do retorno (instante em que o Sol/Lua atinge o grau natal).
+// Formatado no fuso do aparelho — o instante é absoluto (UTC), a hora é a local.
+function fmtReturnMoment(d: Date, loc: string, at: string): string {
+  const date = d.toLocaleDateString(loc)
+  const time = d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+  return `${date} ${at} ${time}`
+}
+
 function getPlanetNatalSign(natalPlanets: any[], name: string): string {
   const p = natalPlanets?.find((x: any) => x.name === name)
   return p?.sign || ''
@@ -578,7 +586,7 @@ export default function CosmosScreen() {
               ) : null}
               {ascSign ? (
                 <View style={styles.heroSign}>
-                  <Text style={styles.heroSignSymbol}>Asc</Text>
+                  <Text style={styles.heroSignSymbol}>↑</Text>
                   <Text style={styles.heroSignText}>{getSignSymbol(ascSign)} {ascSign}</Text>
                 </View>
               ) : null}
@@ -650,10 +658,10 @@ export default function CosmosScreen() {
                 <>
                   {srMoment ? (
                     <Text style={styles.srCaption}>{tl(
-                      `Retorno Solar de ${srMoment.getUTCFullYear()} · exato em ${srMoment.toLocaleDateString('pt-BR')}`,
-                      `Solar Return ${srMoment.getUTCFullYear()} · exact on ${srMoment.toLocaleDateString('en-US')}`,
-                      `Retorno Solar ${srMoment.getUTCFullYear()} · exacto el ${srMoment.toLocaleDateString('es-ES')}`,
-                      `Ritorno Solare ${srMoment.getUTCFullYear()} · esatto il ${srMoment.toLocaleDateString('it-IT')}`,
+                      `Retorno Solar de ${srMoment.getUTCFullYear()} · exato em ${fmtReturnMoment(srMoment, 'pt-BR', 'às')}`,
+                      `Solar Return ${srMoment.getUTCFullYear()} · exact on ${fmtReturnMoment(srMoment, 'en-US', 'at')}`,
+                      `Retorno Solar ${srMoment.getUTCFullYear()} · exacto el ${fmtReturnMoment(srMoment, 'es-ES', 'a las')}`,
+                      `Ritorno Solare ${srMoment.getUTCFullYear()} · esatto il ${fmtReturnMoment(srMoment, 'it-IT', 'alle')}`,
                     )}</Text>
                   ) : null}
                   {srAtBirth ? (
@@ -691,10 +699,10 @@ export default function CosmosScreen() {
                 <>
                   {lrMoment ? (
                     <Text style={styles.srCaption}>{tl(
-                      `Retorno Lunar · exato em ${lrMoment.toLocaleDateString('pt-BR')}`,
-                      `Lunar Return · exact on ${lrMoment.toLocaleDateString('en-US')}`,
-                      `Retorno Lunar · exacto el ${lrMoment.toLocaleDateString('es-ES')}`,
-                      `Ritorno Lunare · esatto il ${lrMoment.toLocaleDateString('it-IT')}`,
+                      `Retorno Lunar · exato em ${fmtReturnMoment(lrMoment, 'pt-BR', 'às')}`,
+                      `Lunar Return · exact on ${fmtReturnMoment(lrMoment, 'en-US', 'at')}`,
+                      `Retorno Lunar · exacto el ${fmtReturnMoment(lrMoment, 'es-ES', 'a las')}`,
+                      `Ritorno Lunare · esatto il ${fmtReturnMoment(lrMoment, 'it-IT', 'alle')}`,
                     )}</Text>
                   ) : null}
                   {lrAtBirth ? (

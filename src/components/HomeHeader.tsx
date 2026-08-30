@@ -109,7 +109,7 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
             } catch { ascSign = undefined }
             const parts: string[] = []
             if (sunSign) parts.push(`☉ ${translateSignName(sunSign, language)}`)
-            if (ascSign) parts.push(`ASC ${translateSignName(ascSign, language)}`)
+            if (ascSign) parts.push(`↑ ${translateSignName(ascSign, language)}`)
             if (moonSign) parts.push(`☽ ${translateSignName(moonSign, language)}`)
             if (!parts.length) return null
             return <Text style={styles.signLine} numberOfLines={1}>{parts.join('  ·  ')}</Text>

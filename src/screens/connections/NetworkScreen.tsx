@@ -207,7 +207,7 @@ export default function NetworkScreen() {
     const parts: string[] = []
     if (p.sunSign) parts.push(`☉ ${p.sunSign}`)
     if (p.moonSign) parts.push(`☽ ${p.moonSign}`)
-    if (p.ascSign) parts.push(`ASC ${p.ascSign}`)
+    if (p.ascSign) parts.push(`↑ ${p.ascSign}`)
     return parts.join('  ·  ')
   }
   const initial = (n?: string | null) => (n || '?').trim().slice(0, 1).toUpperCase()

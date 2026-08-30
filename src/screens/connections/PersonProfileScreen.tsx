@@ -96,7 +96,7 @@ export default function PersonProfileScreen() {
     if (m.includes('opos')) return tl('oposição', 'opposition', 'oposicion', 'opposizione')
     return labelPt
   }
-  const trio = target ? [target.sunSign && `☉ ${target.sunSign}`, target.moonSign && `☽ ${target.moonSign}`, target.ascSign && `ASC ${target.ascSign}`].filter(Boolean).join('  ·  ') : ''
+  const trio = target ? [target.sunSign && `☉ ${target.sunSign}`, target.moonSign && `☽ ${target.moonSign}`, target.ascSign && `↑ ${target.ascSign}`].filter(Boolean).join('  ·  ') : ''
   const name = target?.displayName || tl('Pessoa', 'Person', 'Persona', 'Persona')
 
   return (
