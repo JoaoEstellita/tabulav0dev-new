@@ -97,6 +97,56 @@ export function synastryAspectLine(aspect: SynastryAspect, language: string): st
   return `${cap(domA)} ${CONNECTOR[lang]} ${domB} ${outcome}.`
 }
 
+// Dica relacional por TOM do aspecto (como lidar com o contato na relação).
+const ASPECT_TIP: Record<string, Record<Lang, string>> = {
+  harmonioso: {
+    'pt-BR': 'Um ponto que flui fácil entre vocês — apoiem-se nele.',
+    'en-US': 'A point that flows easily between you — lean on it.',
+    'es-ES': 'Un punto que fluye facil entre ustedes — apoyense en el.',
+    'it-IT': 'Un punto che scorre facile tra voi — appoggiatevi.',
+  },
+  tenso: {
+    'pt-BR': 'Um ponto de fricção — cresce com diálogo e ajuste, não com força.',
+    'en-US': 'A friction point — it grows with dialogue and adjustment, not force.',
+    'es-ES': 'Un punto de friccion — crece con dialogo y ajuste, no con fuerza.',
+    'it-IT': 'Un punto di attrito — cresce col dialogo e l aggiustamento, non con la forza.',
+  },
+  neutro: {
+    'pt-BR': 'Uma fusão intensa — poderosa, pede consciência dos dois.',
+    'en-US': 'An intense merging — powerful, it asks awareness from both.',
+    'es-ES': 'Una fusion intensa — poderosa, pide conciencia de ambos.',
+    'it-IT': 'Una fusione intensa — potente, chiede consapevolezza da entrambi.',
+  },
+}
+const SIDES: Record<Lang, (a: string, b: string) => string> = {
+  'pt-BR': (a, b) => `${cap(a)} de um lado, ${b} do outro.`,
+  'en-US': (a, b) => `${cap(a)} on one side, ${b} on the other.`,
+  'es-ES': (a, b) => `${cap(a)} de un lado, ${b} del otro.`,
+  'it-IT': (a, b) => `${cap(a)} da un lato, ${b} dall'altro.`,
+}
+
+// Alguns aspectos de sinastria (ex.: os do endpoint /synastry) vêm sem `tone` —
+// deriva do nome do aspecto (só os 5 maiores existem na sinastria).
+export function synastryToneOf(aspectName: string): 'harmonioso' | 'tenso' | 'neutro' {
+  if (aspectName === 'trigono' || aspectName === 'sextil') return 'harmonioso'
+  if (aspectName === 'quadratura' || aspectName === 'oposicao') return 'tenso'
+  return 'neutro'
+}
+
+type AspectLike = { mine: string; theirs: string; aspect: string; tone?: string; orb?: number }
+
+/** Interpretação de um aspecto de sinastria: título curto + parágrafo relacional. */
+export function synastryAspectDetail(aspect: AspectLike, language: string): { headline: string; body: string } {
+  const lang: Lang = (['pt-BR', 'en-US', 'es-ES', 'it-IT'].includes(language) ? language : 'pt-BR') as Lang
+  const headline = synastryAspectLine(aspect as SynastryAspect, lang)
+  const domA = PLANET_REL[aspect.mine]?.[lang]
+  const domB = PLANET_REL[aspect.theirs]?.[lang]
+  const tone = aspect.tone || synastryToneOf(aspect.aspect)
+  const tip = ASPECT_TIP[tone]?.[lang] || ASPECT_TIP.neutro[lang]
+  const sides = domA && domB ? SIDES[lang](domA, domB) : ''
+  return { headline, body: `${sides} ${tip}`.trim() }
+}
+
 // ─── Sobreposição de casas (a "outra metade" da sinastria ocidental) ─────────
 // Onde os planetas de uma pessoa caem NAS CASAS da outra: mostra qual área da
 // vida cada um mais ativa no outro. Só planetas pessoais (Sol..Marte) para ficar

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { synastryScore, synastryAspectLine, synastryHouseOverlays } from '../synastryReading'
+import { synastryScore, synastryAspectLine, synastryAspectDetail, synastryToneOf, synastryHouseOverlays } from '../synastryReading'
 import type { SynastryAspect, NatalChart } from '../synastry'
 
 const asp = (mine: string, theirs: string, aspect: string, tone: string, orb: number): SynastryAspect =>
@@ -51,6 +51,23 @@ describe('synastryAspectLine', () => {
   it('planeta/aspecto desconhecido → string vazia (cai no fallback do chamador)', () => {
     expect(synastryAspectLine(asp('chiron', 'moon', 'trigono', 'harmonioso', 1), 'pt-BR')).toBe('')
     expect(synastryAspectLine(asp('sun', 'moon', 'quintil', 'neutro', 1), 'pt-BR')).toBe('')
+  })
+})
+
+describe('synastryAspectDetail', () => {
+  it('headline + body relacional; tip pela natureza', () => {
+    const tenso = synastryAspectDetail(asp('venus', 'uranus', 'quadratura', 'tenso', 2), 'pt-BR')
+    expect(tenso.headline.length).toBeGreaterThan(0)
+    expect(tenso.body).toContain('fricção')
+    const harm = synastryAspectDetail(asp('sun', 'moon', 'trigono', 'harmonioso', 1), 'pt-BR')
+    expect(harm.body).toContain('flui')
+  })
+  it('deriva o tom quando o aspecto vem sem tone (endpoint /synastry)', () => {
+    expect(synastryToneOf('quadratura')).toBe('tenso')
+    expect(synastryToneOf('sextil')).toBe('harmonioso')
+    expect(synastryToneOf('conjuncao')).toBe('neutro')
+    const d = synastryAspectDetail({ mine: 'venus', theirs: 'mars', aspect: 'oposicao', orb: 3 }, 'pt-BR')
+    expect(d.body).toContain('fricção')
   })
 })
 

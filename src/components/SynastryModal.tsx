@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { getSynastry, type SynastryResult } from '../services/DiscoveryService'
 import SynastryWheel from './SynastryWheel'
-import AspectGrid from './AspectGrid'
+import AspectGrid, { transitCellId } from './AspectGrid'
+import SynastryAspectDetailModal from './SynastryAspectDetailModal'
 
 /**
  * Modal de sinastria com UMA pessoa (conexão). Mesmo componente de roda + grade
@@ -20,6 +21,7 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
     ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it } as any)[language] || pt
   const [data, setData] = useState<SynastryResult | null>(null)
   const [loading, setLoading] = useState(false)
+  const [detail, setDetail] = useState<{ mine: string; theirs: string; aspect: string; orb: number } | null>(null)
 
   useEffect(() => {
     if (!visible || !uid) return
@@ -60,7 +62,17 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
                   <SynastryWheel outer={data.myPositions} inner={data.positions} aspects={wheelAspects} size={310} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={name || ''} />
                   <View style={{ marginTop: 14 }}>
                     <Text style={s.sect}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>
-                    <AspectGrid cross rowPlanets={toGrid(data.myPositions)} colPlanets={toGrid(data.positions)} aspects={gridAspects} />
+                    <Text style={s.hint}>{tl('Toque num aspecto para a leitura da dupla', 'Tap an aspect for the pair reading', 'Toca un aspecto para la lectura de la pareja', 'Tocca un aspetto per la lettura della coppia')}</Text>
+                    <AspectGrid
+                      cross
+                      rowPlanets={toGrid(data.myPositions)}
+                      colPlanets={toGrid(data.positions)}
+                      aspects={gridAspects}
+                      onSelectCell={(cellId) => {
+                        const hit = (data.aspects || []).find((a) => transitCellId(CAP[a.mine] || a.mine, a.aspect, CAP[a.theirs] || a.theirs) === cellId)
+                        if (hit) setDetail(hit)
+                      }}
+                    />
                   </View>
                 </>
               ) : (
@@ -70,6 +82,13 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
           )}
         </ScrollView>
       </View>
+      <SynastryAspectDetailModal
+        visible={!!detail}
+        aspect={detail}
+        nameA={tl('Você', 'You', 'Tu', 'Tu')}
+        nameB={name || ''}
+        onClose={() => setDetail(null)}
+      />
     </Modal>
   )
 }
@@ -84,5 +103,6 @@ const s = StyleSheet.create({
   scoreSym: { fontSize: 20 },
   scoreLbl: { color: C.dim, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   empty: { color: C.dim, fontSize: 14, textAlign: 'center', marginTop: 16, paddingHorizontal: 20, lineHeight: 20 },
+  hint: { color: C.dim, fontSize: 12, marginBottom: 8, fontStyle: 'italic' },
   emptyCard: { alignItems: 'center', gap: 12, paddingVertical: 40 },
 })

@@ -47,7 +47,8 @@ import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from "../../astro/synastry"
 import SynastryWheel from "../../components/SynastryWheel"
-import AspectGrid from "../../components/AspectGrid"
+import AspectGrid, { transitCellId } from "../../components/AspectGrid"
+import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModal"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
@@ -160,6 +161,8 @@ export default function GroupsScreen() {
 
   // Estados para grupos
   const [groups, setGroups] = useState<Group[]>([])
+  // Detalhe de um aspecto de sinastria (clique numa célula da grade).
+  const [synDetail, setSynDetail] = useState<{ aspect: SynastryAspect; nameA: string; nameB: string } | null>(null)
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([])
   const [groupAlerts, setGroupAlerts] = useState<GroupAlert[]>([])
@@ -1931,7 +1934,17 @@ export default function GroupsScreen() {
             <SynastryWheel outer={wheelPos(chartA)} inner={wheelPos(chartB)} aspects={aspects.map((a) => ({ mine: a.mine, theirs: a.theirs, labelPt: a.aspect, orb: a.orb }))} size={300} outerLabel={aName} innerLabel={bName} />
             <View style={{ marginTop: 12, alignSelf: 'stretch' }}>
               <Text style={styles.gunaTitle}>{tr('groups.synastry.grid', 'Grade de aspectos')}</Text>
-              <AspectGrid cross rowPlanets={gridPlanets(chartA)} colPlanets={gridPlanets(chartB)} aspects={aspects.map((a) => ({ planet1: SYN_CAP[a.mine] || a.mine, planet2: SYN_CAP[a.theirs] || a.theirs, type: a.aspect, orb: a.orb }))} />
+              <Text style={styles.synastryHint}>{tr('groups.synastry.tapAspect', 'Toque num aspecto para a leitura da dupla')}</Text>
+              <AspectGrid
+                cross
+                rowPlanets={gridPlanets(chartA)}
+                colPlanets={gridPlanets(chartB)}
+                aspects={aspects.map((a) => ({ planet1: SYN_CAP[a.mine] || a.mine, planet2: SYN_CAP[a.theirs] || a.theirs, type: a.aspect, orb: a.orb }))}
+                onSelectCell={(cellId) => {
+                  const hit = aspects.find((x) => transitCellId(SYN_CAP[x.mine] || x.mine, x.aspect, SYN_CAP[x.theirs] || x.theirs) === cellId)
+                  if (hit) setSynDetail({ aspect: hit, nameA: aName || '', nameB: bName || '' })
+                }}
+              />
             </View>
           </View>
         ) : null}
@@ -3664,6 +3677,14 @@ export default function GroupsScreen() {
         onClose={() => setShowAddManaged(false)}
         groupId={selectedGroup?.id || null}
         onCreated={() => { loadGroupData({ force: true }) }}
+      />
+
+      <SynastryAspectDetailModal
+        visible={!!synDetail}
+        aspect={synDetail?.aspect || null}
+        nameA={synDetail?.nameA || ''}
+        nameB={synDetail?.nameB || ''}
+        onClose={() => setSynDetail(null)}
       />
     </LinearGradient>
   )
