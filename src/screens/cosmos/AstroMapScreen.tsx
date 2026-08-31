@@ -291,6 +291,9 @@ export function AstroMapView() {
                     <TouchableOpacity onPress={() => setSel(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color="#9aa2b8" /></TouchableOpacity>
                   </View>
                   {m ? <Text style={s.sheetEssence}>{m.essence}</Text> : null}
+                  {mode === 'today' ? (
+                    <Text style={s.sheetCollective}>{tl('☁️ Linha do céu de HOJE — vale para todo mundo hoje (coletivo), não é do seu mapa. Ali o tema deste planeta está acentuado no mundo.', '☁️ TODAY\'S sky line — it applies to everyone today (collective), not your chart. There this planet\'s theme is heightened worldwide.', '☁️ Linea del cielo de HOY — vale para todos hoy (colectivo), no es de tu carta.', '☁️ Linea del cielo di OGGI — vale per tutti oggi (collettivo), non della tua carta.')}</Text>
+                  ) : null}
                   {m ? <Text style={s.sheetBody}>{m.text}</Text> : null}
                   <Text style={s.sheetCities}>{tl('Cidades nesta linha', 'Cities on this line', 'Ciudades en esta linea', 'Citta su questa linea')}:</Text>
                   {nearbyCities.length ? (
@@ -354,6 +357,7 @@ const s = StyleSheet.create({
   sheet: { backgroundColor: '#0F0F23', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', padding: 20, paddingBottom: 34 },
   sheetTitle: { fontSize: 18, fontWeight: '900', flex: 1, marginRight: 12 },
   sheetEssence: { color: '#9aa2b8', fontSize: 12.5, marginTop: 4, textTransform: 'capitalize' },
+  sheetCollective: { color: '#7F9CF2', fontSize: 12.5, lineHeight: 18, marginTop: 10, fontStyle: 'italic' },
   sheetBody: { color: '#EDEBF7', fontSize: 14.5, lineHeight: 21, marginTop: 12 },
   sheetCities: { color: '#FFD700', fontSize: 12.5, fontWeight: '800', marginTop: 16, textTransform: 'uppercase', letterSpacing: 0.4 },
   sheetCityList: { color: '#C7C9E0', fontSize: 13.5, lineHeight: 20, marginTop: 4 },
