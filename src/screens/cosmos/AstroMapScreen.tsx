@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Modal, Image } from 'react-native'
-import Svg, { Rect, Line as SvgLine, Circle, Text as SvgText, G, Polyline } from 'react-native-svg'
+import Svg, { Rect, Line as SvgLine, Circle, Text as SvgText, G, Polyline, Image as SvgImage } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
@@ -143,9 +143,9 @@ export function AstroMapView() {
         ) : (
           <>
             <View style={[s.mapWrap, { width: W, height: H }]}>
-              <Image source={WORLD_MAP} style={{ position: 'absolute', width: W, height: H }} resizeMode="stretch" />
               <Svg width={W} height={H}>
-                {/* fundo transparente — a Image (mapa-múndi) fica atrás */}
+                {/* mapa-múndi DENTRO do SVG (1º elemento = atrás de tudo); linhas por cima */}
+                <SvgImage href={WORLD_MAP} x={0} y={0} width={W} height={H} preserveAspectRatio="none" />
                 {/* Graticule 30° */}
                 {[-150, -120, -90, -60, -30, 30, 60, 90, 120, 150].map((lo) => (
                   <SvgLine key={`v${lo}`} x1={xOf(lo)} y1={0} x2={xOf(lo)} y2={H} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />

@@ -1531,9 +1531,9 @@ export default function ForecastScreen() {
       <View style={styles.topMenu} {...aMenu}>
         {([
           ['momento', tr('forecast.tab.moment2', 'Momento')],
-          ['astromap', tr('forecast.tab.astromap', 'Astro Map')],
           ['grafico', tr('forecast.view.graph', 'Gráfico')],
           ['calendario', tr('forecast.view.calendar', 'Calendário')],
+          ['astromap', tr('forecast.tab.astromap', 'Astro Map')],
         ] as const).map(([k, lbl]) => {
           const on = forecastView === k
           return (
