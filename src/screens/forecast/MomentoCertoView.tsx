@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getMomento, setMomentoAlert, type MomentoIntention, type MomentoWindow, type MomentoReason } from '../../services/MomentoService'
+import { getMomento, getMomentoOverview, getMomentoPair, setMomentoAlert, type MomentoIntention, type MomentoOverview, type MomentoWindow, type MomentoReason } from '../../services/MomentoService'
+import { listConnections, type Connection } from '../../services/ConnectionsService'
 import { useTourAnchor } from '../../tour/TourProvider'
 
 /**
@@ -34,6 +35,16 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
   const [detail, setDetail] = useState<MomentoWindow | null>(null)
   const [alertOn, setAlertOn] = useState(false)
   const [alertBusy, setAlertBusy] = useState(false)
+  // Resumo "melhor dia por intenção" (as 8 de uma vez) + horizonte ajustável.
+  const [overview, setOverview] = useState<MomentoOverview | null>(null)
+  const [horizon, setHorizon] = useState<15 | 30 | 45>(45)
+  // "Pra vocês dois": conexões aceitas + parceiro escolhido + janelas do par.
+  const [conns, setConns] = useState<Connection[]>([])
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pairPartner, setPairPartner] = useState<{ uid: string; name: string } | null>(null)
+  const [pairWindows, setPairWindows] = useState<MomentoWindow[] | null>(null)
+  const [pairLoading, setPairLoading] = useState(false)
+  const [pairErr, setPairErr] = useState<string | null>(null)
   // Âncoras do tour holofote da aba (ids casam com o buildForecastTour em modo momento).
   const aIntentions = useTourAnchor('momento.intentions')
   const aWindows = useTourAnchor('momento.windows')
@@ -55,6 +66,31 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
     setLoading(true); setWindows(null)
     getMomento(user.uid, intention).then((r) => { setWindows(r.windows); setAlertOn(r.alertEnabled === true) }).finally(() => setLoading(false))
   }, [premium, user?.uid, intention])
+
+  // Resumo geral: melhor dia por intenção (1 chamada, cache dos 8 blocos).
+  useEffect(() => {
+    if (!premium || !user?.uid) return
+    getMomentoOverview(user.uid).then(setOverview).catch(() => {})
+  }, [premium, user?.uid])
+
+  // Conexões aceitas (para "pra vocês dois").
+  useEffect(() => {
+    if (!premium || !user?.uid) return
+    listConnections().then((r) => setConns((r.connections || []).filter((c) => c.status === 'accepted'))).catch(() => {})
+  }, [premium, user?.uid])
+
+  // Janelas do par: recarrega quando troca o parceiro ou a intenção.
+  useEffect(() => {
+    if (!user?.uid || !pairPartner) { setPairWindows(null); return }
+    setPairLoading(true); setPairErr(null); setPairWindows(null)
+    getMomentoPair(user.uid, pairPartner.uid, intention).then((r) => {
+      if (r.notConnected) setPairErr(tl('Vocês não estão mais conectados.', 'You are no longer connected.', 'Ya no estan conectados.', 'Non siete piu connessi.'))
+      else if (r.partnerNoBirth) setPairErr(tl('Faltam os dados de nascimento dessa pessoa.', 'This person is missing birth data.', 'Faltan los datos de nacimiento de esa persona.', 'Mancano i dati di nascita di questa persona.'))
+      else if (r.gated) setPairErr(tl('Recurso Premium.', 'Premium feature.', 'Funcion Premium.', 'Funzione Premium.'))
+      else if (r.error) setPairErr(tl('Não consegui montar agora. Tente de novo.', 'Could not build it now. Try again.', 'No pude montarlo ahora. Intenta de nuevo.', 'Non sono riuscito ora. Riprova.'))
+      else setPairWindows(r.windows)
+    }).finally(() => setPairLoading(false))
+  }, [user?.uid, pairPartner, intention])
 
   const toggleAlert = async (value: boolean) => {
     if (!user?.uid || alertBusy) return
@@ -101,11 +137,20 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
     contrato: tl('Melhores dias para assinar ou fechar', 'Best days to sign or close a deal', 'Mejores dias para firmar o cerrar', 'Migliori giorni per firmare o chiudere'),
   } as Record<MomentoIntention, string>)[k] || tl('Melhores dias', 'Best days', 'Mejores dias', 'Giorni migliori'))
 
+  // Data curta (dia + mês) para os chips do resumo.
+  const fmtShort = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(lang, { day: '2-digit', month: 'short' })
+  // Horizonte ajustável: recorta as janelas aos próximos N dias (client-side).
+  const horizonCutoff = (() => { const d = new Date(); d.setDate(d.getDate() + horizon); return d.toISOString().slice(0, 10) })()
+  const inHorizon = (windows || []).filter((w) => w.dateISO <= horizonCutoff)
   // Dias favoráveis = score >= 50. Se não houver nenhum, não deixa vazio:
   // mostra o mais favorável do período (rótulo honesto pela banda).
-  const favorable = (windows || []).filter((w) => Number(w.score) >= 50)
+  const favorable = inHorizon.filter((w) => Number(w.score) >= 50)
   const weak = favorable.length === 0
-  const shown = weak ? (windows || []).slice(0, 2) : favorable
+  const shown = weak ? inHorizon.slice(0, 2) : favorable
+  const HORIZONS: (15 | 30 | 45)[] = [15, 30, 45]
+  // Par: favoráveis pros dois (≥50) ou, se nenhum, os 2 melhores.
+  const pairFav = (pairWindows || []).filter((w) => Number(w.score) >= 50)
+  const pairShown = pairFav.length ? pairFav : (pairWindows || []).slice(0, 2)
   const intentionLabel = INTENTIONS.find((x) => x.k === intention)?.label || ''
   const winTitle = tl('Momento Certo', 'Right Moment', 'Momento Justo', 'Momento Giusto') + ' · ' + intentionLabel
   const addToCalendar = (w: MomentoWindow) => {
@@ -149,6 +194,32 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
         })}
       </View>
 
+      {premium && overview && INTENTIONS.some((it) => overview[it.k]) ? (
+        <View style={s.ovWrap}>
+          <Text style={s.ovTitle}>{tl('Melhor dia por intenção', 'Best day per intention', 'Mejor dia por intencion', 'Giorno migliore per intenzione')}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
+            {INTENTIONS.map((it) => {
+              const o = overview[it.k]
+              const on = intention === it.k
+              return (
+                <TouchableOpacity key={'ov' + it.k} style={[s.ovChip, on && s.ovChipOn]} activeOpacity={0.85} onPress={() => setIntention(it.k)}>
+                  <Ionicons name={it.icon as any} size={14} color={on ? '#0F0F23' : C.gold} />
+                  <Text style={[s.ovChipLabel, on && { color: '#0F0F23' }]} numberOfLines={1}>{it.label}</Text>
+                  {o ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Text style={[s.ovChipDate, on && { color: '#0F0F23' }]}>{fmtShort(o.dateISO)}</Text>
+                      <View style={[s.ovDot, { backgroundColor: scoreColor(o.score) }]} />
+                    </View>
+                  ) : (
+                    <Text style={[s.ovChipDate, on && { color: '#0F0F23' }]}>—</Text>
+                  )}
+                </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
+
       {!premium ? (
         <TouchableOpacity style={s.paywall} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
           <Text style={s.paywallTitle}>{tl('Recurso Premium', 'Premium feature', 'Funcion Premium', 'Funzione Premium')}</Text>
@@ -162,6 +233,16 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
         </View>
       ) : (
         <View style={{ marginTop: 18, gap: 10 }}>
+          {(windows || []).length > 0 ? (
+            <View style={s.horizonRow}>
+              <Text style={s.horizonLabel}>{tl('Horizonte', 'Horizon', 'Horizonte', 'Orizzonte')}</Text>
+              {HORIZONS.map((h) => (
+                <TouchableOpacity key={'h' + h} style={[s.horizonChip, horizon === h && s.horizonChipOn]} activeOpacity={0.85} onPress={() => setHorizon(h)}>
+                  <Text style={[s.horizonChipTx, horizon === h && s.horizonChipTxOn]}>{h}{tl('d', 'd', 'd', 'g')}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
           {shown.length === 0 ? (
             <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas no período. Tente outra intenção ou volte mais pra frente.', 'No windows in this period. Try another intention or check back later.', 'Sin ventanas en el periodo. Prueba otra intencion o vuelve mas adelante.', 'Nessuna finestra nel periodo. Prova un\'altra intenzione o torna piu avanti.')}</Text></View>
           ) : (
@@ -192,6 +273,16 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
             </View>
             <Switch value={alertOn} onValueChange={toggleAlert} disabled={alertBusy} trackColor={{ true: C.good, false: C.line }} thumbColor="#fff" />
           </View>
+          {conns.length > 0 ? (
+            <TouchableOpacity style={s.pairBtn} activeOpacity={0.85} onPress={() => setPickerOpen(true)}>
+              <Ionicons name="people" size={18} color={C.gold} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.pairBtnTx}>{tl('Momento pra vocês dois', 'Right moment for you two', 'Momento para ustedes dos', 'Momento per voi due')}</Text>
+                <Text style={s.pairBtnSub}>{tl('Janelas boas pros dois de uma conexão.', 'Windows that work for both of a connection.', 'Ventanas buenas para ambos de una conexion.', 'Finestre buone per entrambi di una connessione.')}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={C.dim} />
+            </TouchableOpacity>
+          ) : null}
           <Text style={s.disclaimer}>{tl('Leitura orientativa, não determinista. As janelas apoiam — a escolha é sua.', 'Guidance, not fate. Windows support you — the choice is yours.', 'Orientativo, no determinista. Las ventanas apoyan — la eleccion es tuya.', 'Indicativo, non deterministico. Le finestre sostengono — la scelta e tua.')}</Text>
         </View>
       )}
@@ -234,6 +325,76 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
           </View>
         </View>
       </Modal>
+
+      {/* Picker: escolher uma conexão para "pra vocês dois" */}
+      <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
+        <View style={s.sheetBack}>
+          <View style={s.sheet}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={s.sheetTitle}>{tl('Escolha uma conexão', 'Choose a connection', 'Elige una conexion', 'Scegli una connessione')}</Text>
+              <TouchableOpacity onPress={() => setPickerOpen(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color={C.dim} /></TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 360, marginTop: 12 }}>
+              {conns.map((c) => (
+                <TouchableOpacity key={c.other} style={s.connRow} activeOpacity={0.85} onPress={() => { setPairPartner({ uid: c.other, name: c.otherName || tl('Conexão', 'Connection', 'Conexion', 'Connessione') }); setPickerOpen(false) }}>
+                  <View style={s.connAvatar}><Text style={s.connAvatarTx}>{(c.otherName || '?').slice(0, 1).toUpperCase()}</Text></View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={s.connName} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexion', 'Connessione')}</Text>
+                    {c.origin === 'match' && c.score != null ? <Text style={s.connMeta}>💘 {c.score}% {tl('de match', 'match', 'de match', 'di match')}</Text> : <Text style={s.connMeta}>{tl('Conexão', 'Connection', 'Conexion', 'Connessione')}</Text>}
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={C.dim} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Resultado "pra vocês dois" */}
+      <Modal visible={!!pairPartner} transparent animationType="slide" onRequestClose={() => setPairPartner(null)}>
+        <View style={s.sheetBack}>
+          <View style={s.sheet}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={s.sheetTitle}>💞 {tl('Pra vocês dois', 'For you two', 'Para ustedes dos', 'Per voi due')} · {intentionLabel}</Text>
+              <TouchableOpacity onPress={() => setPairPartner(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color={C.dim} /></TouchableOpacity>
+            </View>
+            {pairPartner ? <Text style={s.pairWho}>{tl('Você', 'You', 'Tu', 'Tu')} + {pairPartner.name}</Text> : null}
+            {pairLoading ? (
+              <View style={{ paddingVertical: 30, alignItems: 'center', gap: 10 }}>
+                <ActivityIndicator color={C.gold} />
+                <Text style={s.loadHint}>{tl('Cruzando os dois céus…', 'Crossing both skies…', 'Cruzando los dos cielos…', 'Incrocio i due cieli…')}</Text>
+              </View>
+            ) : pairErr ? (
+              <View style={s.soon}><Ionicons name="alert-circle-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{pairErr}</Text></View>
+            ) : (
+              <ScrollView style={{ maxHeight: 420, marginTop: 12 }} contentContainerStyle={{ gap: 10, paddingBottom: 8 }}>
+                {pairShown.length === 0 ? (
+                  <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas boas pros dois no período.', 'No good windows for both in this period.', 'Sin ventanas buenas para ambos en el periodo.', 'Nessuna finestra buona per entrambi nel periodo.')}</Text></View>
+                ) : (
+                  <>
+                    {pairFav.length === 0 ? <Text style={s.weakNote}>{tl('Sem dia forte — mostrando o mais favorável pros dois.', 'No strong day — showing the most favorable for both.', 'Sin dia fuerte — mostrando el mas favorable para ambos.', 'Nessun giorno forte — mostro il piu favorevole per entrambi.')}</Text> : null}
+                    {pairShown.map((w, i) => (
+                      <View key={w.dateISO + i} style={s.win}>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
+                          {(w.pctA != null || w.pctB != null) ? <Text style={s.pairPct}>{tl('Você', 'You', 'Tu', 'Tu')} {w.pctA ?? '—'}%  ·  {pairPartner?.name} {w.pctB ?? '—'}%</Text> : null}
+                          {w.reasons.slice(0, 2).map((r, j) => <Text key={'pr' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
+                          {w.cautions.slice(0, 1).map((c, j) => <Text key={'pc' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
+                        </View>
+                        <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
+                          <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
+                        </View>
+                      </View>
+                    ))}
+                    <Text style={s.hourNote}>{tl('Sem hora ideal aqui — o local de vocês dois é diferente.', 'No ideal hour here — your two locations differ.', 'Sin hora ideal aqui — sus dos lugares son distintos.', 'Nessuna ora ideale qui — i vostri due luoghi differiscono.')}</Text>
+                  </>
+                )}
+              </ScrollView>
+            )}
+            <Text style={s.disclaimer}>{tl('Orientativo. As janelas apoiam os dois — a escolha é de vocês.', 'Guidance. Windows support you both — the choice is yours.', 'Orientativo. Las ventanas apoyan a ambos — la eleccion es de ustedes.', 'Indicativo. Le finestre sostengono entrambi — la scelta e vostra.')}</Text>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }
@@ -249,6 +410,19 @@ const s = StyleSheet.create({
   cardTx: { color: C.tx, fontSize: 14, fontWeight: '700' },
   cardTxOn: { color: '#0F0F23', fontWeight: '800' },
   label: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  ovWrap: { marginTop: 14 },
+  ovTitle: { color: C.dim, fontSize: 12, fontWeight: '800', letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 8 },
+  ovChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingVertical: 8, paddingHorizontal: 11 },
+  ovChipOn: { backgroundColor: C.gold, borderColor: C.gold },
+  ovChipLabel: { color: C.tx, fontSize: 12.5, fontWeight: '700', maxWidth: 90 },
+  ovChipDate: { color: C.dim, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
+  ovDot: { width: 8, height: 8, borderRadius: 4 },
+  horizonRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  horizonLabel: { color: C.dim, fontSize: 12.5, fontWeight: '700', marginRight: 2 },
+  horizonChip: { backgroundColor: C.card, borderRadius: 10, borderWidth: 1, borderColor: C.line, paddingVertical: 6, paddingHorizontal: 13 },
+  horizonChipOn: { backgroundColor: C.card2, borderColor: C.gold },
+  horizonChipTx: { color: C.dim, fontSize: 13, fontWeight: '800' },
+  horizonChipTxOn: { color: C.gold },
   win: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
   winDate: { color: C.tx, fontSize: 15, fontWeight: '800', textTransform: 'capitalize' },
   winHuman: { color: C.tx, fontSize: 13.5, fontWeight: '700', lineHeight: 18, marginTop: 3 },
@@ -265,6 +439,16 @@ const s = StyleSheet.create({
   groupTitle: { color: C.tx, fontSize: 12.5, fontWeight: '800', marginTop: 10, marginBottom: 1, textTransform: 'uppercase', letterSpacing: 0.4 },
   ring: { width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
   ringTx: { fontSize: 16, fontWeight: '900' },
+  pairBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card2, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', padding: 14, marginTop: 4 },
+  pairBtnTx: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  pairBtnSub: { color: C.dim, fontSize: 12.5, lineHeight: 17, marginTop: 3 },
+  pairWho: { color: C.gold, fontSize: 13.5, fontWeight: '800', marginTop: 8 },
+  pairPct: { color: C.dim, fontSize: 12.5, fontWeight: '700', marginTop: 3 },
+  connRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 12, marginBottom: 8 },
+  connAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.line },
+  connAvatarTx: { color: C.gold, fontSize: 17, fontWeight: '900' },
+  connName: { color: C.tx, fontSize: 15, fontWeight: '800' },
+  connMeta: { color: C.dim, fontSize: 12.5, marginTop: 2 },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card2, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14, marginTop: 4 },
   alertTitle: { color: C.tx, fontSize: 14, fontWeight: '800' },
   alertSub: { color: C.dim, fontSize: 12.5, lineHeight: 17, marginTop: 3 },
