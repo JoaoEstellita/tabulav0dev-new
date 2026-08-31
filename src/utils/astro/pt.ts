@@ -256,7 +256,8 @@ export function formatPeakETA(window?: { start?: string | Date; exact?: string |
 export function aspectNature(type: string): 'harmonico' | 'desafiador' | 'conjuncao' | 'outro' {
   const key = normalizeText(type)
   if (key === 'trigono' || key === 'sextil') return 'harmonico'
-  if (key === 'quadratura' || key === 'oposicao') return 'desafiador'
+  // Duros: maiores (quadratura/oposição) + menores (semiquadratura/sesquiquadratura/quincúncio).
+  if (['quadratura', 'oposicao', 'semiquadratura', 'sesquiquadratura', 'quincuncio'].includes(key)) return 'desafiador'
   if (key === 'conjuncao') return 'conjuncao'
   return 'outro'
 }
