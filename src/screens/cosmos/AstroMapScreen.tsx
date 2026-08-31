@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Modal } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Modal, Image } from 'react-native'
 import Svg, { Rect, Line as SvgLine, Circle, Text as SvgText, G, Polyline } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -19,6 +19,7 @@ const PL: Record<string, { g: string; c: string }> = {
   Venus: { g: '♀', c: '#FF9FC7' }, Mars: { g: '♂', c: '#FF6B6B' }, Jupiter: { g: '♃', c: '#F2B84B' },
   Saturn: { g: '♄', c: '#B0A08A' }, Uranus: { g: '♅', c: '#6FE3E1' }, Neptune: { g: '♆', c: '#7F9CF2' }, Pluto: { g: '♇', c: '#C08BE0' },
 }
+const WORLD_MAP = require('../../../assets/astromap-world.png')
 const angDiff = (a: number, b: number) => { let d = Math.abs(a - b) % 360; if (d > 180) d = 360 - d; return d }
 // Cidades-âncora rotuladas no mapa (bem espalhadas) — dão orientação sem continentes.
 const ANCHORS = new Set(['São Paulo', 'Nova York', 'Los Angeles', 'Cidade do México', 'Londres', 'Lisboa', 'Roma', 'Cairo', 'Dubai', 'Mumbai', 'Tóquio', 'Sydney', 'Joanesburgo', 'Bangkok'])
@@ -141,9 +142,10 @@ export function AstroMapView() {
           <Text style={s.empty}>{tl('Faltam seus dados de nascimento completos (data, hora e local).', 'Your full birth data is missing (date, time and place).', 'Faltan tus datos de nacimiento (fecha, hora y lugar).', 'Mancano i tuoi dati di nascita (data, ora e luogo).')}</Text>
         ) : (
           <>
-            <View style={s.mapWrap}>
+            <View style={[s.mapWrap, { width: W, height: H }]}>
+              <Image source={WORLD_MAP} style={{ position: 'absolute', width: W, height: H }} resizeMode="stretch" />
               <Svg width={W} height={H}>
-                <Rect x={0} y={0} width={W} height={H} fill="#0B1020" rx={10} />
+                {/* fundo transparente — a Image (mapa-múndi) fica atrás */}
                 {/* Graticule 30° */}
                 {[-150, -120, -90, -60, -30, 30, 60, 90, 120, 150].map((lo) => (
                   <SvgLine key={`v${lo}`} x1={xOf(lo)} y1={0} x2={xOf(lo)} y2={H} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
