@@ -49,8 +49,8 @@ export function AstroMapView() {
   const isPremium = isAdmin || (subscription as any)?.status === 'active'
 
   const [loading, setLoading] = useState(true)
-  const [lines, setLines] = useState<AstroLine[] | null>(null)
-  const [curves, setCurves] = useState<HorizonCurve[] | null>(null)
+  const [natalInst, setNatalInst] = useState<Date | null>(null)
+  const [mode, setMode] = useState<'natal' | 'today'>('natal') // natal (você) x céu de hoje (coletivo)
   const [birth, setBirth] = useState<{ lat: number; lon: number } | null>(null)
   const [focus, setFocus] = useState<string | null>(null) // planeta isolado (mostra ASC/DSC)
   const [sel, setSel] = useState<{ planet: string; angle: 'MC' | 'IC' | 'ASC' | 'DSC' } | null>(null)
@@ -68,13 +68,22 @@ export function AstroMapView() {
         const lat = Number(loc.latitude ?? loc.lat); const lon = Number(loc.longitude ?? loc.lng)
         if (!p?.birthDate || !p?.birthTime || !Number.isFinite(lat) || !Number.isFinite(lon)) { if (alive) setLoading(false); return }
         const inst = await resolveBirthInstant(p.birthDate, p.birthTime, lat, lon)
-        if (!inst) { if (alive) setLoading(false); return }
-        if (alive) { setLines(planetaryLines(inst)); setCurves(horizonCurves(inst)); setBirth({ lat, lon }) }
+        if (alive) { setNatalInst(inst || null); setBirth({ lat, lon }) }
       } catch { /* ignora */ }
       finally { if (alive) setLoading(false) }
     })()
     return () => { alive = false }
   }, [user?.uid, isPremium])
+
+  // Linhas do modo escolhido: natal (instante do nascimento) ou céu de HOJE (coletivo).
+  const lines = useMemo<AstroLine[] | null>(() => {
+    if (mode === 'today') return planetaryLines(new Date())
+    return natalInst ? planetaryLines(natalInst) : null
+  }, [mode, natalInst])
+  const curves = useMemo<HorizonCurve[] | null>(() => {
+    if (mode === 'today') return horizonCurves(new Date())
+    return natalInst ? horizonCurves(natalInst) : null
+  }, [mode, natalInst])
 
   const W = Math.round(Dimensions.get('window').width) - 24
   const H = Math.round(W / 2)
@@ -122,9 +131,22 @@ export function AstroMapView() {
   return (
     <View style={s.screen}>
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
-        <Text style={s.sub}>{tl('Onde cada planeta fica angular no globo. Toque numa linha para a leitura + cidades por perto. (MC = carreira/imagem · IC = raízes/lar)', 'Where each planet turns angular on the globe. Tap a line for its meaning + nearby cities. (MC = career/image · IC = roots/home)', 'Donde cada planeta se vuelve angular. Toca una linea para su significado + ciudades cercanas.', 'Dove ogni pianeta diventa angolare. Tocca una linea per il significato + citta vicine.')}</Text>
+        {/* Toggle: Meu mapa (natal) x Céu de hoje (trânsitos, coletivo) */}
+        <View style={s.modeToggle}>
+          <TouchableOpacity style={[s.modeBtn, mode === 'natal' && s.modeBtnOn]} onPress={() => setMode('natal')}>
+            <Text style={[s.modeTx, mode === 'natal' && s.modeTxOn]}>{tl('Meu mapa', 'My chart', 'Mi carta', 'La mia carta')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.modeBtn, mode === 'today' && s.modeBtnOn]} onPress={() => setMode('today')}>
+            <Text style={[s.modeTx, mode === 'today' && s.modeTxOn]}>{tl('Céu de hoje', 'Today\'s sky', 'Cielo de hoy', 'Cielo di oggi')}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={s.sub}>
+          {mode === 'today'
+            ? tl('Onde o CÉU DE HOJE está forte no mundo (coletivo, muda a cada dia). Toque numa linha para a leitura.', 'Where TODAY\'S SKY is strong worldwide (collective, changes daily). Tap a line for its meaning.', 'Donde el CIELO DE HOY esta fuerte (colectivo, cambia cada dia). Toca una linea.', 'Dove il CIELO DI OGGI e forte (collettivo, cambia ogni giorno). Tocca una linea.')
+            : tl('Onde cada planeta do SEU mapa fica angular no globo. Toque numa linha para a leitura + cidades por perto. (MC = carreira/imagem · IC = raízes/lar)', 'Where each planet of YOUR chart turns angular. Tap a line for its meaning + nearby cities. (MC = career · IC = home)', 'Donde cada planeta de TU carta se vuelve angular. Toca una linea + ciudades cercanas.', 'Dove ogni pianeta della TUA carta diventa angolare. Tocca una linea + citta vicine.')}
+        </Text>
 
-        {/* Atalhos: melhor lugar para... → foca o planeta e abre a leitura mais relevante */}
+        {/* Atalhos por área da vida → foca o planeta e abre a leitura mais relevante */}
         {lines && !loading ? (
           <View style={s.intentRow} {...aIntents}>
             {([
@@ -132,6 +154,10 @@ export function AstroMapView() {
               ['💼', tl('Carreira', 'Career', 'Carrera', 'Carriera'), 'Sun', 'MC'],
               ['🍀', tl('Prosperar', 'Thrive', 'Prosperar', 'Prosperare'), 'Jupiter', 'MC'],
               ['🏡', tl('Lar', 'Home', 'Hogar', 'Casa'), 'Moon', 'IC'],
+              ['🗣️', tl('Comunicação', 'Communication', 'Comunicacion', 'Comunicazione'), 'Mercury', 'MC'],
+              ['🔥', tl('Vitalidade', 'Vitality', 'Vitalidad', 'Vitalita'), 'Mars', 'ASC'],
+              ['🔮', tl('Espírito', 'Spirit', 'Espiritu', 'Spirito'), 'Neptune', 'ASC'],
+              ['🦋', tl('Transformação', 'Transformation', 'Transformacion', 'Trasformazione'), 'Pluto', 'MC'],
             ] as const).map(([emo, lbl, pl, ang]) => (
               <TouchableOpacity key={lbl} style={s.intentChip} onPress={() => { setFocus(pl); setSel({ planet: pl, angle: ang as any }) }}>
                 <Text style={s.intentTx}>{emo} {lbl}</Text>
@@ -175,6 +201,17 @@ export function AstroMapView() {
                   )
                 })}
 
+                {/* Faixas de influência (power zones) do planeta FOCADO: ±~4° em volta da MC/IC */}
+                {focus && byLine[focus] ? (() => {
+                  const ln = byLine[focus]; const col = PL[focus]?.c || '#FFD700'; const bw = (8 / 360) * W
+                  return (
+                    <G>
+                      <Rect x={xOf(ln.lonMC) - bw / 2} y={0} width={bw} height={H} fill={col} fillOpacity={0.1} />
+                      <Rect x={xOf(ln.lonIC) - bw / 2} y={0} width={bw} height={H} fill={col} fillOpacity={0.06} />
+                    </G>
+                  )
+                })() : null}
+
                 {/* ASC/DSC do planeta FOCADO (curvas) — só uma por vez p/ não poluir */}
                 {focus && byCurve[focus] ? (['asc', 'dsc'] as const).map((k) => {
                   const col = PL[focus]?.c || '#FFD700'
@@ -199,8 +236,8 @@ export function AstroMapView() {
                   )
                 })}
 
-                {/* Marcador do nascimento */}
-                {birth ? <SvgText x={xOf(birth.lon)} y={yOf(birth.lat) + 4} fill="#FFD700" fontSize={13} textAnchor="middle">★</SvgText> : null}
+                {/* Marcador do nascimento — só no modo natal (no "céu de hoje" não faz sentido) */}
+                {birth && mode === 'natal' ? <SvgText x={xOf(birth.lon)} y={yOf(birth.lat) + 4} fill="#FFD700" fontSize={13} textAnchor="middle">★</SvgText> : null}
 
                 {/* Áreas de toque sobre cada linha MC e IC */}
                 {lines.map((ln) => (
@@ -289,6 +326,11 @@ const s = StyleSheet.create({
   sub: { color: '#9aa2b8', fontSize: 12.5, lineHeight: 18, marginBottom: 12 },
   empty: { color: '#9aa2b8', fontSize: 14, textAlign: 'center', marginTop: 40, paddingHorizontal: 20, lineHeight: 20 },
   mapWrap: { borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  modeToggle: { flexDirection: 'row', gap: 6, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 4, marginBottom: 10 },
+  modeBtn: { flex: 1, paddingVertical: 8, borderRadius: 9, alignItems: 'center' },
+  modeBtnOn: { backgroundColor: '#FFD700' },
+  modeTx: { color: '#C7C9E0', fontSize: 13, fontWeight: '800' },
+  modeTxOn: { color: '#0F0F23' },
   intentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   intentChip: { backgroundColor: '#1F1F3D', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', paddingHorizontal: 12, paddingVertical: 7 },
   intentTx: { color: '#EDEBF7', fontSize: 13, fontWeight: '700' },
