@@ -686,8 +686,17 @@ export default function ForecastScreen() {
   const forecastViewRef = useRef<'momento' | 'astromap' | 'grafico' | 'calendario'>('grafico')
   const buildForecastTour = useCallback(() => {
     const fl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
-    const menuStep = { id: 'forecast.menu', title: fl('Três modos', 'Three modes', 'Tres modos', 'Tre modi'),
-      body: fl('Esta aba tem três visões: Momento Certo (os melhores dias para agir), Gráfico (a intensidade dos seus dias) e Calendário. Toque para alternar.', 'This tab has three views: Right Moment (best days to act), Chart (your days\' intensity) and Calendar. Tap to switch.', 'Esta pestana tiene tres vistas: Momento Justo (mejores dias para actuar), Grafico (intensidad de tus dias) y Calendario. Toca para alternar.', 'Questa scheda ha tre viste: Momento Giusto (giorni migliori per agire), Grafico (intensita dei giorni) e Calendario. Tocca per alternare.') }
+    const menuStep = { id: 'forecast.menu', title: fl('Quatro modos', 'Four modes', 'Cuatro modos', 'Quattro modi'),
+      body: fl('Esta aba tem quatro visões: Momento (os melhores dias para agir), Gráfico e Calendário (a intensidade dos seus dias) e Astro Map (onde no mundo o céu te favorece). Toque para alternar.', 'This tab has four views: Moment (best days to act), Chart and Calendar (your days\' intensity) and Astro Map (where in the world the sky favors you). Tap to switch.', 'Esta pestana tiene cuatro vistas: Momento (mejores dias para actuar), Grafico y Calendario (intensidad de tus dias) y Astro Map (donde el cielo te favorece). Toca para alternar.', 'Questa scheda ha quattro viste: Momento (giorni migliori per agire), Grafico e Calendario (intensita dei giorni) e Astro Map (dove il cielo ti favorisce). Tocca per alternare.') }
+    if (forecastViewRef.current === 'astromap') return [
+      menuStep,
+      { id: 'astromap.intents', title: fl('Melhores lugares', 'Best places', 'Mejores lugares', 'Luoghi migliori'),
+        body: fl('Astrocartografia: onde no mundo o céu te favorece. Comece por uma intenção — Amor, Carreira, Prosperar, Lar — e o mapa foca o planeta certo.', 'Astrocartography: where in the world the sky favors you. Start with an intention — Love, Career, Thrive, Home — and the map focuses the right planet.', 'Astrocartografia: donde el cielo te favorece. Empieza por una intencion — Amor, Carrera, Prosperar, Hogar — y el mapa enfoca el planeta.', 'Astrocartografia: dove il cielo ti favorisce. Parti da un\'intenzione — Amore, Carriera, Prosperare, Casa — e la mappa focalizza il pianeta.') },
+      { id: 'astromap.map', title: fl('Suas linhas no mundo', 'Your lines on the world', 'Tus lineas en el mundo', 'Le tue linee nel mondo'),
+        body: fl('Cada linha é um planeta ficando angular. A ★ é seu nascimento. Toque numa linha (ou nos botões MC/IC/ASC/DSC abaixo) para a leitura + as cidades por perto.', 'Each line is a planet turning angular. The ★ is your birthplace. Tap a line (or the MC/IC/ASC/DSC buttons below) for its meaning + nearby cities.', 'Cada linea es un planeta angular. La ★ es tu nacimiento. Toca una linea (o los botones MC/IC/ASC/DSC) para su significado + ciudades cercanas.', 'Ogni linea e un pianeta angolare. La ★ e la tua nascita. Tocca una linea (o i pulsanti MC/IC/ASC/DSC) per il significato + le citta vicine.') },
+      { id: 'astromap.legend', title: fl('Isole um planeta', 'Isolate a planet', 'Aisla un planeta', 'Isola un pianeta'),
+        body: fl('Toque num planeta aqui para ver só as 4 linhas dele (MC/IC/ASC/DSC) — o mapa fica limpo e você lê uma coisa de cada vez.', 'Tap a planet here to see only its 4 lines (MC/IC/ASC/DSC) — the map stays clean and you read one thing at a time.', 'Toca un planeta para ver solo sus 4 lineas — el mapa queda limpio.', 'Tocca un pianeta per vedere solo le sue 4 linee — la mappa resta pulita.') },
+    ]
     if (forecastViewRef.current === 'momento') return [
       menuStep,
       { id: 'momento.intentions', title: fl('Escolha a intenção', 'Pick your intention', 'Elige la intencion', 'Scegli l\'intenzione'),
@@ -1545,7 +1554,12 @@ export default function ForecastScreen() {
       </View>
 
       {forecastView === 'astromap' ? (
-        <AstroMapView />
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
+          </TouchableOpacity>
+          <AstroMapView />
+        </View>
       ) : forecastView === 'momento' ? (
         <View style={{ flex: 1 }}>
           <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>

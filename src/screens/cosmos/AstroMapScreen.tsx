@@ -12,6 +12,7 @@ import { planetaryLines, horizonCurves, type AstroLine, type HorizonCurve, type 
 import { WORLD_CITIES } from '../../data/worldCities'
 import { astroMeaning } from '../../data/astrocartographyMeaning'
 import { translatePlanet } from '../../utils/astro/pt'
+import { useTourAnchor } from '../../tour/TourProvider'
 import type { Planet } from '../../astro/planets'
 
 const PL: Record<string, { g: string; c: string }> = {
@@ -53,6 +54,9 @@ export function AstroMapView() {
   const [birth, setBirth] = useState<{ lat: number; lon: number } | null>(null)
   const [focus, setFocus] = useState<string | null>(null) // planeta isolado (mostra ASC/DSC)
   const [sel, setSel] = useState<{ planet: string; angle: 'MC' | 'IC' | 'ASC' | 'DSC' } | null>(null)
+  const aIntents = useTourAnchor('astromap.intents')
+  const aMap = useTourAnchor('astromap.map')
+  const aLegend = useTourAnchor('astromap.legend')
 
   useEffect(() => {
     if (!user?.uid || !isPremium) { setLoading(false); return }
@@ -122,7 +126,7 @@ export function AstroMapView() {
 
         {/* Atalhos: melhor lugar para... → foca o planeta e abre a leitura mais relevante */}
         {lines && !loading ? (
-          <View style={s.intentRow}>
+          <View style={s.intentRow} {...aIntents}>
             {([
               ['❤️', tl('Amor', 'Love', 'Amor', 'Amore'), 'Venus', 'DSC'],
               ['💼', tl('Carreira', 'Career', 'Carrera', 'Carriera'), 'Sun', 'MC'],
@@ -142,7 +146,7 @@ export function AstroMapView() {
           <Text style={s.empty}>{tl('Faltam seus dados de nascimento completos (data, hora e local).', 'Your full birth data is missing (date, time and place).', 'Faltan tus datos de nacimiento (fecha, hora y lugar).', 'Mancano i tuoi dati di nascita (data, ora e luogo).')}</Text>
         ) : (
           <>
-            <View style={[s.mapWrap, { width: W, height: H }]}>
+            <View style={[s.mapWrap, { width: W, height: H }]} {...aMap}>
               <Svg width={W} height={H}>
                 {/* mapa-múndi DENTRO do SVG (1º elemento = atrás de tudo); linhas por cima */}
                 <SvgImage href={WORLD_MAP} x={0} y={0} width={W} height={H} preserveAspectRatio="none" />
@@ -210,7 +214,7 @@ export function AstroMapView() {
 
             {/* Legenda — toque num planeta para ISOLAR e ver as 4 linhas (MC/IC/ASC/DSC). */}
             <Text style={s.hint}>{tl('Toque num planeta para ver as 4 linhas dele:', 'Tap a planet to see its 4 lines:', 'Toca un planeta para ver sus 4 lineas:', 'Tocca un pianeta per vedere le sue 4 linee:')}</Text>
-            <View style={s.legend}>
+            <View style={s.legend} {...aLegend}>
               {lines.map((ln) => (
                 <TouchableOpacity key={`lg${ln.planet}`} style={[s.legendItem, focus === ln.planet && s.legendItemOn]} onPress={() => setFocus(focus === ln.planet ? null : ln.planet)}>
                   <Text style={[s.legendGlyph, { color: PL[ln.planet]?.c }]}>{PL[ln.planet]?.g}</Text>
