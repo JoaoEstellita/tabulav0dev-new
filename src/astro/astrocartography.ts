@@ -19,6 +19,41 @@ const norm180 = (x: number) => (((x + 180) % 360) + 360) % 360 - 180
 
 export type AstroLine = { planet: Planet; ra: number; dec: number; lonMC: number; lonIC: number }
 
+const D = Math.PI / 180
+export type Pt = { lat: number; lon: number }
+export type HorizonCurve = { planet: Planet; asc: Pt[]; dsc: Pt[] }
+
+/**
+ * Curvas ASC (nascer) e DSC (pôr) de cada planeta: onde ele está no horizonte
+ * leste/oeste. Hora angular no horizonte: cos(H) = −tan(lat)·tan(dec). Latitudes
+ * onde |...|>1 são circumpolares (o planeta não nasce/põe) e são puladas.
+ * Validado: Sol no equador → ASC ~−128°, DSC ~+52°.
+ */
+export function horizonCurves(dateUTC: Date, latMin = -72, latMax = 72, step = 2): HorizonCurve[] {
+  const t = new AstroTime(dateUTC)
+  const obs = new Observer(0, 0, 0)
+  const gast = SiderealTime(t)
+  const out: HorizonCurve[] = []
+  for (const { planet, body } of BODIES) {
+    try {
+      const eq = Equator(body, t, obs, true, true)
+      const alpha = eq.ra
+      const dec = eq.dec
+      const asc: Pt[] = []
+      const dsc: Pt[] = []
+      for (let phi = latMin; phi <= latMax; phi += step) {
+        const c = -Math.tan(phi * D) * Math.tan(dec * D)
+        if (Math.abs(c) > 1) continue // circumpolar
+        const H = Math.acos(c) / D / 15 // horas
+        asc.push({ lat: phi, lon: norm180(((-H + alpha) - gast) * 15) })
+        dsc.push({ lat: phi, lon: norm180(((H + alpha) - gast) * 15) })
+      }
+      out.push({ planet, asc, dsc })
+    } catch { /* pula planeta que falhar */ }
+  }
+  return out
+}
+
 /** Linhas MC/IC de cada planeta para o instante UTC dado. */
 export function planetaryLines(dateUTC: Date): AstroLine[] {
   const t = new AstroTime(dateUTC)

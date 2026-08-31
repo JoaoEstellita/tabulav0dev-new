@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Modal } from 'react-native'
-import Svg, { Rect, Line as SvgLine, Circle, Text as SvgText, G } from 'react-native-svg'
+import Svg, { Rect, Line as SvgLine, Circle, Text as SvgText, G, Polyline } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
@@ -8,7 +8,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import UserService from '../../services/firebase/UserService'
 import { resolveBirthInstant } from '../../astro/birthInstant'
-import { planetaryLines, type AstroLine } from '../../astro/astrocartography'
+import { planetaryLines, horizonCurves, type AstroLine, type HorizonCurve, type Pt } from '../../astro/astrocartography'
 import { WORLD_CITIES } from '../../data/worldCities'
 import { astroMeaning } from '../../data/astrocartographyMeaning'
 import { translatePlanet } from '../../utils/astro/pt'
@@ -21,6 +21,21 @@ const PL: Record<string, { g: string; c: string }> = {
 }
 const angDiff = (a: number, b: number) => { let d = Math.abs(a - b) % 360; if (d > 180) d = 360 - d; return d }
 
+// Quebra a polilinha da curva quando a longitude "salta" o meridiano ±180 (senão
+// desenha um traço horizontal atravessando o mapa inteiro). Retorna strings de pontos.
+function polySegments(pts: Pt[], xOf: (lon: number) => number, yOf: (lat: number) => number): string[] {
+  const out: string[] = []
+  let cur: string[] = []
+  let prevLon: number | null = null
+  for (const p of pts) {
+    if (prevLon != null && Math.abs(p.lon - prevLon) > 180) { if (cur.length > 1) out.push(cur.join(' ')); cur = [] }
+    cur.push(`${xOf(p.lon).toFixed(1)},${yOf(p.lat).toFixed(1)}`)
+    prevLon = p.lon
+  }
+  if (cur.length > 1) out.push(cur.join(' '))
+  return out
+}
+
 export default function AstroMapScreen() {
   const navigation = useNavigation<any>()
   const { user } = useAuth()
@@ -31,8 +46,10 @@ export default function AstroMapScreen() {
 
   const [loading, setLoading] = useState(true)
   const [lines, setLines] = useState<AstroLine[] | null>(null)
+  const [curves, setCurves] = useState<HorizonCurve[] | null>(null)
   const [birth, setBirth] = useState<{ lat: number; lon: number } | null>(null)
-  const [sel, setSel] = useState<{ line: AstroLine; angle: 'MC' | 'IC' } | null>(null)
+  const [focus, setFocus] = useState<string | null>(null) // planeta isolado (mostra ASC/DSC)
+  const [sel, setSel] = useState<{ planet: string; angle: 'MC' | 'IC' | 'ASC' | 'DSC' } | null>(null)
 
   useEffect(() => {
     if (!user?.uid || !isPremium) { setLoading(false); return }
@@ -45,7 +62,7 @@ export default function AstroMapScreen() {
         if (!p?.birthDate || !p?.birthTime || !Number.isFinite(lat) || !Number.isFinite(lon)) { if (alive) setLoading(false); return }
         const inst = await resolveBirthInstant(p.birthDate, p.birthTime, lat, lon)
         if (!inst) { if (alive) setLoading(false); return }
-        if (alive) { setLines(planetaryLines(inst)); setBirth({ lat, lon }) }
+        if (alive) { setLines(planetaryLines(inst)); setCurves(horizonCurves(inst)); setBirth({ lat, lon }) }
       } catch { /* ignora */ }
       finally { if (alive) setLoading(false) }
     })()
@@ -57,11 +74,31 @@ export default function AstroMapScreen() {
   const xOf = (lon: number) => ((lon + 180) / 360) * W
   const yOf = (lat: number) => ((90 - lat) / 180) * H
 
+  const byLine = useMemo(() => Object.fromEntries((lines || []).map((l) => [l.planet, l])), [lines])
+  const byCurve = useMemo(() => Object.fromEntries((curves || []).map((c) => [c.planet, c])), [curves])
+
+  // Longitude da curva (ASC/DSC) na latitude mais próxima de `lat`. null se fora.
+  const curveLonAtLat = (pts: Pt[], lat: number): number | null => {
+    if (!pts.length) return null
+    let best: Pt | null = null; let bd = 999
+    for (const p of pts) { const d = Math.abs(p.lat - lat); if (d < bd) { bd = d; best = p } }
+    return best && bd <= 4 ? best.lon : null
+  }
+
   const nearbyCities = useMemo(() => {
     if (!sel) return []
-    const lonLine = sel.angle === 'MC' ? sel.line.lonMC : sel.line.lonIC
-    return WORLD_CITIES.map((c) => ({ ...c, d: angDiff(c.lon, lonLine) })).filter((c) => c.d < 5).sort((a, b) => a.d - b.d)
-  }, [sel])
+    if (sel.angle === 'MC' || sel.angle === 'IC') {
+      const ln = byLine[sel.planet]; if (!ln) return []
+      const lonLine = sel.angle === 'MC' ? ln.lonMC : ln.lonIC
+      return WORLD_CITIES.map((c) => ({ ...c, d: angDiff(c.lon, lonLine) })).filter((c) => c.d < 5).sort((a, b) => a.d - b.d)
+    }
+    const cv = byCurve[sel.planet]; if (!cv) return []
+    const pts = sel.angle === 'ASC' ? cv.asc : cv.dsc
+    return WORLD_CITIES.map((c) => {
+      const lonAt = curveLonAtLat(pts, c.lat)
+      return lonAt == null ? null : { ...c, d: angDiff(c.lon, lonAt) }
+    }).filter((c): c is any => !!c && c.d < 5).sort((a, b) => a.d - b.d)
+  }, [sel, byLine, byCurve])
 
   if (!isPremium) {
     return (
@@ -81,6 +118,22 @@ export default function AstroMapScreen() {
       <Header onBack={() => navigation.goBack()} title={tl('Astro Map', 'Astro Map', 'Astro Map', 'Astro Map')} />
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
         <Text style={s.sub}>{tl('Onde cada planeta fica angular no globo. Toque numa linha para a leitura + cidades por perto. (MC = carreira/imagem · IC = raízes/lar)', 'Where each planet turns angular on the globe. Tap a line for its meaning + nearby cities. (MC = career/image · IC = roots/home)', 'Donde cada planeta se vuelve angular. Toca una linea para su significado + ciudades cercanas.', 'Dove ogni pianeta diventa angolare. Tocca una linea per il significato + citta vicine.')}</Text>
+
+        {/* Atalhos: melhor lugar para... → foca o planeta e abre a leitura mais relevante */}
+        {lines && !loading ? (
+          <View style={s.intentRow}>
+            {([
+              ['❤️', tl('Amor', 'Love', 'Amor', 'Amore'), 'Venus', 'DSC'],
+              ['💼', tl('Carreira', 'Career', 'Carrera', 'Carriera'), 'Sun', 'MC'],
+              ['🍀', tl('Prosperar', 'Thrive', 'Prosperar', 'Prosperare'), 'Jupiter', 'MC'],
+              ['🏡', tl('Lar', 'Home', 'Hogar', 'Casa'), 'Moon', 'IC'],
+            ] as const).map(([emo, lbl, pl, ang]) => (
+              <TouchableOpacity key={lbl} style={s.intentChip} onPress={() => { setFocus(pl); setSel({ planet: pl, angle: ang as any }) }}>
+                <Text style={s.intentTx}>{emo} {lbl}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
 
         {loading ? (
           <ActivityIndicator color="#FFD700" style={{ marginTop: 40 }} />
@@ -106,26 +159,26 @@ export default function AstroMapScreen() {
                   <Circle key={`c${i}`} cx={xOf(c.lon)} cy={yOf(c.lat)} r={1.6} fill="rgba(255,255,255,0.45)" />
                 ))}
 
-                {/* Linhas planetárias: IC tracejada (dim), MC sólida */}
+                {/* ASC/DSC do planeta FOCADO (curvas) — só uma por vez p/ não poluir */}
+                {focus && byCurve[focus] ? (['asc', 'dsc'] as const).map((k) => {
+                  const col = PL[focus]?.c || '#FFD700'
+                  const segs = polySegments((byCurve[focus] as HorizonCurve)[k], xOf, yOf)
+                  return segs.map((pointsStr, si) => (
+                    <Polyline key={`${k}${si}`} points={pointsStr} fill="none" stroke={col} strokeWidth={k === 'asc' ? 1.6 : 1.4} strokeOpacity={k === 'asc' ? 0.9 : 0.55} strokeDasharray={k === 'dsc' ? '2,3' : undefined} />
+                  ))
+                }) : null}
+
+                {/* Linhas MC/IC (todas). Escurece as não-focadas quando há foco. */}
                 {lines.map((ln) => {
                   const col = PL[ln.planet]?.c || '#FFD700'
+                  const dim = focus && ln.planet !== focus
+                  const op = dim ? 0.18 : 1
                   return (
-                    <G key={`ic${ln.planet}`}>
-                      <SvgLine x1={xOf(ln.lonIC)} y1={0} x2={xOf(ln.lonIC)} y2={H} stroke={col} strokeOpacity={0.35} strokeWidth={1.2} strokeDasharray="3,4" />
-                    </G>
-                  )
-                })}
-                {lines.map((ln) => {
-                  const col = PL[ln.planet]?.c || '#FFD700'
-                  return <SvgLine key={`mc${ln.planet}`} x1={xOf(ln.lonMC)} y1={0} x2={xOf(ln.lonMC)} y2={H} stroke={col} strokeWidth={1.8} />
-                })}
-                {/* Glifos no topo (MC) e base (IC) */}
-                {lines.map((ln) => {
-                  const col = PL[ln.planet]?.c || '#FFD700'
-                  return (
-                    <G key={`g${ln.planet}`}>
-                      <SvgText x={xOf(ln.lonMC)} y={12} fill={col} fontSize={11} fontWeight="bold" textAnchor="middle">{PL[ln.planet]?.g}</SvgText>
-                      <SvgText x={xOf(ln.lonIC)} y={H - 4} fill={col} fillOpacity={0.55} fontSize={10} textAnchor="middle">{PL[ln.planet]?.g}</SvgText>
+                    <G key={`l${ln.planet}`}>
+                      <SvgLine x1={xOf(ln.lonIC)} y1={0} x2={xOf(ln.lonIC)} y2={H} stroke={col} strokeOpacity={0.35 * op} strokeWidth={1.2} strokeDasharray="3,4" />
+                      <SvgLine x1={xOf(ln.lonMC)} y1={0} x2={xOf(ln.lonMC)} y2={H} stroke={col} strokeOpacity={op} strokeWidth={1.8} />
+                      <SvgText x={xOf(ln.lonMC)} y={12} fill={col} fillOpacity={op} fontSize={11} fontWeight="bold" textAnchor="middle">{PL[ln.planet]?.g}</SvgText>
+                      <SvgText x={xOf(ln.lonIC)} y={H - 4} fill={col} fillOpacity={0.55 * op} fontSize={10} textAnchor="middle">{PL[ln.planet]?.g}</SvgText>
                     </G>
                   )
                 })}
@@ -133,26 +186,40 @@ export default function AstroMapScreen() {
                 {/* Marcador do nascimento */}
                 {birth ? <SvgText x={xOf(birth.lon)} y={yOf(birth.lat) + 4} fill="#FFD700" fontSize={13} textAnchor="middle">★</SvgText> : null}
 
-                {/* Áreas de toque (largas) sobre cada linha MC e IC */}
+                {/* Áreas de toque sobre cada linha MC e IC */}
                 {lines.map((ln) => (
                   <G key={`t${ln.planet}`}>
-                    <Rect x={xOf(ln.lonMC) - 9} y={0} width={18} height={H} fill="transparent" onPress={() => setSel({ line: ln, angle: 'MC' })} />
-                    <Rect x={xOf(ln.lonIC) - 9} y={0} width={18} height={H} fill="transparent" onPress={() => setSel({ line: ln, angle: 'IC' })} />
+                    <Rect x={xOf(ln.lonMC) - 9} y={0} width={18} height={H} fill="transparent" onPress={() => setSel({ planet: ln.planet, angle: 'MC' })} />
+                    <Rect x={xOf(ln.lonIC) - 9} y={0} width={18} height={H} fill="transparent" onPress={() => setSel({ planet: ln.planet, angle: 'IC' })} />
                   </G>
                 ))}
               </Svg>
             </View>
 
-            {/* Legenda */}
+            {/* Legenda — toque num planeta para ISOLAR e ver as 4 linhas (MC/IC/ASC/DSC). */}
+            <Text style={s.hint}>{tl('Toque num planeta para ver as 4 linhas dele:', 'Tap a planet to see its 4 lines:', 'Toca un planeta para ver sus 4 lineas:', 'Tocca un pianeta per vedere le sue 4 linee:')}</Text>
             <View style={s.legend}>
               {lines.map((ln) => (
-                <TouchableOpacity key={`lg${ln.planet}`} style={s.legendItem} onPress={() => setSel({ line: ln, angle: 'MC' })}>
+                <TouchableOpacity key={`lg${ln.planet}`} style={[s.legendItem, focus === ln.planet && s.legendItemOn]} onPress={() => setFocus(focus === ln.planet ? null : ln.planet)}>
                   <Text style={[s.legendGlyph, { color: PL[ln.planet]?.c }]}>{PL[ln.planet]?.g}</Text>
                   <Text style={s.legendTx}>{translatePlanet(ln.planet, language)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={s.foot}>{tl('★ seu local de nascimento · linha cheia = MC · tracejada = IC', '★ your birth place · solid = MC · dashed = IC', '★ tu lugar de nacimiento · solida = MC · discontinua = IC', '★ il tuo luogo di nascita · piena = MC · tratteggiata = IC')}</Text>
+
+            {/* Ângulos do planeta focado → leitura */}
+            {focus ? (
+              <View style={s.angles}>
+                <Text style={s.anglesTitle}>{translatePlanet(focus, language)}:</Text>
+                {(['MC', 'IC', 'ASC', 'DSC'] as const).map((ang) => (
+                  <TouchableOpacity key={ang} style={s.angleChip} onPress={() => setSel({ planet: focus, angle: ang })}>
+                    <Text style={s.angleChipTx}>{ang}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
+
+            <Text style={s.foot}>{tl('★ nascimento · MC (carreira) cheia · IC (lar) tracejada · ASC (você)/DSC (relações) só no planeta focado', '★ birth · MC (career) solid · IC (home) dashed · ASC (self)/DSC (relationships) show for the focused planet', '★ nacimiento · MC solida · IC discontinua · ASC/DSC solo en el planeta enfocado', '★ nascita · MC piena · IC tratteggiata · ASC/DSC solo sul pianeta focalizzato')}</Text>
           </>
         )}
       </ScrollView>
@@ -162,12 +229,12 @@ export default function AstroMapScreen() {
         <View style={s.sheetBack}>
           <View style={s.sheet}>
             {sel ? (() => {
-              const col = PL[sel.line.planet]?.c || '#FFD700'
-              const m = astroMeaning(sel.line.planet, sel.angle, language)
+              const col = PL[sel.planet]?.c || '#FFD700'
+              const m = astroMeaning(sel.planet, sel.angle, language)
               return (
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={[s.sheetTitle, { color: col }]}>{PL[sel.line.planet]?.g} {tl('Linha de', 'Line of', 'Linea de', 'Linea di')} {translatePlanet(sel.line.planet, language)} · {sel.angle}</Text>
+                    <Text style={[s.sheetTitle, { color: col }]}>{PL[sel.planet]?.g} {tl('Linha de', 'Line of', 'Linea de', 'Linea di')} {translatePlanet(sel.planet, language)} · {sel.angle}</Text>
                     <TouchableOpacity onPress={() => setSel(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={24} color="#9aa2b8" /></TouchableOpacity>
                   </View>
                   {m ? <Text style={s.sheetEssence}>{m.essence}</Text> : null}
@@ -206,8 +273,17 @@ const s = StyleSheet.create({
   sub: { color: '#9aa2b8', fontSize: 12.5, lineHeight: 18, marginBottom: 12 },
   empty: { color: '#9aa2b8', fontSize: 14, textAlign: 'center', marginTop: 40, paddingHorizontal: 20, lineHeight: 20 },
   mapWrap: { borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#1C1C33', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  intentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  intentChip: { backgroundColor: '#1F1F3D', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', paddingHorizontal: 12, paddingVertical: 7 },
+  intentTx: { color: '#EDEBF7', fontSize: 13, fontWeight: '700' },
+  hint: { color: '#9aa2b8', fontSize: 12, marginTop: 12, marginBottom: 6, fontStyle: 'italic' },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#1C1C33', borderRadius: 8, borderWidth: 1, borderColor: 'transparent', paddingHorizontal: 8, paddingVertical: 4 },
+  legendItemOn: { borderColor: '#FFD700', backgroundColor: '#26264a' },
+  angles: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  anglesTitle: { color: '#EDEBF7', fontSize: 13, fontWeight: '800' },
+  angleChip: { backgroundColor: '#1F1F3D', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', paddingHorizontal: 12, paddingVertical: 6 },
+  angleChipTx: { color: '#FFD700', fontSize: 13, fontWeight: '800' },
   legendGlyph: { fontSize: 14, fontWeight: '900' },
   legendTx: { color: '#C7C9E0', fontSize: 12, fontWeight: '600' },
   foot: { color: '#9aa2b8', fontSize: 11.5, marginTop: 10, lineHeight: 16 },
