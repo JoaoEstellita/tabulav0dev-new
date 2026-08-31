@@ -20,6 +20,8 @@ const PL: Record<string, { g: string; c: string }> = {
   Saturn: { g: '♄', c: '#B0A08A' }, Uranus: { g: '♅', c: '#6FE3E1' }, Neptune: { g: '♆', c: '#7F9CF2' }, Pluto: { g: '♇', c: '#C08BE0' },
 }
 const angDiff = (a: number, b: number) => { let d = Math.abs(a - b) % 360; if (d > 180) d = 360 - d; return d }
+// Cidades-âncora rotuladas no mapa (bem espalhadas) — dão orientação sem continentes.
+const ANCHORS = new Set(['São Paulo', 'Nova York', 'Los Angeles', 'Cidade do México', 'Londres', 'Lisboa', 'Roma', 'Cairo', 'Dubai', 'Mumbai', 'Tóquio', 'Sydney', 'Joanesburgo', 'Bangkok'])
 
 // Quebra a polilinha da curva quando a longitude "salta" o meridiano ±180 (senão
 // desenha um traço horizontal atravessando o mapa inteiro). Retorna strings de pontos.
@@ -36,7 +38,7 @@ function polySegments(pts: Pt[], xOf: (lon: number) => number, yOf: (lat: number
   return out
 }
 
-export default function AstroMapScreen() {
+export function AstroMapView() {
   const navigation = useNavigation<any>()
   const { user } = useAuth()
   const { language } = useAppLanguage()
@@ -103,7 +105,6 @@ export default function AstroMapScreen() {
   if (!isPremium) {
     return (
       <View style={s.screen}>
-        <Header onBack={() => navigation.goBack()} title={tl('Astro Map', 'Astro Map', 'Astro Map', 'Astro Map')} />
         <View style={s.paywall}>
           <Text style={s.paywallTitle}>{tl('Recurso Premium', 'Premium feature', 'Función Premium', 'Funzione Premium')}</Text>
           <Text style={s.paywallSub}>{tl('Veja onde no mundo o céu te favorece — suas linhas planetárias no mapa. Assine para desbloquear.', 'See where in the world the sky favors you — your planetary lines on the map. Subscribe to unlock.', 'Ve donde en el mundo el cielo te favorece — tus lineas planetarias. Suscribete.', 'Vedi dove nel mondo il cielo ti favorisce — le tue linee planetarie. Abbonati.')}</Text>
@@ -115,7 +116,6 @@ export default function AstroMapScreen() {
 
   return (
     <View style={s.screen}>
-      <Header onBack={() => navigation.goBack()} title={tl('Astro Map', 'Astro Map', 'Astro Map', 'Astro Map')} />
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
         <Text style={s.sub}>{tl('Onde cada planeta fica angular no globo. Toque numa linha para a leitura + cidades por perto. (MC = carreira/imagem · IC = raízes/lar)', 'Where each planet turns angular on the globe. Tap a line for its meaning + nearby cities. (MC = career/image · IC = roots/home)', 'Donde cada planeta se vuelve angular. Toca una linea para su significado + ciudades cercanas.', 'Dove ogni pianeta diventa angolare. Tocca una linea per il significato + citta vicine.')}</Text>
 
@@ -154,10 +154,20 @@ export default function AstroMapScreen() {
                 <SvgLine x1={0} y1={yOf(0)} x2={W} y2={yOf(0)} stroke="rgba(255,255,255,0.16)" strokeWidth={1} />
                 <SvgLine x1={xOf(0)} y1={0} x2={xOf(0)} y2={H} stroke="rgba(255,255,255,0.16)" strokeWidth={1} />
 
-                {/* Cidades */}
-                {WORLD_CITIES.map((c, i) => (
-                  <Circle key={`c${i}`} cx={xOf(c.lon)} cy={yOf(c.lat)} r={1.6} fill="rgba(255,255,255,0.45)" />
+                {/* Labels de longitude (orientação) */}
+                {[-120, -60, 0, 60, 120].map((lo) => (
+                  <SvgText key={`xl${lo}`} x={xOf(lo)} y={H - 2} fill="rgba(255,255,255,0.3)" fontSize={7} textAnchor="middle">{lo === 0 ? '0°' : `${lo > 0 ? '+' : ''}${lo}`}</SvgText>
                 ))}
+                {/* Cidades — âncoras rotuladas p/ dar orientação (sem continentes) */}
+                {WORLD_CITIES.map((c, i) => {
+                  const anchor = ANCHORS.has(c.name)
+                  return (
+                    <G key={`c${i}`}>
+                      <Circle cx={xOf(c.lon)} cy={yOf(c.lat)} r={anchor ? 2 : 1.4} fill={anchor ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)'} />
+                      {anchor ? <SvgText x={xOf(c.lon) + 3} y={yOf(c.lat) + 2.5} fill="rgba(255,255,255,0.65)" fontSize={6.5}>{c.name}</SvgText> : null}
+                    </G>
+                  )
+                })}
 
                 {/* ASC/DSC do planeta FOCADO (curvas) — só uma por vez p/ não poluir */}
                 {focus && byCurve[focus] ? (['asc', 'dsc'] as const).map((k) => {
@@ -267,7 +277,7 @@ function Header({ onBack, title }: { onBack: () => void; title: string }) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0F0F23', paddingTop: 44 },
+  screen: { flex: 1, backgroundColor: '#0F0F23' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingBottom: 6 },
   headTitle: { color: '#EDEBF7', fontSize: 18, fontWeight: '900' },
   sub: { color: '#9aa2b8', fontSize: 12.5, lineHeight: 18, marginBottom: 12 },

@@ -607,16 +607,6 @@ export default function CosmosScreen() {
           <Text style={styles.heroTitle}>✦ {tl('Mapa', 'Chart', 'Mapa', 'Mappa')}</Text>
         </View>
 
-        {/* Entrada do Astro Map (astrocartografia) — onde no mundo o céu te favorece. */}
-        <TouchableOpacity style={styles.astroMapEntry} activeOpacity={0.85} onPress={() => (navigation as any).navigate('AstroMap')}>
-          <Text style={{ fontSize: 18 }}>🌍</Text>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.astroMapTitle}>{tl('Astro Map', 'Astro Map', 'Astro Map', 'Astro Map')}</Text>
-            <Text style={styles.astroMapSub} numberOfLines={1}>{tl('Onde no mundo o céu te favorece', 'Where in the world the sky favors you', 'Donde el cielo te favorece', 'Dove il cielo ti favorisce')}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#FFD700" />
-        </TouchableOpacity>
-
         {/* Mapa natal e Perfil completo embutidos: a aba se chama "Mapa" e agora
             entrega o conteúdo de cara, sem exigir dois toques. O hook roda UMA vez
             aqui e os dados descem por prop (useLifeAreas não é contexto). */}

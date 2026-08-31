@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, InteractionManager, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import MomentoCertoView from './MomentoCertoView'
+import { AstroMapView } from '../cosmos/AstroMapScreen'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation, useRoute } from '@react-navigation/native'
@@ -682,7 +683,7 @@ export default function ForecastScreen() {
   const aView = useTourAnchor('forecast.view')
   const aEvents = useTourAnchor('forecast.events')
   useTourScroller('Forecast', useCallback((y: number) => forecastScrollRef.current?.scrollTo({ y, animated: true }), []))
-  const forecastViewRef = useRef<'momento' | 'grafico' | 'calendario'>('grafico')
+  const forecastViewRef = useRef<'momento' | 'astromap' | 'grafico' | 'calendario'>('grafico')
   const buildForecastTour = useCallback(() => {
     const fl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
     const menuStep = { id: 'forecast.menu', title: fl('Três modos', 'Three modes', 'Tres modos', 'Tre modi'),
@@ -754,7 +755,7 @@ export default function ForecastScreen() {
   const [areaSummaryOpen, setAreaSummaryOpen] = useState(false)
   // Menu da aba: Momento Certo | Gráfico | Calendário. Default 'grafico' por ora;
   // vira 'momento' quando o motor (F1 backend) entrar.
-  const [forecastView, setForecastView] = useState<'momento' | 'grafico' | 'calendario'>('momento')
+  const [forecastView, setForecastView] = useState<'momento' | 'astromap' | 'grafico' | 'calendario'>('momento')
   forecastViewRef.current = forecastView
   // Deep-link de um card de área: preseleciona a intenção e força o modo Momento.
   const route = useRoute() as any
@@ -1529,7 +1530,8 @@ export default function ForecastScreen() {
       {/* Menu da aba Previsões: Momento Certo | Gráfico | Calendário */}
       <View style={styles.topMenu} {...aMenu}>
         {([
-          ['momento', tr('forecast.tab.moment', 'Momento Certo')],
+          ['momento', tr('forecast.tab.moment2', 'Momento')],
+          ['astromap', tr('forecast.tab.astromap', 'Astro Map')],
           ['grafico', tr('forecast.view.graph', 'Gráfico')],
           ['calendario', tr('forecast.view.calendar', 'Calendário')],
         ] as const).map(([k, lbl]) => {
@@ -1542,7 +1544,9 @@ export default function ForecastScreen() {
         })}
       </View>
 
-      {forecastView === 'momento' ? (
+      {forecastView === 'astromap' ? (
+        <AstroMapView />
+      ) : forecastView === 'momento' ? (
         <View style={{ flex: 1 }}>
           <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
