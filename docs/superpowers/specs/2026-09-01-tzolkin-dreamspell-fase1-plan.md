@@ -599,10 +599,14 @@ git commit -m "feat(tzolkin): traduções en/es/it (regras i18n do projeto)"
 
 ---
 
-## Task 9: UI — TzolkinProfileContent
+## Task 9: UI — TzolkinProfileContent (sub-abado)
+
+> **Atualização (pedido do usuário):** a aba Tzolkin tem **sub-abas** próprias (espelha Ocidental Natal/Trânsitos/Solar/Lunar): **Kin** (assinatura), **Roda** (tabuleiro 13×20 + Oráculo clicável), **Onda** (onda encantada), **Interpretações** (leitura curada). Estado `subTab` interno; cada sub-aba é um sub-componente focado.
 
 **Arquivos:**
-- Criar: `src/screens/cosmos/TzolkinProfileContent.tsx`
+- Criar: `src/screens/cosmos/TzolkinProfileContent.tsx` (container + sub-abas)
+- Criar: `src/screens/cosmos/tzolkin/TzolkinBoard.tsx` (matriz 13×20)
+- Criar: `src/screens/cosmos/tzolkin/TzolkinOracle.tsx` (cruz clicável)
 
 - [ ] **Step 1: Ler o precedente**
 

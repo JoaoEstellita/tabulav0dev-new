@@ -29,6 +29,9 @@ import {
   getMoonPhaseLabelFromKey,
 } from '../utils/moonPhase'
 import { nakshatraFromTropical } from '../astro/vedic'
+import { kinOfDate, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../astro/tzolkin'
+
+const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 import { MOON_SIGN_MOOD, MOON_SIGN_GLYPH, SIGN_NAMES_I18N, SIGN_KEYS } from '../data/moonSignMood'
 
 // ---------------------------------------------------------------------------
@@ -410,6 +413,21 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
                   {tl('Nakshatra (védico)', 'Nakshatra (Vedic)', 'Nakshatra (védico)', 'Nakshatra (vedico)')}: {moonDetails.moonNakshatra}
                 </Text>
               ) : null}
+
+              {TZOLKIN_ENABLED ? (() => {
+                const todayKin = kinOfDate(new Date().toISOString().slice(0, 10))
+                const kinHex = COLOR_LABELS[SEALS[sealOf(todayKin) - 1].color].hex
+                return (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: kinHex, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#0F0F23', fontSize: 10, fontWeight: '900' }}>{sealOf(todayKin)}</Text>
+                    </View>
+                    <Text style={styles.moonNakshatra}>
+                      {tl('Kin de hoje', 'Kin of the day', 'Kin de hoy', 'Kin di oggi')}: {todayKin} — {getKinDisplayName(todayKin, language)}
+                    </Text>
+                  </View>
+                )
+              })() : null}
 
               <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.void', 'Void Moon')}</Text>
               <Text style={styles.moonModalText}>{tr('profile.moon.modal.current', 'Current')}: {moonDetails.currentVoidLabel}</Text>

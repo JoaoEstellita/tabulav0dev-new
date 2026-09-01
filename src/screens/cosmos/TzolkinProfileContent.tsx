@@ -1,0 +1,245 @@
+/**
+ * MODO TZOLKIN (Dreamspell) da aba Mapa. Sub-abas: Kin (assinatura), Roda
+ * (tabuleiro 13×20 + Oráculo da Quinta Força clicável), Onda (onda encantada),
+ * Interpretações (leitura curada ×4). Motor puro em astro/tzolkin (sem IA).
+ */
+import React, { useEffect, useMemo, useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
+import { useAuth } from '../../hooks/useAuth'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
+import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
+import { readSeal, readTone, readSynthesis, oracleRole, familyText, castleText, disclaimer, todayRelation } from '../../data/tzolkin/reading'
+
+type SubTab = 'kin' | 'roda' | 'onda' | 'interp'
+type Role = 'destiny' | 'guide' | 'analog' | 'antipode' | 'occult'
+
+export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?: string }) {
+  const { user } = useAuth()
+  const { language } = useAppLanguage()
+  const lang = language || 'pt-BR'
+  const tl = (pt: string, en: string, es: string, it: string) =>
+    lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt
+
+  const [date, setDate] = useState<string | undefined>(birthDateISO)
+  const [tab, setTab] = useState<SubTab>('kin')
+
+  useEffect(() => {
+    if (birthDateISO) { setDate(birthDateISO); return }
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then((snap) => { setDate(snap.data()?.birthDate) }).catch(() => { })
+  }, [user?.uid, birthDateISO])
+
+  const profile = useMemo(() => (date ? buildProfile(date) : null), [date])
+  const todayKin = useMemo(() => kinOfDate(new Date().toISOString().slice(0, 10)), [])
+
+  if (!date) {
+    return <View style={s.card}><Text style={s.cardText}>{tl('Cadastre sua data de nascimento para ver seu Kin.', 'Add your birth date to see your Kin.', 'Registra tu fecha de nacimiento para ver tu Kin.', 'Inserisci la tua data di nascita per vedere il tuo Kin.')}</Text></View>
+  }
+  if (!profile) return <View style={s.loadingWrap}><ActivityIndicator color="#FFD700" /></View>
+
+  const color = COLOR_LABELS[SEALS[profile.seal - 1].color]
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Sub-abas */}
+      <View style={s.tabs}>
+        {([['kin', tl('Kin', 'Kin', 'Kin', 'Kin')], ['roda', tl('Roda', 'Wheel', 'Rueda', 'Ruota')], ['onda', tl('Onda', 'Wavespell', 'Onda', 'Onda')], ['interp', tl('Interpretações', 'Readings', 'Lecturas', 'Letture')]] as [SubTab, string][]).map(([k, label]) => (
+          <TouchableOpacity key={k} style={[s.tabBtn, tab === k && s.tabBtnActive]} activeOpacity={0.85} onPress={() => setTab(k)}>
+            <Text style={[s.tabTxt, tab === k && s.tabTxtActive]}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {tab === 'kin' && <KinView profile={profile} color={color} todayKin={todayKin} lang={lang} tl={tl} />}
+        {tab === 'roda' && <RodaView profile={profile} lang={lang} tl={tl} />}
+        {tab === 'onda' && <OndaView profile={profile} color={color} lang={lang} tl={tl} />}
+        {tab === 'interp' && <InterpView profile={profile} lang={lang} tl={tl} />}
+        <Text style={s.disclaimer}>{disclaimer(lang)}</Text>
+      </ScrollView>
+    </View>
+  )
+}
+
+// ── Glifo placeholder (círculo com cor + número do selo) ────────────────────
+function Glyph({ seal, size = 56 }: { seal: number; size?: number }) {
+  const c = COLOR_LABELS[SEALS[seal - 1].color]
+  return (
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.hex, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,.25)' }}>
+      <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: size * 0.34 }}>{seal}</Text>
+    </View>
+  )
+}
+
+// ── Sub-aba KIN ─────────────────────────────────────────────────────────────
+function KinView({ profile, color, todayKin, lang, tl }: any) {
+  const sw = getSealWords(profile.seal, lang), tw = getToneWords(profile.tone, lang)
+  const today = buildToday(todayKin)
+  const rel = todayRelation(profile.kin, todayKin, profile.oracle, profile.seal, profile.tone, today.seal, today.tone, lang)
+  return (
+    <>
+      <View style={[s.header, { borderColor: color.hex }]}>
+        <Glyph seal={profile.seal} />
+        <Text style={s.kinNum}>KIN {profile.kin}</Text>
+        <Text style={[s.kinName, { color: color.hex }]}>{getKinDisplayName(profile.kin, lang)}</Text>
+        <View style={s.chipRow}>
+          <View style={s.chip}><Text style={s.chipTxt}>{tl('Selo', 'Seal', 'Sello', 'Sigillo')} {profile.seal} · {sw.name}</Text></View>
+          <View style={s.chip}><Text style={s.chipTxt}>{tl('Tom', 'Tone', 'Tono', 'Tono')} {profile.tone} · {tw.name}</Text></View>
+        </View>
+      </View>
+      <Card title={tl('Palavras-chave', 'Keywords', 'Palabras clave', 'Parole chiave')}>
+        <Text style={s.body}>{tl('Selo', 'Seal', 'Sello', 'Sigillo')}: {sw.power} · {sw.action} · {sw.essence}</Text>
+        <Text style={s.body}>{tl('Tom', 'Tone', 'Tono', 'Tono')}: {tw.essence} · {tw.power} · {tw.action}</Text>
+      </Card>
+      <Card title={tl('Kin de hoje', 'Kin of the day', 'Kin de hoy', 'Kin di oggi')}>
+        <Text style={s.body}>KIN {todayKin} — {getKinDisplayName(todayKin, lang)}</Text>
+        {rel ? <Text style={[s.body, { marginTop: 6, fontStyle: 'italic' }]}>{rel}</Text> : null}
+      </Card>
+    </>
+  )
+}
+
+// ── Sub-aba RODA (tabuleiro 13×20 + Oráculo) ────────────────────────────────
+function RodaView({ profile, lang, tl }: any) {
+  const board = useMemo(() => {
+    const g: number[][] = Array.from({ length: 20 }, () => Array(13).fill(0))
+    for (let k = 1; k <= 260; k++) g[sealOf(k) - 1][toneOf(k) - 1] = k
+    return g
+  }, [])
+  const [sel, setSel] = useState<Role>('destiny')
+  const o = profile.oracle
+  const posOf: Record<Role, any> = { destiny: o.destiny, guide: o.guide, analog: o.analog, antipode: o.antipode, occult: o.occult }
+  const selPos = posOf[sel]
+  const roleLabel = (r: Role) => r === 'destiny' ? tl('Destino', 'Destiny', 'Destino', 'Destino') : oracleRole(r as any, lang).title
+
+  return (
+    <>
+      <Card title={tl('Tabuleiro Tzolkin', 'Tzolkin board', 'Tablero Tzolkin', 'Tabellone Tzolkin')}>
+        <Text style={[s.body, { marginBottom: 8 }]}>{tl('260 Kins — 20 selos × 13 tons. Seu Kin em destaque.', '260 Kins — 20 seals × 13 tones. Your Kin highlighted.', '260 Kines — 20 sellos × 13 tonos. Tu Kin destacado.', '260 Kin — 20 sigilli × 13 toni. Il tuo Kin in evidenza.')}</Text>
+        <View>
+          {board.map((row, si) => (
+            <View key={si} style={{ flexDirection: 'row' }}>
+              {row.map((k, ti) => {
+                const hl = k === profile.kin
+                const c = COLOR_LABELS[SEALS[si].color].hex
+                return <View key={ti} style={[s.cell, { backgroundColor: hl ? c : c + '33', borderColor: hl ? '#fff' : 'transparent', borderWidth: hl ? 1.5 : 0 }]} />
+              })}
+            </View>
+          ))}
+        </View>
+      </Card>
+
+      <Card title={tl('Oráculo da Quinta Força', 'Fifth Force Oracle', 'Oraculo de la Quinta Fuerza', 'Oracolo della Quinta Forza')}>
+        <View style={s.oracle}>
+          <OracleNode pos={o.guide} label={roleLabel('guide')} active={sel === 'guide'} onPress={() => setSel('guide')} />
+          <View style={s.oracleRow}>
+            <OracleNode pos={o.antipode} label={roleLabel('antipode')} active={sel === 'antipode'} onPress={() => setSel('antipode')} />
+            <OracleNode pos={o.destiny} label={roleLabel('destiny')} active={sel === 'destiny'} onPress={() => setSel('destiny')} big />
+            <OracleNode pos={o.analog} label={roleLabel('analog')} active={sel === 'analog'} onPress={() => setSel('analog')} />
+          </View>
+          <OracleNode pos={o.occult} label={roleLabel('occult')} active={sel === 'occult'} onPress={() => setSel('occult')} />
+        </View>
+        <View style={s.oracleInfo}>
+          <Text style={s.oracleInfoTitle}>{roleLabel(sel)} — KIN {selPos.kin}</Text>
+          <Text style={s.body}>{getKinDisplayName(selPos.kin, lang)}</Text>
+          {sel !== 'destiny' ? <Text style={[s.body, { marginTop: 6 }]}>{oracleRole(sel as any, lang).text}</Text> : null}
+        </View>
+      </Card>
+    </>
+  )
+}
+
+function OracleNode({ pos, label, active, onPress, big }: any) {
+  const c = COLOR_LABELS[SEALS[pos.seal - 1].color].hex
+  const d = big ? 54 : 46
+  return (
+    <TouchableOpacity style={{ alignItems: 'center' }} activeOpacity={0.8} onPress={onPress}>
+      <View style={{ width: d, height: d, borderRadius: d / 2, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: active ? 2.5 : 1, borderColor: active ? '#fff' : 'rgba(255,255,255,.2)' }}>
+        <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 13 }}>{pos.kin}</Text>
+      </View>
+      <Text style={s.oracleLabel}>{label}</Text>
+    </TouchableOpacity>
+  )
+}
+
+// ── Sub-aba ONDA ─────────────────────────────────────────────────────────────
+function OndaView({ profile, color, lang, tl }: any) {
+  const w = profile.wavespell
+  const ruling = getSealWords(w.rulingSeal, lang)
+  const cells = Array.from({ length: 13 }, (_, i) => w.startKin + i)
+  return (
+    <>
+      <Card title={tl('Onda Encantada', 'Wavespell', 'Onda Encantada', 'Onda Incantata')}>
+        <Text style={s.body}>{tl('Onda do', 'Wavespell of', 'Onda del', 'Onda del')} {ruling.name} — {tl('Kin inicial', 'start Kin', 'Kin inicial', 'Kin iniziale')} {w.startKin}</Text>
+        <Text style={[s.body, { marginTop: 4 }]}>{tl('Sua posição', 'Your position', 'Tu posicion', 'La tua posizione')}: {w.position}/13</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+          {cells.map((k, i) => {
+            const hl = k === profile.kin
+            const c = COLOR_LABELS[SEALS[sealOf(k) - 1].color].hex
+            return (
+              <View key={k} style={{ alignItems: 'center' }}>
+                <View style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: hl ? c : c + '33', alignItems: 'center', justifyContent: 'center', borderWidth: hl ? 1.5 : 0, borderColor: '#fff' }}>
+                  <Text style={{ color: hl ? '#0F0F23' : '#cfcbe6', fontWeight: '800', fontSize: 11 }}>{i + 1}</Text>
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      </Card>
+    </>
+  )
+}
+
+// ── Sub-aba INTERPRETAÇÕES ──────────────────────────────────────────────────
+function InterpView({ profile, lang, tl }: any) {
+  return (
+    <>
+      <Card title={tl('Sua essência (Selo)', 'Your essence (Seal)', 'Tu esencia (Sello)', 'La tua essenza (Sigillo)')}><Text style={s.body}>{readSeal(profile.seal, lang)}</Text></Card>
+      <Card title={tl('Seu Tom Galáctico', 'Your Galactic Tone', 'Tu Tono Galactico', 'Il tuo Tono Galattico')}><Text style={s.body}>{readTone(profile.tone, lang)}</Text></Card>
+      <Card title={tl('Selo + Tom', 'Seal + Tone', 'Sello + Tono', 'Sigillo + Tono')}><Text style={s.body}>{readSynthesis(profile.seal, profile.tone, lang)}</Text></Card>
+      <Card title={familyText(profile.earthFamily, lang).title}><Text style={s.body}>{familyText(profile.earthFamily, lang).text}</Text></Card>
+      <Card title={castleText(profile.castle.key, lang).title}><Text style={s.body}>{castleText(profile.castle.key, lang).text}</Text></Card>
+    </>
+  )
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={s.cardBox}>
+      <Text style={s.cardTitle}>{title}</Text>
+      {children}
+    </View>
+  )
+}
+
+function buildToday(kin: number) { return { kin, seal: sealOf(kin), tone: toneOf(kin) } }
+
+const s = StyleSheet.create({
+  tabs: { flexDirection: 'row', gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
+  tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center' },
+  tabBtnActive: { backgroundColor: 'rgba(245,197,66,.18)', borderWidth: 1, borderColor: '#f5c542' },
+  tabTxt: { color: '#a7a2c9', fontSize: 11.5, fontWeight: '700' },
+  tabTxtActive: { color: '#f5c542' },
+  header: { borderWidth: 1, borderRadius: 16, padding: 18, margin: 12, alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,.03)' },
+  kinNum: { color: '#a7a2c9', fontSize: 13, fontWeight: '800', letterSpacing: 1.5 },
+  kinName: { fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  chipRow: { flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' },
+  chip: { backgroundColor: 'rgba(255,255,255,.07)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+  chipTxt: { color: '#cfcbe6', fontSize: 12, fontWeight: '600' },
+  cardBox: { backgroundColor: 'rgba(255,255,255,.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,.08)', borderRadius: 14, padding: 14, marginHorizontal: 12, marginTop: 10 },
+  cardTitle: { color: '#efedfb', fontSize: 14, fontWeight: '800', marginBottom: 8 },
+  body: { color: '#c9c5e2', fontSize: 13.5, lineHeight: 20 },
+  card: { backgroundColor: 'rgba(255,255,255,.04)', borderRadius: 14, padding: 16, margin: 12 },
+  cardText: { color: '#c9c5e2', fontSize: 14, lineHeight: 20 },
+  loadingWrap: { padding: 40, alignItems: 'center' },
+  disclaimer: { color: '#8a86a8', fontSize: 11, lineHeight: 16, marginHorizontal: 16, marginTop: 16 },
+  cell: { flex: 1, aspectRatio: 1, margin: 0.5, borderRadius: 2 },
+  oracle: { alignItems: 'center', gap: 10, paddingVertical: 8 },
+  oracleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28 },
+  oracleLabel: { color: '#a7a2c9', fontSize: 10, fontWeight: '700', marginTop: 3 },
+  oracleInfo: { marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)', paddingTop: 12 },
+  oracleInfoTitle: { color: '#f5c542', fontSize: 13, fontWeight: '800', marginBottom: 4 },
+})

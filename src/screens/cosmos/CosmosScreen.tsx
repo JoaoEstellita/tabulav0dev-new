@@ -21,6 +21,9 @@ import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvi
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
 import { VedicProfileContent } from './VedicProfileContent'
+import TzolkinProfileContent from './TzolkinProfileContent'
+
+const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0' // default ligado; '0' desliga
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -254,7 +257,7 @@ export default function CosmosScreen() {
   const aWheel = useTourAnchor('cosmos.wheel')
   useTourScroller('Cosmos', useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const [showTop, setShowTop] = useState(false)
-  const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
+  const [mapMode, setMapMode] = useState<'western' | 'vedic' | 'tzolkin'>('western')
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
   const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
   // Retorno Solar (carga sob demanda ao entrar no modo 'solar').
@@ -621,10 +624,17 @@ export default function CosmosScreen() {
           <TouchableOpacity style={[styles.modeBtn, mapMode === 'vedic' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('vedic')}>
             <Text style={[styles.modeBtnText, mapMode === 'vedic' && styles.modeBtnTextActive]}>{tl('Védico', 'Vedic', 'Védico', 'Vedico')}</Text>
           </TouchableOpacity>
+          {TZOLKIN_ENABLED && (
+            <TouchableOpacity style={[styles.modeBtn, mapMode === 'tzolkin' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('tzolkin')}>
+              <Text style={[styles.modeBtnText, mapMode === 'tzolkin' && styles.modeBtnTextActive]}>Tzolkin</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {mapMode === 'vedic' ? (
           <VedicProfileContent transitData={transitData} loading={loading} natalAscDeg={natalAscDeg} />
+        ) : mapMode === 'tzolkin' ? (
+          <TzolkinProfileContent />
         ) : (
           <>
             {/* Sub-toggle: roda natal pura vs bi-roda (trânsitos de agora sobre o natal). */}
