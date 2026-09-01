@@ -39,3 +39,7 @@ firebase-debug.log
 *.tsbuildinfo
 
 .vercel
+
+# Google Play service account (NUNCA commitar)
+play-service-account.json
+*-service-account*.json
