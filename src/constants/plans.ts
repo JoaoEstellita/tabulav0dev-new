@@ -4,6 +4,7 @@ export type PlanId =
   | 'essential_monthly'
   | 'pro_monthly'
   | 'premium_monthly'
+  | 'essential_yearly'
   | 'pro_yearly'
   | 'premium_yearly'
 
@@ -97,6 +98,27 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     ],
   },
   // ─── Anuais (2 meses grátis: paga 10 meses, leva 12) ────────────────────────
+  {
+    id: 'essential_yearly',
+    tier: 'essential',
+    billingPeriod: 'yearly',
+    months: 12,
+    name: 'Essential',
+    price: 199.00, // 10 × 19,90
+    forecastMaxDays: 7,
+    creditsPerMonth: 0,
+    includesGroups: true,
+    includesChatbot: true,
+    requiresWhatsapp: true,
+    features: [
+      'Status diário das 8 áreas da vida',
+      'Mapa natal Ocidental e Védico (Jyotish)',
+      'Acesso a grupos e Rede (match + sinastria)',
+      'Forecast: 7 dias',
+      'Astrólogo IA no WhatsApp — 3/dia',
+      '2 meses grátis no plano anual',
+    ],
+  },
   {
     id: 'pro_yearly',
     tier: 'pro',
