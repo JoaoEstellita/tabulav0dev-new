@@ -1179,13 +1179,13 @@ export default function SettingsScreen() {
   const openSupport = () => {
     Alert.alert(tr('settings.alert.support.title', 'Suporte'), tr('settings.alert.support.body', 'Escolha como falar com a equipe:'), [
       { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
-      { text: tr('settings.alert.support.whatsapp', 'WhatsApp'), onPress: () => Linking.openURL('https://w.app/tabulaestelar') },
+      { text: tr('settings.alert.support.whatsapp', 'WhatsApp'), onPress: () => Linking.openURL('https://wa.me/5522988237163') },
       { text: tr('settings.alert.support.email', 'Email'), onPress: () => Linking.openURL('mailto:contato@tabulaestelar.com.br') },
     ]);
   };
 
   const openFeedback = () => {
-    Linking.openURL('https://w.app/tabulaestelar_sugestao');
+    Linking.openURL('https://wa.me/5522988237163?text=' + encodeURIComponent('Sugestão: '));
   };
 
   const handleToggle = (itemId: string, value: boolean) => {
