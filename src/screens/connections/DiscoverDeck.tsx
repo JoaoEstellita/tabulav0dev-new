@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView, Animated, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView, Animated, Alert, Platform, Switch } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getDeck, getDeckDetail, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters, type WheelPos, type DeckDetail } from '../../services/DiscoveryService'
+import { getDeck, getDeckDetail, swipe, getMyProfile, reportProfile, setDeckVisible, setShareChart, type DeckCard, type DeckFilters, type WheelPos, type DeckDetail } from '../../services/DiscoveryService'
 import { requestConnection } from '../../services/ConnectionsService'
 import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
 import LocationField, { type PickedLocation } from '../../components/LocationField'
@@ -45,6 +45,11 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const [missing, setMissing] = useState<string[]>([])
   const [showAff, setShowAff] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  // Toggles de privacidade no topo do Descobrir (como era antes): aparecer no
+  // baralho + mostrar a roda de sinastria no card.
+  const [inDeck, setInDeck] = useState(true)        // !deckHidden
+  const [wheelOpen, setWheelOpen] = useState(true)  // shareChart
+  const [privBusy, setPrivBusy] = useState<null | 'deck' | 'wheel'>(null)
   const incomplete = missing.length > 0
   const matchAnim = useRef(new Animated.Value(0)).current
 
@@ -58,8 +63,24 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
       if (!p?.gender) miss.push(tl('seu gênero', 'your gender', 'tu genero', 'il tuo genere'))
       if (!p?.seeking) miss.push(tl('quem quer conhecer', 'who you want to meet', 'a quien conocer', 'chi conoscere'))
       setMissing(miss)
+      setInDeck((r as any)?.deckHidden !== true)
+      setWheelOpen((p as any)?.shareChart !== false)
     }).catch(() => {})
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Toggles otimistas — reverte se a chamada falhar.
+  const toggleDeck = async (v: boolean) => {
+    setInDeck(v); setPrivBusy('deck')
+    const r = await setDeckVisible(v).catch(() => ({ ok: false } as any))
+    if (!r.ok) setInDeck(!v)
+    setPrivBusy(null)
+  }
+  const toggleWheel = async (v: boolean) => {
+    setWheelOpen(v); setPrivBusy('wheel')
+    const r = await setShareChart(v).catch(() => ({ ok: false } as any))
+    if (!r.ok) setWheelOpen(!v)
+    setPrivBusy(null)
+  }
 
   useEffect(() => {
     if (matchWith) {
@@ -155,6 +176,19 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
             <Ionicons name="options-outline" size={18} color={C.gold} />
             <Text style={s.filterTx}>{tl('Filtros', 'Filters', 'Filtros', 'Filtri')}</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={s.privRow}>
+        <View style={s.privItem}>
+          <Ionicons name="eye-outline" size={15} color={inDeck ? C.gold : C.dim} />
+          <Text style={s.privTx} numberOfLines={1}>{tl('Visível no Match', 'Visible in Match', 'Visible en Match', 'Visibile nel Match')}</Text>
+          <Switch value={inDeck} disabled={privBusy === 'deck'} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
+        </View>
+        <View style={s.privItem}>
+          <Ionicons name="planet-outline" size={15} color={wheelOpen ? C.gold : C.dim} />
+          <Text style={s.privTx} numberOfLines={1}>{tl('Sinastria visível', 'Synastry visible', 'Sinastria visible', 'Sinastria visibile')}</Text>
+          <Switch value={wheelOpen} disabled={privBusy === 'wheel'} onValueChange={toggleWheel} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
         </View>
       </View>
 
@@ -383,6 +417,9 @@ const s = StyleSheet.create({
   title: { color: C.tx, fontSize: 17, fontWeight: '800' },
   filterBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 18, borderWidth: 1, borderColor: C.line },
   filterTx: { color: C.gold, fontSize: 13, fontWeight: '700' },
+  privRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  privItem: { flex: 1, minWidth: 150, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingLeft: 10, paddingRight: 6, paddingVertical: 5 },
+  privTx: { flex: 1, minWidth: 0, color: C.tx, fontSize: 12.5, fontWeight: '700' },
   incomplete: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(232,184,75,0.12)', borderWidth: 1, borderColor: 'rgba(232,184,75,0.4)', borderRadius: 14, padding: 14, marginBottom: 14 },
   incompleteTx: { flex: 1, color: C.tx, fontSize: 13, fontWeight: '600' },
   cardBox: { backgroundColor: C.card, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: C.magenta, shadowOpacity: 0.25, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
