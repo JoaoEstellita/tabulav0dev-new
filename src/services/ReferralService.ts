@@ -1,10 +1,13 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { backendFetch } from './backend/client'
 
 // Atribuição de parceria (influencer). First-touch: o 1º código capturado vence.
 const REF_KEY = 'tabula_partner_ref'
 
-// Fallback em memória: no app (React Native) não existe localStorage. Como o
-// cadastro + a atribuição acontecem na MESMA sessão, guardar em memória basta.
+// Fallback em memória (web usa localStorage). No app (React Native) não há
+// localStorage; além da memória, persistimos em AsyncStorage para durar entre
+// sessões — o Play Install Referrer captura na instalação, mas o cadastro pode
+// acontecer dias depois, em outra sessão.
 let _memRef: string | null = null
 
 function clean(raw: string | null | undefined): string {
@@ -18,10 +21,23 @@ function writeStore(code: string): void {
   if (!code) return
   if (!_memRef) _memRef = code // first-touch em memória (cobre o app)
   try { if (typeof localStorage !== 'undefined' && !localStorage.getItem(REF_KEY)) localStorage.setItem(REF_KEY, code) } catch { /* noop */ }
+  // Persiste no app (first-touch: não sobrescreve um código já gravado).
+  AsyncStorage.getItem(REF_KEY).then((v) => { if (!v) AsyncStorage.setItem(REF_KEY, code).catch(() => { }) }).catch(() => { })
 }
 function dropStore(): void {
   _memRef = null
   try { if (typeof localStorage !== 'undefined') localStorage.removeItem(REF_KEY) } catch { /* noop */ }
+  AsyncStorage.removeItem(REF_KEY).catch(() => { })
+}
+
+/** Carrega o código persistido (AsyncStorage) para a memória. Chamar no boot do app. */
+export async function hydrateReferral(): Promise<void> {
+  try {
+    if (_memRef) return
+    const v = await AsyncStorage.getItem(REF_KEY)
+    const c = clean(v)
+    if (c) _memRef = c
+  } catch { /* noop */ }
 }
 
 /** Captura `?ref=` (ou `?parceria=`) da URL na 1ª visita — só web. */

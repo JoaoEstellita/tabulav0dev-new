@@ -14,7 +14,8 @@ import {
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
-import { captureReferralFromUrl, attributeReferralIfAny } from "../services/ReferralService"
+import { captureReferralFromUrl, attributeReferralIfAny, hydrateReferral } from "../services/ReferralService"
+import { capturePlayInstallReferrer } from "../services/PlayInstallReferrer"
 import LoadingScreen from "../components/LoadingScreen"
 import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
 import { capturarTokenDoQuiz, consumirTokenDoQuiz } from "../services/claimQuiz"
@@ -194,6 +195,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     captureReferralFromUrl() // parceria: guarda ?ref= da URL antes do login (web)
+    hydrateReferral() // parceria: recarrega código persistido (app, entre sessões)
+    capturePlayInstallReferrer() // parceria: lê o referrer da Play na instalação (Android)
 
     const watchdog = setTimeout(() => {
       if (!loadingRef.current) return
