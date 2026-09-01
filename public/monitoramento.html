@@ -559,6 +559,13 @@
         <div id="users-table" style="overflow-x:auto"></div>
       </div>
 
+      <!-- Parcerias (influencers) -->
+      <div class="card card-full">
+        <div class="card-title">Parcerias · <span style="color:var(--muted)">receita − custo → split</span></div>
+        <button onclick="loadPartners()" style="padding:8px 14px;background:#6d28d9;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">Carregar parcerias</button>
+        <div id="partners-box" style="overflow-x:auto;margin-top:12px"></div>
+      </div>
+
       <!-- Erros 24h -->
       <div class="card">
         <div class="card-title">Erros (últimas 24h)</div>
@@ -607,6 +614,40 @@
       </div>
     `
     renderUsersTable()
+  }
+
+  // ── Parcerias: receita/custo/lucro por parceiro + split ────────────────────
+  async function loadPartners() {
+    const box = document.getElementById('partners-box')
+    box.innerHTML = 'Carregando…'
+    try {
+      const res = await fetch(`${BACKEND}/api/monitoring?partners=1`, { headers: { 'Authorization': `Bearer ${getPassword()}` } })
+      if (!res.ok) { box.innerHTML = 'Erro: HTTP ' + res.status; return }
+      const d = await res.json()
+      const ps = d.parceiros || []
+      if (!ps.length) { box.innerHTML = '<div style="color:var(--muted)">Nenhum parceiro cadastrado ainda.</div>'; return }
+      const m = d.custoModelo || {}
+      box.innerHTML = ps.map(p => `
+        <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <strong>${p.nome} <span style="color:var(--muted);font-weight:400">(${p.code} · ${p.sharePct}%)</span></strong>
+            <span style="color:var(--muted)">${fmtNum(p.clientesAtivos)}/${fmtNum(p.totalClientes)} ativos</span>
+          </div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-variant-numeric:tabular-nums;font-size:13px">
+            <span>Receita: <b>R$ ${p.receitaMesBRL.toFixed(2)}</b></span>
+            <span>Custo: <b>R$ ${p.custoMesBRL.toFixed(2)}</b></span>
+            <span>Lucro: <b style="color:var(--ok)">R$ ${p.lucroMesBRL.toFixed(2)}</b></span>
+            <span>Repasse (${p.sharePct}%): <b style="color:#e879f9">R$ ${p.repasseParceiroBRL.toFixed(2)}</b></span>
+            <span>Nosso: <b>R$ ${p.nossoBRL.toFixed(2)}</b></span>
+          </div>
+          <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">ver ${p.clientes.length} clientes</summary>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
+              <tr style="text-align:left;color:var(--muted)"><th>Cliente</th><th>Plano</th><th>Ativo</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr>
+              ${p.clientes.map(c => `<tr style="border-top:1px solid var(--border)"><td>${c.nome || c.uid}</td><td>${c.plano || '—'}</td><td>${c.ativo ? '✓' : '—'}</td><td>R$ ${c.receitaBRL.toFixed(2)}</td><td>R$ ${c.custoBRL.toFixed(2)}</td><td>R$ ${c.lucroBRL.toFixed(2)}</td></tr>`).join('')}
+            </table>
+          </details>
+        </div>`).join('') + `<div style="color:var(--muted);font-size:11px;margin-top:4px">Custo = IA/API + taxa MP (${((m.mpFeePct || 0) * 100).toFixed(0)}%) + infra R$ ${m.infraPorClienteBRL}/cliente · mês ${d.mes}</div>`
+    } catch (e) { box.innerHTML = 'Erro: ' + e.message }
   }
 
   // ── Tabela de usuários (filtro client-side + ações admin) ──────────────────

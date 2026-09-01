@@ -14,6 +14,7 @@ import {
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
+import { captureReferralFromUrl, attributeReferralIfAny } from "../services/ReferralService"
 import LoadingScreen from "../components/LoadingScreen"
 import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
 import { capturarTokenDoQuiz, consumirTokenDoQuiz } from "../services/claimQuiz"
@@ -192,6 +193,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => { })
     }
 
+    captureReferralFromUrl() // parceria: guarda ?ref= da URL antes do login (web)
+
     const watchdog = setTimeout(() => {
       if (!loadingRef.current) return
       console.warn('Auth loading timeout. Forcing UI to recover.')
@@ -208,6 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (__DEV__) console.log('Aguardando verificacao de dados...')
         syncPublicProfile(user)
         recordUserActivity(user)
+        attributeReferralIfAny(user.uid) // parceria: grava referredBy 1x (se houver ?ref)
         // Verificar imediatamente — Firestore retorna erro se doc não existir, tratado no catch
         setTimeout(async () => {
           try {
