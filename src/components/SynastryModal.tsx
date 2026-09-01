@@ -6,6 +6,15 @@ import { getSynastry, type SynastryResult } from '../services/DiscoveryService'
 import SynastryWheel from './SynastryWheel'
 import AspectGrid, { transitCellId } from './AspectGrid'
 import SynastryAspectDetailModal from './SynastryAspectDetailModal'
+import { useAuth } from '../hooks/useAuth'
+import { db } from '../config/firebase'
+import { doc, getDoc } from 'firebase/firestore'
+import TzolkinMatchView from '../screens/cosmos/TzolkinMatchView'
+import { tzolkinMatchScore } from '../astro/tzolkin'
+
+const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
+// Peso do Tzolkin na "Visão Integrada" exibida (astro continua base). '0' esconde o combinado.
+const TZ_DISPLAY_WEIGHT = Math.max(0, Math.min(1, Number(process.env.EXPO_PUBLIC_TZOLKIN_MATCH_WEIGHT ?? '0.3')))
 
 /**
  * Modal de sinastria com UMA pessoa (conexão). Mesmo componente de roda + grade
@@ -22,12 +31,24 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
   const [data, setData] = useState<SynastryResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [detail, setDetail] = useState<{ mine: string; theirs: string; aspect: string; orb: number } | null>(null)
+  const { user } = useAuth()
+  const [tzDates, setTzDates] = useState<{ a?: string; b?: string }>({})
+  const [showTz, setShowTz] = useState(false)
 
   useEffect(() => {
     if (!visible || !uid) return
     setData(null); setLoading(true)
     getSynastry(uid).then(setData).catch(() => setData(null)).finally(() => setLoading(false))
   }, [visible, uid])
+
+  // Tzolkin Match: busca as datas de nascimento das duas pessoas (aditivo, gated).
+  useEffect(() => {
+    if (!TZOLKIN_ENABLED || !visible || !uid || !user?.uid) { setTzDates({}); setShowTz(false); return }
+    Promise.all([
+      getDoc(doc(db, 'users', user.uid)).then(s => s.data()?.birthDate as string | undefined).catch(() => undefined),
+      getDoc(doc(db, 'users', uid)).then(s => s.data()?.birthDate as string | undefined).catch(() => undefined),
+    ]).then(([a, b]) => setTzDates({ a, b }))
+  }, [visible, uid, user?.uid])
 
   const wheelAspects = (data?.aspects || []).map((a) => ({ mine: a.mine, theirs: a.theirs, labelPt: a.aspect, orb: a.orb }))
   const gridAspects = (data?.aspects || []).map((a) => ({ planet1: CAP[a.mine] || a.mine, planet2: CAP[a.theirs] || a.theirs, type: a.aspect, orb: a.orb }))
@@ -56,6 +77,31 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
                   <Text style={s.scoreLbl}>{tl('afinidade', 'affinity', 'afinidad', 'affinita')}</Text>
                 </View>
               ) : null}
+
+              {TZOLKIN_ENABLED && tzDates.a && tzDates.b ? (() => {
+                const tz = tzolkinMatchScore(tzDates.a!, tzDates.b!)
+                const astro = typeof data.score === 'number' ? Math.round(data.score) : null
+                const combined = (astro != null && TZ_DISPLAY_WEIGHT > 0) ? Math.round(astro * (1 - TZ_DISPLAY_WEIGHT) + tz * TZ_DISPLAY_WEIGHT) : null
+                return (
+                  <View style={{ backgroundColor: 'rgba(139,124,246,.10)', borderWidth: 1, borderColor: 'rgba(139,124,246,.35)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={{ color: '#c9c5e2', fontSize: 13, fontWeight: '700' }}>Tzolkin Match</Text>
+                      <Text style={{ color: '#8b7cf6', fontSize: 20, fontWeight: '900' }}>{tz}%</Text>
+                    </View>
+                    {combined != null ? (
+                      <Text style={{ color: '#a7a2c9', fontSize: 12, marginTop: 4 }}>{tl('Visão integrada', 'Integrated view', 'Vision integrada', 'Visione integrata')}: {combined}% <Text style={{ color: '#6f6a90', fontSize: 11 }}>(astro + Tzolkin)</Text></Text>
+                    ) : null}
+                    <TouchableOpacity onPress={() => setShowTz(v => !v)} style={{ marginTop: 8 }}>
+                      <Text style={{ color: '#8b7cf6', fontSize: 12.5, fontWeight: '700' }}>{showTz ? tl('Ocultar detalhes ▲', 'Hide details ▲', 'Ocultar detalles ▲', 'Nascondi dettagli ▲') : tl('Ver Tzolkin Match ▼', 'See Tzolkin Match ▼', 'Ver Tzolkin Match ▼', 'Vedi Tzolkin Match ▼')}</Text>
+                    </TouchableOpacity>
+                    {showTz ? (
+                      <View style={{ marginTop: 10, height: 540 }}>
+                        <TzolkinMatchView aDateISO={tzDates.a!} bDateISO={tzDates.b!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
+                      </View>
+                    ) : null}
+                  </View>
+                )
+              })() : null}
               {data.myPositions?.length && data.positions?.length ? (
                 <>
                   <Text style={s.sect}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>

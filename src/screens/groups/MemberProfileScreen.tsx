@@ -16,6 +16,9 @@ import { LocalAstrologyService, type LocalTransitData } from '../../services/ast
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { AstroProfileContent } from '../cosmos/AstroProfileScreen'
 import { VedicProfileContent } from '../cosmos/VedicProfileContent'
+import TzolkinProfileContent from '../cosmos/TzolkinProfileContent'
+
+const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import StarLoader from '../../components/StarLoader'
 
@@ -243,6 +246,11 @@ export default function MemberProfileScreen() {
                 ) : null}
                 <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
                 <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
+                {TZOLKIN_ENABLED && chartMeta.birthDate ? (
+                  <View style={{ height: 560, marginTop: 12 }}>
+                    <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
+                  </View>
+                ) : null}
               </>
             )}
           </>
