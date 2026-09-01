@@ -41,6 +41,19 @@ export function readSynthesis(seal: number, tone: number, l: string): string {
   return t[L]
 }
 
+// A Onda Encantada é uma jornada de 13 câmaras — cada posição (tom) faz uma
+// pergunta. Estrutura canônica do Dreamspell.
+const WAVESPELL_Q: Record<TzLang, string[]> = {
+  'pt-BR': ['Qual é o meu propósito?', 'Quais são meus obstáculos?', 'Como posso melhor servir?', 'Qual é a forma da minha ação?', 'Como me fortaleço?', 'Como estendo minha igualdade aos outros?', 'Como sintonizo meu serviço com os outros?', 'Vivo aquilo em que acredito?', 'Como realizo meu propósito?', 'Como aperfeiçoo o que faço?', 'Como solto e libero?', 'Como me dedico a tudo que vive?', 'Como expando minha alegria e meu amor?'],
+  'en-US': ['What is my purpose?', 'What are my obstacles?', 'How can I best serve?', 'What is the form of my action?', 'How do I empower myself?', 'How do I extend my equality to others?', 'How do I attune my service to others?', 'Do I live what I believe?', 'How do I realize my purpose?', 'How do I perfect what I do?', 'How do I let go and release?', 'How do I dedicate myself to all that lives?', 'How do I expand my joy and love?'],
+  'es-ES': ['Cual es mi proposito?', 'Cuales son mis obstaculos?', 'Como puedo servir mejor?', 'Cual es la forma de mi accion?', 'Como me fortalezco?', 'Como extiendo mi igualdad a los demas?', 'Como sintonizo mi servicio con los demas?', 'Vivo lo que creo?', 'Como realizo mi proposito?', 'Como perfecciono lo que hago?', 'Como suelto y libero?', 'Como me dedico a todo lo que vive?', 'Como expando mi alegria y mi amor?'],
+  'it-IT': ['Qual e il mio scopo?', 'Quali sono i miei ostacoli?', 'Come posso servire meglio?', 'Qual e la forma della mia azione?', 'Come mi rafforzo?', 'Come estendo la mia uguaglianza agli altri?', 'Come sintonizzo il mio servizio con gli altri?', 'Vivo cio in cui credo?', 'Come realizzo il mio scopo?', 'Come perfeziono cio che faccio?', 'Come lascio andare e libero?', 'Come mi dedico a tutto cio che vive?', 'Come espando la mia gioia e il mio amore?'],
+}
+/** Pergunta da câmara (posição 1..13) da Onda Encantada. */
+export function wavespellQuestion(position: number, l: string): string {
+  return (WAVESPELL_Q[lang(l)] || WAVESPELL_Q['pt-BR'])[position - 1] || ''
+}
+
 type RoleKey = 'guide' | 'analog' | 'antipode' | 'occult'
 export function oracleRole(key: RoleKey, l: string): { title: string; text: string } {
   const L = lang(l)

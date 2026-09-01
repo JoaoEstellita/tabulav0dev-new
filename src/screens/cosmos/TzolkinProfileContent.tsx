@@ -13,7 +13,7 @@ import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLO
 import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
 import { SEAL_SVG, TONE_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { SvgXml } from 'react-native-svg'
-import { readSeal, readTone, readSynthesis, oracleRole, familyText, castleText, disclaimer, todayRelation } from '../../data/tzolkin/reading'
+import { readSeal, readTone, readSynthesis, oracleRole, familyText, castleText, disclaimer, todayRelation, wavespellQuestion } from '../../data/tzolkin/reading'
 
 type SubTab = 'kin' | 'roda' | 'onda' | 'interp'
 type Role = 'destiny' | 'guide' | 'analog' | 'antipode' | 'occult'
@@ -109,7 +109,10 @@ function KinView({ profile, color, todayKin, lang, tl }: any) {
   return (
     <>
       <View style={[s.header, { borderColor: color.hex }]}>
-        <Glyph seal={profile.seal} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Glyph seal={profile.seal} />
+          <ToneGlyph tone={profile.tone} size={42} />
+        </View>
         <Text style={s.kinNum}>KIN {profile.kin}</Text>
         <Text style={[s.kinName, { color: color.hex }]}>{getKinDisplayName(profile.kin, lang)}</Text>
         <View style={s.chipRow}>
@@ -233,6 +236,10 @@ function OndaView({ profile, lang, tl }: any) {
       </Card>
 
       <Card title={`${tl('Posição', 'Position', 'Posicion', 'Posizione')} ${sel} — ${selTone.name}`}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <ToneGlyph tone={sel} size={34} />
+          <Text style={[s.body, { flex: 1, color: '#f5c542', fontWeight: '700', fontStyle: 'italic' }]}>“{wavespellQuestion(sel, lang)}”</Text>
+        </View>
         <Text style={s.body}>{readTone(sel, lang)}</Text>
         <Text style={[s.body, { marginTop: 8, color: '#cfcbe6' }]}>KIN {selKin} — {getKinDisplayName(selKin, lang)}</Text>
         <Text style={[s.body, { marginTop: 6, fontStyle: 'italic', color: '#a7a2c9' }]}>
