@@ -810,7 +810,7 @@
               <button onclick="userAction('${r.uid}','activate')" style="margin-left:4px;padding:3px 8px;background:var(--ok);color:#04120a;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Ativar</button>
               <button onclick="userAction('${r.uid}','trial')" style="margin-left:4px;padding:3px 8px;background:var(--warn);color:#1a1400;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Trial</button>
               <button onclick="userAction('${r.uid}','deactivate')" style="margin-left:4px;padding:3px 8px;background:#3a2020;color:#ff8a80;border:1px solid #5a2a2a;border-radius:6px;font-size:12px;cursor:pointer">Desativar</button>
-              <button onclick="setReferral('${r.uid}', ${JSON.stringify(r.referredBy || '')})" title="${r.referredBy ? 'Parceria: ' + r.referredBy : 'Sem parceria'}" style="margin-left:4px;padding:3px 8px;background:${r.referredBy ? 'rgba(232,121,249,.18)' : '#241f40'};color:${r.referredBy ? '#e879f9' : 'var(--muted)'};border:1px solid ${r.referredBy ? 'rgba(232,121,249,.4)' : 'var(--border)'};border-radius:6px;font-size:12px;cursor:pointer">${r.referredBy ? '🔗 ' + r.referredBy : '🔗 parceria'}</button>
+              <button onclick="setReferral('${r.uid}', '${r.referredBy || ''}')" title="${r.referredBy ? 'Parceria: ' + r.referredBy : 'Sem parceria'}" style="margin-left:4px;padding:3px 8px;background:${r.referredBy ? 'rgba(232,121,249,.18)' : '#241f40'};color:${r.referredBy ? '#e879f9' : 'var(--muted)'};border:1px solid ${r.referredBy ? 'rgba(232,121,249,.4)' : 'var(--border)'};border-radius:6px;font-size:12px;cursor:pointer">${r.referredBy ? '🔗 ' + r.referredBy : '🔗 parceria'}</button>
             </td>
           </tr>`
         }).join('')}
