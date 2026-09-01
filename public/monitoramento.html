@@ -842,7 +842,13 @@
 
   // Atribui/transfere/remove a parceria de um cliente à mão (ex.: apagou a msg inicial).
   async function setReferral(uid, current) {
-    const code = prompt('Código da parceria deste cliente (vazio = remover):', current || '')
+    // Garante a lista de parceiros pra mostrar como referência no prompt.
+    if (!window.__partnersData) { try { await loadPartners() } catch (e) {} }
+    const ps = (window.__partnersData && window.__partnersData.parceiros) || []
+    const ref = ps.length
+      ? ('\n\nParceiros disponíveis (copie o código):\n' + ps.map(p => '• ' + p.code + '  —  ' + p.nome).join('\n'))
+      : ''
+    const code = prompt('Código da parceria deste cliente (vazio = remover):' + ref, current || '')
     if (code === null) return
     const clean = String(code).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
     try {
