@@ -43,3 +43,6 @@ firebase-debug.log
 # Google Play service account (NUNCA commitar)
 play-service-account.json
 *-service-account*.json
+
+# artefatos de build baixados
+*.aab
