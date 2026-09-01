@@ -45,6 +45,8 @@ function kinFromToneSeal(tone: number, seal: number): number {
   for (let k = 1; k <= 260; k++) if (toneOf(k) === tone && sealOf(k) === seal) return k
   return 0 // impossível: 13 e 20 são coprimos → sempre existe um Kin
 }
+/** Kin único (1..260) com o selo e o tom dados. */
+export function kinBySealTone(seal: number, tone: number): number { return kinFromToneSeal(tone, seal) }
 function pos(kin: number): OraclePosition { return { kin, seal: sealOf(kin), tone: toneOf(kin) } }
 function guideOffset(tone: number): number {
   if (tone === 1 || tone === 6 || tone === 11) return 0
