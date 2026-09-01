@@ -130,6 +130,9 @@ Distinguir erro de cálculo de erro de UI: logar `tzolkin_engine_error` sem dado
 
 ## 13. Testes (Vitest, obrigatórios)
 
+> **Algoritmo validado empiricamente (2026-09-01)** — protótipo em node confirmou TODOS os vetores abaixo antes da implementação: datas→Kin (34/143/137/96), selo/tom (137→17/7, 96→16/5), oráculo completo de 137 e 96, relação 137×96→233, e bordas (dia anterior→33, kin 1/260). As fórmulas da seção 4 são a fonte de verdade.
+
+
 Vetores de referência: `26/07/1987→Kin 34` (Mago Galáctico Branco); `01/01/1990→Kin 143`; `10/04/1989→Kin 137` (Terra Ressonante Vermelha, selo 17, tom 7); `29/05/2003→Kin 96` (Guerreiro Entonado Amarelo, selo 16, tom 5). Bordas: dia anterior à referência, Kin 1, Kin 260, transição 260→1, anos bissextos, 28/02, 29/02 (Hunab Ku), 01/03, datas pré-1987, pós-2100, módulo negativo.
 
 Oráculo (regressão):
