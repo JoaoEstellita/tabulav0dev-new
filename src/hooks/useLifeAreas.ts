@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Platform } from 'react-native'
+import * as Sentry from '@sentry/react-native'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import { useAuth } from './useAuth'
 import TransitService from '../services/prokerala/TransitService'
@@ -426,6 +427,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
       }
     } catch (err) {
       console.error(' Erro ao carregar dados de transito:', err)
+      // Captura o stack real no device — este catch estava silenciando erros do
+      // motor local (Hermes/newArch) e deixando a Home presa em "Mapa em processamento".
+      try { Sentry.captureException(err, { tags: { area: 'useLifeAreas.loadTransitData' } }) } catch { }
       const fallbackAllowed = backendLifeAreasValue && Object.keys(backendLifeAreasValue).length > 0
       if (!fallbackAllowed) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrologicos')

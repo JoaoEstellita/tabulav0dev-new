@@ -36,7 +36,9 @@ function normalizeType(t: string): AspectName | any {
     'semiquadratura': 'semiquadratura',
     'sesquiquadratura': 'sesquiquadratura',
   }
-  const k = t.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase()
+  // ̀-ͯ = combining diacritical marks. NÃO usar /\p{Diacritic}/gu: Unicode
+  // property escapes não funcionam no Hermes (RN) → Perfil "em processamento" no APK.
+  const k = t.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
   return map[k] || t
 }
 
