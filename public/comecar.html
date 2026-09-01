@@ -97,8 +97,12 @@
       else { try { ref = clean(localStorage.getItem(REF_KEY)); } catch (e) {} }
     } catch (e) {}
 
-    // 2) Monta o link do WhatsApp com o marcador de parceria (a IA detecta e atribui).
-    var msg = 'Oi Tábula! ' + (ref ? ('Vim pela parceria ' + ref + ' ') : '') + '✨ Quero conhecer meu mapa astral 🌙';
+    // 2) Monta o link do WhatsApp. Mensagem CURTA e natural: "Vim pela <Nome>" —
+    // a IA reconhece o nome (alias do parceiro) e atribui. `n` = nome amigável.
+    var name = '';
+    try { name = (new URLSearchParams(window.location.search).get('n') || '').trim(); } catch (e) {}
+    var quem = name || ref;
+    var msg = quem ? ('Oi! Vim pela ' + quem + ' 🌙') : 'Oi! Quero conhecer meu mapa astral 🌙';
     document.getElementById('ctaWa').href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
 
     // 3) Link "Criar conta" preserva o ?ref pro app atribuir.
