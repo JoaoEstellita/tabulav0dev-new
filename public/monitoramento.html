@@ -258,6 +258,8 @@
       document.getElementById('last-update').textContent =
         'Atualizado às ' + new Date().toLocaleTimeString('pt-BR')
       renderDashboard(data)
+      // Parcerias: busca fresca no load completo (ou 1ª vez); refresh usa o cache.
+      if (withUsers || !window.__partnersData) loadPartners()
     } catch (err) {
       main.innerHTML = `<div class="error-msg">Erro ao carregar dados: ${err.message}</div>`
     }
@@ -561,8 +563,8 @@
 
       <!-- Parcerias (influencers) -->
       <div class="card card-full">
-        <div class="card-title">Parcerias · <span style="color:var(--muted)">receita − custo → split</span></div>
-        <button onclick="loadPartners()" style="padding:8px 14px;background:#6d28d9;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">Carregar parcerias</button>
+        <div class="card-title">🤝 Parcerias · <span style="color:var(--muted)">clientes · receita − custo → repasse</span></div>
+        <button onclick="loadPartners()" style="padding:6px 12px;background:#2a2550;color:#c9c4ea;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px">↻ Atualizar parcerias</button>
         <div id="partners-box" style="overflow-x:auto;margin-top:12px"></div>
       </div>
 
@@ -614,21 +616,44 @@
       </div>
     `
     renderUsersTable()
+    renderPartners() // re-renderiza parcerias do cache (não re-busca)
   }
 
   // ── Parcerias: receita/custo/lucro por parceiro + split ────────────────────
+  // Fetch só no load completo; renderiza do cache a cada refresh (não sangra leituras).
   async function loadPartners() {
     const box = document.getElementById('partners-box')
-    box.innerHTML = 'Carregando…'
+    if (box) box.innerHTML = 'Carregando…'
     try {
       const res = await fetch(`${BACKEND}/api/monitoring?partners=1`, { headers: { 'Authorization': `Bearer ${getPassword()}` } })
-      if (!res.ok) { box.innerHTML = 'Erro: HTTP ' + res.status; return }
-      const d = await res.json()
+      if (!res.ok) { if (box) box.innerHTML = 'Erro: HTTP ' + res.status; return }
+      window.__partnersData = await res.json()
+      renderPartners()
+    } catch (e) { if (box) box.innerHTML = 'Erro: ' + e.message }
+  }
+
+  function renderPartners() {
+    const box = document.getElementById('partners-box')
+    const d = window.__partnersData
+    if (!box || !d) return
+    {
       const ps = d.parceiros || []
       if (!ps.length) { box.innerHTML = '<div style="color:var(--muted)">Nenhum parceiro cadastrado ainda.</div>'; return }
       const m = d.custoModelo || {}
       const badge = (s) => s === 'pagante' ? '<span style="color:var(--ok)">● Pagante</span>' : s === 'trial' ? '<span style="color:#fbbf24">● Trial</span>' : '<span style="color:var(--muted)">○ Grátis</span>'
-      box.innerHTML = ps.map(p => `
+      // Resumo geral (todos os parceiros)
+      const T = ps.reduce((a, p) => ({
+        clientes: a.clientes + p.totalClientes, pagantes: a.pagantes + p.pagantes,
+        receita: a.receita + p.receitaMesBRL, lucro: a.lucro + p.lucroMesBRL, repasse: a.repasse + p.repasseParceiroBRL,
+      }), { clientes: 0, pagantes: 0, receita: 0, lucro: 0, repasse: 0 })
+      const summary = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Parceiros</div><div style="font-size:22px;font-weight:800">${fmtNum(ps.length)}</div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Clientes (pagantes)</div><div style="font-size:22px;font-weight:800">${fmtNum(T.clientes)} <span style="font-size:13px;color:var(--ok)">(${fmtNum(T.pagantes)})</span></div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Lucro do mês</div><div style="font-size:22px;font-weight:800;color:var(--ok)">R$ ${T.lucro.toFixed(2)}</div></div>
+          <div style="background:rgba(232,121,249,.12);border:1px solid rgba(232,121,249,.4);border-radius:12px;padding:12px"><div style="color:#e879f9;font-size:11px;font-weight:700">A REPASSAR (total)</div><div style="font-size:22px;font-weight:900;color:#e879f9">R$ ${T.repasse.toFixed(2)}</div></div>
+        </div>`
+      box.innerHTML = summary + ps.map(p => `
         <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <strong>${p.nome} <span style="color:var(--muted);font-weight:400">(${p.code} · ${p.sharePct}%)</span></strong>
@@ -649,7 +674,7 @@
             </table>
           </details>
         </div>`).join('') + `<div style="color:var(--muted);font-size:11px;margin-top:4px">Modelo: custo = IA/API (real) + taxa MP ${((m.mpFeePct || 0) * 100).toFixed(0)}% + infra R$ ${m.infraPorClienteBRL}/cliente · mês ${d.mes}. Grátis/trial não geram receita mas contam custo → puxam o lucro pra baixo (o acordo desconta os custos de todos os clientes dela).</div>`
-    } catch (e) { box.innerHTML = 'Erro: ' + e.message }
+    }
   }
 
   // ── Tabela de usuários (filtro client-side + ações admin) ──────────────────
