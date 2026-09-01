@@ -4,13 +4,14 @@
  * Interpretações (leitura curada ×4). Motor puro em astro/tzolkin (sem IA).
  */
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
 import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
+import { SEAL_GLYPHS } from '../../assets/tzolkin/sealGlyphs'
 import { readSeal, readTone, readSynthesis, oracleRole, familyText, castleText, disclaimer, todayRelation } from '../../data/tzolkin/reading'
 
 type SubTab = 'kin' | 'roda' | 'onda' | 'interp'
@@ -67,9 +68,23 @@ export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?:
 // ── Glifo placeholder (círculo com cor + número do selo) ────────────────────
 function Glyph({ seal, size = 56 }: { seal: number; size?: number }) {
   const c = COLOR_LABELS[SEALS[seal - 1].color]
+  const img = SEAL_GLYPHS[seal]
+  if (img) return <Image source={img} style={{ width: size, height: size, borderRadius: 10 }} resizeMode="contain" />
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.hex, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,.25)' }}>
       <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: size * 0.34 }}>{seal}</Text>
+    </View>
+  )
+}
+
+// Selo pequeno para listas (imagem se houver, senão cor + número).
+function MiniSeal({ seal, size = 30, highlight }: { seal: number; size?: number; highlight?: boolean }) {
+  const hex = COLOR_LABELS[SEALS[seal - 1].color].hex
+  const img = SEAL_GLYPHS[seal]
+  if (img) return <Image source={img} style={{ width: size, height: size, borderRadius: 6 }} resizeMode="contain" />
+  return (
+    <View style={{ width: size, height: size, borderRadius: 7, backgroundColor: highlight ? hex : hex + '55', alignItems: 'center', justifyContent: 'center', borderWidth: highlight ? 1.5 : 0, borderColor: '#fff' }}>
+      <Text style={{ color: highlight ? '#0F0F23' : '#e6e3f5', fontWeight: '800', fontSize: size * 0.4 }}>{seal}</Text>
     </View>
   )
 }
@@ -166,28 +181,44 @@ function OracleNode({ pos, label, active, onPress, big }: any) {
 }
 
 // ── Sub-aba ONDA ─────────────────────────────────────────────────────────────
-function OndaView({ profile, color, lang, tl }: any) {
+function OndaView({ profile, lang, tl }: any) {
   const w = profile.wavespell
   const ruling = getSealWords(w.rulingSeal, lang)
-  const cells = Array.from({ length: 13 }, (_, i) => w.startKin + i)
+  const [sel, setSel] = useState<number>(w.position) // posição selecionada (tom 1..13)
+  const selKin = w.startKin + (sel - 1)
+  const selTone = getToneWords(sel, lang)
   return (
     <>
       <Card title={tl('Onda Encantada', 'Wavespell', 'Onda Encantada', 'Onda Incantata')}>
         <Text style={s.body}>{tl('Onda do', 'Wavespell of', 'Onda del', 'Onda del')} {ruling.name} — {tl('Kin inicial', 'start Kin', 'Kin inicial', 'Kin iniziale')} {w.startKin}</Text>
-        <Text style={[s.body, { marginTop: 4 }]}>{tl('Sua posição', 'Your position', 'Tu posicion', 'La tua posizione')}: {w.position}/13</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-          {cells.map((k, i) => {
-            const hl = k === profile.kin
-            const c = COLOR_LABELS[SEALS[sealOf(k) - 1].color].hex
-            return (
-              <View key={k} style={{ alignItems: 'center' }}>
-                <View style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: hl ? c : c + '33', alignItems: 'center', justifyContent: 'center', borderWidth: hl ? 1.5 : 0, borderColor: '#fff' }}>
-                  <Text style={{ color: hl ? '#0F0F23' : '#cfcbe6', fontWeight: '800', fontSize: 11 }}>{i + 1}</Text>
-                </View>
+        <Text style={[s.body, { marginTop: 2, marginBottom: 8 }]}>{tl('Sua posição', 'Your position', 'Tu posicion', 'La tua posizione')}: {w.position}/13 — {tl('toque cada tom para ler', 'tap each tone to read', 'toca cada tono para leer', 'tocca ogni tono per leggere')}</Text>
+        {Array.from({ length: 13 }, (_, i) => {
+          const posNum = i + 1
+          const kin = w.startKin + i
+          const tw = getToneWords(posNum, lang)
+          const sw = getSealWords(sealOf(kin), lang)
+          const isUser = kin === profile.kin
+          const isSel = posNum === sel
+          return (
+            <TouchableOpacity key={posNum} activeOpacity={0.8} onPress={() => setSel(posNum)}
+              style={[s.wRow, isSel && s.wRowSel]}>
+              <View style={s.toneNum}><Text style={s.toneNumTx}>{posNum}</Text></View>
+              <MiniSeal seal={sealOf(kin)} size={30} highlight={isUser} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.wTone} numberOfLines={1}>{tw.name} · {sw.name}</Text>
+                <Text style={s.wKin}>KIN {kin}{isUser ? tl(' · você', ' · you', ' · tu', ' · tu') : ''}</Text>
               </View>
-            )
-          })}
-        </View>
+            </TouchableOpacity>
+          )
+        })}
+      </Card>
+
+      <Card title={`${tl('Posição', 'Position', 'Posicion', 'Posizione')} ${sel} — ${selTone.name}`}>
+        <Text style={s.body}>{readTone(sel, lang)}</Text>
+        <Text style={[s.body, { marginTop: 8, color: '#cfcbe6' }]}>KIN {selKin} — {getKinDisplayName(selKin, lang)}</Text>
+        <Text style={[s.body, { marginTop: 6, fontStyle: 'italic', color: '#a7a2c9' }]}>
+          {tl('Aqui o tom', 'Here the tone', 'Aqui el tono', 'Qui il tono')} {selTone.name} ({selTone.essence}) {tl('atua sobre o selo', 'acts on the seal', 'actua sobre el sello', 'agisce sul sigillo')} {getSealWords(sealOf(selKin), lang).name}.
+        </Text>
       </Card>
     </>
   )
@@ -242,4 +273,10 @@ const s = StyleSheet.create({
   oracleLabel: { color: '#a7a2c9', fontSize: 10, fontWeight: '700', marginTop: 3 },
   oracleInfo: { marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)', paddingTop: 12 },
   oracleInfoTitle: { color: '#f5c542', fontSize: 13, fontWeight: '800', marginBottom: 4 },
+  wRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, paddingHorizontal: 8, borderRadius: 10, marginBottom: 2 },
+  wRowSel: { backgroundColor: 'rgba(139,124,246,.14)', borderWidth: 1, borderColor: 'rgba(139,124,246,.4)' },
+  toneNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' },
+  toneNumTx: { color: '#cfcbe6', fontSize: 12, fontWeight: '800' },
+  wTone: { color: '#efedfb', fontSize: 13, fontWeight: '700' },
+  wKin: { color: '#a7a2c9', fontSize: 11.5, marginTop: 1 },
 })
