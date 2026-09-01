@@ -105,7 +105,15 @@
       "@sentry/react-native",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
-      "expo-build-properties"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ]
     ],
     "web": {
       "favicon": "./assets/favicon.png",
