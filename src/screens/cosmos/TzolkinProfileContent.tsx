@@ -11,7 +11,8 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
 import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
-import { SEAL_GLYPHS } from '../../assets/tzolkin/sealGlyphs'
+import { SEAL_SVG, TONE_SVG } from '../../assets/tzolkin/sealGlyphs'
+import { SvgXml } from 'react-native-svg'
 import { readSeal, readTone, readSynthesis, oracleRole, familyText, castleText, disclaimer, todayRelation } from '../../data/tzolkin/reading'
 
 type SubTab = 'kin' | 'roda' | 'onda' | 'interp'
@@ -68,8 +69,8 @@ export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?:
 // ── Glifo placeholder (círculo com cor + número do selo) ────────────────────
 function Glyph({ seal, size = 56 }: { seal: number; size?: number }) {
   const c = COLOR_LABELS[SEALS[seal - 1].color]
-  const img = SEAL_GLYPHS[seal]
-  if (img) return <Image source={img} style={{ width: size, height: size, borderRadius: 10 }} resizeMode="contain" />
+  const xml = SEAL_SVG[seal]
+  if (xml) return <View style={{ width: size, height: size }}><SvgXml xml={xml} width="100%" height="100%" /></View>
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.hex, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,.25)' }}>
       <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: size * 0.34 }}>{seal}</Text>
@@ -77,16 +78,27 @@ function Glyph({ seal, size = 56 }: { seal: number; size?: number }) {
   )
 }
 
-// Selo pequeno para listas (imagem se houver, senão cor + número).
+// Selo pequeno para listas (glifo SVG se houver, senão cor + número).
 function MiniSeal({ seal, size = 30, highlight }: { seal: number; size?: number; highlight?: boolean }) {
   const hex = COLOR_LABELS[SEALS[seal - 1].color].hex
-  const img = SEAL_GLYPHS[seal]
-  if (img) return <Image source={img} style={{ width: size, height: size, borderRadius: 6 }} resizeMode="contain" />
+  const xml = SEAL_SVG[seal]
+  if (xml) return (
+    <View style={{ width: size, height: size, borderRadius: 6, borderWidth: highlight ? 2 : 0, borderColor: '#fff', overflow: 'hidden' }}>
+      <SvgXml xml={xml} width="100%" height="100%" />
+    </View>
+  )
   return (
     <View style={{ width: size, height: size, borderRadius: 7, backgroundColor: highlight ? hex : hex + '55', alignItems: 'center', justifyContent: 'center', borderWidth: highlight ? 1.5 : 0, borderColor: '#fff' }}>
       <Text style={{ color: highlight ? '#0F0F23' : '#e6e3f5', fontWeight: '800', fontSize: size * 0.4 }}>{seal}</Text>
     </View>
   )
+}
+
+// Glifo do tom (SVG dos pontos/barras) — para a Onda e o cabeçalho.
+function ToneGlyph({ tone, size = 26 }: { tone: number; size?: number }) {
+  const xml = TONE_SVG[tone]
+  if (!xml) return null
+  return <View style={{ width: size, height: size }}><SvgXml xml={xml} width="100%" height="100%" /></View>
 }
 
 // ── Sub-aba KIN ─────────────────────────────────────────────────────────────
@@ -133,18 +145,25 @@ function RodaView({ profile, lang, tl }: any) {
   return (
     <>
       <Card title={tl('Tabuleiro Tzolkin', 'Tzolkin board', 'Tablero Tzolkin', 'Tabellone Tzolkin')}>
-        <Text style={[s.body, { marginBottom: 8 }]}>{tl('260 Kins — 20 selos × 13 tons. Seu Kin em destaque.', '260 Kins — 20 seals × 13 tones. Your Kin highlighted.', '260 Kines — 20 sellos × 13 tonos. Tu Kin destacado.', '260 Kin — 20 sigilli × 13 toni. Il tuo Kin in evidenza.')}</Text>
-        <View>
-          {board.map((row, si) => (
-            <View key={si} style={{ flexDirection: 'row' }}>
-              {row.map((k, ti) => {
-                const hl = k === profile.kin
-                const c = COLOR_LABELS[SEALS[si].color].hex
-                return <View key={ti} style={[s.cell, { backgroundColor: hl ? c : c + '33', borderColor: hl ? '#fff' : 'transparent', borderWidth: hl ? 1.5 : 0 }]} />
-              })}
-            </View>
-          ))}
-        </View>
+        <Text style={[s.body, { marginBottom: 8 }]}>{tl('260 Kins — 20 selos (linhas) × 13 tons (colunas). Seu Kin em destaque.', '260 Kins — 20 seals (rows) × 13 tones (columns). Your Kin highlighted.', '260 Kines — 20 sellos (filas) × 13 tonos (columnas). Tu Kin destacado.', '260 Kin — 20 sigilli (righe) × 13 toni (colonne). Il tuo Kin in evidenza.')}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View>
+            {board.map((row, si) => (
+              <View key={si} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1 }}>
+                <MiniSeal seal={si + 1} size={18} />
+                {row.map((k, ti) => {
+                  const hl = k === profile.kin
+                  const c = COLOR_LABELS[SEALS[si].color].hex
+                  return (
+                    <View key={ti} style={{ width: 26, height: 18, marginLeft: 1, borderRadius: 2, backgroundColor: hl ? c : c + '40', borderWidth: hl ? 1 : 0, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: hl ? '#0F0F23' : 'rgba(230,227,245,.8)', fontSize: 8, fontWeight: hl ? '900' : '600' }}>{k}</Text>
+                    </View>
+                  )
+                })}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
       </Card>
 
       <Card title={tl('Oráculo da Quinta Força', 'Fifth Force Oracle', 'Oraculo de la Quinta Fuerza', 'Oracolo della Quinta Forza')}>
