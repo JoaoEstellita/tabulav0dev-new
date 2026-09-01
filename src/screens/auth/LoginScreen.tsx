@@ -19,6 +19,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
+import { setReferralCode } from "../../services/ReferralService"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import CosmicBackground from "../../components/CosmicBackground"
 
@@ -41,6 +42,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [partnerCode, setPartnerCode] = useState("")
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -151,6 +153,9 @@ export default function LoginScreen() {
       if (isLogin) {
         await signIn(email, password)
       } else {
+        // Parceria (influencer): guarda o código antes do cadastro — a atribuição
+        // roda no onAuthStateChanged (useAuth) logo após criar a conta.
+        if (partnerCode.trim()) setReferralCode(partnerCode)
         await signUp(email, password)
       }
     } catch (error: any) {
@@ -307,6 +312,23 @@ export default function LoginScreen() {
                   onSubmitEditing={handleAuth}
                 />
               </View>
+              )}
+
+              {!isLogin && (
+                <View style={styles.inputContainer}>
+                  <Ionicons name="pricetag" size={20} color="#666" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder={"Código de parceria (opcional)"}
+                    placeholderTextColor="#666"
+                    value={partnerCode}
+                    onChangeText={setPartnerCode}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="go"
+                    onSubmitEditing={handleAuth}
+                  />
+                </View>
               )}
 
               <TouchableOpacity

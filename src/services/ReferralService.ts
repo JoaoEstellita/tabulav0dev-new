@@ -3,16 +3,24 @@ import { backendFetch } from './backend/client'
 // Atribuição de parceria (influencer). First-touch: o 1º código capturado vence.
 const REF_KEY = 'tabula_partner_ref'
 
+// Fallback em memória: no app (React Native) não existe localStorage. Como o
+// cadastro + a atribuição acontecem na MESMA sessão, guardar em memória basta.
+let _memRef: string | null = null
+
 function clean(raw: string | null | undefined): string {
   return String(raw || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40)
 }
 function readStore(): string | null {
-  try { return typeof localStorage !== 'undefined' ? localStorage.getItem(REF_KEY) : null } catch { return null }
+  try { if (typeof localStorage !== 'undefined') { const v = localStorage.getItem(REF_KEY); if (v) return v } } catch { /* noop */ }
+  return _memRef
 }
 function writeStore(code: string): void {
+  if (!code) return
+  if (!_memRef) _memRef = code // first-touch em memória (cobre o app)
   try { if (typeof localStorage !== 'undefined' && !localStorage.getItem(REF_KEY)) localStorage.setItem(REF_KEY, code) } catch { /* noop */ }
 }
 function dropStore(): void {
+  _memRef = null
   try { if (typeof localStorage !== 'undefined') localStorage.removeItem(REF_KEY) } catch { /* noop */ }
 }
 
