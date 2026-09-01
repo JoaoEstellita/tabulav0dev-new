@@ -40,6 +40,9 @@ import HomeCollectiveGrid from './HomeCollectiveGrid'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
+import SubscriptionIntroModal from '../../components/SubscriptionIntroModal'
+import { useSubscription } from '../../hooks/useSubscription'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
@@ -314,6 +317,18 @@ export default function HomeScreen() {
 
   // Trânsito mais intenso do dia para a frase explicativa do score
   const navigation = useNavigation<any>()
+
+  // Upsell pós-cadastro (1×): mostra os benefícios da assinatura no pico de
+  // interesse. Não mostra a quem já assina; "Agora não" fecha e não repete.
+  const { subscription: _subForIntro, loading: _subLoading } = useSubscription()
+  const [showSubIntro, setShowSubIntro] = useState(false)
+  useEffect(() => {
+    if (_subLoading || _subForIntro?.isActive) return
+    let cancelled = false
+    AsyncStorage.getItem('subIntroSeen_v1').then((v) => { if (!cancelled && !v) setShowSubIntro(true) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [_subLoading, _subForIntro])
+  const dismissSubIntro = () => { setShowSubIntro(false); AsyncStorage.setItem('subIntroSeen_v1', '1').catch(() => {}) }
 
   // Headline = trânsito pessoal (trânsito→natal) de maior força. Mesma fonte da tela
   // PersonalTransits, então o texto do card bate com o 1º item da lista que ele abre.
@@ -612,6 +627,12 @@ export default function HomeScreen() {
       />
 
       {/* ?? MODAL DE DETALHES DA \u00C1REA */}
+      <SubscriptionIntroModal
+        visible={showSubIntro}
+        onClose={dismissSubIntro}
+        onSeePlans={() => { dismissSubIntro(); navigation.navigate('Premium', { openTab: 'features' }) }}
+      />
+
       <LifeAreaDetailModal
         visible={modalVisible}
         onClose={() => {
