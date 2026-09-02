@@ -652,6 +652,7 @@
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Clientes (pagantes)</div><div style="font-size:22px;font-weight:800">${fmtNum(T.clientes)} <span style="font-size:13px;color:var(--ok)">(${fmtNum(T.pagantes)})</span></div></div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Lucro do mês</div><div style="font-size:22px;font-weight:800;color:var(--ok)">R$ ${T.lucro.toFixed(2)}</div></div>
           <div style="background:rgba(232,121,249,.12);border:1px solid rgba(232,121,249,.4);border-radius:12px;padding:12px"><div style="color:#e879f9;font-size:11px;font-weight:700">A REPASSAR (total)</div><div style="font-size:22px;font-weight:900;color:#e879f9">R$ ${T.repasse.toFixed(2)}</div></div>
+          <div onclick="backfillTzolkin()" style="cursor:pointer;background:rgba(139,124,246,.12);border:1px solid rgba(139,124,246,.4);border-radius:12px;padding:12px"><div style="color:#8b7cf6;font-size:11px;font-weight:700">🔄 Backfill Tzolkin</div><div id="tzbf" style="font-size:13px;color:var(--muted);margin-top:4px">clique p/ rodar</div></div>
         </div>`
       box.innerHTML = summary + ps.map(p => `
         <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
@@ -816,6 +817,19 @@
         }).join('')}
       </tbody>
     </table>`
+  }
+
+  async function backfillTzolkin() {
+    const el = document.getElementById('tzbf'); if (el) el.textContent = 'rodando...';
+    try {
+      const res = await fetch(`${BACKEND}/api/monitoring-action`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getPassword()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'backfill-tzolkin' }),
+      });
+      const j = await res.json();
+      if (el) el.textContent = j.ok ? `${j.set} preenchidos · ${j.skipped} pulados` : (j.error || 'erro');
+    } catch (e) { if (el) el.textContent = 'falha de rede'; }
   }
 
   async function userAction(uid, action) {
