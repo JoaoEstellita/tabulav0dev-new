@@ -23,6 +23,8 @@ import { SIGN_NAMES_I18N, MOON_SIGN_GLYPH, SIGN_KEYS } from '../../data/moonSign
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
 const VEDIC_ENABLED = process.env.EXPO_PUBLIC_VEDIC_ENABLED !== '0'
+// Nakshatras (27 mansões lunares) na ordem canônica — a barra mostra a nakshatra da Lua.
+const NAK_NAMES = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati']
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 // planetEn (minúsculo) → nome capitalizado que o AspectGrid espera.
@@ -281,16 +283,16 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               const tzM = (TZOLKIN_ENABLED && tzKin && myKin) ? getTzolkinMatchByKins(myKin, tzKin) : null
               const xml = tzKin ? SEAL_SVG[sealOf(tzKin)] : null
               const sealHex = tzKin ? COLOR_LABELS[SEALS[sealOf(tzKin) - 1].color].hex : '#8B7CF6'
-              // Védico (signo solar sideral 0..11) e animal chinês (ramo do ano 0..11).
-              const vSign = (VEDIC_ENABLED && typeof current.vedicSunSign === 'number') ? current.vedicSunSign : null
-              const vName = vSign != null ? (SIGN_NAMES_I18N[lang] || SIGN_NAMES_I18N['pt-BR'])[vSign] : null
-              const vGlyph = vSign != null ? MOON_SIGN_GLYPH[SIGN_KEYS[vSign]] : null
+              // Védico: NAKSHATRA da Lua (não signo). Chinês: animal do ramo do ano.
+              const vNak = (VEDIC_ENABLED && typeof current.vedicNakshatra === 'number') ? current.vedicNakshatra : null
+              const vName = vNak != null ? NAK_NAMES[vNak] : null
               const cAn = (CHINESE_ENABLED && typeof current.chineseAnimal === 'number') ? current.chineseAnimal : null
               const cBr = cAn != null ? BRANCHES[cAn] : null
               const cName = cBr ? (lang === 'es-ES' ? ANIMAL_ESIT[cAn as number].es : lang === 'it-IT' ? ANIMAL_ESIT[cAn as number].it : lang === 'en-US' ? cBr.animalEn : cBr.animalPt) : null
               const cHex = cBr ? ELEMENT_HEX[cBr.element] : '#8B7CF6'
               const hasTz = TZOLKIN_ENABLED && !!tzKin
-              const showBar = hasTz || vSign != null || cAn != null
+              const pct = (v?: number | null) => (v != null ? <Text style={s.cosmicPct}>{Math.round(v)}%</Text> : null)
+              const showBar = hasTz || vNak != null || cAn != null
               return (
                 <>
                   {showBar ? (
@@ -303,25 +305,28 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                               : <View style={[s.cosmicTokFill, { backgroundColor: sealHex }]}><Text style={s.cosmicTokTxt}>{sealOf(tzKin as number)}</Text></View>}
                             <Text style={s.cosmicSys}>Tzolkin</Text>
                             <Text style={s.cosmicVal} numberOfLines={2}>{getKinDisplayName(tzKin as number, lang)}</Text>
+                            {pct(current.tzolkinScore)}
                           </View>
                         ) : null}
-                        {vSign != null ? (
+                        {vNak != null ? (
                           <>
                             {hasTz ? <View style={s.cosmicSep} /> : null}
                             <View style={s.cosmicCell}>
-                              <View style={[s.cosmicTokFill, { backgroundColor: 'rgba(139,124,246,.16)', borderWidth: 1, borderColor: 'rgba(139,124,246,.5)' }]}><Text style={[s.cosmicGlyph, { color: '#b7abff' }]}>{vGlyph}</Text></View>
+                              <View style={[s.cosmicTokFill, { backgroundColor: 'rgba(124,156,246,.16)', borderWidth: 1, borderColor: 'rgba(124,156,246,.5)' }]}><Text style={[s.cosmicGlyph, { color: '#a9c0ff' }]}>☾</Text></View>
                               <Text style={s.cosmicSys}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
                               <Text style={s.cosmicVal} numberOfLines={2}>{vName}</Text>
+                              {pct(current.vedicScore)}
                             </View>
                           </>
                         ) : null}
                         {cAn != null ? (
                           <>
-                            {(hasTz || vSign != null) ? <View style={s.cosmicSep} /> : null}
+                            {(hasTz || vNak != null) ? <View style={s.cosmicSep} /> : null}
                             <View style={s.cosmicCell}>
                               <View style={[s.cosmicTokFill, { backgroundColor: cHex + '26', borderWidth: 1, borderColor: cHex + '80' }]}><Text style={[s.cosmicGlyph, { color: cHex }]}>{cBr?.hanzi}</Text></View>
                               <Text style={s.cosmicSys}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
                               <Text style={s.cosmicVal} numberOfLines={2}>{cName}</Text>
+                              {pct(current.chineseScore)}
                             </View>
                           </>
                         ) : null}
@@ -331,7 +336,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                           {tzM.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
                         </View>
                       ) : null}
-                      <Text style={s.cosmicCap}>{tl('Kin maia · Sol sideral (védico) · animal do ano (chinês)', 'Mayan Kin · sidereal Sun (Vedic) · year animal (Chinese)', 'Kin maya · Sol sideral (vedico) · animal del año (chino)', 'Kin maya · Sole siderale (vedico) · animale dell\'anno (cinese)')}</Text>
+                      <Text style={s.cosmicCap}>{tl('Kin maia · nakshatra da Lua (védico) · animal do ano (chinês) · % = afinidade com você', 'Mayan Kin · Moon nakshatra (Vedic) · year animal (Chinese) · % = affinity with you', 'Kin maya · nakshatra de la Luna (vedico) · animal del año (chino) · % = afinidad contigo', 'Kin maya · nakshatra della Luna (vedico) · animale dell\'anno (cinese) · % = affinita con te')}</Text>
                     </View>
                   ) : null}
                   <View style={s.tierRow}>
@@ -340,7 +345,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                   {(() => {
                     // Breakdown: astro + cada sistema com dado → integrado. Usa os scores do
                     // backend (o que de fato entrou no ranking); Tzolkin cai no do front se faltar.
-                    const parts = [`${tl('astro', 'astro', 'astro', 'astro')} ${Math.round(current.score)}%`]
+                    const parts = [`${tl('Astro', 'Astro', 'Astro', 'Astro')} ${Math.round(current.score)}%`]
                     const tzS = current.tzolkinScore ?? tzM?.scores.overall
                     if (tzS != null) parts.push(`Tzolkin ${Math.round(tzS)}%`)
                     if (current.vedicScore != null) parts.push(`${tl('Védico', 'Vedic', 'Vedico', 'Vedico')} ${Math.round(current.vedicScore)}%`)
@@ -548,6 +553,7 @@ const s = StyleSheet.create({
   cosmicGlyph: { fontSize: 20, fontWeight: '800' },
   cosmicSys: { color: '#8b85b3', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
   cosmicVal: { color: '#efedfb', fontSize: 12.5, fontWeight: '800', textAlign: 'center', marginTop: 2 },
+  cosmicPct: { color: '#c7bdff', fontSize: 13, fontWeight: '900', marginTop: 4 },
   cosmicCap: { color: '#6f6a90', fontSize: 9.5, textAlign: 'center', marginTop: 10, lineHeight: 13 },
   tzPct: { color: '#8b7cf6', fontSize: 20, fontWeight: '900' },
   tzTag: { backgroundColor: 'rgba(139,124,246,.18)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },

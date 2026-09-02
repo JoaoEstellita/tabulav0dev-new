@@ -9,9 +9,7 @@ import SynastryAspectDetailModal from './SynastryAspectDetailModal'
 import { useAuth } from '../hooks/useAuth'
 import { db } from '../config/firebase'
 import { doc, getDoc } from 'firebase/firestore'
-import TzolkinMatchView from '../screens/cosmos/TzolkinMatchView'
-import ChineseMatchView from '../screens/cosmos/ChineseMatchView'
-import VedicMatchView from '../screens/cosmos/VedicMatchView'
+import SynastryTabs from './SynastryTabs'
 import { tzolkinMatchScore } from '../astro/tzolkin'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
@@ -92,8 +90,8 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
               ) : null}
 
               {typeof data.combinedScore === 'number' ? (() => {
-                // Mesma fonte do deck (backend): astro + cada sistema com dado → integrado.
-                const parts = [`${tl('astro', 'astro', 'astro', 'astro')} ${Math.round(data.score || 0)}%`]
+                // Mesma fonte do deck (backend): Astro + cada sistema com dado → integrado.
+                const parts = [`${tl('Astro', 'Astro', 'Astro', 'Astro')} ${Math.round(data.score || 0)}%`]
                 if (data.tzolkinScore != null) parts.push(`Tzolkin ${Math.round(data.tzolkinScore)}%`)
                 if (data.vedicScore != null) parts.push(`${tl('Védico', 'Vedic', 'Vedico', 'Vedico')} ${Math.round(data.vedicScore)}%`)
                 if (data.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(data.chineseScore)}%`)
@@ -102,51 +100,25 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
                 ) : null
               })() : null}
 
-              {TZOLKIN_ENABLED && people.a?.date && people.b?.date ? (
-                <View style={{ backgroundColor: 'rgba(139,124,246,.10)', borderWidth: 1, borderColor: 'rgba(139,124,246,.35)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={{ color: '#c9c5e2', fontSize: 13, fontWeight: '700' }}>Tzolkin Match</Text>
-                    {data.tzolkinScore != null ? <Text style={{ color: '#8b7cf6', fontSize: 20, fontWeight: '900' }}>{Math.round(data.tzolkinScore)}%</Text> : null}
-                  </View>
-                  <View style={{ marginTop: 10, marginHorizontal: -14, marginBottom: -14 }}>
-                    <TzolkinMatchView embedded aDateISO={people.a!.date!} bDateISO={people.b!.date!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
-                  </View>
-                </View>
-              ) : null}
-              {CHINESE_ENABLED && people.a?.date && people.b?.date ? (
-                <View style={{ backgroundColor: 'rgba(228,87,46,.09)', borderWidth: 1, borderColor: 'rgba(228,87,46,.30)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
-                  <Text style={{ color: '#e4572e', fontSize: 13, fontWeight: '800', marginBottom: 8 }}>{tl('Sinastria Chinesa (BaZi)', 'Chinese synastry (BaZi)', 'Sinastria China (BaZi)', 'Sinastria Cinese (BaZi)')}</Text>
-                  <ChineseMatchView embedded aBirth={{ birthDate: people.a.date, birthTime: people.a.time, longitude: people.a.lon }} bBirth={{ birthDate: people.b.date, birthTime: people.b.time, longitude: people.b.lon }} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
-                </View>
-              ) : null}
-              {VEDIC_ENABLED && people.a?.date && people.b?.date && moonOf(data.myPositions) != null && moonOf(data.positions) != null ? (
-                <View style={{ backgroundColor: 'rgba(139,124,246,.09)', borderWidth: 1, borderColor: 'rgba(139,124,246,.30)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
-                  <Text style={{ color: '#8B7CF6', fontSize: 13, fontWeight: '800', marginBottom: 8 }}>{tl('Sinastria Védica (Guna Milan)', 'Vedic synastry (Guna Milan)', 'Sinastria Vedica (Guna Milan)', 'Sinastria Vedica (Guna Milan)')}</Text>
-                  <VedicMatchView embedded aMoonLon={moonOf(data.myPositions)} aBirthDate={people.a.date} bMoonLon={moonOf(data.positions)} bBirthDate={people.b.date} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
-                </View>
-              ) : null}
-              {data.myPositions?.length && data.positions?.length ? (
-                <>
-                  <Text style={s.sect}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
-                  <SynastryWheel outer={data.myPositions} inner={data.positions} aspects={wheelAspects} size={310} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={name || ''} />
-                  <View style={{ marginTop: 14 }}>
-                    <Text style={s.sect}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>
-                    <Text style={s.hint}>{tl('Toque num aspecto para a leitura da dupla', 'Tap an aspect for the pair reading', 'Toca un aspecto para la lectura de la pareja', 'Tocca un aspetto per la lettura della coppia')}</Text>
-                    <AspectGrid
-                      cross
-                      rowPlanets={toGrid(data.myPositions)}
-                      colPlanets={toGrid(data.positions)}
-                      aspects={gridAspects}
-                      onSelectCell={(cellId) => {
-                        const hit = (data.aspects || []).find((a) => transitCellId(CAP[a.mine] || a.mine, a.aspect, CAP[a.theirs] || a.theirs) === cellId)
-                        if (hit) setDetail(hit)
-                      }}
-                    />
-                  </View>
-                </>
-              ) : (
-                <Text style={s.empty}>{tl('Sem aspectos pessoais relevantes.', 'No relevant personal aspects.', 'Sin aspectos personales relevantes.', 'Nessun aspetto personale rilevante.')}</Text>
-              )}
+              {(() => {
+                const astralNode = (data.myPositions?.length && data.positions?.length) ? (
+                  <>
+                    <Text style={s.sect}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
+                    <SynastryWheel outer={data.myPositions} inner={data.positions} aspects={wheelAspects} size={310} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={name || ''} />
+                    <View style={{ marginTop: 14 }}>
+                      <Text style={s.sect}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>
+                      <Text style={s.hint}>{tl('Toque num aspecto para a leitura da dupla', 'Tap an aspect for the pair reading', 'Toca un aspecto para la lectura de la pareja', 'Tocca un aspetto per la lettura della coppia')}</Text>
+                      <AspectGrid cross rowPlanets={toGrid(data.myPositions)} colPlanets={toGrid(data.positions)} aspects={gridAspects}
+                        onSelectCell={(cellId) => { const hit = (data.aspects || []).find((a) => transitCellId(CAP[a.mine] || a.mine, a.aspect, CAP[a.theirs] || a.theirs) === cellId); if (hit) setDetail(hit) }} />
+                    </View>
+                  </>
+                ) : <Text style={s.empty}>{tl('Sem aspectos pessoais relevantes.', 'No relevant personal aspects.', 'Sin aspectos personales relevantes.', 'Nessun aspetto personale rilevante.')}</Text>
+                const both = people.a?.date && people.b?.date
+                const tzolkin = both ? { aDateISO: people.a!.date!, bDateISO: people.b!.date! } : null
+                const chinese = both ? { aBirth: { birthDate: people.a!.date, birthTime: people.a!.time, longitude: people.a!.lon }, bBirth: { birthDate: people.b!.date, birthTime: people.b!.time, longitude: people.b!.lon } } : null
+                const vedic = (both && moonOf(data.myPositions) != null && moonOf(data.positions) != null) ? { aMoonLon: moonOf(data.myPositions), aBirthDate: people.a!.date, bMoonLon: moonOf(data.positions), bBirthDate: people.b!.date } : null
+                return <SynastryTabs aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} astral={astralNode} tzolkin={tzolkin} chinese={chinese} vedic={vedic} />
+              })()}
             </>
           )}
         </ScrollView>

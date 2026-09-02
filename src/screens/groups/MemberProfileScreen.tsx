@@ -21,6 +21,7 @@ import ChineseProfileContent from '../cosmos/ChineseProfileContent'
 import TzolkinMatchView from '../cosmos/TzolkinMatchView'
 import ChineseMatchView from '../cosmos/ChineseMatchView'
 import VedicMatchView from '../cosmos/VedicMatchView'
+import SynastryTabs from '../../components/SynastryTabs'
 import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -291,36 +292,31 @@ export default function MemberProfileScreen() {
                     <ChineseProfileContent birth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} />
                   </View>
                 ) : null}
-                {synAspects && synAspects.length ? (() => {
-                  const sc = synastryScore(synAspects)
+                {(() => {
+                  const first = (member?.displayName || '').split(' ')[0] || undefined
+                  const memberLon = member?.birthData?.coordinates?.longitude
+                  const astralNode = (synAspects && synAspects.length) ? (() => {
+                    const sc = synastryScore(synAspects)
+                    return (
+                      <View>
+                        <Text style={{ color: '#efedfb', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{tl('Compatibilidade', 'Compatibility', 'Compatibilidad', 'Compatibilita')}: {sc.pct}% · {sc.harmonics} {tl('harmônicos', 'harmonics', 'harmonicos', 'armonici')} · {sc.tensions} {tl('tensos', 'tense', 'tensos', 'tesi')}</Text>
+                        {synAspects.slice(0, 8).map((a, i) => (
+                          <Text key={i} style={{ color: '#c9c5e2', fontSize: 13, lineHeight: 19 }}>• {synastryAspectLine(a, language)}</Text>
+                        ))}
+                      </View>
+                    )
+                  })() : null
+                  const tzolkin = (TZOLKIN_ENABLED && chartMeta.birthDate && viewerBirth) ? { aDateISO: viewerBirth, bDateISO: chartMeta.birthDate } : null
+                  const chinese = (CHINESE_ENABLED && chartMeta.birthDate && viewerFull?.birthDate) ? { aBirth: viewerFull, bBirth: { birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: memberLon } } : null
+                  const vedic = (VEDIC_ENABLED && chartMeta.birthDate && viewerFull?.moonLon != null && lrMoonLon != null) ? { aMoonLon: viewerFull.moonLon, aBirthDate: viewerFull.birthDate, bMoonLon: lrMoonLon, bBirthDate: chartMeta.birthDate } : null
+                  if (!astralNode && !tzolkin && !chinese && !vedic) return null
                   return (
-                    <View style={{ marginTop: 16, backgroundColor: 'rgba(255,255,255,.04)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.08)', padding: 14 }}>
-                      <Text style={{ color: '#f5c542', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>{tl('Sinastria astral', 'Astro synastry', 'Sinastria astral', 'Sinastria astrale')}</Text>
-                      <Text style={{ color: '#efedfb', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{tl('Compatibilidade', 'Compatibility', 'Compatibilidad', 'Compatibilita')}: {sc.pct}% · {sc.harmonics} {tl('harmônicos', 'harmonics', 'harmonicos', 'armonici')} · {sc.tensions} {tl('tensos', 'tense', 'tensos', 'tesi')}</Text>
-                      {synAspects.slice(0, 8).map((a, i) => (
-                        <Text key={i} style={{ color: '#c9c5e2', fontSize: 13, lineHeight: 19 }}>• {synastryAspectLine(a, language)}</Text>
-                      ))}
+                    <View style={{ marginTop: 18 }}>
+                      <Text style={{ color: '#f5c542', fontSize: 16, fontWeight: '900', marginBottom: 10, paddingHorizontal: 4 }}>{tl('Sinastria com você', 'Synastry with you', 'Sinastria contigo', 'Sinastria con te')}</Text>
+                      <SynastryTabs aName={tl('Você', 'You', 'Tu', 'Tu')} bName={first} astral={astralNode} tzolkin={tzolkin} chinese={chinese} vedic={vedic} />
                     </View>
                   )
-                })() : null}
-                {TZOLKIN_ENABLED && chartMeta.birthDate && viewerBirth ? (
-                  <View style={{ marginTop: 16 }}>
-                    <Text style={{ color: '#f5c542', fontSize: 15, fontWeight: '800', marginBottom: 6, paddingHorizontal: 12 }}>{tl('Sinastria Tzolkin', 'Tzolkin synastry', 'Sinastria Tzolkin', 'Sinastria Tzolkin')}</Text>
-                    <TzolkinMatchView embedded aDateISO={viewerBirth} bDateISO={chartMeta.birthDate} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
-                  </View>
-                ) : null}
-                {CHINESE_ENABLED && chartMeta.birthDate && viewerFull?.birthDate ? (
-                  <View style={{ marginTop: 16, paddingHorizontal: 12 }}>
-                    <Text style={{ color: '#e4572e', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>{tl('Sinastria Chinesa', 'Chinese synastry', 'Sinastria China', 'Sinastria Cinese')}</Text>
-                    <ChineseMatchView embedded aBirth={viewerFull} bBirth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
-                  </View>
-                ) : null}
-                {VEDIC_ENABLED && chartMeta.birthDate && viewerFull?.moonLon != null && lrMoonLon != null ? (
-                  <View style={{ marginTop: 16, paddingHorizontal: 12 }}>
-                    <Text style={{ color: '#8B7CF6', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>{tl('Sinastria Védica', 'Vedic synastry', 'Sinastria Vedica', 'Sinastria Vedica')}</Text>
-                    <VedicMatchView embedded aMoonLon={viewerFull.moonLon} aBirthDate={viewerFull.birthDate} bMoonLon={lrMoonLon} bBirthDate={chartMeta.birthDate} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
-                  </View>
-                ) : null}
+                })()}
               </>
             )}
           </>

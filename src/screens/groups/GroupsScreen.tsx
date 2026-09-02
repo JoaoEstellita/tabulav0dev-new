@@ -50,6 +50,7 @@ import SynastryWheel from "../../components/SynastryWheel"
 import AspectGrid, { transitCellId } from "../../components/AspectGrid"
 import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModal"
 import SynastryModal from "../../components/SynastryModal"
+import SynastryTabs from "../../components/SynastryTabs"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
@@ -1876,14 +1877,27 @@ export default function GroupsScreen() {
   // Corpo da sinastria (compartilhado pelo Você×membro e pela matriz membro×membro):
   // índice de compatibilidade + aspectos (top-5, ou todos quando expandido, com texto
   // legível) + Guna Milan (total, ou 8 kutas detalhados quando expandido).
+  // birthData ({datetime, coordinates}) → {birthDate, birthTime, longitude} p/ as lentes.
+  const birthOf = (uid?: string) => {
+    const mb = groupMembers.find((m) => m.userId === uid)?.birthData
+    if (!mb?.datetime) return undefined
+    const dt = String(mb.datetime)
+    return { birthDate: dt.slice(0, 10), birthTime: dt.length >= 16 ? dt.slice(11, 16) : undefined, longitude: mb.coordinates?.longitude }
+  }
+  const moonOfChart = (c?: NatalChart) => {
+    const m = (c?.planets || []).find((p) => p.name === 'Moon' || p.name === 'Lua')
+    return typeof m?.longitude === 'number' ? m.longitude : null
+  }
   const renderSynastryBody = (
     key: string,
     aspects: SynastryAspect[],
-    guna?: ResolvedGunaMilan,
-    chartA?: NatalChart,
-    chartB?: NatalChart,
+    guna: ResolvedGunaMilan | undefined,
+    chartA: NatalChart | undefined,
+    chartB: NatalChart | undefined,
     aName?: string,
     bName?: string,
+    aBirth?: { birthDate?: string; birthTime?: string; longitude?: number },
+    bBirth?: { birthDate?: string; birthTime?: string; longitude?: number },
   ) => {
     const expanded = expandedSyn.has(key)
     const score = synastryScore(aspects)
@@ -1953,24 +1967,19 @@ export default function GroupsScreen() {
             </View>
           </View>
         ) : null}
-        {expanded && guna ? (
-          <View style={styles.gunaBox}>
-            {/* Só o resultado (pontos), sem veredito de bom/ruim no sistema védico. */}
-            <Text style={styles.gunaTitle}>
-              {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {guna.total}/36
-            </Text>
-            {expanded ? (
-              <>
-                {guna.kutas.map((k) => (
-                  <View key={`${key}-kuta-${k.key}`} style={styles.gunaKutaRow}>
-                    <Text style={styles.gunaKutaName}>{k.nome}</Text>
-                    <Text style={styles.gunaKutaMeta}>{k.points}/{k.max}{isPt && k.oQueMede ? ` · ${k.oQueMede}` : ''}</Text>
-                  </View>
-                ))}
-              </>
-            ) : null}
-          </View>
-        ) : null}
+        {expanded ? (() => {
+          // Lentes simbólicas em abas: Tzolkin · Chinês · Védico (Guna Milan pelas Luas).
+          const tzolkin = (aBirth?.birthDate && bBirth?.birthDate) ? { aDateISO: aBirth.birthDate, bDateISO: bBirth.birthDate } : null
+          const chinese = (aBirth?.birthDate && bBirth?.birthDate) ? { aBirth, bBirth } : null
+          const mA = moonOfChart(chartA); const mB = moonOfChart(chartB)
+          const vedic = (aBirth?.birthDate && bBirth?.birthDate && mA != null && mB != null) ? { aMoonLon: mA, aBirthDate: aBirth.birthDate, bMoonLon: mB, bBirthDate: bBirth.birthDate } : null
+          if (!tzolkin && !chinese && !vedic) return null
+          return (
+            <View style={{ marginTop: 12 }}>
+              <SynastryTabs aName={aName} bName={bName} tzolkin={tzolkin} chinese={chinese} vedic={vedic} />
+            </View>
+          )
+        })() : null}
         {overlays.length > 0 ? (
           <View style={styles.gunaBox}>
             <Text style={styles.gunaTitle}>
@@ -2438,7 +2447,7 @@ export default function GroupsScreen() {
                           <Text style={styles.synastryMemberName} numberOfLines={1}>
                             {member.displayName}
                           </Text>
-                          {renderSynastryBody(member.userId, aspects, gunaMilanByMember[member.userId], chartByMember[user?.uid || ''], chartByMember[member.userId], tr('groups.synastry.you', 'Você'), member.displayName)}
+                          {renderSynastryBody(member.userId, aspects, gunaMilanByMember[member.userId], chartByMember[user?.uid || ''], chartByMember[member.userId], tr('groups.synastry.you', 'Você'), member.displayName, birthOf(user?.uid), birthOf(member.userId))}
                         </View>
                       )
                     })
@@ -2466,7 +2475,7 @@ export default function GroupsScreen() {
                     <Text style={styles.synastryMemberName} numberOfLines={1}>
                       {`${pair.aName}  ×  ${pair.bName}`}
                     </Text>
-                    {renderSynastryBody(pair.id, pair.aspects, pair.guna, chartByMember[pair.aId], chartByMember[pair.bId], pair.aName, pair.bName)}
+                    {renderSynastryBody(pair.id, pair.aspects, pair.guna, chartByMember[pair.aId], chartByMember[pair.bId], pair.aName, pair.bName, birthOf(pair.aId), birthOf(pair.bId))}
                   </View>
                 ))}
                 <Text style={styles.synastryFootnote}>
