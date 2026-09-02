@@ -10,6 +10,8 @@ import { nakshatraFromTropical } from '../../astro/vedic/nakshatra'
 import { computeGunaMilan } from '../../astro/vedic/gunaMilan'
 import { lensColor } from '../../theme/lenses'
 
+import { UI } from '../../theme/ui'
+
 const VC = lensColor('vedic') // índigo canônico do Védico
 
 const KUTA_LABEL: Record<string, [string, string, string, string]> = {
@@ -87,10 +89,10 @@ const s = StyleSheet.create({
   totalMax: { color: '#8892a4', fontSize: 15, fontWeight: '700' },
   band: { color: '#b9c8ff', fontSize: 12, fontWeight: '700', marginTop: 1 },
   kutaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 7, gap: 8 },
-  kutaLabel: { color: '#b8b3d6', fontSize: 11.5, fontWeight: '600', width: 118 },
+  kutaLabel: { color: '#b8b3d6', fontSize: 12, fontWeight: '600', width: 118 },
   kutaBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.08)', overflow: 'hidden' },
   kutaBarFill: { height: 6, borderRadius: 3 },
-  kutaPts: { color: '#efedfb', fontSize: 11, fontWeight: '800', width: 38, textAlign: 'right' },
+  kutaPts: { color: '#efedfb', fontSize: 12, fontWeight: '800', width: 38, textAlign: 'right' },
   dosha: { color: '#f0a58c', fontSize: 11, marginTop: 10, lineHeight: 15 },
-  disc: { color: '#8892a4', fontSize: 10.5, marginTop: 10, fontStyle: 'italic', lineHeight: 15 },
+  disc: { ...UI.disclaimer, color: '#8892a4', marginTop: 10 },
 })

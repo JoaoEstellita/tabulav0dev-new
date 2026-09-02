@@ -9,6 +9,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getChineseMatch, BRANCHES, type ChineseInput } from '../../astro/chinese'
 import { ELEMENT_HEX, ANIMAL_ESIT } from '../../data/chinese/chineseText'
+import { UI } from '../../theme/ui'
 
 type Birth = { birthDate?: string; birthTime?: string; longitude?: number }
 
@@ -123,5 +124,5 @@ const s = StyleSheet.create({
   barFill: { height: 7, borderRadius: 4 },
   tag: { backgroundColor: 'rgba(228,87,46,.16)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
   tagTx: { color: '#f0a58c', fontSize: 11, fontWeight: '700' },
-  disc: { color: '#8892a4', fontSize: 10.5, marginTop: 12, fontStyle: 'italic', lineHeight: 15 },
+  disc: { ...UI.disclaimer, color: '#8892a4', marginTop: 12 },
 })
