@@ -206,7 +206,7 @@ export default function GroupsScreen() {
   // Sinastria: quais leituras estão expandidas (chave = memberId ou pair.id).
   const [expandedSyn, setExpandedSyn] = useState<Set<string>>(new Set())
   // Sinastria par-a-par a partir da matriz de membros (botão "Sinastria" abre o modal).
-  const [synModal, setSynModal] = useState<{ uid: string; name: string } | null>(null)
+  const [synModal, setSynModal] = useState<{ uid: string; name: string; birth?: any } | null>(null)
   const toggleSyn = useCallback((key: string) => {
     setExpandedSyn((prev) => {
       const next = new Set(prev)
@@ -1934,6 +1934,18 @@ export default function GroupsScreen() {
               </View>
             )
           })}
+        {overlays.length > 0 ? (
+          <View style={styles.gunaBox}>
+            <Text style={styles.gunaTitle}>
+              {tr('groups.synastry.housesTitle', 'Casas — o que um ativa no outro')}
+            </Text>
+            {overlays.map((o, i) => (
+              <Text key={`${key}-ov-${i}`} style={styles.synastryAspectLineText}>
+                {`${translatePlanet(o.planet, language)} (${o.fromName}) → ${tr('groups.synastry.houseWord', 'Casa')} ${o.house}${o.toName ? ` (${o.toName})` : ''}${o.focus ? `: ${o.focus}` : ''}`}
+              </Text>
+            ))}
+          </View>
+        ) : null}
         {expanded && chartA && chartB ? (
           <View style={{ marginTop: 12, alignItems: 'center' }}>
             <Text style={[styles.gunaTitle, { alignSelf: 'flex-start' }]}>{tr('groups.synastry.wheel', 'Roda de sinastria')}</Text>
@@ -1967,18 +1979,6 @@ export default function GroupsScreen() {
             </View>
           )
         })() : null}
-        {overlays.length > 0 ? (
-          <View style={styles.gunaBox}>
-            <Text style={styles.gunaTitle}>
-              {tr('groups.synastry.housesTitle', 'Casas — o que um ativa no outro')}
-            </Text>
-            {overlays.map((o, i) => (
-              <Text key={`${key}-ov-${i}`} style={styles.synastryAspectLineText}>
-                {`${translatePlanet(o.planet, language)} (${o.fromName}) → ${tr('groups.synastry.houseWord', 'Casa')} ${o.house}${o.toName ? ` (${o.toName})` : ''}${o.focus ? `: ${o.focus}` : ''}`}
-              </Text>
-            ))}
-          </View>
-        ) : null}
       </View>
     )
   }
@@ -2283,7 +2283,7 @@ export default function GroupsScreen() {
                           activeOpacity={0.8}
                           accessibilityRole="button"
                           accessibilityLabel={tr('groups.member.synastry', 'Sinastria')}
-                          onPress={() => setSynModal({ uid: member.userId, name: member.displayName || tr('connections.thisPerson', 'esta pessoa') })}
+                          onPress={() => setSynModal({ uid: member.userId, name: member.displayName || tr('connections.thisPerson', 'esta pessoa'), birth: member.birthData })}
                         >
                           <Ionicons name="heart-outline" size={14} color="#FFD700" />
                           <Text style={styles.memberChartBtnText} numberOfLines={1}>
@@ -2519,7 +2519,7 @@ export default function GroupsScreen() {
         </View>
       </Modal>
 
-      <SynastryModal visible={!!synModal} uid={synModal?.uid || null} name={synModal?.name || null} onClose={() => setSynModal(null)} />
+      <SynastryModal visible={!!synModal} uid={synModal?.uid || null} name={synModal?.name || null} targetBirth={synModal?.birth || null} onClose={() => setSynModal(null)} />
 
       <Modal
         visible={showGroupActionsModal}

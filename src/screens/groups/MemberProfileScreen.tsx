@@ -328,10 +328,10 @@ const styles = StyleSheet.create({
   avatarInitial: { color: '#FFD700', fontSize: 20, fontWeight: '700' },
   name: { color: '#F8FAFC', fontSize: 20, fontWeight: '700', flex: 1 },
   modeToggle: {
-    flexDirection: 'row', alignSelf: 'center',
+    flexDirection: 'row', gap: 4,
     backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 22, padding: 3, marginTop: 4, marginBottom: 12,
   },
-  modeBtn: { paddingHorizontal: 22, paddingVertical: 7, borderRadius: 20 },
+  modeBtn: { paddingHorizontal: 15, paddingVertical: 7, borderRadius: 20 },
   modeBtnActive: { backgroundColor: '#FFD700' },
   modeBtnText: { color: '#8892a4', fontSize: 13, fontWeight: '700' },
   modeBtnTextActive: { color: '#1A1A1A' },

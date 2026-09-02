@@ -26,7 +26,7 @@ const TZ_DISPLAY_WEIGHT = Math.max(0, Math.min(1, Number(process.env.EXPO_PUBLIC
 const C = { bg: '#0F0F23', card: '#161728', line: 'rgba(255,255,255,0.12)', gold: '#FFD700', magenta: '#FF4D8D', tx: '#EDEBF7', dim: '#9A9CB8' }
 const CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto' }
 
-export default function SynastryModal({ visible, uid, name, onClose }: { visible: boolean; uid: string | null; name: string | null; onClose: () => void }) {
+export default function SynastryModal({ visible, uid, name, onClose, targetBirth }: { visible: boolean; uid: string | null; name: string | null; onClose: () => void; targetBirth?: { datetime?: string; coordinates?: { longitude?: number } } | null }) {
   const { language } = useAppLanguage()
   const tl = (pt: string, en: string, es: string, it: string) =>
     ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it } as any)[language] || pt
@@ -54,11 +54,17 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
       const time = d?.birthTime || d?.birthData?.birthTime || (dt.length >= 16 ? dt.slice(11, 16) : undefined)
       return { date, time, lon: typeof loc?.longitude === 'number' ? loc.longitude : undefined }
     }
+    // Alvo pode ser perfil GERENCIADO (sem doc users) — nesse caso usa o birthData passado
+    // pelo grupo, senão as lentes ficariam sem data e só sobraria a aba Astral.
+    const dt = String(targetBirth?.datetime || '')
+    const targetPerson: Person | null = dt.length >= 10
+      ? { date: dt.slice(0, 10), time: dt.length >= 16 ? dt.slice(11, 16) : undefined, lon: targetBirth?.coordinates?.longitude }
+      : null
     Promise.all([
       getDoc(doc(db, 'users', user.uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
-      getDoc(doc(db, 'users', uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
-    ]).then(([a, b]) => setPeople({ a, b }))
-  }, [visible, uid, user?.uid])
+      targetPerson ? Promise.resolve(targetPerson) : getDoc(doc(db, 'users', uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
+    ]).then(([a, b]) => setPeople({ a, b: (b?.date ? b : targetPerson) || b }))
+  }, [visible, uid, user?.uid, targetBirth?.datetime])
 
   const moonOf = (pos?: { planetEn: string; longitude: number }[]) => {
     const m = (pos || []).find((p) => p.planetEn === 'moon')

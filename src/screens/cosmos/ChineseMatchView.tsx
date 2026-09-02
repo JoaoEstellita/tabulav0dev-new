@@ -8,7 +8,7 @@ import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getChineseMatch, BRANCHES, type ChineseInput } from '../../astro/chinese'
-import { ELEMENT_HEX } from '../../data/chinese/chineseText'
+import { ELEMENT_HEX, ANIMAL_ESIT } from '../../data/chinese/chineseText'
 
 type Birth = { birthDate?: string; birthTime?: string; longitude?: number }
 
@@ -67,6 +67,7 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
 
   const animalA = BRANCHES[m.a.zodiac.animalBranch]
   const animalB = BRANCHES[m.b.zodiac.animalBranch]
+  const animalNm = (idx: number, br: typeof animalA) => (lang === 'es-ES' ? ANIMAL_ESIT[idx].es : lang === 'it-IT' ? ANIMAL_ESIT[idx].it : lang === 'en-US' ? br.animalEn : br.animalPt)
   const Wrap: any = embedded ? View : ScrollView
   const wrapProps: any = embedded ? {} : { style: { flex: 1 }, contentContainerStyle: { paddingBottom: 32 }, showsVerticalScrollIndicator: false }
 
@@ -75,11 +76,13 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
       <View style={s.head}>
         <View style={s.person}>
           <View style={[s.animalTok, { backgroundColor: ELEMENT_HEX[animalA.element] + '26', borderColor: ELEMENT_HEX[animalA.element] }]}><Text style={[s.hanzi, { color: ELEMENT_HEX[animalA.element] }]}>{animalA.hanzi}</Text></View>
+          <Text style={[s.animalNm, { color: ELEMENT_HEX[animalA.element] }]} numberOfLines={1}>{animalNm(m.a.zodiac.animalBranch, animalA)}</Text>
           {aName ? <Text style={s.pName} numberOfLines={1}>{aName}</Text> : null}
         </View>
         <Text style={s.cross}>×</Text>
         <View style={s.person}>
           <View style={[s.animalTok, { backgroundColor: ELEMENT_HEX[animalB.element] + '26', borderColor: ELEMENT_HEX[animalB.element] }]}><Text style={[s.hanzi, { color: ELEMENT_HEX[animalB.element] }]}>{animalB.hanzi}</Text></View>
+          <Text style={[s.animalNm, { color: ELEMENT_HEX[animalB.element] }]} numberOfLines={1}>{animalNm(m.b.zodiac.animalBranch, animalB)}</Text>
           {bName ? <Text style={s.pName} numberOfLines={1}>{bName}</Text> : null}
         </View>
       </View>
@@ -110,6 +113,7 @@ const s = StyleSheet.create({
   person: { alignItems: 'center', flex: 1 },
   animalTok: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   hanzi: { fontSize: 24, fontWeight: '800' },
+  animalNm: { fontSize: 12.5, fontWeight: '800', marginTop: 4 },
   pName: { color: '#c9c5e2', fontSize: 12, fontWeight: '700', marginTop: 4, maxWidth: 90, textAlign: 'center' },
   cross: { color: '#8892a4', fontSize: 22, fontWeight: '700', paddingHorizontal: 10 },
   rel: { color: '#efedfb', fontSize: 13.5, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
