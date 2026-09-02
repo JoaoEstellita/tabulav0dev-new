@@ -8,6 +8,9 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { nakshatraFromTropical } from '../../astro/vedic/nakshatra'
 import { computeGunaMilan } from '../../astro/vedic/gunaMilan'
+import { lensColor } from '../../theme/lenses'
+
+const VC = lensColor('vedic') // índigo canônico do Védico
 
 const KUTA_LABEL: Record<string, [string, string, string, string]> = {
   varna: ['Varna (trabalho)', 'Varna (work)', 'Varna', 'Varna'],
@@ -61,7 +64,7 @@ export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthD
       {g.kutas.map((k) => (
         <View key={k.key} style={s.kutaRow}>
           <Text style={[s.kutaLabel, k.dosha ? { color: '#e4572e' } : null]} numberOfLines={1}>{L(KUTA_LABEL[k.key] || [k.key, k.key, k.key, k.key])}</Text>
-          <View style={s.kutaBarBg}><View style={[s.kutaBarFill, { width: `${(k.points / k.max) * 100}%`, backgroundColor: k.dosha ? '#e4572e' : '#8B7CF6' }]} /></View>
+          <View style={s.kutaBarBg}><View style={[s.kutaBarFill, { width: `${(k.points / k.max) * 100}%`, backgroundColor: k.dosha ? '#e4572e' : VC }]} /></View>
           <Text style={s.kutaPts}>{k.points % 1 === 0 ? k.points : k.points.toFixed(1)}/{k.max}</Text>
         </View>
       ))}
@@ -78,11 +81,11 @@ export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthD
 const s = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   person: { alignItems: 'center', flex: 1 },
-  nakName: { color: '#b7abff', fontSize: 13, fontWeight: '800', maxWidth: 100, textAlign: 'center' },
+  nakName: { color: '#a9bcff', fontSize: 13, fontWeight: '800', maxWidth: 100, textAlign: 'center' },
   pName: { color: '#c9c5e2', fontSize: 11.5, fontWeight: '700', marginTop: 2, maxWidth: 100, textAlign: 'center' },
-  total: { color: '#8B7CF6', fontSize: 28, fontWeight: '900' },
+  total: { color: '#6c8cff', fontSize: 28, fontWeight: '900' },
   totalMax: { color: '#8892a4', fontSize: 15, fontWeight: '700' },
-  band: { color: '#c7bdff', fontSize: 12, fontWeight: '700', marginTop: 1 },
+  band: { color: '#b9c8ff', fontSize: 12, fontWeight: '700', marginTop: 1 },
   kutaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 7, gap: 8 },
   kutaLabel: { color: '#b8b3d6', fontSize: 11.5, fontWeight: '600', width: 118 },
   kutaBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.08)', overflow: 'hidden' },

@@ -10,6 +10,7 @@ import { useAppLanguage } from '../hooks/useAppLanguage'
 import TzolkinMatchView from '../screens/cosmos/TzolkinMatchView'
 import ChineseMatchView from '../screens/cosmos/ChineseMatchView'
 import VedicMatchView from '../screens/cosmos/VedicMatchView'
+import { lensColor, lensLabel } from '../theme/lenses'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
@@ -34,10 +35,10 @@ export default function SynastryTabs({ aName, bName, astral, tzolkin, chinese, v
 
   const tabs = useMemo(() => {
     const t: { key: string; label: string; color: string }[] = []
-    if (astral) t.push({ key: 'astral', label: tl('Astral', 'Astro', 'Astral', 'Astrale'), color: '#f5c542' })
-    if (TZOLKIN_ENABLED && tzolkin) t.push({ key: 'tzolkin', label: 'Tzolkin', color: '#8b7cf6' })
-    if (CHINESE_ENABLED && chinese) t.push({ key: 'chinese', label: tl('Chinês', 'Chinese', 'Chino', 'Cinese'), color: '#e4572e' })
-    if (VEDIC_ENABLED && vedic) t.push({ key: 'vedic', label: tl('Védico', 'Vedic', 'Vedico', 'Vedico'), color: '#7c9cf6' })
+    if (astral) t.push({ key: 'astral', label: tl('Astral', 'Astro', 'Astral', 'Astrale'), color: lensColor('astro') })
+    if (TZOLKIN_ENABLED && tzolkin) t.push({ key: 'tzolkin', label: lensLabel('tzolkin', lang), color: lensColor('tzolkin') })
+    if (CHINESE_ENABLED && chinese) t.push({ key: 'chinese', label: lensLabel('chinese', lang), color: lensColor('chinese') })
+    if (VEDIC_ENABLED && vedic) t.push({ key: 'vedic', label: lensLabel('vedic', lang), color: lensColor('vedic') })
     return t
   }, [astral, tzolkin, chinese, vedic, lang])
 

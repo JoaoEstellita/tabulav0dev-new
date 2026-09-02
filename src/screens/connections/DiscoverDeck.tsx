@@ -16,6 +16,7 @@ import { getKinDisplayName, sealOf, SEALS, COLOR_LABELS, getTzolkinMatchByKins, 
 import { SvgCss } from 'react-native-svg/css'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { tagLabel } from '../../data/tzolkin/matchText'
+import { LENS } from '../../theme/lenses'
 import { BRANCHES } from '../../astro/chinese'
 import { ELEMENT_HEX, ANIMAL_ESIT } from '../../data/chinese/chineseText'
 import { SIGN_NAMES_I18N, MOON_SIGN_GLYPH, SIGN_KEYS } from '../../data/moonSignMood'
@@ -332,7 +333,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                             <>
                               {hasTz ? <View style={s.cosmicSep} /> : null}
                               <View style={s.cosmicCell}>
-                                <View style={[s.cosmicTokFill, { backgroundColor: 'rgba(124,156,246,.16)', borderWidth: 1, borderColor: 'rgba(124,156,246,.5)' }]}><Text style={[s.cosmicGlyph, { color: '#a9c0ff' }]}>☾</Text></View>
+                                <View style={[s.cosmicTokFill, { backgroundColor: LENS.vedic.soft, borderWidth: 1, borderColor: LENS.vedic.border }]}><Text style={[s.cosmicGlyph, { color: LENS.vedic.color }]}>☾</Text></View>
                                 <Text style={s.cosmicSys}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
                                 <Text style={s.cosmicVal} numberOfLines={2}>{vName}</Text>
                                 {pct(current.vedicScore)}

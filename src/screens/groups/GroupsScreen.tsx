@@ -51,6 +51,7 @@ import AspectGrid, { transitCellId } from "../../components/AspectGrid"
 import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModal"
 import SynastryModal from "../../components/SynastryModal"
 import SynastryTabs from "../../components/SynastryTabs"
+import { affinityBand, affinityLabel } from "../../theme/lenses"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
@@ -1906,7 +1907,7 @@ export default function GroupsScreen() {
         <TouchableOpacity activeOpacity={0.85} onPress={() => toggleSyn(key)}>
           <View style={styles.synastryCompatRow}>
             <Text style={styles.synastryCompatText}>
-              {`${tr('groups.synastry.compat.title', 'Compatibilidade')}: ${tr(`groups.synastry.compat.${score.bandKey}`, score.bandKey)} · ${score.pct}%`}
+              {`${affinityLabel(affinityBand(score.pct), language)} · ${score.pct}%`}
             </Text>
             <Text style={styles.synastryCompatMeta}>
               {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}  ${expanded ? '▴' : '▾'}`}
