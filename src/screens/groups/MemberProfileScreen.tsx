@@ -17,6 +17,7 @@ import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { AstroProfileContent } from '../cosmos/AstroProfileScreen'
 import { VedicProfileContent } from '../cosmos/VedicProfileContent'
 import TzolkinProfileContent from '../cosmos/TzolkinProfileContent'
+import ChineseProfileContent from '../cosmos/ChineseProfileContent'
 import TzolkinMatchView from '../cosmos/TzolkinMatchView'
 import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -25,6 +26,7 @@ import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type Na
 import { synastryScore, synastryAspectLine } from '../../astro/synastryReading'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
+const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import StarLoader from '../../components/StarLoader'
 
@@ -275,6 +277,11 @@ export default function MemberProfileScreen() {
                 {TZOLKIN_ENABLED && chartMeta.birthDate ? (
                   <View style={{ height: 560, marginTop: 12 }}>
                     <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
+                  </View>
+                ) : null}
+                {CHINESE_ENABLED && chartMeta.birthDate ? (
+                  <View style={{ height: 640, marginTop: 12 }}>
+                    <ChineseProfileContent birth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} />
                   </View>
                 ) : null}
                 {synAspects && synAspects.length ? (() => {
