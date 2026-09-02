@@ -10,9 +10,13 @@ import { useAuth } from '../hooks/useAuth'
 import { db } from '../config/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import TzolkinMatchView from '../screens/cosmos/TzolkinMatchView'
+import ChineseMatchView from '../screens/cosmos/ChineseMatchView'
+import VedicMatchView from '../screens/cosmos/VedicMatchView'
 import { tzolkinMatchScore } from '../astro/tzolkin'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
+const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
+const VEDIC_ENABLED = process.env.EXPO_PUBLIC_VEDIC_ENABLED !== '0'
 // Peso do Tzolkin na "Visão Integrada" exibida (astro continua base). '0' esconde o combinado.
 const TZ_DISPLAY_WEIGHT = Math.max(0, Math.min(1, Number(process.env.EXPO_PUBLIC_TZOLKIN_MATCH_WEIGHT ?? '0.3')))
 
@@ -32,8 +36,8 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
   const [loading, setLoading] = useState(false)
   const [detail, setDetail] = useState<{ mine: string; theirs: string; aspect: string; orb: number } | null>(null)
   const { user } = useAuth()
-  const [tzDates, setTzDates] = useState<{ a?: string; b?: string }>({})
-  const [showTz, setShowTz] = useState(false)
+  type Person = { date?: string; time?: string; lon?: number }
+  const [people, setPeople] = useState<{ a?: Person; b?: Person }>({})
 
   useEffect(() => {
     if (!visible || !uid) return
@@ -41,14 +45,23 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
     getSynastry(uid).then(setData).catch(() => setData(null)).finally(() => setLoading(false))
   }, [visible, uid])
 
-  // Tzolkin Match: busca as datas de nascimento das duas pessoas (aditivo, gated).
+  // Sinastrias simbólicas (Tzolkin/Chinês/Védico): nascimento das 2 pessoas (aditivo, gated).
   useEffect(() => {
-    if (!TZOLKIN_ENABLED || !visible || !uid || !user?.uid) { setTzDates({}); setShowTz(false); return }
+    if (!visible || !uid || !user?.uid) { setPeople({}); return }
+    const toPerson = (d: any): Person => {
+      const loc = d?.birthLocation || d?.birthData?.birthLocation || d?.birthData?.coordinates
+      return { date: d?.birthDate, time: d?.birthTime, lon: typeof loc?.longitude === 'number' ? loc.longitude : undefined }
+    }
     Promise.all([
-      getDoc(doc(db, 'users', user.uid)).then(s => s.data()?.birthDate as string | undefined).catch(() => undefined),
-      getDoc(doc(db, 'users', uid)).then(s => s.data()?.birthDate as string | undefined).catch(() => undefined),
-    ]).then(([a, b]) => setTzDates({ a, b }))
+      getDoc(doc(db, 'users', user.uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
+      getDoc(doc(db, 'users', uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
+    ]).then(([a, b]) => setPeople({ a, b }))
   }, [visible, uid, user?.uid])
+
+  const moonOf = (pos?: { planetEn: string; longitude: number }[]) => {
+    const m = (pos || []).find((p) => p.planetEn === 'moon')
+    return typeof m?.longitude === 'number' ? m.longitude : null
+  }
 
   const wheelAspects = (data?.aspects || []).map((a) => ({ mine: a.mine, theirs: a.theirs, labelPt: a.aspect, orb: a.orb }))
   const gridAspects = (data?.aspects || []).map((a) => ({ planet1: CAP[a.mine] || a.mine, planet2: CAP[a.theirs] || a.theirs, type: a.aspect, orb: a.orb }))
@@ -78,8 +91,8 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
                 </View>
               ) : null}
 
-              {TZOLKIN_ENABLED && tzDates.a && tzDates.b ? (() => {
-                const tz = tzolkinMatchScore(tzDates.a!, tzDates.b!)
+              {TZOLKIN_ENABLED && people.a?.date && people.b?.date ? (() => {
+                const tz = tzolkinMatchScore(people.a!.date!, people.b!.date!)
                 const astro = typeof data.score === 'number' ? Math.round(data.score) : null
                 const combined = (astro != null && TZ_DISPLAY_WEIGHT > 0) ? Math.round(astro * (1 - TZ_DISPLAY_WEIGHT) + tz * TZ_DISPLAY_WEIGHT) : null
                 return (
@@ -92,11 +105,23 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
                       <Text style={{ color: '#a7a2c9', fontSize: 12, marginTop: 4 }}>{tl('Visão integrada', 'Integrated view', 'Vision integrada', 'Visione integrata')}: {combined}% <Text style={{ color: '#6f6a90', fontSize: 11 }}>(astro + Tzolkin)</Text></Text>
                     ) : null}
                     <View style={{ marginTop: 10, marginHorizontal: -14, marginBottom: -14 }}>
-                      <TzolkinMatchView embedded aDateISO={tzDates.a!} bDateISO={tzDates.b!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
+                      <TzolkinMatchView embedded aDateISO={people.a!.date!} bDateISO={people.b!.date!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
                     </View>
                   </View>
                 )
               })() : null}
+              {CHINESE_ENABLED && people.a?.date && people.b?.date ? (
+                <View style={{ backgroundColor: 'rgba(228,87,46,.09)', borderWidth: 1, borderColor: 'rgba(228,87,46,.30)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                  <Text style={{ color: '#e4572e', fontSize: 13, fontWeight: '800', marginBottom: 8 }}>{tl('Sinastria Chinesa (BaZi)', 'Chinese synastry (BaZi)', 'Sinastria China (BaZi)', 'Sinastria Cinese (BaZi)')}</Text>
+                  <ChineseMatchView embedded aBirth={{ birthDate: people.a.date, birthTime: people.a.time, longitude: people.a.lon }} bBirth={{ birthDate: people.b.date, birthTime: people.b.time, longitude: people.b.lon }} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
+                </View>
+              ) : null}
+              {VEDIC_ENABLED && people.a?.date && people.b?.date && moonOf(data.myPositions) != null && moonOf(data.positions) != null ? (
+                <View style={{ backgroundColor: 'rgba(139,124,246,.09)', borderWidth: 1, borderColor: 'rgba(139,124,246,.30)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                  <Text style={{ color: '#8B7CF6', fontSize: 13, fontWeight: '800', marginBottom: 8 }}>{tl('Sinastria Védica (Guna Milan)', 'Vedic synastry (Guna Milan)', 'Sinastria Vedica (Guna Milan)', 'Sinastria Vedica (Guna Milan)')}</Text>
+                  <VedicMatchView embedded aMoonLon={moonOf(data.myPositions)} aBirthDate={people.a.date} bMoonLon={moonOf(data.positions)} bBirthDate={people.b.date} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
+                </View>
+              ) : null}
               {data.myPositions?.length && data.positions?.length ? (
                 <>
                   <Text style={s.sect}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>

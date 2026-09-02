@@ -49,6 +49,7 @@ import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type Na
 import SynastryWheel from "../../components/SynastryWheel"
 import AspectGrid, { transitCellId } from "../../components/AspectGrid"
 import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModal"
+import SynastryModal from "../../components/SynastryModal"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
@@ -204,6 +205,7 @@ export default function GroupsScreen() {
   // Sinastria: quais leituras estão expandidas (chave = memberId ou pair.id).
   const [expandedSyn, setExpandedSyn] = useState<Set<string>>(new Set())
   // Conexões (Fase 1): pedido de conexão a partir da matriz de membros.
+  const [synModal, setSynModal] = useState<{ uid: string; name: string } | null>(null)
   const [connectTarget, setConnectTarget] = useState<{ userId: string; name: string } | null>(null)
   const [connectShareWa, setConnectShareWa] = useState(false)
   const [connectSentIds, setConnectSentIds] = useState<Set<string>>(new Set())
@@ -2279,6 +2281,20 @@ export default function GroupsScreen() {
                           </Text>
                         </TouchableOpacity>
                       ) : null}
+                      {!member.isManaged && member.userId !== user?.uid && (member as any).shareSynastry !== false ? (
+                        <TouchableOpacity
+                          style={styles.memberChartBtn}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('groups.member.synastry', 'Sinastria')}
+                          onPress={() => setSynModal({ uid: member.userId, name: member.displayName || tr('connections.thisPerson', 'esta pessoa') })}
+                        >
+                          <Ionicons name="heart-outline" size={14} color="#FFD700" />
+                          <Text style={styles.memberChartBtnText} numberOfLines={1}>
+                            {tr('groups.member.synastry', 'Sinastria')}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
                       {!member.isManaged && member.userId !== user?.uid ? (
                         <TouchableOpacity
                           style={styles.memberChartBtn}
@@ -2521,6 +2537,8 @@ export default function GroupsScreen() {
           </View>
         </View>
       </Modal>
+
+      <SynastryModal visible={!!synModal} uid={synModal?.uid || null} name={synModal?.name || null} onClose={() => setSynModal(null)} />
 
       <Modal visible={!!connectTarget} transparent animationType="fade" onRequestClose={() => setConnectTarget(null)}>
         <View style={styles.modalOverlay}>

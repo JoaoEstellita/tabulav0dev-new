@@ -19,6 +19,8 @@ import { VedicProfileContent } from '../cosmos/VedicProfileContent'
 import TzolkinProfileContent from '../cosmos/TzolkinProfileContent'
 import ChineseProfileContent from '../cosmos/ChineseProfileContent'
 import TzolkinMatchView from '../cosmos/TzolkinMatchView'
+import ChineseMatchView from '../cosmos/ChineseMatchView'
+import VedicMatchView from '../cosmos/VedicMatchView'
 import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -27,6 +29,7 @@ import { synastryScore, synastryAspectLine } from '../../astro/synastryReading'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
+const VEDIC_ENABLED = process.env.EXPO_PUBLIC_VEDIC_ENABLED !== '0'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import StarLoader from '../../components/StarLoader'
 
@@ -43,6 +46,8 @@ export default function MemberProfileScreen() {
   const member = (route.params as any)?.member as SlimMember | undefined
   const { user } = useAuth()
   const [viewerBirth, setViewerBirth] = useState<string | undefined>()
+  // Nascimento COMPLETO do viewer (p/ sinastrias Chinês/Védico): data+hora+long.+Lua tropical.
+  const [viewerFull, setViewerFull] = useState<{ birthDate?: string; birthTime?: string; longitude?: number; moonLon?: number } | null>(null)
   const [synAspects, setSynAspects] = useState<SynastryAspect[] | null>(null)
   useEffect(() => {
     if (!user?.uid) return
@@ -58,6 +63,8 @@ export default function MemberProfileScreen() {
         const [mine, theirs] = await Promise.all([computeNatalChart(mineBirth), computeNatalChart(mb)])
         if (mine && theirs) setSynAspects(computeSynastryAspects(mine.planets, theirs.planets, 20))
         else setSynAspects(null)
+        const myMoon = (mine?.planets || []).find((p: any) => p.name === 'Moon' || p.name === 'Lua')
+        setViewerFull({ birthDate: d.birthDate, birthTime: d.birthTime, longitude: loc.longitude, moonLon: typeof myMoon?.longitude === 'number' ? myMoon.longitude : undefined })
       } catch { setSynAspects(null) }
     }).catch(() => { })
   }, [user?.uid, member?.birthData?.datetime])
@@ -300,6 +307,18 @@ export default function MemberProfileScreen() {
                   <View style={{ marginTop: 16 }}>
                     <Text style={{ color: '#f5c542', fontSize: 15, fontWeight: '800', marginBottom: 6, paddingHorizontal: 12 }}>{tl('Sinastria Tzolkin', 'Tzolkin synastry', 'Sinastria Tzolkin', 'Sinastria Tzolkin')}</Text>
                     <TzolkinMatchView embedded aDateISO={viewerBirth} bDateISO={chartMeta.birthDate} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
+                  </View>
+                ) : null}
+                {CHINESE_ENABLED && chartMeta.birthDate && viewerFull?.birthDate ? (
+                  <View style={{ marginTop: 16, paddingHorizontal: 12 }}>
+                    <Text style={{ color: '#e4572e', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>{tl('Sinastria Chinesa', 'Chinese synastry', 'Sinastria China', 'Sinastria Cinese')}</Text>
+                    <ChineseMatchView embedded aBirth={viewerFull} bBirth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
+                  </View>
+                ) : null}
+                {VEDIC_ENABLED && chartMeta.birthDate && viewerFull?.moonLon != null && lrMoonLon != null ? (
+                  <View style={{ marginTop: 16, paddingHorizontal: 12 }}>
+                    <Text style={{ color: '#8B7CF6', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>{tl('Sinastria Védica', 'Vedic synastry', 'Sinastria Vedica', 'Sinastria Vedica')}</Text>
+                    <VedicMatchView embedded aMoonLon={viewerFull.moonLon} aBirthDate={viewerFull.birthDate} bMoonLon={lrMoonLon} bBirthDate={chartMeta.birthDate} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
                   </View>
                 ) : null}
               </>

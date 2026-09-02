@@ -1,0 +1,93 @@
+/**
+ * Sinastria védica (Guna Milan / Ashtakoot, 36 pontos) entre 2 pessoas. Recebe a
+ * longitude TROPICAL da Lua + a data de nascimento de cada um (a nakshatra vem da Lua
+ * sideral, Lahiri por data). Motor clássico determinístico. Embedded flui sem scroll.
+ */
+import React, { useMemo } from 'react'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { nakshatraFromTropical } from '../../astro/vedic/nakshatra'
+import { computeGunaMilan } from '../../astro/vedic/gunaMilan'
+
+const KUTA_LABEL: Record<string, [string, string, string, string]> = {
+  varna: ['Varna (trabalho)', 'Varna (work)', 'Varna', 'Varna'],
+  vashya: ['Vashya (atração)', 'Vashya (attraction)', 'Vashya', 'Vashya'],
+  tara: ['Tara (destino)', 'Tara (destiny)', 'Tara', 'Tara'],
+  yoni: ['Yoni (intimidade)', 'Yoni (intimacy)', 'Yoni', 'Yoni'],
+  graha_maitri: ['Graha Maitri (mente)', 'Graha Maitri (mind)', 'Graha Maitri', 'Graha Maitri'],
+  gana: ['Gana (temperamento)', 'Gana (temperament)', 'Gana', 'Gana'],
+  bhakoot: ['Bhakoot (amor)', 'Bhakoot (love)', 'Bhakoot', 'Bhakoot'],
+  nadi: ['Nadi (saúde/genes)', 'Nadi (health)', 'Nadi', 'Nadi'],
+}
+
+export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthDate, aName, bName, embedded }: { aMoonLon?: number | null; aBirthDate?: string; bMoonLon?: number | null; bBirthDate?: string; aName?: string; bName?: string; embedded?: boolean }) {
+  const { language } = useAppLanguage()
+  const lang = language || 'pt-BR'
+  const tl = (pt: string, en: string, es: string, it: string) => (lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt)
+  const L = (arr: [string, string, string, string]) => (lang === 'en-US' ? arr[1] : lang === 'es-ES' ? arr[2] : lang === 'it-IT' ? arr[3] : arr[0])
+
+  const res = useMemo(() => {
+    if (aMoonLon == null || bMoonLon == null || !aBirthDate || !bBirthDate) return null
+    const na = nakshatraFromTropical(aMoonLon, new Date(`${aBirthDate.slice(0, 10)}T12:00:00Z`))
+    const nb = nakshatraFromTropical(bMoonLon, new Date(`${bBirthDate.slice(0, 10)}T12:00:00Z`))
+    return { g: computeGunaMilan(na, nb), na, nb }
+  }, [aMoonLon, bMoonLon, aBirthDate, bBirthDate])
+
+  if (!res) return null
+  const { g, na, nb } = res
+  const pct = Math.round((g.total / 36) * 100)
+  const bandLabel = ({ baixo: tl('baixa', 'low', 'baja', 'bassa'), medio: tl('média', 'medium', 'media', 'media'), bom: tl('boa', 'good', 'buena', 'buona'), excelente: tl('excelente', 'excellent', 'excelente', 'eccellente') } as any)[g.band]
+
+  const Wrap: any = embedded ? View : ScrollView
+  const wrapProps: any = embedded ? {} : { style: { flex: 1 }, contentContainerStyle: { paddingBottom: 32 }, showsVerticalScrollIndicator: false }
+
+  return (
+    <Wrap {...wrapProps}>
+      <View style={s.head}>
+        <View style={s.person}>
+          <Text style={s.nakName} numberOfLines={1}>{na.nakshatra.name}</Text>
+          {aName ? <Text style={s.pName} numberOfLines={1}>{aName}</Text> : null}
+        </View>
+        <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
+          <Text style={s.total}>{g.total}<Text style={s.totalMax}>/36</Text></Text>
+          <Text style={s.band}>{pct}% · {bandLabel}</Text>
+        </View>
+        <View style={s.person}>
+          <Text style={s.nakName} numberOfLines={1}>{nb.nakshatra.name}</Text>
+          {bName ? <Text style={s.pName} numberOfLines={1}>{bName}</Text> : null}
+        </View>
+      </View>
+
+      {g.kutas.map((k) => (
+        <View key={k.key} style={s.kutaRow}>
+          <Text style={[s.kutaLabel, k.dosha ? { color: '#e4572e' } : null]} numberOfLines={1}>{L(KUTA_LABEL[k.key] || [k.key, k.key, k.key, k.key])}</Text>
+          <View style={s.kutaBarBg}><View style={[s.kutaBarFill, { width: `${(k.points / k.max) * 100}%`, backgroundColor: k.dosha ? '#e4572e' : '#8B7CF6' }]} /></View>
+          <Text style={s.kutaPts}>{k.points % 1 === 0 ? k.points : k.points.toFixed(1)}/{k.max}</Text>
+        </View>
+      ))}
+
+      {(g.hasNadiDosha || g.hasBhakootDosha) ? (
+        <Text style={s.dosha}>⚠️ {[g.hasNadiDosha ? 'Nadi' : null, g.hasBhakootDosha ? 'Bhakoot' : null].filter(Boolean).join(' · ')} {tl('dosha — ponto de atenção tradicional (mitigável).', 'dosha — traditional caution (mitigable).', 'dosha — atencion tradicional.', 'dosha — attenzione tradizionale.')}</Text>
+      ) : null}
+
+      <Text style={s.disc}>{tl('Guna Milan clássico (Ashtakoot) sobre a nakshatra da Lua sideral.', 'Classical Guna Milan (Ashtakoot) over the sidereal Moon nakshatra.', 'Guna Milan clasico sobre la nakshatra de la Luna sideral.', 'Guna Milan classico sulla nakshatra della Luna siderale.')}</Text>
+    </Wrap>
+  )
+}
+
+const s = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  person: { alignItems: 'center', flex: 1 },
+  nakName: { color: '#b7abff', fontSize: 13, fontWeight: '800', maxWidth: 100, textAlign: 'center' },
+  pName: { color: '#c9c5e2', fontSize: 11.5, fontWeight: '700', marginTop: 2, maxWidth: 100, textAlign: 'center' },
+  total: { color: '#8B7CF6', fontSize: 28, fontWeight: '900' },
+  totalMax: { color: '#8892a4', fontSize: 15, fontWeight: '700' },
+  band: { color: '#c7bdff', fontSize: 12, fontWeight: '700', marginTop: 1 },
+  kutaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 7, gap: 8 },
+  kutaLabel: { color: '#b8b3d6', fontSize: 11.5, fontWeight: '600', width: 118 },
+  kutaBarBg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.08)', overflow: 'hidden' },
+  kutaBarFill: { height: 6, borderRadius: 3 },
+  kutaPts: { color: '#efedfb', fontSize: 11, fontWeight: '800', width: 38, textAlign: 'right' },
+  dosha: { color: '#f0a58c', fontSize: 11, marginTop: 10, lineHeight: 15 },
+  disc: { color: '#8892a4', fontSize: 10.5, marginTop: 10, fontStyle: 'italic', lineHeight: 15 },
+})
