@@ -92,20 +92,30 @@ export function useTourScroller(tab: TourTab, scrollTo: (y: number) => void) {
 
 /** Tour da ABA: dispara no 1º foco (uma vez) e devolve openTour para o botão "?". */
 export function useTabTour(storageKey: string, tab: TourTab, buildSteps: () => TourStep[]) {
-  const { start } = useTourControls()
+  const { start, anchors } = useTourControls()
   const buildRef = useRef(buildSteps)
   buildRef.current = buildSteps
   const openTour = useCallback(() => start(buildRef.current(), tab), [start, tab])
   useFocusEffect(useCallback(() => {
     let alive = true
-    const timer = setTimeout(() => {
+    let tries = 0
+    let timer: ReturnType<typeof setTimeout>
+    // Espera a 1ª âncora ESTAR MEDIDA (onLayout) antes de abrir — senão o holofote
+    // dispara sobre um layout que ainda não existe e fica fora do lugar.
+    const attempt = () => {
+      if (!alive) return
       AsyncStorage.getItem(storageKey).then((v) => {
         if (!alive || v) return
-        AsyncStorage.setItem(storageKey, '1').catch(() => {})
-        if (alive) start(buildRef.current(), tab)
-      }).catch(() => {})
-    }, 800)
+        const steps = buildRef.current()
+        const firstId = steps[0]?.id
+        const ready = !firstId || !!anchors.current[firstId]
+        if (!ready && tries < 24) { tries++; timer = setTimeout(attempt, 250); return } // até ~6s
+        AsyncStorage.setItem(storageKey, '1').catch(() => { })
+        if (alive) start(steps, tab)
+      }).catch(() => { })
+    }
+    timer = setTimeout(attempt, 600)
     return () => { alive = false; clearTimeout(timer) }
-  }, [storageKey, tab, start]))
+  }, [storageKey, tab, start, anchors]))
   return { openTour }
 }
