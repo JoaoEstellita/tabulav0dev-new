@@ -1,7 +1,7 @@
 // Tzolkin Match — camada de relação entre 2 Kins. Motor puro, determinístico.
 // TzolkinMatchScore é um MODELO DO APP construído sobre relações Dreamspell —
 // não é "porcentagem maia" nem probabilidade. Antípoda = desafio/fortalecimento.
-import { buildProfile, kinBySealTone, getEarthFamily } from './engine'
+import { buildProfile, profileFromKin, kinBySealTone, getEarthFamily } from './engine'
 import type { TzolkinProfile } from './types'
 
 export type RelationKey = 'same-kin' | 'same-seal' | 'same-tone' | 'guide' | 'analog' | 'antipode' | 'occult'
@@ -116,15 +116,26 @@ function tagsOf(s: TzolkinMatchScores, aToB: RelationKey[], bToA: RelationKey[])
   return t
 }
 
-export function getTzolkinMatch(isoA: string, isoB: string): TzolkinMatch {
-  const a = buildProfile(isoA), b = buildProfile(isoB)
+function matchProfiles(a: TzolkinProfile, b: TzolkinProfile): TzolkinMatch {
   const aToB = directRelations(a, b), bToA = directRelations(b, a)
   const conns = crossConnections(a, b)
   const scores = scoreOf(a, b, aToB, bToA, conns)
   return { a, b, directRelations: { aToB, bToA }, crossConnections: conns, relationshipKin: relationshipKin(a, b), scores, tags: tagsOf(scores, aToB, bToA) }
 }
 
+export function getTzolkinMatch(isoA: string, isoB: string): TzolkinMatch {
+  return matchProfiles(buildProfile(isoA), buildProfile(isoB))
+}
+
+/** Match a partir dos Kins (quando não temos as datas — ex.: deck do Match). */
+export function getTzolkinMatchByKins(kinA: number, kinB: number): TzolkinMatch {
+  return matchProfiles(profileFromKin(kinA), profileFromKin(kinB))
+}
+
 // Score 0..100 só (para o combinedScore do ranking, frontend ou backend).
 export function tzolkinMatchScore(isoA: string, isoB: string): number {
   return getTzolkinMatch(isoA, isoB).scores.overall
+}
+export function tzolkinMatchScoreByKins(kinA: number, kinB: number): number {
+  return getTzolkinMatchByKins(kinA, kinB).scores.overall
 }

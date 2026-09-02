@@ -1,8 +1,8 @@
 export * from './types'
 export { TONES, SEALS, COLOR_LABELS } from './constants'
 export {
-  calculateKin, kinOfDate, buildProfile, getOracle, getWavespell, getCastle,
-  getEarthFamily, getKinDisplayName, sealOf, toneOf, colorIndexOf, mod, kinBySealTone,
+  calculateKin, kinOfDate, buildProfile, profileFromKin, getOracle, getWavespell, getCastle,
+  getEarthFamily, getKinDisplayName, sealOf, toneOf, colorIndexOf, mod, kinBySealTone, dayOrdinal,
 } from './engine'
-export { getTzolkinMatch, tzolkinMatchScore, TZOLKIN_MATCH_WEIGHTS } from './match'
+export { getTzolkinMatch, getTzolkinMatchByKins, tzolkinMatchScore, tzolkinMatchScoreByKins, TZOLKIN_MATCH_WEIGHTS } from './match'
 export type { TzolkinMatch, TzolkinMatchConnection, TzolkinMatchScores, RelationKey } from './match'

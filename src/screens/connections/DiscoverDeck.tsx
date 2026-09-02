@@ -12,6 +12,12 @@ import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promp
 import LocationField, { type PickedLocation } from '../../components/LocationField'
 import SynastryWheel from '../../components/SynastryWheel'
 import AspectGrid from '../../components/AspectGrid'
+import { getKinDisplayName, sealOf, SEALS, COLOR_LABELS, getTzolkinMatchByKins, kinOfDate } from '../../astro/tzolkin'
+import { SvgXml } from 'react-native-svg'
+import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
+import { tagLabel } from '../../data/tzolkin/matchText'
+
+const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 // planetEn (minúsculo) → nome capitalizado que o AspectGrid espera.
@@ -45,6 +51,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const [missing, setMissing] = useState<string[]>([])
   const [showAff, setShowAff] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [myKin, setMyKin] = useState<number | null>(null)
   // Toggles de privacidade no topo do Descobrir (como era antes): aparecer no
   // baralho + mostrar a roda de sinastria no card.
   const [inDeck, setInDeck] = useState(true)        // !deckHidden
@@ -117,6 +124,21 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 
   const current = cards[idx] || null
   const detail = current ? detailByUid[current.uid] : undefined
+
+  // Meu Kin Tzolkin (para o Tzolkin Match no card).
+  useEffect(() => {
+    if (!TZOLKIN_ENABLED || !user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then((sn) => { const bd = sn.data()?.birthDate; setMyKin(bd ? kinOfDate(bd) : null) }).catch(() => { })
+  }, [user?.uid])
+
+  // Auto-carrega a roda/grade quando o card muda (sem toggle — tudo inline).
+  useEffect(() => {
+    if (!current || !current.chartOpen || detailByUid[current.uid]) return
+    setDetailLoading(true)
+    getDeckDetail(current.uid).then((d) => setDetailByUid((m) => ({ ...m, [current.uid]: d })))
+      .catch(() => setDetailByUid((m) => ({ ...m, [current.uid]: { shared: false } })))
+      .finally(() => setDetailLoading(false))
+  }, [current?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const act = async (action: 'like' | 'pass') => {
     if (!current || busy) return
@@ -233,18 +255,50 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               ) : null}
               <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
             </View>
+            {/* Botões de ação SOBRE a foto */}
+            <View style={s.actionsOver}>
+              <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
+                <Ionicons name="close" size={28} color="#ff6b6b" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.act, s.friend]} disabled={busy} onPress={askFriend} activeOpacity={0.85}>
+                <Text style={s.friendEmoji}>🤝</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
+                <Ionicons name="heart" size={26} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
-          {/* Leitura de afinidade — resumo visível, aspectos sob toggle */}
+          {/* Leitura de afinidade — tudo visível (sem toggle) */}
           <View style={s.detail}>
-            <TouchableOpacity style={s.affToggle} onPress={toggleAff} activeOpacity={0.8}>
+            <View style={s.tierRow}>
               <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {Math.round(current.score)}%</Text>
-              <View style={s.affToggleRight}>
-                <Text style={s.affToggleTx}>{showAff ? tl('ocultar', 'hide', 'ocultar', 'nascondi') : tl('ver aspectos', 'see aspects', 'ver aspectos', 'vedi aspetti')}</Text>
-                <Ionicons name={showAff ? 'chevron-up' : 'chevron-down'} size={16} color={C.magenta} />
-              </View>
-            </TouchableOpacity>
-            {showAff ? (
-              <View style={{ marginTop: 4 }}>
+            </View>
+            {TZOLKIN_ENABLED && current.tzolkinKin ? (() => {
+              const tzKin = current.tzolkinKin!
+              const seal = sealOf(tzKin)
+              const xml = SEAL_SVG[seal]
+              const hex = COLOR_LABELS[SEALS[seal - 1].color].hex
+              const m = myKin ? getTzolkinMatchByKins(myKin, tzKin) : null
+              return (
+                <View style={s.tzBox}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    {xml ? <View style={{ width: 34, height: 34 }}><SvgXml xml={xml} width="100%" height="100%" /></View>
+                      : <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 11 }}>{seal}</Text></View>}
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={s.tzTitle}>Tzolkin · KIN {tzKin}</Text>
+                      <Text style={s.tzName}>{getKinDisplayName(tzKin, lang)}</Text>
+                    </View>
+                    {m ? <Text style={s.tzPct}>{m.scores.overall}%</Text> : null}
+                  </View>
+                  {m && m.tags.length ? (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {m.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
+                    </View>
+                  ) : null}
+                </View>
+              )
+            })() : null}
+            <View style={{ marginTop: 4 }}>
                 {current.harmonics?.length ? (
                   <>
                     <Text style={s.detailHead}>{tl('O que flui entre vocês', 'What flows between you', 'Lo que fluye entre ustedes', 'Cosa scorre tra voi')}</Text>
@@ -280,7 +334,6 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                   <Text style={[s.reason, { marginTop: 10 }]}>🔒 {tl('Este perfil não abriu a roda de sinastria.', 'This profile did not open the synastry wheel.', 'Este perfil no abrio la rueda de sinastria.', 'Questo profilo non ha aperto la ruota di sinastria.')}</Text>
                 )}
               </View>
-            ) : null}
             {/* Sobre a pessoa: bio + favoritos */}
             {(current.bio || Object.keys(current.prompts || {}).length) ? (
               <>
@@ -307,26 +360,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
         </View>
       )}
 
-      {current ? (
-        <>
-          <View style={s.actions}>
-            <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
-              <Ionicons name="close" size={30} color="#ff6b6b" />
-            </TouchableOpacity>
-            <TouchableOpacity style={[s.act, s.friend]} disabled={busy} onPress={askFriend} activeOpacity={0.85}>
-              <Text style={s.friendEmoji}>🤝</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
-              <Ionicons name="heart" size={28} color="#fff" />
-            </TouchableOpacity>
-          </View>
-          <View style={s.actionLabels}>
-            <Text style={s.actLbl}>{tl('Passar', 'Pass', 'Pasar', 'Passa')}</Text>
-            <Text style={s.actLbl}>{tl('Amizade', 'Friend', 'Amistad', 'Amicizia')}</Text>
-            <Text style={s.actLbl}>{tl('Match', 'Match', 'Match', 'Match')}</Text>
-          </View>
-        </>
-      ) : null}
+      {/* Botões de ação agora ficam SOBRE a foto (dentro do card). */}
 
       {toast ? <View style={s.toast}><Text style={s.toastTx}>{toast}</Text></View> : null}
 
@@ -432,7 +466,8 @@ const s = StyleSheet.create({
   ringPct: { color: '#fff', fontSize: 19, fontWeight: '900', lineHeight: 20 },
   ringSym: { fontSize: 11, fontWeight: '700' },
   ringLbl: { color: '#fff', fontSize: 8, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.85 },
-  overlay: { position: 'absolute', left: 18, right: 18, bottom: 16 },
+  overlay: { position: 'absolute', left: 18, right: 18, bottom: 84 },
+  actionsOver: { position: 'absolute', left: 0, right: 0, bottom: 12, flexDirection: 'row', justifyContent: 'center', gap: 22 },
   name: { color: '#fff', fontSize: 25, fontWeight: '900' },
   age: { color: 'rgba(255,255,255,0.9)', fontSize: 22, fontWeight: '600' },
   city: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 4 },
@@ -443,6 +478,13 @@ const s = StyleSheet.create({
   affToggleRight: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   affToggleTx: { color: C.magenta, fontSize: 12, fontWeight: '700' },
   tierLabel: { color: C.magenta, fontSize: 15, fontWeight: '800' },
+  tierRow: { flexDirection: 'row', alignItems: 'center' },
+  tzBox: { marginTop: 10, backgroundColor: 'rgba(139,124,246,.10)', borderWidth: 1, borderColor: 'rgba(139,124,246,.35)', borderRadius: 12, padding: 12 },
+  tzTitle: { color: '#a7a2c9', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  tzName: { color: '#efedfb', fontSize: 14, fontWeight: '800' },
+  tzPct: { color: '#8b7cf6', fontSize: 20, fontWeight: '900' },
+  tzTag: { backgroundColor: 'rgba(139,124,246,.18)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
+  tzTagTx: { color: '#c7bdff', fontSize: 11, fontWeight: '700' },
   detailHead: { color: C.dim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 10, marginBottom: 4 },
   harmonic: { color: C.tx, fontSize: 13, lineHeight: 19 },
   tension: { color: C.gold, fontSize: 13, lineHeight: 19 },

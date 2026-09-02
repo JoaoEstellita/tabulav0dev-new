@@ -127,3 +127,12 @@ export function buildProfile(iso: string): TzolkinProfile {
     earthFamily: getEarthFamily(base.seal),
   }
 }
+
+/** Perfil a partir do Kin (sem a data) — para quando só temos o Kin (ex.: deck do Match). */
+export function profileFromKin(kin: number): TzolkinProfile {
+  const seal = sealOf(kin)
+  return {
+    kin, seal, tone: toneOf(kin), colorIndex: colorIndexOf(seal), isHunabKuLeapDay: false,
+    oracle: getOracle(kin), wavespell: getWavespell(kin), castle: getCastle(kin), earthFamily: getEarthFamily(seal),
+  }
+}
