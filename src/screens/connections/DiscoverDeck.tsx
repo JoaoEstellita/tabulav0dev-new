@@ -252,7 +252,10 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
             </TouchableOpacity>
             {/* Info sobre a foto */}
             <View style={s.overlay}>
-              <Text style={s.name}>{current.displayName}{current.age ? <Text style={s.age}>, {current.age}</Text> : null}</Text>
+              <Text style={s.name}>{current.displayName}</Text>
+              {current.age ? (
+                <Text style={s.age}>{tl(`${current.age} anos`, `${current.age} years`, `${current.age} años`, `${current.age} anni`)}</Text>
+              ) : null}
               {current.city ? (
                 <Text style={s.city}>📍 {current.city}
                   {typeof current.distanceKm === 'number'
@@ -260,7 +263,6 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                     : current.sameCity ? <Text style={s.near}>  ·  {tl('perto de você', 'near you', 'cerca de ti', 'vicino a te')}</Text> : null}
                 </Text>
               ) : null}
-              <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
             </View>
             {/* Botões de ação SOBRE a foto */}
             <View style={s.actionsOver}>
@@ -292,68 +294,72 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               const cHex = cBr ? ELEMENT_HEX[cBr.element] : '#8B7CF6'
               const hasTz = TZOLKIN_ENABLED && !!tzKin
               const pct = (v?: number | null) => (v != null ? <Text style={s.cosmicPct}>{Math.round(v)}%</Text> : null)
-              const showBar = hasTz || vNak != null || cAn != null
+              const signGlyph = (name?: string | null) => { const k = String(name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return MOON_SIGN_GLYPH[k] || '' }
+              const trio = current.sunSign || current.moonSign || current.ascSign
+              const showBar = trio || hasTz || vNak != null || cAn != null
+              // Breakdown: Astro + cada sistema com dado → integrado (scores do backend).
+              const parts = [`${tl('Astro', 'Astro', 'Astro', 'Astro')} ${Math.round(current.score)}%`]
+              const tzS = current.tzolkinScore ?? tzM?.scores.overall
+              if (tzS != null) parts.push(`Tzolkin ${Math.round(tzS)}%`)
+              if (current.vedicScore != null) parts.push(`${tl('Védico', 'Vedic', 'Vedico', 'Vedico')} ${Math.round(current.vedicScore)}%`)
+              if (current.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(current.chineseScore)}%`)
               return (
                 <>
                   {showBar ? (
                     <View style={s.cosmicBar}>
                       <Text style={s.cosmicHdr}>{tl('Assinatura cósmica', 'Cosmic signature', 'Firma cosmica', 'Firma cosmica')}</Text>
-                      <View style={s.cosmicRow}>
-                        {hasTz ? (
-                          <View style={s.cosmicCell}>
-                            {xml ? <View style={s.cosmicTok}><SvgCss xml={xml} width="100%" height="100%" /></View>
-                              : <View style={[s.cosmicTokFill, { backgroundColor: sealHex }]}><Text style={s.cosmicTokTxt}>{sealOf(tzKin as number)}</Text></View>}
-                            <Text style={s.cosmicSys}>Tzolkin</Text>
-                            <Text style={s.cosmicVal} numberOfLines={2}>{getKinDisplayName(tzKin as number, lang)}</Text>
-                            {pct(current.tzolkinScore)}
-                          </View>
-                        ) : null}
-                        {vNak != null ? (
-                          <>
-                            {hasTz ? <View style={s.cosmicSep} /> : null}
-                            <View style={s.cosmicCell}>
-                              <View style={[s.cosmicTokFill, { backgroundColor: 'rgba(124,156,246,.16)', borderWidth: 1, borderColor: 'rgba(124,156,246,.5)' }]}><Text style={[s.cosmicGlyph, { color: '#a9c0ff' }]}>☾</Text></View>
-                              <Text style={s.cosmicSys}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
-                              <Text style={s.cosmicVal} numberOfLines={2}>{vName}</Text>
-                              {pct(current.vedicScore)}
-                            </View>
-                          </>
-                        ) : null}
-                        {cAn != null ? (
-                          <>
-                            {(hasTz || vNak != null) ? <View style={s.cosmicSep} /> : null}
-                            <View style={s.cosmicCell}>
-                              <View style={[s.cosmicTokFill, { backgroundColor: cHex + '26', borderWidth: 1, borderColor: cHex + '80' }]}><Text style={[s.cosmicGlyph, { color: cHex }]}>{cBr?.hanzi}</Text></View>
-                              <Text style={s.cosmicSys}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
-                              <Text style={s.cosmicVal} numberOfLines={2}>{cName}</Text>
-                              {pct(current.chineseScore)}
-                            </View>
-                          </>
-                        ) : null}
-                      </View>
-                      {tzM && tzM.tags.length ? (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10, justifyContent: 'center' }}>
-                          {tzM.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
+                      {trio ? (
+                        <View style={s.cosmicTrioRow}>
+                          <View style={s.cosmicCell}><Text style={[s.trioGlyph, { color: '#f5c542' }]}>☉</Text><Text style={s.cosmicSys}>{tl('Sol', 'Sun', 'Sol', 'Sole')}</Text><Text style={s.cosmicVal} numberOfLines={1}>{signGlyph(current.sunSign)} {current.sunSign || '—'}</Text></View>
+                          <View style={s.cosmicSep} />
+                          <View style={s.cosmicCell}><Text style={[s.trioGlyph, { color: '#a9c0ff' }]}>☽</Text><Text style={s.cosmicSys}>{tl('Lua', 'Moon', 'Luna', 'Luna')}</Text><Text style={s.cosmicVal} numberOfLines={1}>{signGlyph(current.moonSign)} {current.moonSign || '—'}</Text></View>
+                          <View style={s.cosmicSep} />
+                          <View style={s.cosmicCell}><Text style={[s.trioGlyph, { color: '#3ecf8e' }]}>↑</Text><Text style={s.cosmicSys}>{tl('Asc', 'Asc', 'Asc', 'Asc')}</Text><Text style={s.cosmicVal} numberOfLines={1}>{signGlyph(current.ascSign)} {current.ascSign || '—'}</Text></View>
                         </View>
                       ) : null}
-                      <Text style={s.cosmicCap}>{tl('Kin maia · nakshatra da Lua (védico) · animal do ano (chinês) · % = afinidade com você', 'Mayan Kin · Moon nakshatra (Vedic) · year animal (Chinese) · % = affinity with you', 'Kin maya · nakshatra de la Luna (vedico) · animal del año (chino) · % = afinidad contigo', 'Kin maya · nakshatra della Luna (vedico) · animale dell\'anno (cinese) · % = affinita con te')}</Text>
+                      {(hasTz || vNak != null || cAn != null) ? (
+                        <View style={[s.cosmicRow, trio ? { marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(139,124,246,.18)', paddingTop: 12 } : null]}>
+                          {hasTz ? (
+                            <View style={s.cosmicCell}>
+                              {xml ? <View style={s.cosmicTok}><SvgCss xml={xml} width="100%" height="100%" /></View>
+                                : <View style={[s.cosmicTokFill, { backgroundColor: sealHex }]}><Text style={s.cosmicTokTxt}>{sealOf(tzKin as number)}</Text></View>}
+                              <Text style={s.cosmicSys}>Tzolkin</Text>
+                              <Text style={s.cosmicVal} numberOfLines={2}>{getKinDisplayName(tzKin as number, lang)}</Text>
+                              {pct(current.tzolkinScore)}
+                            </View>
+                          ) : null}
+                          {vNak != null ? (
+                            <>
+                              {hasTz ? <View style={s.cosmicSep} /> : null}
+                              <View style={s.cosmicCell}>
+                                <View style={[s.cosmicTokFill, { backgroundColor: 'rgba(124,156,246,.16)', borderWidth: 1, borderColor: 'rgba(124,156,246,.5)' }]}><Text style={[s.cosmicGlyph, { color: '#a9c0ff' }]}>☾</Text></View>
+                                <Text style={s.cosmicSys}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
+                                <Text style={s.cosmicVal} numberOfLines={2}>{vName}</Text>
+                                {pct(current.vedicScore)}
+                              </View>
+                            </>
+                          ) : null}
+                          {cAn != null ? (
+                            <>
+                              {(hasTz || vNak != null) ? <View style={s.cosmicSep} /> : null}
+                              <View style={s.cosmicCell}>
+                                <View style={[s.cosmicTokFill, { backgroundColor: cHex + '26', borderWidth: 1, borderColor: cHex + '80' }]}><Text style={[s.cosmicGlyph, { color: cHex }]}>{cBr?.hanzi}</Text></View>
+                                <Text style={s.cosmicSys}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
+                                <Text style={s.cosmicVal} numberOfLines={2}>{cName}</Text>
+                                {pct(current.chineseScore)}
+                              </View>
+                            </>
+                          ) : null}
+                        </View>
+                      ) : null}
+                      {parts.length > 1 ? (
+                        <Text style={s.cosmicBreak}>{parts.join(' · ')} → {tl('integrado', 'integrated', 'integrado', 'integrato')} {combined}%</Text>
+                      ) : null}
                     </View>
                   ) : null}
                   <View style={s.tierRow}>
                     <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {combined}%</Text>
                   </View>
-                  {(() => {
-                    // Breakdown: astro + cada sistema com dado → integrado. Usa os scores do
-                    // backend (o que de fato entrou no ranking); Tzolkin cai no do front se faltar.
-                    const parts = [`${tl('Astro', 'Astro', 'Astro', 'Astro')} ${Math.round(current.score)}%`]
-                    const tzS = current.tzolkinScore ?? tzM?.scores.overall
-                    if (tzS != null) parts.push(`Tzolkin ${Math.round(tzS)}%`)
-                    if (current.vedicScore != null) parts.push(`${tl('Védico', 'Vedic', 'Vedico', 'Vedico')} ${Math.round(current.vedicScore)}%`)
-                    if (current.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(current.chineseScore)}%`)
-                    return parts.length > 1 ? (
-                      <Text style={{ color: '#8892a4', fontSize: 11.5, marginTop: 2 }}>{parts.join(' · ')} → {tl('integrado', 'integrated', 'integrado', 'integrato')} {combined}%</Text>
-                    ) : null
-                  })()}
                 </>
               )
             })()}
@@ -528,7 +534,7 @@ const s = StyleSheet.create({
   overlay: { position: 'absolute', left: 18, right: 18, bottom: 84 },
   actionsOver: { position: 'absolute', left: 0, right: 0, bottom: 12, flexDirection: 'row', justifyContent: 'center', gap: 22 },
   name: { color: '#fff', fontSize: 25, fontWeight: '900' },
-  age: { color: 'rgba(255,255,255,0.9)', fontSize: 22, fontWeight: '600' },
+  age: { color: 'rgba(255,255,255,0.92)', fontSize: 15, fontWeight: '700', marginTop: 2 },
   city: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 4 },
   near: { color: C.good, fontSize: 13, fontWeight: '700' },
   signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
@@ -554,7 +560,9 @@ const s = StyleSheet.create({
   cosmicSys: { color: '#8b85b3', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
   cosmicVal: { color: '#efedfb', fontSize: 12.5, fontWeight: '800', textAlign: 'center', marginTop: 2 },
   cosmicPct: { color: '#c7bdff', fontSize: 13, fontWeight: '900', marginTop: 4 },
-  cosmicCap: { color: '#6f6a90', fontSize: 9.5, textAlign: 'center', marginTop: 10, lineHeight: 13 },
+  cosmicTrioRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 4 },
+  trioGlyph: { fontSize: 20, fontWeight: '800', marginBottom: 5 },
+  cosmicBreak: { color: '#8892a4', fontSize: 11, textAlign: 'center', marginTop: 12, lineHeight: 15 },
   tzPct: { color: '#8b7cf6', fontSize: 20, fontWeight: '900' },
   tzTag: { backgroundColor: 'rgba(139,124,246,.18)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
   tzTagTx: { color: '#c7bdff', fontSize: 11, fontWeight: '700' },
