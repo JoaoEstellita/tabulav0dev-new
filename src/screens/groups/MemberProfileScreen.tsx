@@ -75,7 +75,9 @@ export default function MemberProfileScreen() {
   const birth = member?.birthData
   const [data, setData] = useState<LocalTransitData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar' | 'vedico' | 'tzolkin' | 'chines'>('natal')
+  // Sistema (fileira de cima) + modo ocidental (fileira de baixo, só no Ocidental) — igual à aba Mapa.
+  const [mapMode, setMapMode] = useState<'western' | 'vedico' | 'tzolkin' | 'chines'>('western')
+  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
   // Retorno Solar do membro (no local de NASCIMENTO dele — não temos onde ele mora).
   const [srData, setSrData] = useState<any>(null)
   const [srLoading, setSrLoading] = useState(false)
@@ -232,36 +234,51 @@ export default function MemberProfileScreen() {
           <View style={styles.center}><StarLoader /></View>
         ) : (
           <>
-            {/* Abas: mapas ocidentais (Natal/Trânsitos/Solar/Lunar) + lentes (Védico/Tzolkin/Chinês). */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modeToggle}>
-              <TouchableOpacity style={[styles.modeBtn, westMode === 'natal' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('natal')}>
-                <Text style={[styles.modeBtnText, westMode === 'natal' && styles.modeBtnTextActive]}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
+            {/* Fileira 1 — SISTEMA (Ocidental/Védico/Tzolkin/Chinês), igual à aba Mapa. */}
+            <View style={styles.modeToggle}>
+              <TouchableOpacity style={[styles.modeBtn, mapMode === 'western' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('western')}>
+                <Text style={[styles.modeBtnText, mapMode === 'western' && styles.modeBtnTextActive]}>{tl('Ocidental', 'Western', 'Occidental', 'Occidentale')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modeBtn, westMode === 'transitos' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('transitos')}>
-                <Text style={[styles.modeBtnText, westMode === 'transitos' && styles.modeBtnTextActive]}>{tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modeBtn, westMode === 'solar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('solar')}>
-                <Text style={[styles.modeBtnText, westMode === 'solar' && styles.modeBtnTextActive]}>{tl('Solar', 'Solar', 'Solar', 'Solare')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modeBtn, westMode === 'lunar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('lunar')}>
-                <Text style={[styles.modeBtnText, westMode === 'lunar' && styles.modeBtnTextActive]}>{tl('Lunar', 'Lunar', 'Lunar', 'Lunare')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modeBtn, westMode === 'vedico' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('vedico')}>
-                <Text style={[styles.modeBtnText, westMode === 'vedico' && styles.modeBtnTextActive]}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
+              <TouchableOpacity style={[styles.modeBtn, mapMode === 'vedico' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('vedico')}>
+                <Text style={[styles.modeBtnText, mapMode === 'vedico' && styles.modeBtnTextActive]}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
               </TouchableOpacity>
               {TZOLKIN_ENABLED ? (
-                <TouchableOpacity style={[styles.modeBtn, westMode === 'tzolkin' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('tzolkin')}>
-                  <Text style={[styles.modeBtnText, westMode === 'tzolkin' && styles.modeBtnTextActive]}>Tzolkin</Text>
+                <TouchableOpacity style={[styles.modeBtn, mapMode === 'tzolkin' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('tzolkin')}>
+                  <Text style={[styles.modeBtnText, mapMode === 'tzolkin' && styles.modeBtnTextActive]}>Tzolkin</Text>
                 </TouchableOpacity>
               ) : null}
               {CHINESE_ENABLED ? (
-                <TouchableOpacity style={[styles.modeBtn, westMode === 'chines' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('chines')}>
-                  <Text style={[styles.modeBtnText, westMode === 'chines' && styles.modeBtnTextActive]}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
+                <TouchableOpacity style={[styles.modeBtn, mapMode === 'chines' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('chines')}>
+                  <Text style={[styles.modeBtnText, mapMode === 'chines' && styles.modeBtnTextActive]}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
                 </TouchableOpacity>
               ) : null}
-            </ScrollView>
+            </View>
 
-            {westMode === 'solar' ? (
+            {/* Fileira 2 — modo Ocidental (Natal/Trânsitos/Solar/Lunar), só quando Ocidental. */}
+            {mapMode === 'western' ? (
+              <View style={styles.modeToggle}>
+                <TouchableOpacity style={[styles.modeBtn, westMode === 'natal' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('natal')}>
+                  <Text style={[styles.modeBtnText, westMode === 'natal' && styles.modeBtnTextActive]}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modeBtn, westMode === 'transitos' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('transitos')}>
+                  <Text style={[styles.modeBtnText, westMode === 'transitos' && styles.modeBtnTextActive]}>{tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modeBtn, westMode === 'solar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('solar')}>
+                  <Text style={[styles.modeBtnText, westMode === 'solar' && styles.modeBtnTextActive]}>{tl('Solar', 'Solar', 'Solar', 'Solare')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modeBtn, westMode === 'lunar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('lunar')}>
+                  <Text style={[styles.modeBtnText, westMode === 'lunar' && styles.modeBtnTextActive]}>{tl('Lunar', 'Lunar', 'Lunar', 'Lunare')}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            {mapMode === 'vedico' ? (
+              <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
+            ) : mapMode === 'tzolkin' ? (
+              chartMeta.birthDate ? <View style={{ height: 640 }}><TzolkinProfileContent birthDateISO={chartMeta.birthDate} /></View> : null
+            ) : mapMode === 'chines' ? (
+              chartMeta.birthDate ? <View style={{ height: 720 }}><ChineseProfileContent birth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} /></View> : null
+            ) : westMode === 'solar' ? (
               srLoading || (!srData && !srError) ? (
                 <View style={styles.center}><StarLoader /></View>
               ) : srError || !srData ? (
@@ -285,20 +302,6 @@ export default function MemberProfileScreen() {
                   <AstroProfileContent transitData={lrData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="lunar" />
                 </>
               )
-            ) : westMode === 'vedico' ? (
-              <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
-            ) : westMode === 'tzolkin' ? (
-              chartMeta.birthDate ? (
-                <View style={{ height: 640 }}>
-                  <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
-                </View>
-              ) : null
-            ) : westMode === 'chines' ? (
-              chartMeta.birthDate ? (
-                <View style={{ height: 720 }}>
-                  <ChineseProfileContent birth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} />
-                </View>
-              ) : null
             ) : (
               <>
                 <NatalChartWheelContent transitData={data} loading={false} showLegend={false} showTransits={westMode === 'transitos'} chartMeta={{ skipSelfFetch: true }} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />

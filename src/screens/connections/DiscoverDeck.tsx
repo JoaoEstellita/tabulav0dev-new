@@ -209,18 +209,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
         </View>
       </View>
 
-      <View style={s.privRow}>
-        <View style={s.privItem}>
-          <Ionicons name="eye-outline" size={15} color={inDeck ? C.gold : C.dim} />
-          <Text style={s.privTx} numberOfLines={1}>{tl('Visível no Match', 'Visible in Match', 'Visible en Match', 'Visibile nel Match')}</Text>
-          <Switch value={inDeck} disabled={privBusy === 'deck'} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
-        </View>
-        <View style={s.privItem}>
-          <Ionicons name="planet-outline" size={15} color={wheelOpen ? C.gold : C.dim} />
-          <Text style={s.privTx} numberOfLines={1}>{tl('Sinastria visível', 'Synastry visible', 'Sinastria visible', 'Sinastria visibile')}</Text>
-          <Switch value={wheelOpen} disabled={privBusy === 'wheel'} onValueChange={toggleWheel} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
-        </View>
-      </View>
+      {/* Toggles de visibilidade movidos p/ a aba Perfil (não poluem o baralho). */}
 
       {incomplete ? (
         <TouchableOpacity style={s.incomplete} onPress={onGoProfile} activeOpacity={0.9}>
