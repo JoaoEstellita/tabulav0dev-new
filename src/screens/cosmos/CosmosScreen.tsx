@@ -22,8 +22,10 @@ import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
 import { VedicProfileContent } from './VedicProfileContent'
 import TzolkinProfileContent from './TzolkinProfileContent'
+import ChineseProfileContent from './ChineseProfileContent'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0' // default ligado; '0' desliga
+const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -257,7 +259,7 @@ export default function CosmosScreen() {
   const aWheel = useTourAnchor('cosmos.wheel')
   useTourScroller('Cosmos', useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const [showTop, setShowTop] = useState(false)
-  const [mapMode, setMapMode] = useState<'western' | 'vedic' | 'tzolkin'>('western')
+  const [mapMode, setMapMode] = useState<'western' | 'vedic' | 'tzolkin' | 'chinese'>('western')
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
   const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
   // Retorno Solar (carga sob demanda ao entrar no modo 'solar').
@@ -545,11 +547,17 @@ export default function CosmosScreen() {
       id: 'cosmos.system', title: tl('Tzolkin — 13 Luas', 'Tzolkin — 13 Moons', 'Tzolkin — 13 Lunas', 'Tzolkin — 13 Lune'),
       body: tl('Toque em "Tzolkin" para seu Kin do Sincronário das 13 Luas: selo, tom, Oráculo da Quinta Força, Onda Encantada e o Kin do dia. Uma leitura simbólica inspirada no Tzolk\'in maia (não é o calendário maia tradicional).', 'Tap "Tzolkin" for your 13-Moon Kin: seal, tone, Fifth Force Oracle, Wavespell and the Kin of the day. A symbolic reading inspired by the Maya Tzolk\'in (not the traditional Maya calendar).', 'Toca "Tzolkin" para tu Kin del Sincronario de 13 Lunas: sello, tono, Oraculo de la Quinta Fuerza, Onda Encantada y el Kin del dia. Una lectura simbolica inspirada en el Tzolkin maya (no es el calendario maya tradicional).', 'Tocca "Tzolkin" per il tuo Kin delle 13 Lune: sigillo, tono, Oracolo della Quinta Forza, Onda Incantata e il Kin del giorno. Una lettura simbolica ispirata al Tzolk\'in maya (non e il calendario maya tradizionale).'),
       onEnter: () => { setMapMode('tzolkin') },
+      onExit: () => { if (!CHINESE_ENABLED) { setMapMode('western'); setWestMode('natal') } },
+    }] : []),
+    ...(CHINESE_ENABLED ? [{
+      id: 'cosmos.system', title: tl('Chinês — BaZi', 'Chinese — BaZi', 'Chino — BaZi', 'Cinese — BaZi'),
+      body: tl('Toque em "Chinês" para seu BaZi (Quatro Pilares): signo animal, Day Master, os quatro pilares, Cinco Elementos e Dez Deuses. O núcleo é o Day Master, não só o animal.', 'Tap "Chinese" for your BaZi (Four Pillars): animal sign, Day Master, the four pillars, Five Elements and Ten Gods. The core is the Day Master, not just the animal.', 'Toca "Chino" para tu BaZi (Cuatro Pilares): signo animal, Day Master, los cuatro pilares, Cinco Elementos y Diez Dioses. El nucleo es el Day Master, no solo el animal.', 'Tocca "Cinese" per il tuo BaZi (Quattro Pilastri): segno animale, Day Master, i quattro pilastri, Cinque Elementi e Dieci Dei. Il nucleo e il Day Master, non solo l animale.'),
+      onEnter: () => { setMapMode('chinese') },
       onExit: () => { setMapMode('western'); setWestMode('natal') },
     }] : []),
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
-  // v2: reabre uma vez pra todos após incluir o Tzolkin no tour.
-  const { openTour: openCosmosTour } = useTabTour('tour_seen_cosmos_v2', 'Cosmos', buildCosmosTour)
+  // v3: reabre uma vez após incluir Tzolkin e Chinês no tour.
+  const { openTour: openCosmosTour } = useTabTour('tour_seen_cosmos_v3', 'Cosmos', buildCosmosTour)
 
   const handleCardPress = (f: FeatureCard) => {
     // "Em breve" tem prioridade: não leva ao paywall (a feature ainda não existe).
@@ -636,12 +644,19 @@ export default function CosmosScreen() {
               <Text style={[styles.modeBtnText, mapMode === 'tzolkin' && styles.modeBtnTextActive]}>Tzolkin</Text>
             </TouchableOpacity>
           )}
+          {CHINESE_ENABLED && (
+            <TouchableOpacity style={[styles.modeBtn, mapMode === 'chinese' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('chinese')}>
+              <Text style={[styles.modeBtnText, mapMode === 'chinese' && styles.modeBtnTextActive]}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {mapMode === 'vedic' ? (
           <VedicProfileContent transitData={transitData} loading={loading} natalAscDeg={natalAscDeg} />
         ) : mapMode === 'tzolkin' ? (
           <TzolkinProfileContent />
+        ) : mapMode === 'chinese' ? (
+          <ChineseProfileContent />
         ) : (
           <>
             {/* Sub-toggle: roda natal pura vs bi-roda (trânsitos de agora sobre o natal). */}
