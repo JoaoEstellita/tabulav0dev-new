@@ -237,8 +237,8 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
             <LinearGradient colors={['transparent', 'rgba(12,8,24,0.35)', 'rgba(12,8,24,0.96)']} locations={[0, 0.55, 1]} style={s.grad} pointerEvents="none" />
             {/* Anel de compatibilidade */}
             <View style={s.ring}>
-              <Text style={s.ringPct}>{Math.round(current.score)}<Text style={s.ringSym}>%</Text></Text>
-              <Text style={s.ringLbl}>{tl('afinidade', 'match', 'afinidad', 'affinita')}</Text>
+              <Text style={s.ringPct}>{Math.round(current.combinedScore ?? current.score)}<Text style={s.ringSym}>%</Text></Text>
+              <Text style={s.ringLbl}>{tl('compatível', 'match', 'compatible', 'compatibile')}</Text>
             </View>
             <TouchableOpacity style={s.report} onPress={report} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="flag-outline" size={16} color="rgba(255,255,255,0.85)" />
@@ -270,34 +270,40 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
           </View>
           {/* Leitura de afinidade — tudo visível (sem toggle) */}
           <View style={s.detail}>
-            <View style={s.tierRow}>
-              <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {Math.round(current.score)}%</Text>
-            </View>
-            {TZOLKIN_ENABLED && current.tzolkinKin ? (() => {
-              const tzKin = current.tzolkinKin!
-              const seal = sealOf(tzKin)
-              const xml = SEAL_SVG[seal]
-              const hex = COLOR_LABELS[SEALS[seal - 1].color].hex
-              const m = myKin ? getTzolkinMatchByKins(myKin, tzKin) : null
+            {(() => {
+              const combined = Math.round(current.combinedScore ?? current.score)
+              const tzKin = current.tzolkinKin
+              const tzM = (TZOLKIN_ENABLED && tzKin && myKin) ? getTzolkinMatchByKins(myKin, tzKin) : null
+              const xml = tzKin ? SEAL_SVG[sealOf(tzKin)] : null
+              const hex = tzKin ? COLOR_LABELS[SEALS[sealOf(tzKin) - 1].color].hex : '#888'
               return (
-                <View style={s.tzBox}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    {xml ? <View style={{ width: 34, height: 34 }}><SvgCss xml={xml} width="100%" height="100%" /></View>
-                      : <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 11 }}>{seal}</Text></View>}
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={s.tzTitle}>Tzolkin · KIN {tzKin}</Text>
-                      <Text style={s.tzName}>{getKinDisplayName(tzKin, lang)}</Text>
-                    </View>
-                    {m ? <Text style={s.tzPct}>{m.scores.overall}%</Text> : null}
-                  </View>
-                  {m && m.tags.length ? (
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                      {m.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
+                <>
+                  {TZOLKIN_ENABLED && tzKin ? (
+                    <View style={s.tzBox}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        {xml ? <View style={{ width: 34, height: 34 }}><SvgCss xml={xml} width="100%" height="100%" /></View>
+                          : <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 11 }}>{sealOf(tzKin)}</Text></View>}
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={s.tzTitle}>Tzolkin · KIN {tzKin}</Text>
+                          <Text style={s.tzName}>{getKinDisplayName(tzKin, lang)}</Text>
+                        </View>
+                      </View>
+                      {tzM && tzM.tags.length ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                          {tzM.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
+                        </View>
+                      ) : null}
                     </View>
                   ) : null}
-                </View>
+                  <View style={s.tierRow}>
+                    <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {combined}%</Text>
+                  </View>
+                  {tzM ? (
+                    <Text style={{ color: '#8892a4', fontSize: 11.5, marginTop: 2 }}>{tl('astro', 'astro', 'astro', 'astro')} {Math.round(current.score)}% · Tzolkin {tzM.scores.overall}% → {tl('integrado', 'integrated', 'integrado', 'integrato')} {combined}%</Text>
+                  ) : null}
+                </>
               )
-            })() : null}
+            })()}
             <View style={{ marginTop: 4 }}>
                 {current.harmonics?.length ? (
                   <>

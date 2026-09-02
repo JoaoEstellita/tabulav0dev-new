@@ -318,12 +318,12 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
           onPress={() => { setMoonTab('lua'); setMoonModalVisible(true) }}
         >
           <View style={styles.moonIconRow}>
-            {signGlyph ? <Text style={styles.moonSignGlyph}>{signGlyph}</Text> : null}
             {TZOLKIN_ENABLED && dayKinXml ? (
               <TouchableOpacity onPress={() => { setMoonTab('tzolkin'); setMoonModalVisible(true) }} style={styles.dayKinGlyph} activeOpacity={0.7}>
                 <SvgCss xml={dayKinXml} width="100%" height="100%" />
               </TouchableOpacity>
             ) : null}
+            {signGlyph ? <Text style={styles.moonSignGlyph}>{signGlyph}</Text> : null}
             <View style={styles.moonIconWrap}>
               <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
             </View>

@@ -168,8 +168,8 @@ export default function HomeScreen() {
   const buildHomeTour = React.useCallback(() => ([
     { id: 'home.header', title: tl('Seu topo astrológico', 'Your astro header', 'Tu encabezado astral', 'La tua intestazione'),
       body: tl('Aqui ficam seu Sol, Lua e Ascendente (↑). Toque na foto para trocá-la.', 'Here are your Sun, Moon and Ascendant (↑). Tap the photo to change it.', 'Aqui estan tu Sol, Luna y Ascendente (↑). Toca la foto para cambiarla.', 'Qui ci sono Sole, Luna e Ascendente (↑). Tocca la foto per cambiarla.') },
-    { id: 'home.moon', title: tl('Dados da Lua', 'Moon data', 'Datos de la Luna', 'Dati della Luna'),
-      body: tl('Toque na Lua para ver a fase de hoje, o signo e os dados lunares.', 'Tap the Moon to see today\'s phase, sign and lunar data.', 'Toca la Luna para ver la fase de hoy, el signo y los datos lunares.', 'Tocca la Luna per la fase di oggi, il segno e i dati lunari.') },
+    { id: 'home.moon', title: tl('Lua & Tzolkin do dia', 'Moon & Tzolkin', 'Luna & Tzolkin', 'Luna & Tzolkin'),
+      body: tl('Toque na Lua para a fase de hoje, o signo e os dados lunares. E toque no glifo do Kin (à esquerda) para o seu Tzolkin do dia — selo, tom, Oráculo e o Sincronário das 13 Luas.', 'Tap the Moon for today\'s phase, sign and lunar data. And tap the Kin glyph (on the left) for the day\'s Tzolkin — seal, tone, Oracle and the 13-Moon calendar.', 'Toca la Luna para la fase de hoy, el signo y los datos lunares. Y toca el glifo del Kin (a la izquierda) para tu Tzolkin del dia — sello, tono, Oraculo y el Sincronario de 13 Lunas.', 'Tocca la Luna per la fase di oggi, il segno e i dati lunari. E tocca il glifo del Kin (a sinistra) per il Tzolkin del giorno — sigillo, tono, Oracolo e il calendario delle 13 Lune.') },
     { id: 'home.areas', title: tl('8 Áreas da vida', '8 Life areas', '8 Areas de la vida', '8 Aree della vita'),
       body: tl('Cada card mostra como o céu de hoje mexe numa parte da sua vida. Toque num card para abrir o status completo — e, dentro dele, você vê exatamente os trânsitos que estão afetando aquela área, além dos conselhos.', 'Each card shows how today\'s sky affects a part of your life. Tap a card to open the full status — and inside it you see exactly which transits are affecting that area, plus advice.', 'Cada tarjeta muestra como el cielo de hoy afecta una parte de tu vida. Toca una tarjeta para abrir el estado completo — y dentro ves exactamente los transitos que afectan esa area, ademas de consejos.', 'Ogni card mostra come il cielo di oggi tocca una parte della tua vita. Tocca una card per aprire lo stato completo — e dentro vedi esattamente i transiti che influenzano quell\'area, oltre ai consigli.') },
     { id: 'home.wheel', title: tl('Céu de hoje (roda)', 'Today\'s sky (wheel)', 'Cielo de hoy (rueda)', 'Cielo di oggi (ruota)'),
@@ -177,7 +177,7 @@ export default function HomeScreen() {
     { id: 'home.transits', title: tl('Comparação de trânsitos', 'Transit comparison', 'Comparacion de transitos', 'Confronto transiti'),
       body: tl('Planeta a planeta, o que cada trânsito ativa. Toque numa célula da grade para a leitura daquele aspecto.', 'Planet by planet, what each transit activates. Tap a grid cell for that aspect\'s reading.', 'Planeta a planeta, que activa cada transito. Toca una celda de la grilla para la lectura de ese aspecto.', 'Pianeta per pianeta, cosa attiva ogni transito. Tocca una cella della griglia per la lettura di quell\'aspetto.') },
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
-  const { openTour: openHomeTour } = useTabTour('tour_seen_home', 'Home', buildHomeTour)
+  const { openTour: openHomeTour } = useTabTour('tour_seen_home_v2', 'Home', buildHomeTour)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
