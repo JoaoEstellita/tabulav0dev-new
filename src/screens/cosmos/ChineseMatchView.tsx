@@ -77,7 +77,7 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
           <View style={[s.animalTok, { backgroundColor: ELEMENT_HEX[animalA.element] + '26', borderColor: ELEMENT_HEX[animalA.element] }]}><Text style={[s.hanzi, { color: ELEMENT_HEX[animalA.element] }]}>{animalA.hanzi}</Text></View>
           {aName ? <Text style={s.pName} numberOfLines={1}>{aName}</Text> : null}
         </View>
-        <Text style={s.overall}>{m.scores.overall}%</Text>
+        <Text style={s.cross}>×</Text>
         <View style={s.person}>
           <View style={[s.animalTok, { backgroundColor: ELEMENT_HEX[animalB.element] + '26', borderColor: ELEMENT_HEX[animalB.element] }]}><Text style={[s.hanzi, { color: ELEMENT_HEX[animalB.element] }]}>{animalB.hanzi}</Text></View>
           {bName ? <Text style={s.pName} numberOfLines={1}>{bName}</Text> : null}
@@ -97,6 +97,9 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
         </View>
       ) : null}
 
+      {(!aBirth?.birthTime || !bBirth?.birthTime) ? (
+        <Text style={[s.disc, { color: '#f0a58c' }]}>⚠️ {tl('Sem a hora de nascimento de alguém, o pilar da hora é aproximado (meio-dia).', 'Without someone\'s birth time, the hour pillar is approximate (noon).', 'Sin la hora de nacimiento, el pilar de la hora es aproximado (mediodia).', 'Senza l\'ora di nascita, il pilastro dell\'ora e approssimato (mezzogiorno).')}</Text>
+      ) : null}
       <Text style={s.disc}>{tl('Modelo simbólico do app baseado no BaZi (Day Master + pilares).', 'App symbolic model based on BaZi (Day Master + pillars).', 'Modelo simbolico del app basado en BaZi.', 'Modello simbolico del app basato sul BaZi.')}</Text>
     </Wrap>
   )
@@ -108,7 +111,7 @@ const s = StyleSheet.create({
   animalTok: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   hanzi: { fontSize: 24, fontWeight: '800' },
   pName: { color: '#c9c5e2', fontSize: 12, fontWeight: '700', marginTop: 4, maxWidth: 90, textAlign: 'center' },
-  overall: { color: '#e4572e', fontSize: 30, fontWeight: '900', paddingHorizontal: 8 },
+  cross: { color: '#8892a4', fontSize: 22, fontWeight: '700', paddingHorizontal: 10 },
   rel: { color: '#efedfb', fontSize: 13.5, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
   barLabel: { color: '#b8b3d6', fontSize: 12, fontWeight: '600' },
   barVal: { color: '#efedfb', fontSize: 12, fontWeight: '800' },

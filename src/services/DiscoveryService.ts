@@ -106,6 +106,10 @@ export type SynastryResult = {
   premium: boolean
   target?: PublicProfile
   score?: number | null
+  combinedScore?: number | null
+  tzolkinScore?: number | null
+  vedicScore?: number | null
+  chineseScore?: number | null
   aspects?: SynastryAspect[]
   myPositions?: WheelPos[]
   positions?: WheelPos[]
@@ -118,6 +122,10 @@ export async function getSynastry(uid: string): Promise<SynastryResult> {
     premium: !!r?.premium,
     target: r?.target,
     score: r?.score ?? null,
+    combinedScore: r?.combinedScore ?? null,
+    tzolkinScore: r?.tzolkinScore ?? null,
+    vedicScore: r?.vedicScore ?? null,
+    chineseScore: r?.chineseScore ?? null,
     aspects: Array.isArray(r?.aspects) ? r.aspects : undefined,
     myPositions: Array.isArray(r?.myPositions) ? r.myPositions : undefined,
     positions: Array.isArray(r?.positions) ? r.positions : undefined,

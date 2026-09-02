@@ -331,6 +331,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                           {tzM.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
                         </View>
                       ) : null}
+                      <Text style={s.cosmicCap}>{tl('Kin maia · Sol sideral (védico) · animal do ano (chinês)', 'Mayan Kin · sidereal Sun (Vedic) · year animal (Chinese)', 'Kin maya · Sol sideral (vedico) · animal del año (chino)', 'Kin maya · Sole siderale (vedico) · animale dell\'anno (cinese)')}</Text>
                     </View>
                   ) : null}
                   <View style={s.tierRow}>
@@ -547,6 +548,7 @@ const s = StyleSheet.create({
   cosmicGlyph: { fontSize: 20, fontWeight: '800' },
   cosmicSys: { color: '#8b85b3', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
   cosmicVal: { color: '#efedfb', fontSize: 12.5, fontWeight: '800', textAlign: 'center', marginTop: 2 },
+  cosmicCap: { color: '#6f6a90', fontSize: 9.5, textAlign: 'center', marginTop: 10, lineHeight: 13 },
   tzPct: { color: '#8b7cf6', fontSize: 20, fontWeight: '900' },
   tzTag: { backgroundColor: 'rgba(139,124,246,.18)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
   tzTagTx: { color: '#c7bdff', fontSize: 11, fontWeight: '700' },

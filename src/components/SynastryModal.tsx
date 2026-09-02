@@ -86,30 +86,33 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
             <>
               {typeof data.score === 'number' ? (
                 <View style={s.scoreBox}>
-                  <Text style={s.scorePct}>{Math.round(data.score)}<Text style={s.scoreSym}>%</Text></Text>
-                  <Text style={s.scoreLbl}>{tl('afinidade', 'affinity', 'afinidad', 'affinita')}</Text>
+                  <Text style={s.scorePct}>{Math.round(typeof data.combinedScore === 'number' ? data.combinedScore : data.score)}<Text style={s.scoreSym}>%</Text></Text>
+                  <Text style={s.scoreLbl}>{typeof data.combinedScore === 'number' && data.combinedScore !== Math.round(data.score) ? tl('afinidade integrada', 'integrated affinity', 'afinidad integrada', 'affinita integrata') : tl('afinidade', 'affinity', 'afinidad', 'affinita')}</Text>
                 </View>
               ) : null}
 
-              {TZOLKIN_ENABLED && people.a?.date && people.b?.date ? (() => {
-                const tz = tzolkinMatchScore(people.a!.date!, people.b!.date!)
-                const astro = typeof data.score === 'number' ? Math.round(data.score) : null
-                const combined = (astro != null && TZ_DISPLAY_WEIGHT > 0) ? Math.round(astro * (1 - TZ_DISPLAY_WEIGHT) + tz * TZ_DISPLAY_WEIGHT) : null
-                return (
-                  <View style={{ backgroundColor: 'rgba(139,124,246,.10)', borderWidth: 1, borderColor: 'rgba(139,124,246,.35)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={{ color: '#c9c5e2', fontSize: 13, fontWeight: '700' }}>Tzolkin Match</Text>
-                      <Text style={{ color: '#8b7cf6', fontSize: 20, fontWeight: '900' }}>{tz}%</Text>
-                    </View>
-                    {combined != null ? (
-                      <Text style={{ color: '#a7a2c9', fontSize: 12, marginTop: 4 }}>{tl('Visão integrada', 'Integrated view', 'Vision integrada', 'Visione integrata')}: {combined}% <Text style={{ color: '#6f6a90', fontSize: 11 }}>(astro + Tzolkin)</Text></Text>
-                    ) : null}
-                    <View style={{ marginTop: 10, marginHorizontal: -14, marginBottom: -14 }}>
-                      <TzolkinMatchView embedded aDateISO={people.a!.date!} bDateISO={people.b!.date!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
-                    </View>
-                  </View>
-                )
+              {typeof data.combinedScore === 'number' ? (() => {
+                // Mesma fonte do deck (backend): astro + cada sistema com dado → integrado.
+                const parts = [`${tl('astro', 'astro', 'astro', 'astro')} ${Math.round(data.score || 0)}%`]
+                if (data.tzolkinScore != null) parts.push(`Tzolkin ${Math.round(data.tzolkinScore)}%`)
+                if (data.vedicScore != null) parts.push(`${tl('Védico', 'Vedic', 'Vedico', 'Vedico')} ${Math.round(data.vedicScore)}%`)
+                if (data.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(data.chineseScore)}%`)
+                return parts.length > 1 ? (
+                  <Text style={{ color: '#8892a4', fontSize: 12, textAlign: 'center', marginTop: -6, marginBottom: 14 }}>{parts.join(' · ')} → {Math.round(data.combinedScore!)}%</Text>
+                ) : null
               })() : null}
+
+              {TZOLKIN_ENABLED && people.a?.date && people.b?.date ? (
+                <View style={{ backgroundColor: 'rgba(139,124,246,.10)', borderWidth: 1, borderColor: 'rgba(139,124,246,.35)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ color: '#c9c5e2', fontSize: 13, fontWeight: '700' }}>Tzolkin Match</Text>
+                    {data.tzolkinScore != null ? <Text style={{ color: '#8b7cf6', fontSize: 20, fontWeight: '900' }}>{Math.round(data.tzolkinScore)}%</Text> : null}
+                  </View>
+                  <View style={{ marginTop: 10, marginHorizontal: -14, marginBottom: -14 }}>
+                    <TzolkinMatchView embedded aDateISO={people.a!.date!} bDateISO={people.b!.date!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
+                  </View>
+                </View>
+              ) : null}
               {CHINESE_ENABLED && people.a?.date && people.b?.date ? (
                 <View style={{ backgroundColor: 'rgba(228,87,46,.09)', borderWidth: 1, borderColor: 'rgba(228,87,46,.30)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
                   <Text style={{ color: '#e4572e', fontSize: 13, fontWeight: '800', marginBottom: 8 }}>{tl('Sinastria Chinesa (BaZi)', 'Chinese synastry (BaZi)', 'Sinastria China (BaZi)', 'Sinastria Cinese (BaZi)')}</Text>

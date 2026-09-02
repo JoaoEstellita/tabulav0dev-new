@@ -71,6 +71,9 @@ export default function ChineseProfileContent({ birth: birthProp }: { birth?: Bi
         {tab === 'geral' && <Geral profile={profile} lang={lang} tl={tl} />}
         {tab === 'bazi' && <BaziView profile={profile} lang={lang} tl={tl} />}
         {tab === 'dinamica' && <Dinamica profile={profile} lang={lang} tl={tl} />}
+        {!(birth?.birthTime && /^\d{1,2}:\d{2}/.test(birth.birthTime)) ? (
+          <Text style={[s.disclaimer, { color: '#f0a58c' }]}>⚠️ {tl('Sem a hora de nascimento, o pilar da hora é aproximado (meio-dia).', 'Without the birth time, the hour pillar is approximate (noon).', 'Sin la hora de nacimiento, el pilar de la hora es aproximado (mediodia).', 'Senza l\'ora di nascita, il pilastro dell\'ora e approssimato (mezzogiorno).')}</Text>
+        ) : null}
         <Text style={s.disclaimer}>{chineseDisclaimer(lang)}</Text>
       </ScrollView>
     </View>
