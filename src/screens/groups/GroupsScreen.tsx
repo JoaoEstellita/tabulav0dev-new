@@ -1901,19 +1901,22 @@ export default function GroupsScreen() {
     // Box INTEIRO clicável (sem toggle separado). Compacto = só o resumo; expandido
     // = aspectos com frase interpretativa + Guna + casas.
     return (
-      <TouchableOpacity activeOpacity={0.9} onPress={() => toggleSyn(key)} style={styles.synastryBox}>
-        <View style={styles.synastryCompatRow}>
-          <Text style={styles.synastryCompatText}>
-            {`${tr('groups.synastry.compat.title', 'Compatibilidade')}: ${tr(`groups.synastry.compat.${score.bandKey}`, score.bandKey)} · ${score.pct}%`}
-          </Text>
-          <Text style={styles.synastryCompatMeta}>
-            {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}  ${expanded ? '▴' : '▾'}`}
-          </Text>
-        </View>
-        {!expanded ? (
-          <Text style={styles.synastryHint}>{tr('groups.synastry.tapToExpand', 'Toque para ver a leitura completa')}</Text>
-        ) : (
-          shown.map((asp, index) => {
+      <View style={styles.synastryBox}>
+        {/* Só o cabeçalho colapsa/expande — assim tocar numa aba/aspecto interno não fecha a box. */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => toggleSyn(key)}>
+          <View style={styles.synastryCompatRow}>
+            <Text style={styles.synastryCompatText}>
+              {`${tr('groups.synastry.compat.title', 'Compatibilidade')}: ${tr(`groups.synastry.compat.${score.bandKey}`, score.bandKey)} · ${score.pct}%`}
+            </Text>
+            <Text style={styles.synastryCompatMeta}>
+              {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}  ${expanded ? '▴' : '▾'}`}
+            </Text>
+          </View>
+          {!expanded ? (
+            <Text style={styles.synastryHint}>{tr('groups.synastry.tapToExpand', 'Toque para ver a leitura completa')}</Text>
+          ) : null}
+        </TouchableOpacity>
+        {shown.map((asp, index) => {
             const toneColor = asp.tone === 'harmonioso' ? '#4ECDC4' : asp.tone === 'tenso' ? '#FF6B6B' : '#B39DDB'
             const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
             // Frase interpretativa coerente com o aspecto (só no expandido).
@@ -1930,8 +1933,7 @@ export default function GroupsScreen() {
                 {line ? <Text style={styles.synastryAspectLineText}>{line}</Text> : null}
               </View>
             )
-          })
-        )}
+          })}
         {expanded && chartA && chartB ? (
           <View style={{ marginTop: 12, alignItems: 'center' }}>
             <Text style={[styles.gunaTitle, { alignSelf: 'flex-start' }]}>{tr('groups.synastry.wheel', 'Roda de sinastria')}</Text>
@@ -1977,7 +1979,7 @@ export default function GroupsScreen() {
             ))}
           </View>
         ) : null}
-      </TouchableOpacity>
+      </View>
     )
   }
 
