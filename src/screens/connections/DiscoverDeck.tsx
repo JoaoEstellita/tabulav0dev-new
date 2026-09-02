@@ -16,8 +16,13 @@ import { getKinDisplayName, sealOf, SEALS, COLOR_LABELS, getTzolkinMatchByKins, 
 import { SvgCss } from 'react-native-svg/css'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { tagLabel } from '../../data/tzolkin/matchText'
+import { BRANCHES } from '../../astro/chinese'
+import { ELEMENT_HEX, ANIMAL_ESIT } from '../../data/chinese/chineseText'
+import { SIGN_NAMES_I18N, MOON_SIGN_GLYPH, SIGN_KEYS } from '../../data/moonSignMood'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
+const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
+const VEDIC_ENABLED = process.env.EXPO_PUBLIC_VEDIC_ENABLED !== '0'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 // planetEn (minúsculo) → nome capitalizado que o AspectGrid espera.
@@ -275,21 +280,54 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               const tzKin = current.tzolkinKin
               const tzM = (TZOLKIN_ENABLED && tzKin && myKin) ? getTzolkinMatchByKins(myKin, tzKin) : null
               const xml = tzKin ? SEAL_SVG[sealOf(tzKin)] : null
-              const hex = tzKin ? COLOR_LABELS[SEALS[sealOf(tzKin) - 1].color].hex : '#888'
+              const sealHex = tzKin ? COLOR_LABELS[SEALS[sealOf(tzKin) - 1].color].hex : '#8B7CF6'
+              // Védico (signo solar sideral 0..11) e animal chinês (ramo do ano 0..11).
+              const vSign = (VEDIC_ENABLED && typeof current.vedicSunSign === 'number') ? current.vedicSunSign : null
+              const vName = vSign != null ? (SIGN_NAMES_I18N[lang] || SIGN_NAMES_I18N['pt-BR'])[vSign] : null
+              const vGlyph = vSign != null ? MOON_SIGN_GLYPH[SIGN_KEYS[vSign]] : null
+              const cAn = (CHINESE_ENABLED && typeof current.chineseAnimal === 'number') ? current.chineseAnimal : null
+              const cBr = cAn != null ? BRANCHES[cAn] : null
+              const cName = cBr ? (lang === 'es-ES' ? ANIMAL_ESIT[cAn as number].es : lang === 'it-IT' ? ANIMAL_ESIT[cAn as number].it : lang === 'en-US' ? cBr.animalEn : cBr.animalPt) : null
+              const cHex = cBr ? ELEMENT_HEX[cBr.element] : '#8B7CF6'
+              const hasTz = TZOLKIN_ENABLED && !!tzKin
+              const showBar = hasTz || vSign != null || cAn != null
               return (
                 <>
-                  {TZOLKIN_ENABLED && tzKin ? (
-                    <View style={s.tzBox}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        {xml ? <View style={{ width: 34, height: 34 }}><SvgCss xml={xml} width="100%" height="100%" /></View>
-                          : <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 11 }}>{sealOf(tzKin)}</Text></View>}
-                        <View style={{ flex: 1, minWidth: 0 }}>
-                          <Text style={s.tzTitle}>Tzolkin · KIN {tzKin}</Text>
-                          <Text style={s.tzName}>{getKinDisplayName(tzKin, lang)}</Text>
-                        </View>
+                  {showBar ? (
+                    <View style={s.cosmicBar}>
+                      <Text style={s.cosmicHdr}>{tl('Assinatura cósmica', 'Cosmic signature', 'Firma cosmica', 'Firma cosmica')}</Text>
+                      <View style={s.cosmicRow}>
+                        {hasTz ? (
+                          <View style={s.cosmicCell}>
+                            {xml ? <View style={s.cosmicTok}><SvgCss xml={xml} width="100%" height="100%" /></View>
+                              : <View style={[s.cosmicTokFill, { backgroundColor: sealHex }]}><Text style={s.cosmicTokTxt}>{sealOf(tzKin as number)}</Text></View>}
+                            <Text style={s.cosmicSys}>Tzolkin</Text>
+                            <Text style={s.cosmicVal} numberOfLines={2}>{getKinDisplayName(tzKin as number, lang)}</Text>
+                          </View>
+                        ) : null}
+                        {vSign != null ? (
+                          <>
+                            {hasTz ? <View style={s.cosmicSep} /> : null}
+                            <View style={s.cosmicCell}>
+                              <View style={[s.cosmicTokFill, { backgroundColor: 'rgba(139,124,246,.16)', borderWidth: 1, borderColor: 'rgba(139,124,246,.5)' }]}><Text style={[s.cosmicGlyph, { color: '#b7abff' }]}>{vGlyph}</Text></View>
+                              <Text style={s.cosmicSys}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
+                              <Text style={s.cosmicVal} numberOfLines={2}>{vName}</Text>
+                            </View>
+                          </>
+                        ) : null}
+                        {cAn != null ? (
+                          <>
+                            {(hasTz || vSign != null) ? <View style={s.cosmicSep} /> : null}
+                            <View style={s.cosmicCell}>
+                              <View style={[s.cosmicTokFill, { backgroundColor: cHex + '26', borderWidth: 1, borderColor: cHex + '80' }]}><Text style={[s.cosmicGlyph, { color: cHex }]}>{cBr?.hanzi}</Text></View>
+                              <Text style={s.cosmicSys}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
+                              <Text style={s.cosmicVal} numberOfLines={2}>{cName}</Text>
+                            </View>
+                          </>
+                        ) : null}
                       </View>
                       {tzM && tzM.tags.length ? (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10, justifyContent: 'center' }}>
                           {tzM.tags.map((t) => <View key={t} style={s.tzTag}><Text style={s.tzTagTx}>{tagLabel(t, lang)}</Text></View>)}
                         </View>
                       ) : null}
@@ -488,6 +526,18 @@ const s = StyleSheet.create({
   tzBox: { marginTop: 10, backgroundColor: 'rgba(139,124,246,.10)', borderWidth: 1, borderColor: 'rgba(139,124,246,.35)', borderRadius: 12, padding: 12 },
   tzTitle: { color: '#a7a2c9', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   tzName: { color: '#efedfb', fontSize: 14, fontWeight: '800' },
+  // Barra "Assinatura cósmica" — Tzolkin · Védico · Chinês lado a lado.
+  cosmicBar: { marginTop: 12, backgroundColor: 'rgba(139,124,246,.09)', borderWidth: 1, borderColor: 'rgba(139,124,246,.30)', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 8 },
+  cosmicHdr: { color: '#9a94c4', fontSize: 10, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 },
+  cosmicRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  cosmicCell: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
+  cosmicSep: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(139,124,246,.22)', marginTop: 4 },
+  cosmicTok: { width: 40, height: 40, marginBottom: 7 },
+  cosmicTokFill: { width: 40, height: 40, borderRadius: 20, marginBottom: 7, alignItems: 'center', justifyContent: 'center' },
+  cosmicTokTxt: { color: '#0F0F23', fontWeight: '900', fontSize: 14 },
+  cosmicGlyph: { fontSize: 20, fontWeight: '800' },
+  cosmicSys: { color: '#8b85b3', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
+  cosmicVal: { color: '#efedfb', fontSize: 12.5, fontWeight: '800', textAlign: 'center', marginTop: 2 },
   tzPct: { color: '#8b7cf6', fontSize: 20, fontWeight: '900' },
   tzTag: { backgroundColor: 'rgba(139,124,246,.18)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
   tzTagTx: { color: '#c7bdff', fontSize: 11, fontWeight: '700' },
