@@ -151,6 +151,23 @@ function RodaView({ profile, lang, tl }: any) {
 
   return (
     <>
+      <Card title={tl('Oráculo da Quinta Força', 'Fifth Force Oracle', 'Oraculo de la Quinta Fuerza', 'Oracolo della Quinta Forza')}>
+        <View style={s.oracle}>
+          <OracleNode pos={o.guide} label={roleLabel('guide')} active={sel === 'guide'} onPress={() => setSel('guide')} />
+          <View style={s.oracleRow}>
+            <OracleNode pos={o.antipode} label={roleLabel('antipode')} active={sel === 'antipode'} onPress={() => setSel('antipode')} />
+            <OracleNode pos={o.destiny} label={roleLabel('destiny')} active={sel === 'destiny'} onPress={() => setSel('destiny')} big />
+            <OracleNode pos={o.analog} label={roleLabel('analog')} active={sel === 'analog'} onPress={() => setSel('analog')} />
+          </View>
+          <OracleNode pos={o.occult} label={roleLabel('occult')} active={sel === 'occult'} onPress={() => setSel('occult')} />
+        </View>
+        <View style={s.oracleInfo}>
+          <Text style={s.oracleInfoTitle}>{roleLabel(sel)} — KIN {selPos.kin}</Text>
+          <Text style={s.body}>{getKinDisplayName(selPos.kin, lang)}</Text>
+          {sel !== 'destiny' ? <Text style={[s.body, { marginTop: 6 }]}>{oracleRole(sel as any, lang).text}</Text> : null}
+        </View>
+      </Card>
+
       <Card title={tl('Tabuleiro Tzolkin', 'Tzolkin board', 'Tablero Tzolkin', 'Tabellone Tzolkin')}>
         <Text style={[s.body, { marginBottom: 8 }]}>{tl('260 Kins — 20 selos (linhas) × 13 tons (colunas). Seu Kin em destaque.', '260 Kins — 20 seals (rows) × 13 tones (columns). Your Kin highlighted.', '260 Kines — 20 sellos (filas) × 13 tonos (columnas). Tu Kin destacado.', '260 Kin — 20 sigilli (righe) × 13 toni (colonne). Il tuo Kin in evidenza.')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -171,23 +188,6 @@ function RodaView({ profile, lang, tl }: any) {
             ))}
           </View>
         </ScrollView>
-      </Card>
-
-      <Card title={tl('Oráculo da Quinta Força', 'Fifth Force Oracle', 'Oraculo de la Quinta Fuerza', 'Oracolo della Quinta Forza')}>
-        <View style={s.oracle}>
-          <OracleNode pos={o.guide} label={roleLabel('guide')} active={sel === 'guide'} onPress={() => setSel('guide')} />
-          <View style={s.oracleRow}>
-            <OracleNode pos={o.antipode} label={roleLabel('antipode')} active={sel === 'antipode'} onPress={() => setSel('antipode')} />
-            <OracleNode pos={o.destiny} label={roleLabel('destiny')} active={sel === 'destiny'} onPress={() => setSel('destiny')} big />
-            <OracleNode pos={o.analog} label={roleLabel('analog')} active={sel === 'analog'} onPress={() => setSel('analog')} />
-          </View>
-          <OracleNode pos={o.occult} label={roleLabel('occult')} active={sel === 'occult'} onPress={() => setSel('occult')} />
-        </View>
-        <View style={s.oracleInfo}>
-          <Text style={s.oracleInfoTitle}>{roleLabel(sel)} — KIN {selPos.kin}</Text>
-          <Text style={s.body}>{getKinDisplayName(selPos.kin, lang)}</Text>
-          {sel !== 'destiny' ? <Text style={[s.body, { marginTop: 6 }]}>{oracleRole(sel as any, lang).text}</Text> : null}
-        </View>
       </Card>
     </>
   )

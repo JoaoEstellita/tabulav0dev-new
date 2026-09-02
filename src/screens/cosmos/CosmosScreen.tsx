@@ -540,9 +540,16 @@ export default function CosmosScreen() {
     { id: 'cosmos.system', title: tl('Mapa Védico', 'Vedic Chart', 'Carta Vedica', 'Carta Vedica'),
       body: tl('Toque em "Védico" para ver seu mapa no sistema indiano (sideral): signos, casas e o Guna. Uma outra lente sobre o mesmo céu.', 'Tap "Vedic" to see your chart in the Indian (sidereal) system: signs, houses and Guna. Another lens on the same sky.', 'Toca "Vedico" para ver tu carta en el sistema indio (sideral): signos, casas y Guna. Otra lente sobre el mismo cielo.', 'Tocca "Vedico" per la tua carta nel sistema indiano (siderale): segni, case e Guna. Un\'altra lente sullo stesso cielo.'),
       onEnter: () => { setMapMode('vedic') },
-      onExit: () => { setMapMode('western'); setWestMode('natal') } },
+      onExit: () => { if (!TZOLKIN_ENABLED) { setMapMode('western'); setWestMode('natal') } } },
+    ...(TZOLKIN_ENABLED ? [{
+      id: 'cosmos.system', title: tl('Tzolkin — 13 Luas', 'Tzolkin — 13 Moons', 'Tzolkin — 13 Lunas', 'Tzolkin — 13 Lune'),
+      body: tl('Toque em "Tzolkin" para seu Kin do Sincronário das 13 Luas: selo, tom, Oráculo da Quinta Força, Onda Encantada e o Kin do dia. Uma leitura simbólica inspirada no Tzolk\'in maia (não é o calendário maia tradicional).', 'Tap "Tzolkin" for your 13-Moon Kin: seal, tone, Fifth Force Oracle, Wavespell and the Kin of the day. A symbolic reading inspired by the Maya Tzolk\'in (not the traditional Maya calendar).', 'Toca "Tzolkin" para tu Kin del Sincronario de 13 Lunas: sello, tono, Oraculo de la Quinta Fuerza, Onda Encantada y el Kin del dia. Una lectura simbolica inspirada en el Tzolkin maya (no es el calendario maya tradicional).', 'Tocca "Tzolkin" per il tuo Kin delle 13 Lune: sigillo, tono, Oracolo della Quinta Forza, Onda Incantata e il Kin del giorno. Una lettura simbolica ispirata al Tzolk\'in maya (non e il calendario maya tradizionale).'),
+      onEnter: () => { setMapMode('tzolkin') },
+      onExit: () => { setMapMode('western'); setWestMode('natal') },
+    }] : []),
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
-  const { openTour: openCosmosTour } = useTabTour('tour_seen_cosmos', 'Cosmos', buildCosmosTour)
+  // v2: reabre uma vez pra todos após incluir o Tzolkin no tour.
+  const { openTour: openCosmosTour } = useTabTour('tour_seen_cosmos_v2', 'Cosmos', buildCosmosTour)
 
   const handleCardPress = (f: FeatureCard) => {
     // "Em breve" tem prioridade: não leva ao paywall (a feature ainda não existe).

@@ -2,6 +2,7 @@
 // Sem bespoke por Kin — compõe selo/tom/oráculo/família/castelo com templates curtos.
 import { getSealWords, getToneWords, ORACLE_ROLE_I18N, FAMILY_I18N, CASTLE_I18N, DISCLAIMER_I18N, type TzLang } from './tzolkinOverridesI18n'
 import { TZOLKIN_ORACLE_ROLE_PT, TZOLKIN_FAMILY_PT, TZOLKIN_CASTLE_PT, TZOLKIN_DISCLAIMER_PT } from './tzolkinOverridesPtBR'
+import { SEAL_DEEP_PT, TONE_DEEP_PT } from './deepReadings'
 
 function lang(l: string): TzLang {
   if (l === 'en-US' || l === 'es-ES' || l === 'it-IT') return l
@@ -9,23 +10,30 @@ function lang(l: string): TzLang {
 }
 
 export function readSeal(seal: number, l: string): string {
-  const L = lang(l), w = getSealWords(seal, L)
+  const L = lang(l)
+  if (L === 'pt-BR') {
+    const d = SEAL_DEEP_PT[seal]
+    if (d) return `${d.essence}\n\n${d.potential}\n\n⚠️ Sombra: ${d.shadow}\n\n✨ Dom: ${d.gift}`
+  }
+  const w = getSealWords(seal, L)
   const t: Record<TzLang, string> = {
-    'pt-BR': `O selo ${w.name} traz ${w.essence} — seu poder é ${w.power}, sua ação é ${w.action}.`,
-    'en-US': `The ${w.name} seal carries ${w.essence} — its power is ${w.power}, its action is ${w.action}.`,
-    'es-ES': `El sello ${w.name} trae ${w.essence}: su poder es ${w.power}, su accion es ${w.action}.`,
-    'it-IT': `Il sigillo ${w.name} porta ${w.essence}: il suo potere e ${w.power}, la sua azione e ${w.action}.`,
+    'pt-BR': `O selo ${w.name} traz ${w.essence} — seu poder é ${w.power}, sua ação é ${w.action}. Simboliza essa qualidade viva em você, um convite a encarná-la com consciência.`,
+    'en-US': `The ${w.name} seal carries ${w.essence} — its power is ${w.power}, expressed through the action to ${w.action}. It symbolizes this quality alive in you, an invitation to embody it consciously.`,
+    'es-ES': `El sello ${w.name} trae ${w.essence}: su poder es ${w.power}, expresado en la accion de ${w.action}. Simboliza esta cualidad viva en ti, una invitacion a encarnarla con consciencia.`,
+    'it-IT': `Il sigillo ${w.name} porta ${w.essence}: il suo potere e ${w.power}, espresso nell azione di ${w.action}. Simboleggia questa qualita viva in te, un invito a incarnarla con consapevolezza.`,
   }
   return t[L]
 }
 
 export function readTone(tone: number, l: string): string {
-  const L = lang(l), w = getToneWords(tone, L)
+  const L = lang(l)
+  if (L === 'pt-BR') { const d = TONE_DEEP_PT[tone]; if (d) return d }
+  const w = getToneWords(tone, L)
   const t: Record<TzLang, string> = {
-    'pt-BR': `Tom ${w.name}: essência de ${w.essence}. Poder de ${w.power}, ação de ${w.action}.`,
-    'en-US': `${w.name} tone: essence of ${w.essence}. Power to ${w.power}, action to ${w.action}.`,
-    'es-ES': `Tono ${w.name}: esencia de ${w.essence}. Poder de ${w.power}, accion de ${w.action}.`,
-    'it-IT': `Tono ${w.name}: essenza di ${w.essence}. Potere di ${w.power}, azione di ${w.action}.`,
+    'pt-BR': `Tom ${w.name}: essência de ${w.essence}. Traz o poder de ${w.power} e a ação de ${w.action} — a etapa da jornada em que essa força se expressa.`,
+    'en-US': `${w.name} tone: essence of ${w.essence}. It brings the power to ${w.power} and the action to ${w.action} — the stage of the journey where this force expresses itself.`,
+    'es-ES': `Tono ${w.name}: esencia de ${w.essence}. Trae el poder de ${w.power} y la accion de ${w.action}, la etapa del viaje donde esta fuerza se expresa.`,
+    'it-IT': `Tono ${w.name}: essenza di ${w.essence}. Porta il potere di ${w.power} e l azione di ${w.action}, la tappa del viaggio in cui questa forza si esprime.`,
   }
   return t[L]
 }
