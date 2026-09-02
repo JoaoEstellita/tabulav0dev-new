@@ -2304,21 +2304,6 @@ export default function GroupsScreen() {
                           </Text>
                         </TouchableOpacity>
                       ) : null}
-                      {!member.isManaged && member.userId !== user?.uid ? (
-                        <TouchableOpacity
-                          style={styles.memberChartBtn}
-                          activeOpacity={0.8}
-                          disabled={connectSentIds.has(member.userId)}
-                          onPress={() => setConnectTarget({ userId: member.userId, name: member.displayName || tr('connections.thisPerson', 'esta pessoa') })}
-                          accessibilityRole="button"
-                          accessibilityLabel={tr('connections.connect', 'Conectar')}
-                        >
-                          <Ionicons name={connectSentIds.has(member.userId) ? 'checkmark' : 'person-add-outline'} size={14} color="#FFD700" />
-                          <Text style={styles.memberChartBtnText} numberOfLines={1}>
-                            {connectSentIds.has(member.userId) ? tr('connections.sent', 'Pedido enviado') : tr('connections.connect', 'Conectar')}
-                          </Text>
-                        </TouchableOpacity>
-                      ) : null}
                       {member.isManaged && selectedGroup?.createdBy === user?.uid ? (
                         <TouchableOpacity
                           style={styles.memberChartBtn}
