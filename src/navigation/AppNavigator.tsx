@@ -304,15 +304,13 @@ function MainTabs() {
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
-              {/* O status do dia e as oito areas sao o valor que se repete, e
-                  eram o unico que nunca travava. O mapa continua livre. */}
-              <AccessGuard>
-                <>
-                  <TrialBanner />
-                  <HomeScreen />
-                  <TrialWelcomeModal />
-                </>
-              </AccessGuard>
+              {/* Status do dia + 8 áreas agora GRÁTIS (modelo aberto: o pago é Previsões,
+                  astrocartografia, retornos, matriz de grupo e a IA sem limite). */}
+              <>
+                <TrialBanner />
+                <HomeScreen />
+                <TrialWelcomeModal />
+              </>
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}

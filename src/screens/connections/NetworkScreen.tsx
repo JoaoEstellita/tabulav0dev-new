@@ -37,9 +37,9 @@ export default function NetworkScreen() {
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
-  const { isAdmin, subscription, trialActive } = useSubscriptionCheck()
-  // Gate: a Rede/Match é para assinante ATIVO ou TRIAL; grátis vê o paywall.
-  const gated = !isAdmin && !subscription?.active && !trialActive
+  useSubscriptionCheck()
+  // Match agora é GRÁTIS (isca viral) — sem paywall. O pago fica nos mapas/matriz de grupo e nas Previsões.
+  const gated = false
   const [showTour, setShowTour] = useState(false)
   // Tour holofote da aba Match (só assinante; grátis vê o carrossel de venda no paywall)
   const aMenu = useTourAnchor('match.menu')
