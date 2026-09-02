@@ -4,6 +4,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { getSynastry, type SynastryResult } from '../services/DiscoveryService'
 import SynastryWheel from './SynastryWheel'
+import { resolvePlanetInSignText } from '../utils/natalInterpretation'
+
+// Camada de signos (o "tempero"): planeta pessoal → signo pela longitude.
+const SYN_SIGN_TOK = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces']
+const SYN_SIGN_PT = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+const SYN_PLANET_PT: Record<string, string> = { sun: 'Sol', moon: 'Lua', mercury: 'Mercúrio', venus: 'Vênus', mars: 'Marte' }
+const SYN_PERSONAL = ['sun', 'moon', 'mercury', 'venus', 'mars']
+const synSignIdx = (lon: number) => Math.floor((((lon % 360) + 360) % 360) / 30)
+const synFirstSentence = (t: string) => { const i = t.search(/[.!?]\s/); return i > 0 ? t.slice(0, i + 1) : t }
 import AspectGrid, { transitCellId } from './AspectGrid'
 import SynastryAspectDetailModal from './SynastryAspectDetailModal'
 import { useAuth } from '../hooks/useAuth'
@@ -111,8 +120,25 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
               })() : null}
 
               {(() => {
+                const signList = (pos?: { planetEn: string; longitude: number }[]) => SYN_PERSONAL
+                  .map((pl) => { const p = (pos || []).find((x) => x.planetEn === pl); return p ? `${SYN_PLANET_PT[pl]} em ${SYN_SIGN_PT[synSignIdx(p.longitude)]}` : null })
+                  .filter(Boolean).join(' · ')
+                const curatedSigns = (pos?: { planetEn: string; longitude: number }[], who?: string) => ['sun', 'moon', 'venus']
+                  .map((pl) => { const p = (pos || []).find((x) => x.planetEn === pl); if (!p) return null; const t = resolvePlanetInSignText(pl, SYN_SIGN_TOK[synSignIdx(p.longitude)], language); return t ? `${who} — ${SYN_PLANET_PT[pl]} em ${SYN_SIGN_PT[synSignIdx(p.longitude)]}: ${synFirstSentence(t)}` : null })
+                  .filter(Boolean) as string[]
+                const uSigns = signList(data.myPositions); const tSigns = signList(data.positions)
                 const astralNode = (data.myPositions?.length && data.positions?.length) ? (
                   <>
+                    {(uSigns || tSigns) ? (
+                      <View style={{ marginBottom: 14, backgroundColor: 'rgba(245,197,66,.07)', borderRadius: 12, padding: 12 }}>
+                        <Text style={s.sect}>{tl('O tempero de cada um (planetas por signo)', 'Each one\'s flavor (planets by sign)', 'El toque de cada uno', 'Il carattere di ciascuno')}</Text>
+                        {uSigns ? <Text style={{ color: '#efedfb', fontSize: 13, fontWeight: '700', marginBottom: 3 }}>{tl('Você', 'You', 'Tu', 'Tu')} — {uSigns}</Text> : null}
+                        {tSigns ? <Text style={{ color: '#efedfb', fontSize: 13, fontWeight: '700' }}>{name || tl('a pessoa', 'them', 'la persona', 'la persona')} — {tSigns}</Text> : null}
+                        {[...curatedSigns(data.myPositions, tl('Você', 'You', 'Tu', 'Tu')), ...curatedSigns(data.positions, name || '')].slice(0, 6).map((l, i) => (
+                          <Text key={i} style={{ color: '#c9c5e2', fontSize: 12, lineHeight: 17, marginTop: 5 }}>• {l}</Text>
+                        ))}
+                      </View>
+                    ) : null}
                     <Text style={s.sect}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
                     <SynastryWheel outer={data.myPositions} inner={data.positions} aspects={wheelAspects} size={310} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={name || ''} />
                     <View style={{ marginTop: 14 }}>
