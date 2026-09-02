@@ -21,6 +21,8 @@ import TzolkinMatchView from '../cosmos/TzolkinMatchView'
 import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
+import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from '../../astro/synastry'
+import { synastryScore, synastryAspectLine } from '../../astro/synastryReading'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
@@ -39,10 +41,24 @@ export default function MemberProfileScreen() {
   const member = (route.params as any)?.member as SlimMember | undefined
   const { user } = useAuth()
   const [viewerBirth, setViewerBirth] = useState<string | undefined>()
+  const [synAspects, setSynAspects] = useState<SynastryAspect[] | null>(null)
   useEffect(() => {
-    if (!TZOLKIN_ENABLED || !user?.uid) return
-    getDoc(doc(db, 'users', user.uid)).then((sn) => setViewerBirth(sn.data()?.birthDate)).catch(() => { })
-  }, [user?.uid])
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then(async (sn) => {
+      const d = sn.data() || {}
+      setViewerBirth(d.birthDate)
+      // Sinastria astral: precisa da carta COMPLETA do viewer (data+hora+local) e do membro.
+      const loc = d.birthLocation || d.birthData?.birthLocation
+      const mb = member?.birthData
+      if (!d.birthDate || !loc?.latitude || !mb?.datetime || !mb?.coordinates) { setSynAspects(null); return }
+      const mineBirth = { datetime: `${d.birthDate}T${d.birthTime || '12:00'}:00`, coordinates: { latitude: loc.latitude, longitude: loc.longitude } }
+      try {
+        const [mine, theirs] = await Promise.all([computeNatalChart(mineBirth), computeNatalChart(mb)])
+        if (mine && theirs) setSynAspects(computeSynastryAspects(mine.planets, theirs.planets, 20))
+        else setSynAspects(null)
+      } catch { setSynAspects(null) }
+    }).catch(() => { })
+  }, [user?.uid, member?.birthData?.datetime])
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
@@ -261,6 +277,18 @@ export default function MemberProfileScreen() {
                     <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
                   </View>
                 ) : null}
+                {synAspects && synAspects.length ? (() => {
+                  const sc = synastryScore(synAspects)
+                  return (
+                    <View style={{ marginTop: 16, backgroundColor: 'rgba(255,255,255,.04)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.08)', padding: 14 }}>
+                      <Text style={{ color: '#f5c542', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>{tl('Sinastria astral', 'Astro synastry', 'Sinastria astral', 'Sinastria astrale')}</Text>
+                      <Text style={{ color: '#efedfb', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{tl('Compatibilidade', 'Compatibility', 'Compatibilidad', 'Compatibilita')}: {sc.pct}% · {sc.harmonics} {tl('harmônicos', 'harmonics', 'harmonicos', 'armonici')} · {sc.tensions} {tl('tensos', 'tense', 'tensos', 'tesi')}</Text>
+                      {synAspects.slice(0, 8).map((a, i) => (
+                        <Text key={i} style={{ color: '#c9c5e2', fontSize: 13, lineHeight: 19 }}>• {synastryAspectLine(a, language)}</Text>
+                      ))}
+                    </View>
+                  )
+                })() : null}
                 {TZOLKIN_ENABLED && chartMeta.birthDate && viewerBirth ? (
                   <View style={{ marginTop: 16 }}>
                     <Text style={{ color: '#f5c542', fontSize: 15, fontWeight: '800', marginBottom: 6, paddingHorizontal: 12 }}>{tl('Sinastria Tzolkin', 'Tzolkin synastry', 'Sinastria Tzolkin', 'Sinastria Tzolkin')}</Text>
