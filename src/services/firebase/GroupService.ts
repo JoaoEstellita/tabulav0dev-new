@@ -71,6 +71,7 @@ export interface GroupMember {
   shareEnabled?: boolean
   shareStatus?: boolean
   shareChart?: boolean
+  shareSynastry?: boolean
   lifeAreas?: Record<string, { percentage: number; status: string; influences?: string[]; mainPlanets?: string[] }>
   areaTransits?: Record<string, Array<{
     transitPlanet: string
@@ -115,6 +116,7 @@ export interface GroupMemberSettings {
   notifiedLifeAreas: string[]
   shareStatus?: boolean
   shareChart?: boolean
+  shareSynastry?: boolean
   cooldownMinutes?: number
   lastAlertByArea?: Record<string, any>
   enabled?: boolean
@@ -579,6 +581,7 @@ class GroupService {
                   birthData: member.birthData || undefined,
                   shareChart: member.shareChart,
                   shareStatus: member.shareStatus,
+                  shareSynastry: member.shareSynastry,
                   subscriptionActive: memberAdmin ? true : member.subscriptionActive !== false,
                   subscriptionStatus: member.subscriptionStatus || null,
                   isAdmin: memberAdmin,
@@ -653,6 +656,7 @@ class GroupService {
             isAdmin: adminFlag,
             shareChart: memberStatus?.shareChart,
             shareStatus: memberStatus?.shareStatus,
+            shareSynastry: memberStatus?.shareSynastry,
           } as GroupMember
         })
       )
@@ -828,6 +832,7 @@ class GroupService {
         notifiedLifeAreas: data.notifiedLifeAreas || this.LIFE_AREAS,
         shareStatus: data.shareStatus ?? true,
         shareChart: data.shareChart ?? true,
+        shareSynastry: data.shareSynastry ?? true,
         cooldownMinutes: data.cooldownMinutes || 0,
         lastAlertByArea: data.lastAlertByArea || {},
         enabled: data.enabled ?? true,
@@ -855,6 +860,7 @@ class GroupService {
         notifiedLifeAreas: defaults.notifiedLifeAreas,
         shareStatus: true,
         shareChart: true,
+        shareSynastry: true,
         cooldownMinutes: 0,
         lastAlertByArea: {},
         enabled: true,
@@ -903,6 +909,7 @@ class GroupService {
       notifiedLifeAreas: string[]
       shareStatus?: boolean
       shareChart?: boolean
+      shareSynastry?: boolean
       cooldownMinutes?: number
       enabled?: boolean
       types?: GroupMemberSettings['types']
@@ -918,6 +925,7 @@ class GroupService {
       notifiedLifeAreas: settings.notifiedLifeAreas || this.LIFE_AREAS,
       shareStatus: settings.shareStatus ?? true,
       shareChart: settings.shareChart ?? true,
+      shareSynastry: settings.shareSynastry ?? true,
       cooldownMinutes: settings.cooldownMinutes ?? 0,
       enabled: settings.enabled ?? true,
       types: settings.types || null,
@@ -933,6 +941,7 @@ class GroupService {
       await setDoc(doc(db, "groups", groupId, "memberStatus", userId), {
         shareChart: settings.shareChart ?? true,
         shareStatus: settings.shareStatus ?? true,
+        shareSynastry: settings.shareSynastry ?? true,
       }, { merge: true })
     } catch { /* best-effort */ }
   }

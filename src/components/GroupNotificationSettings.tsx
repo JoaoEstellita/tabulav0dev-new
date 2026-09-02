@@ -74,6 +74,7 @@ export interface GroupNotificationSettings {
   }
   shareStatus: boolean
   shareChart: boolean
+  shareSynastry: boolean
   cooldownMinutes: number
   priority: 'all' | 'critical_only' | 'none'
 }
@@ -118,6 +119,7 @@ const defaultSettings: GroupNotificationSettings = {
   },
   shareStatus: true,
   shareChart: true,
+  shareSynastry: true,
   cooldownMinutes: 0,
   priority: 'all',
 }
@@ -200,6 +202,7 @@ export default function GroupNotificationSettings({
         priority: memberSettings?.priority || defaultSettings.priority,
         shareStatus: memberSettings?.shareStatus ?? defaultSettings.shareStatus,
         shareChart: memberSettings?.shareChart ?? defaultSettings.shareChart,
+        shareSynastry: memberSettings?.shareSynastry ?? defaultSettings.shareSynastry,
         cooldownMinutes: memberSettings?.cooldownMinutes ?? defaultSettings.cooldownMinutes,
         customAlertMessages: buildMessageState(memberSettings?.customAlertMessages),
         sharedLifeAreas: buildLifeAreasState(sharedLifeAreas),
@@ -409,7 +412,7 @@ export default function GroupNotificationSettings({
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Compartilhar mapa completo</Text>
                 <Text style={styles.settingDescription}>
-                  Permitir que membros abram seu mapa natal, trânsitos e sinastria neste grupo
+                  Permitir que membros abram seu mapa natal e trânsitos neste grupo
                 </Text>
               </View>
               <Switch
@@ -417,6 +420,21 @@ export default function GroupNotificationSettings({
                 onValueChange={(value) => updateSettings({ shareChart: value })}
                 trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
                 thumbColor={settings.shareChart ? '#000' : '#f4f3f4'}
+              />
+            </View>
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Compartilhar sinastria</Text>
+                <Text style={styles.settingDescription}>
+                  Aparecer na sinastria do grupo (compatibilidade com os membros)
+                </Text>
+              </View>
+              <Switch
+                value={settings.shareSynastry}
+                onValueChange={(value) => updateSettings({ shareSynastry: value })}
+                trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
+                thumbColor={settings.shareSynastry ? '#000' : '#f4f3f4'}
               />
             </View>
 

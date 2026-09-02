@@ -661,9 +661,9 @@ export default function GroupsScreen() {
         // reusa nos aspectos, no Guna e na sobreposição de casas.
         const charts: Record<string, NatalChart> = { [user.uid]: mineChart }
         for (const member of others) {
-          // Honra o toggle "Compartilhar mapa completo" (shareChart): quem desliga
+          // Honra o toggle "Compartilhar sinastria" (shareSynastry): quem desliga
           // não aparece na sinastria (você×membro nem na matriz de duplas).
-          if ((member as any).shareChart === false) continue
+          if ((member as any).shareSynastry === false) continue
           const theirsChart = await computeNatalChart(member.birthData)
           if (cancelled) return
           const theirDatetime = member.birthData?.datetime
@@ -2414,7 +2414,7 @@ export default function GroupsScreen() {
                   <ActivityIndicator color="#FFD700" style={{ marginVertical: 14 }} />
                 ) : (
                   otherMembers
-                    .filter((member) => member.birthData?.datetime && member.birthData?.coordinates && (member as any).shareChart !== false)
+                    .filter((member) => member.birthData?.datetime && member.birthData?.coordinates && (member as any).shareSynastry !== false)
                     .map((member) => {
                       const aspects = synastryByMember[member.userId] || []
                       return (
