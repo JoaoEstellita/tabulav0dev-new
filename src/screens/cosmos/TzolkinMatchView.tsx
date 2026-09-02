@@ -5,7 +5,7 @@
  */
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
-import { SvgXml } from 'react-native-svg'
+import { SvgCss } from 'react-native-svg/css'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getTzolkinMatch, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
@@ -18,7 +18,7 @@ function KinBadge({ kin, name, lang }: { kin: number; name?: string; lang: strin
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
       {xml ? (
-        <View style={{ width: 46, height: 46 }}><SvgXml xml={xml} width="100%" height="100%" /></View>
+        <View style={{ width: 46, height: 46 }}><SvgCss xml={xml} width="100%" height="100%" /></View>
       ) : (
         <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 12 }}>{seal}</Text>

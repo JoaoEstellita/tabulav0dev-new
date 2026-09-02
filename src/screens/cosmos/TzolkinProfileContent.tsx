@@ -12,10 +12,10 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
 import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
 import { SEAL_SVG, TONE_SVG } from '../../assets/tzolkin/sealGlyphs'
-import { SvgXml } from 'react-native-svg'
+import { SvgCss } from 'react-native-svg/css'
 import { readSeal, readTone, readSynthesis, oracleRole, familyText, castleText, disclaimer, todayRelation, wavespellQuestion } from '../../data/tzolkin/reading'
 
-type SubTab = 'kin' | 'roda' | 'onda' | 'interp'
+type SubTab = 'kin' | 'roda' | 'onda'
 type Role = 'destiny' | 'guide' | 'analog' | 'antipode' | 'occult'
 
 export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?: string }) {
@@ -48,7 +48,7 @@ export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?:
     <View style={{ flex: 1 }}>
       {/* Sub-abas */}
       <View style={s.tabs}>
-        {([['kin', tl('Kin', 'Kin', 'Kin', 'Kin')], ['roda', tl('Roda', 'Wheel', 'Rueda', 'Ruota')], ['onda', tl('Onda', 'Wavespell', 'Onda', 'Onda')], ['interp', tl('Interpretações', 'Readings', 'Lecturas', 'Letture')]] as [SubTab, string][]).map(([k, label]) => (
+        {([['kin', tl('Kin', 'Kin', 'Kin', 'Kin')], ['roda', tl('Roda', 'Wheel', 'Rueda', 'Ruota')], ['onda', tl('Onda', 'Wavespell', 'Onda', 'Onda')]] as [SubTab, string][]).map(([k, label]) => (
           <TouchableOpacity key={k} style={[s.tabBtn, tab === k && s.tabBtnActive]} activeOpacity={0.85} onPress={() => setTab(k)}>
             <Text style={[s.tabTxt, tab === k && s.tabTxtActive]}>{label}</Text>
           </TouchableOpacity>
@@ -59,7 +59,6 @@ export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?:
         {tab === 'kin' && <KinView profile={profile} color={color} todayKin={todayKin} lang={lang} tl={tl} />}
         {tab === 'roda' && <RodaView profile={profile} lang={lang} tl={tl} />}
         {tab === 'onda' && <OndaView profile={profile} color={color} lang={lang} tl={tl} />}
-        {tab === 'interp' && <InterpView profile={profile} lang={lang} tl={tl} />}
         <Text style={s.disclaimer}>{disclaimer(lang)}</Text>
       </ScrollView>
     </View>
@@ -70,7 +69,7 @@ export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?:
 function Glyph({ seal, size = 56 }: { seal: number; size?: number }) {
   const c = COLOR_LABELS[SEALS[seal - 1].color]
   const xml = SEAL_SVG[seal]
-  if (xml) return <View style={{ width: size, height: size }}><SvgXml xml={xml} width="100%" height="100%" /></View>
+  if (xml) return <View style={{ width: size, height: size }}><SvgCss xml={xml} width="100%" height="100%" /></View>
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.hex, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,.25)' }}>
       <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: size * 0.34 }}>{seal}</Text>
@@ -84,7 +83,7 @@ function MiniSeal({ seal, size = 30, highlight }: { seal: number; size?: number;
   const xml = SEAL_SVG[seal]
   if (xml) return (
     <View style={{ width: size, height: size, borderRadius: 6, borderWidth: highlight ? 2 : 0, borderColor: '#fff', overflow: 'hidden' }}>
-      <SvgXml xml={xml} width="100%" height="100%" />
+      <SvgCss xml={xml} width="100%" height="100%" />
     </View>
   )
   return (
@@ -98,7 +97,7 @@ function MiniSeal({ seal, size = 30, highlight }: { seal: number; size?: number;
 function ToneGlyph({ tone, size = 26 }: { tone: number; size?: number }) {
   const xml = TONE_SVG[tone]
   if (!xml) return null
-  return <View style={{ width: size, height: size }}><SvgXml xml={xml} width="100%" height="100%" /></View>
+  return <View style={{ width: size, height: size }}><SvgCss xml={xml} width="100%" height="100%" /></View>
 }
 
 // ── Sub-aba KIN ─────────────────────────────────────────────────────────────
@@ -109,9 +108,9 @@ function KinView({ profile, color, todayKin, lang, tl }: any) {
   return (
     <>
       <View style={[s.header, { borderColor: color.hex }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Glyph seal={profile.seal} />
-          <ToneGlyph tone={profile.tone} size={42} />
+        <View style={{ alignItems: 'center', gap: 6 }}>
+          <ToneGlyph tone={profile.tone} size={30} />
+          <Glyph seal={profile.seal} size={58} />
         </View>
         <Text style={s.kinNum}>KIN {profile.kin}</Text>
         <Text style={[s.kinName, { color: color.hex }]}>{getKinDisplayName(profile.kin, lang)}</Text>
@@ -124,6 +123,11 @@ function KinView({ profile, color, todayKin, lang, tl }: any) {
         <Text style={s.body}>{tl('Selo', 'Seal', 'Sello', 'Sigillo')}: {sw.power} · {sw.action} · {sw.essence}</Text>
         <Text style={s.body}>{tl('Tom', 'Tone', 'Tono', 'Tono')}: {tw.essence} · {tw.power} · {tw.action}</Text>
       </Card>
+      <Card title={tl('Sua essência (Selo)', 'Your essence (Seal)', 'Tu esencia (Sello)', 'La tua essenza (Sigillo)')}><Text style={s.body}>{readSeal(profile.seal, lang)}</Text></Card>
+      <Card title={tl('Seu Tom Galáctico', 'Your Galactic Tone', 'Tu Tono Galactico', 'Il tuo Tono Galattico')}><Text style={s.body}>{readTone(profile.tone, lang)}</Text></Card>
+      <Card title={tl('Selo + Tom', 'Seal + Tone', 'Sello + Tono', 'Sigillo + Tono')}><Text style={s.body}>{readSynthesis(profile.seal, profile.tone, lang)}</Text></Card>
+      <Card title={familyText(profile.earthFamily, lang).title}><Text style={s.body}>{familyText(profile.earthFamily, lang).text}</Text></Card>
+      <Card title={castleText(profile.castle.key, lang).title}><Text style={s.body}>{castleText(profile.castle.key, lang).text}</Text></Card>
       <Card title={tl('Kin de hoje', 'Kin of the day', 'Kin de hoy', 'Kin di oggi')}>
         <Text style={s.body}>KIN {todayKin} — {getKinDisplayName(todayKin, lang)}</Text>
         {rel ? <Text style={[s.body, { marginTop: 6, fontStyle: 'italic' }]}>{rel}</Text> : null}
@@ -196,7 +200,7 @@ function OracleNode({ pos, label, active, onPress, big }: any) {
   return (
     <TouchableOpacity style={{ alignItems: 'center' }} activeOpacity={0.8} onPress={onPress}>
       <View style={{ width: d, height: d, borderRadius: xml ? 8 : d / 2, overflow: 'hidden', backgroundColor: xml ? 'transparent' : c, alignItems: 'center', justifyContent: 'center', borderWidth: active ? 2.5 : 1, borderColor: active ? '#fff' : 'rgba(255,255,255,.2)' }}>
-        {xml ? <SvgXml xml={xml} width="100%" height="100%" /> : <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 13 }}>{pos.kin}</Text>}
+        {xml ? <SvgCss xml={xml} width="100%" height="100%" /> : <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 13 }}>{pos.kin}</Text>}
       </View>
       <Text style={s.oracleLabel}>{label}</Text>
       <Text style={{ color: '#8a86a8', fontSize: 9 }}>KIN {pos.kin}</Text>

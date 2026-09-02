@@ -13,7 +13,7 @@ import LocationField, { type PickedLocation } from '../../components/LocationFie
 import SynastryWheel from '../../components/SynastryWheel'
 import AspectGrid from '../../components/AspectGrid'
 import { getKinDisplayName, sealOf, SEALS, COLOR_LABELS, getTzolkinMatchByKins, kinOfDate } from '../../astro/tzolkin'
-import { SvgXml } from 'react-native-svg'
+import { SvgCss } from 'react-native-svg/css'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { tagLabel } from '../../data/tzolkin/matchText'
 
@@ -282,7 +282,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               return (
                 <View style={s.tzBox}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    {xml ? <View style={{ width: 34, height: 34 }}><SvgXml xml={xml} width="100%" height="100%" /></View>
+                    {xml ? <View style={{ width: 34, height: 34 }}><SvgCss xml={xml} width="100%" height="100%" /></View>
                       : <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 11 }}>{seal}</Text></View>}
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={s.tzTitle}>Tzolkin · KIN {tzKin}</Text>
