@@ -17,6 +17,10 @@ import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { AstroProfileContent } from '../cosmos/AstroProfileScreen'
 import { VedicProfileContent } from '../cosmos/VedicProfileContent'
 import TzolkinProfileContent from '../cosmos/TzolkinProfileContent'
+import TzolkinMatchView from '../cosmos/TzolkinMatchView'
+import { useAuth } from '../../hooks/useAuth'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
@@ -33,6 +37,12 @@ export default function MemberProfileScreen() {
   const navigation = useNavigation<any>()
   const { language } = useAppLanguage()
   const member = (route.params as any)?.member as SlimMember | undefined
+  const { user } = useAuth()
+  const [viewerBirth, setViewerBirth] = useState<string | undefined>()
+  useEffect(() => {
+    if (!TZOLKIN_ENABLED || !user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then((sn) => setViewerBirth(sn.data()?.birthDate)).catch(() => { })
+  }, [user?.uid])
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
@@ -249,6 +259,12 @@ export default function MemberProfileScreen() {
                 {TZOLKIN_ENABLED && chartMeta.birthDate ? (
                   <View style={{ height: 560, marginTop: 12 }}>
                     <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
+                  </View>
+                ) : null}
+                {TZOLKIN_ENABLED && chartMeta.birthDate && viewerBirth ? (
+                  <View style={{ marginTop: 16 }}>
+                    <Text style={{ color: '#f5c542', fontSize: 15, fontWeight: '800', marginBottom: 6, paddingHorizontal: 12 }}>{tl('Sinastria Tzolkin', 'Tzolkin synastry', 'Sinastria Tzolkin', 'Sinastria Tzolkin')}</Text>
+                    <TzolkinMatchView embedded aDateISO={viewerBirth} bDateISO={chartMeta.birthDate} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={(member?.displayName || '').split(' ')[0] || undefined} />
                   </View>
                 ) : null}
               </>
