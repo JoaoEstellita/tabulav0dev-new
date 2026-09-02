@@ -336,9 +336,18 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                   <View style={s.tierRow}>
                     <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {combined}%</Text>
                   </View>
-                  {tzM ? (
-                    <Text style={{ color: '#8892a4', fontSize: 11.5, marginTop: 2 }}>{tl('astro', 'astro', 'astro', 'astro')} {Math.round(current.score)}% · Tzolkin {tzM.scores.overall}% → {tl('integrado', 'integrated', 'integrado', 'integrato')} {combined}%</Text>
-                  ) : null}
+                  {(() => {
+                    // Breakdown: astro + cada sistema com dado → integrado. Usa os scores do
+                    // backend (o que de fato entrou no ranking); Tzolkin cai no do front se faltar.
+                    const parts = [`${tl('astro', 'astro', 'astro', 'astro')} ${Math.round(current.score)}%`]
+                    const tzS = current.tzolkinScore ?? tzM?.scores.overall
+                    if (tzS != null) parts.push(`Tzolkin ${Math.round(tzS)}%`)
+                    if (current.vedicScore != null) parts.push(`${tl('Védico', 'Vedic', 'Vedico', 'Vedico')} ${Math.round(current.vedicScore)}%`)
+                    if (current.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(current.chineseScore)}%`)
+                    return parts.length > 1 ? (
+                      <Text style={{ color: '#8892a4', fontSize: 11.5, marginTop: 2 }}>{parts.join(' · ')} → {tl('integrado', 'integrated', 'integrado', 'integrato')} {combined}%</Text>
+                    ) : null
+                  })()}
                 </>
               )
             })()}

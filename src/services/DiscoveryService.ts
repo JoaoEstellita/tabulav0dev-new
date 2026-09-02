@@ -136,7 +136,7 @@ export type MatchResult = {
 export type AffinityTier = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
 export type WheelPos = { planetEn: string; longitude: number }
 export type GridAspect = { mine: string; theirs: string; labelPt?: string; orb?: number }
-export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null; chartOpen?: boolean; tzolkinKin?: number | null; tzolkinScore?: number | null; combinedScore?: number; chineseAnimal?: number | null; vedicSunSign?: number | null }
+export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null; chartOpen?: boolean; tzolkinKin?: number | null; tzolkinScore?: number | null; combinedScore?: number; chineseAnimal?: number | null; vedicSunSign?: number | null; vedicScore?: number | null; chineseScore?: number | null }
 export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[]; maxKm?: number }
 export type DeckDetail = { shared: boolean; positions?: WheelPos[]; grid?: GridAspect[]; myPositions?: WheelPos[] }
 
