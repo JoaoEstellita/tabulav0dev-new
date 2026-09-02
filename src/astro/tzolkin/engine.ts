@@ -28,6 +28,9 @@ export function kinOfDate(iso: string): number {
   return mod((BASE_KIN - 1) + (ordinal(y, m, d) - BASE_ORD), 260) + 1
 }
 
+/** Ordinal de dias civis ignorando 29/02 (usado pelo calendário das 13 Luas). */
+export function dayOrdinal(iso: string): number { const { y, m, d } = parseISO(iso); return ordinal(y, m, d) }
+
 export function sealOf(kin: number): number { return ((kin - 1) % 20) + 1 }
 export function toneOf(kin: number): number { return ((kin - 1) % 13) + 1 }
 export function colorIndexOf(seal: number): number { return (seal - 1) % 4 }

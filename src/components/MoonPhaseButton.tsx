@@ -30,6 +30,8 @@ import {
 } from '../utils/moonPhase'
 import { nakshatraFromTropical } from '../astro/vedic'
 import { kinOfDate, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../astro/tzolkin'
+import { thirteenMoonDate } from '../astro/tzolkin/thirteenMoon'
+import { moonName, plasmaName, moonQuestion } from '../data/tzolkin/thirteenMoonText'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 import { MOON_SIGN_MOOD, MOON_SIGN_GLYPH, SIGN_NAMES_I18N, SIGN_KEYS } from '../data/moonSignMood'
@@ -425,6 +427,21 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
                     <Text style={styles.moonNakshatra}>
                       {tl('Kin de hoje', 'Kin of the day', 'Kin de hoy', 'Kin di oggi')}: {todayKin} — {getKinDisplayName(todayKin, language)}
                     </Text>
+                  </View>
+                )
+              })() : null}
+
+              {TZOLKIN_ENABLED ? (() => {
+                const tm = thirteenMoonDate(new Date().toISOString().slice(0, 10))
+                if (tm.isDayOutOfTime) return (
+                  <Text style={[styles.moonNakshatra, { marginTop: 6 }]}>{tl('Hoje é o Dia Fora do Tempo (25/07) — 0.0 Hunab Ku.', 'Today is the Day out of Time (Jul 25) — 0.0 Hunab Ku.', 'Hoy es el Dia Fuera del Tiempo (25/07) — 0.0 Hunab Ku.', 'Oggi e il Giorno Fuori dal Tempo (25/07) — 0.0 Hunab Ku.')}</Text>
+                )
+                return (
+                  <View style={{ marginTop: 6 }}>
+                    <Text style={styles.moonNakshatra}>
+                      {tl('Sincronário', 'Synchronometer', 'Sincronario', 'Sincronario')}: {moonName(tm.moon, language)} · {tl('dia', 'day', 'dia', 'giorno')} {tm.dayOfMoon}/28 · {plasmaName(tm.plasma)}
+                    </Text>
+                    <Text style={[styles.moonNakshatra, { color: '#8b7cf6', fontStyle: 'italic', marginTop: 2 }]}>“{moonQuestion(tm.moon, language)}”</Text>
                   </View>
                 )
               })() : null}
