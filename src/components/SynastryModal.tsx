@@ -91,14 +91,9 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
                     {combined != null ? (
                       <Text style={{ color: '#a7a2c9', fontSize: 12, marginTop: 4 }}>{tl('Visão integrada', 'Integrated view', 'Vision integrada', 'Visione integrata')}: {combined}% <Text style={{ color: '#6f6a90', fontSize: 11 }}>(astro + Tzolkin)</Text></Text>
                     ) : null}
-                    <TouchableOpacity onPress={() => setShowTz(v => !v)} style={{ marginTop: 8 }}>
-                      <Text style={{ color: '#8b7cf6', fontSize: 12.5, fontWeight: '700' }}>{showTz ? tl('Ocultar detalhes ▲', 'Hide details ▲', 'Ocultar detalles ▲', 'Nascondi dettagli ▲') : tl('Ver Tzolkin Match ▼', 'See Tzolkin Match ▼', 'Ver Tzolkin Match ▼', 'Vedi Tzolkin Match ▼')}</Text>
-                    </TouchableOpacity>
-                    {showTz ? (
-                      <View style={{ marginTop: 10, height: 540 }}>
-                        <TzolkinMatchView aDateISO={tzDates.a!} bDateISO={tzDates.b!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
-                      </View>
-                    ) : null}
+                    <View style={{ marginTop: 10, marginHorizontal: -14, marginBottom: -14 }}>
+                      <TzolkinMatchView embedded aDateISO={tzDates.a!} bDateISO={tzDates.b!} aName={tl('Você', 'You', 'Tu', 'Tu')} bName={name || undefined} />
+                    </View>
                   </View>
                 )
               })() : null}

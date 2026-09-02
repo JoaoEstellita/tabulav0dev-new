@@ -192,12 +192,14 @@ function RodaView({ profile, lang, tl }: any) {
 function OracleNode({ pos, label, active, onPress, big }: any) {
   const c = COLOR_LABELS[SEALS[pos.seal - 1].color].hex
   const d = big ? 54 : 46
+  const xml = SEAL_SVG[pos.seal]
   return (
     <TouchableOpacity style={{ alignItems: 'center' }} activeOpacity={0.8} onPress={onPress}>
-      <View style={{ width: d, height: d, borderRadius: d / 2, backgroundColor: c, alignItems: 'center', justifyContent: 'center', borderWidth: active ? 2.5 : 1, borderColor: active ? '#fff' : 'rgba(255,255,255,.2)' }}>
-        <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 13 }}>{pos.kin}</Text>
+      <View style={{ width: d, height: d, borderRadius: xml ? 8 : d / 2, overflow: 'hidden', backgroundColor: xml ? 'transparent' : c, alignItems: 'center', justifyContent: 'center', borderWidth: active ? 2.5 : 1, borderColor: active ? '#fff' : 'rgba(255,255,255,.2)' }}>
+        {xml ? <SvgXml xml={xml} width="100%" height="100%" /> : <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 13 }}>{pos.kin}</Text>}
       </View>
       <Text style={s.oracleLabel}>{label}</Text>
+      <Text style={{ color: '#8a86a8', fontSize: 9 }}>KIN {pos.kin}</Text>
     </TouchableOpacity>
   )
 }

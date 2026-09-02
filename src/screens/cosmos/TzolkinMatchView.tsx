@@ -5,17 +5,25 @@
  */
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { SvgXml } from 'react-native-svg'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getTzolkinMatch, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
+import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { tagLabel, dimLabel, relationLabel, connLabel, matchDisclaimer } from '../../data/tzolkin/matchText'
 
 function KinBadge({ kin, name, lang }: { kin: number; name?: string; lang: string }) {
-  const hex = COLOR_LABELS[SEALS[sealOf(kin) - 1].color].hex
+  const seal = sealOf(kin)
+  const hex = COLOR_LABELS[SEALS[seal - 1].color].hex
+  const xml = SEAL_SVG[seal]
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
-      <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 12 }}>{sealOf(kin)}</Text>
-      </View>
+      {xml ? (
+        <View style={{ width: 46, height: 46 }}><SvgXml xml={xml} width="100%" height="100%" /></View>
+      ) : (
+        <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: hex, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#0F0F23', fontWeight: '900', fontSize: 12 }}>{seal}</Text>
+        </View>
+      )}
       {name ? <Text style={s.person} numberOfLines={1}>{name}</Text> : null}
       <Text style={s.kinNum}>KIN {kin}</Text>
       <Text style={[s.kinName, { color: hex }]}>{getKinDisplayName(kin, lang)}</Text>
@@ -34,7 +42,7 @@ function Bar({ label, value }: { label: string; value: number }) {
   )
 }
 
-export default function TzolkinMatchView({ aDateISO, bDateISO, aName, bName }: { aDateISO: string; bDateISO: string; aName?: string; bName?: string }) {
+export default function TzolkinMatchView({ aDateISO, bDateISO, aName, bName, embedded }: { aDateISO: string; bDateISO: string; aName?: string; bName?: string; embedded?: boolean }) {
   const { language } = useAppLanguage()
   const lang = language || 'pt-BR'
   const tl = (pt: string, en: string, es: string, it: string) => lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt
@@ -45,8 +53,12 @@ export default function TzolkinMatchView({ aDateISO, bDateISO, aName, bName }: {
     ...m.directRelations.bToA.map(k => `${bName || 'B'} → ${aName || 'A'}: ${relationLabel(k, lang)}`),
   ]
 
+  // Embedded (dentro de outra ScrollView, ex.: SynastryModal): flui sem scroll próprio.
+  const Wrap: any = embedded ? View : ScrollView
+  const wrapProps: any = embedded ? {} : { style: { flex: 1 }, contentContainerStyle: { paddingBottom: 32 }, showsVerticalScrollIndicator: false }
+
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+    <Wrap {...wrapProps}>
       <View style={s.pair}>
         <KinBadge kin={m.a.kin} name={aName} lang={lang} />
         <Text style={s.plus}>+</Text>
@@ -86,7 +98,7 @@ export default function TzolkinMatchView({ aDateISO, bDateISO, aName, bName }: {
       </View>
 
       <Text style={s.disclaimer}>{matchDisclaimer(lang)}</Text>
-    </ScrollView>
+    </Wrap>
   )
 }
 
