@@ -29,9 +29,12 @@ import {
   getMoonPhaseLabelFromKey,
 } from '../utils/moonPhase'
 import { nakshatraFromTropical } from '../astro/vedic'
-import { kinOfDate, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../astro/tzolkin'
+import { kinOfDate, getKinDisplayName, sealOf, SEALS, COLOR_LABELS, todayISO } from '../astro/tzolkin'
 import { thirteenMoonDate } from '../astro/tzolkin/thirteenMoon'
 import { moonName, plasmaName, moonQuestion } from '../data/tzolkin/thirteenMoonText'
+import TzolkinProfileContent from '../screens/cosmos/TzolkinProfileContent'
+import { SEAL_SVG } from '../assets/tzolkin/sealGlyphs'
+import { SvgCss } from 'react-native-svg/css'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 import { MOON_SIGN_MOOD, MOON_SIGN_GLYPH, SIGN_NAMES_I18N, SIGN_KEYS } from '../data/moonSignMood'
@@ -130,6 +133,9 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
   const [moonVoidLabel, setMoonVoidLabel] = useState<string | null>(null)
   const [moonVoidLine2, setMoonVoidLine2] = useState<string | null>(null)
   const [moonModalVisible, setMoonModalVisible] = useState(false)
+  const [moonTab, setMoonTab] = useState<'lua' | 'tzolkin'>('lua')
+  const dayKin = useMemo(() => kinOfDate(todayISO()), [])
+  const dayKinXml = SEAL_SVG[sealOf(dayKin)]
   const [moonDetails, setMoonDetails] = useState<MoonDetails>({
     phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
     phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualizacao'),
@@ -309,10 +315,15 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
           delayPressIn={0}
           onPressIn={moonPress.onPressIn}
           onPressOut={moonPress.onPressOut}
-          onPress={() => setMoonModalVisible(true)}
+          onPress={() => { setMoonTab('lua'); setMoonModalVisible(true) }}
         >
           <View style={styles.moonIconRow}>
             {signGlyph ? <Text style={styles.moonSignGlyph}>{signGlyph}</Text> : null}
+            {TZOLKIN_ENABLED && dayKinXml ? (
+              <TouchableOpacity onPress={() => { setMoonTab('tzolkin'); setMoonModalVisible(true) }} style={styles.dayKinGlyph} activeOpacity={0.7}>
+                <SvgCss xml={dayKinXml} width="100%" height="100%" />
+              </TouchableOpacity>
+            ) : null}
             <View style={styles.moonIconWrap}>
               <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
             </View>
@@ -352,6 +363,17 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
             {...moonPanResponder.panHandlers}
           >
             <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Lunar Calendar')}</Text>
+            {TZOLKIN_ENABLED ? (
+              <View style={styles.moonTabs}>
+                <TouchableOpacity style={[styles.moonTabBtn, moonTab === 'lua' && styles.moonTabBtnActive]} activeOpacity={0.85} onPress={() => setMoonTab('lua')}><Text style={[styles.moonTabTx, moonTab === 'lua' && styles.moonTabTxActive]}>{tl('Lua', 'Moon', 'Luna', 'Luna')}</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.moonTabBtn, moonTab === 'tzolkin' && styles.moonTabBtnActive]} activeOpacity={0.85} onPress={() => setMoonTab('tzolkin')}><Text style={[styles.moonTabTx, moonTab === 'tzolkin' && styles.moonTabTxActive]}>Tzolkin</Text></TouchableOpacity>
+              </View>
+            ) : null}
+            {moonTab === 'tzolkin' ? (
+              <View style={{ flex: 1, minHeight: 420 }}>
+                <TzolkinProfileContent birthDateISO={todayISO()} />
+              </View>
+            ) : (
             <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
               {/* Hero: fase + signo atual da Lua + iluminação */}
               <View style={styles.moonHero}>
@@ -417,7 +439,7 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
               ) : null}
 
               {TZOLKIN_ENABLED ? (() => {
-                const todayKin = kinOfDate(new Date().toISOString().slice(0, 10))
+                const todayKin = kinOfDate(todayISO())
                 const kinHex = COLOR_LABELS[SEALS[sealOf(todayKin) - 1].color].hex
                 return (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
@@ -432,7 +454,7 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
               })() : null}
 
               {TZOLKIN_ENABLED ? (() => {
-                const tm = thirteenMoonDate(new Date().toISOString().slice(0, 10))
+                const tm = thirteenMoonDate(todayISO())
                 if (tm.isDayOutOfTime) return (
                   <Text style={[styles.moonNakshatra, { marginTop: 6 }]}>{tl('Hoje é o Dia Fora do Tempo (25/07) — 0.0 Hunab Ku.', 'Today is the Day out of Time (Jul 25) — 0.0 Hunab Ku.', 'Hoy es el Dia Fuera del Tiempo (25/07) — 0.0 Hunab Ku.', 'Oggi e il Giorno Fuori dal Tempo (25/07) — 0.0 Hunab Ku.')}</Text>
                 )
@@ -462,6 +484,7 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
                 <Text style={styles.moonModalText}>{tr('profile.moon.modal.noUpcoming', 'No upcoming events in calendar.')}</Text>
               )}
             </ScrollView>
+            )}
             <TouchableOpacity
               style={styles.moonModalCloseButton}
               onPress={() => setMoonModalVisible(false)}
@@ -535,6 +558,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 12,
   },
+  dayKinGlyph: { width: 22, height: 22, marginHorizontal: 4 },
+  moonTabs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  moonTabBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center' },
+  moonTabBtnActive: { backgroundColor: 'rgba(245,197,66,.18)', borderWidth: 1, borderColor: '#f5c542' },
+  moonTabTx: { color: '#a7a2c9', fontSize: 12.5, fontWeight: '700' },
+  moonTabTxActive: { color: '#f5c542' },
   moonHero: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.22)',

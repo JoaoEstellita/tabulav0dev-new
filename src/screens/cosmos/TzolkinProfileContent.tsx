@@ -9,7 +9,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
+import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS, todayISO } from '../../astro/tzolkin'
 import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
 import { SEAL_SVG, TONE_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { SvgCss } from 'react-native-svg/css'
@@ -35,7 +35,7 @@ export default function TzolkinProfileContent({ birthDateISO }: { birthDateISO?:
   }, [user?.uid, birthDateISO])
 
   const profile = useMemo(() => (date ? buildProfile(date) : null), [date])
-  const todayKin = useMemo(() => kinOfDate(new Date().toISOString().slice(0, 10)), [])
+  const todayKin = useMemo(() => kinOfDate(todayISO()), [])
 
   if (!date) {
     return <View style={s.card}><Text style={s.cardText}>{tl('Cadastre sua data de nascimento para ver seu Kin.', 'Add your birth date to see your Kin.', 'Registra tu fecha de nacimiento para ver tu Kin.', 'Inserisci la tua data di nascita per vedere il tuo Kin.')}</Text></View>
