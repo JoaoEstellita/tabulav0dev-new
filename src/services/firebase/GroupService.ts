@@ -577,6 +577,8 @@ class GroupService {
                   lifeAreas,
                   areaTransits: member.areaTransits || undefined,
                   birthData: member.birthData || undefined,
+                  shareChart: member.shareChart,
+                  shareStatus: member.shareStatus,
                   subscriptionActive: memberAdmin ? true : member.subscriptionActive !== false,
                   subscriptionStatus: member.subscriptionStatus || null,
                   isAdmin: memberAdmin,
@@ -649,6 +651,8 @@ class GroupService {
             subscriptionActive,
             subscriptionStatus: subscriptionStatus || null,
             isAdmin: adminFlag,
+            shareChart: memberStatus?.shareChart,
+            shareStatus: memberStatus?.shareStatus,
           } as GroupMember
         })
       )
@@ -823,6 +827,7 @@ class GroupService {
         sharedLifeAreas: data.sharedLifeAreas || this.LIFE_AREAS,
         notifiedLifeAreas: data.notifiedLifeAreas || this.LIFE_AREAS,
         shareStatus: data.shareStatus ?? true,
+        shareChart: data.shareChart ?? true,
         cooldownMinutes: data.cooldownMinutes || 0,
         lastAlertByArea: data.lastAlertByArea || {},
         enabled: data.enabled ?? true,
@@ -849,6 +854,7 @@ class GroupService {
         sharedLifeAreas: defaults.sharedLifeAreas,
         notifiedLifeAreas: defaults.notifiedLifeAreas,
         shareStatus: true,
+        shareChart: true,
         cooldownMinutes: 0,
         lastAlertByArea: {},
         enabled: true,
@@ -920,6 +926,15 @@ class GroupService {
       customAlertMessages: settings.customAlertMessages || null,
       updatedAt: Timestamp.now(),
     })
+    // Espelha as flags de visibilidade no memberStatus (coleção lida no
+    // carregamento dos membros) — sem isso os toggles não são honrados na
+    // lista/sinastria/mapa (os dados moram em coleções diferentes).
+    try {
+      await setDoc(doc(db, "groups", groupId, "memberStatus", userId), {
+        shareChart: settings.shareChart ?? true,
+        shareStatus: settings.shareStatus ?? true,
+      }, { merge: true })
+    } catch { /* best-effort */ }
   }
 
   async updateInviteSettings(
