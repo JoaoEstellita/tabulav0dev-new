@@ -14,7 +14,7 @@ export default function GroupsAccessGuard() {
   const navigation = useNavigation<any>()
   const { loading, subscription, trialActive, isAdmin } = useSubscriptionCheck()
 
-  const hasAccess = !!(isAdmin || trialActive || subscription?.active)
+  const hasFullAccess = !!(isAdmin || trialActive || subscription?.active)
 
   if (loading) {
     return (
@@ -24,27 +24,10 @@ export default function GroupsAccessGuard() {
     )
   }
 
-  if (hasAccess) {
-    return <GroupsScreen />
-  }
-
-  return (
-    <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
-      <View style={styles.content}>
-        <Ionicons name="lock-closed" size={48} color="#FFD700" />
-        <Text style={styles.title}>{t('groupsAccess.title')}</Text>
-        <Text style={styles.subtitle}>
-          {t('groupsAccess.subtitle')}
-        </Text>
-        <TouchableOpacity
-          style={styles.ctaButton}
-          onPress={() => navigation.navigate('Premium', { openTab: 'features' })}
-        >
-          <Text style={styles.ctaText}>{t('groupsAccess.cta')}</Text>
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
-  )
+  // Grupos agora é ABERTO (criar grupo + adicionar pessoas + sinastria de você × alguém são
+  // grátis, isca viral). O que é PAGO — mapa completo do membro + a matriz de sinastria do
+  // grupo — fica travado DENTRO da tela quando !hasFullAccess.
+  return <GroupsScreen hasFullAccess={hasFullAccess} />
 }
 
 const styles = StyleSheet.create({

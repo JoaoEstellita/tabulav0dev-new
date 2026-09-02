@@ -138,7 +138,10 @@ type MemberAreaTransitItem = {
 
 const getTransitSource = (transitLike: any) => transitLike?.rawTransit || transitLike || {}
 
-export default function GroupsScreen() {
+export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?: boolean } = {}) {
+  // Recursos PAGOS dentro dos grupos (mapa completo do membro + matriz de sinastria do grupo).
+  // Criar grupo, adicionar pessoas e a sinastria de você × 1 membro (botão Sinastria) são GRÁTIS.
+  const paidLocked = !hasFullAccess
   const { t, language } = useAppLanguage()
   const route = useRoute<any>()
   const navigation = useNavigation()
@@ -2268,11 +2271,13 @@ export default function GroupsScreen() {
                           activeOpacity={0.8}
                           accessibilityRole="button"
                           accessibilityLabel={tr('groups.member.viewChart', 'Ver mapa completo')}
-                          onPress={() => (navigation as any).navigate('MemberProfile', {
-                            member: { displayName: member.displayName, profilePhoto: member.profilePhoto, birthData: member.birthData },
-                          })}
+                          onPress={() => paidLocked
+                            ? (navigation as any).navigate('Premium', { openTab: 'features' })
+                            : (navigation as any).navigate('MemberProfile', {
+                              member: { displayName: member.displayName, profilePhoto: member.profilePhoto, birthData: member.birthData },
+                            })}
                         >
-                          <Ionicons name="planet-outline" size={14} color="#FFD700" />
+                          <Ionicons name={paidLocked ? 'lock-closed' : 'planet-outline'} size={14} color="#FFD700" />
                           <Text style={styles.memberChartBtnText} numberOfLines={1}>
                             {tr('groups.member.viewChart', 'Ver mapa completo')}
                           </Text>
@@ -2399,7 +2404,16 @@ export default function GroupsScreen() {
               })}
             </View>
 
-            {selectedGroup && !synastryMineMissing && (synastryLoading || Object.keys(synastryByMember).length > 0) ? (
+            {selectedGroup && paidLocked ? (
+              <TouchableOpacity style={[styles.synastrySection, { alignItems: 'center', gap: 8 }]} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+                <Ionicons name="lock-closed" size={30} color="#FFD700" />
+                <Text style={[styles.synastryTitle, { textAlign: 'center' }]}>{tr('groups.synastry.lockedTitle', 'Sinastria do grupo — para assinantes')}</Text>
+                <Text style={[styles.synastrySubtitle, { textAlign: 'center' }]}>{tr('groups.synastry.lockedBody', 'Veja de uma vez a compatibilidade sua com cada membro e de todos entre si (aspectos, casas, Guna Milan, Tzolkin e Chinês). A sinastria de você × 1 pessoa é grátis no botão "Sinastria" de cada membro.')}</Text>
+                <View style={[styles.ctaButton, { marginTop: 4 }]}><Text style={styles.ctaText}>{tr('groupsAccess.cta', 'Assinar')}</Text></View>
+              </TouchableOpacity>
+            ) : null}
+
+            {selectedGroup && !paidLocked && !synastryMineMissing && (synastryLoading || Object.keys(synastryByMember).length > 0) ? (
               <View style={styles.synastrySection} {...aSynastry}>
                 <View style={styles.synastryHeader}>
                   <Ionicons name="git-compare-outline" size={18} color="#FFD700" />
@@ -2432,7 +2446,7 @@ export default function GroupsScreen() {
             ) : null}
 
             {/* Sinastria ENTRE os participantes (matriz de todas as duplas, fora você) */}
-            {selectedGroup && pairSynastry.length > 0 ? (
+            {selectedGroup && !paidLocked && pairSynastry.length > 0 ? (
               <View style={styles.synastrySection}>
                 <View style={styles.synastryHeader}>
                   <Ionicons name="people-circle-outline" size={18} color="#FFD700" />
@@ -4746,6 +4760,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
+  ctaButton: { backgroundColor: "#FFD700", paddingHorizontal: 22, paddingVertical: 10, borderRadius: 10 },
+  ctaText: { color: "#0F0F23", fontWeight: "800", fontSize: 14 },
   modalButtonConfirm: {
     flex: 1,
     backgroundColor: "#FFD700",
