@@ -205,23 +205,8 @@ export default function GroupsScreen() {
   const [synastryMineMissing, setSynastryMineMissing] = useState(false)
   // Sinastria: quais leituras estão expandidas (chave = memberId ou pair.id).
   const [expandedSyn, setExpandedSyn] = useState<Set<string>>(new Set())
-  // Conexões (Fase 1): pedido de conexão a partir da matriz de membros.
+  // Sinastria par-a-par a partir da matriz de membros (botão "Sinastria" abre o modal).
   const [synModal, setSynModal] = useState<{ uid: string; name: string } | null>(null)
-  const [connectTarget, setConnectTarget] = useState<{ userId: string; name: string } | null>(null)
-  const [connectShareWa, setConnectShareWa] = useState(false)
-  const [connectSentIds, setConnectSentIds] = useState<Set<string>>(new Set())
-  const [connectBusy, setConnectBusy] = useState(false)
-  const submitConnect = async () => {
-    if (!connectTarget || connectBusy) return
-    setConnectBusy(true)
-    try {
-      await requestConnection(connectTarget.userId, selectedGroup?.id ?? null, connectShareWa)
-      setConnectSentIds((prev) => new Set(prev).add(connectTarget.userId))
-    } catch { /* erro silencioso; o botão volta ao normal */ }
-    setConnectBusy(false)
-    setConnectTarget(null)
-    setConnectShareWa(false)
-  }
   const toggleSyn = useCallback((key: string) => {
     setExpandedSyn((prev) => {
       const next = new Set(prev)
@@ -2534,33 +2519,6 @@ export default function GroupsScreen() {
 
       <SynastryModal visible={!!synModal} uid={synModal?.uid || null} name={synModal?.name || null} onClose={() => setSynModal(null)} />
 
-      <Modal visible={!!connectTarget} transparent animationType="fade" onRequestClose={() => setConnectTarget(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.orderModalContent}>
-            <Text style={styles.modalTitle}>
-              {tr('connections.connectWith', 'Conectar com')} {connectTarget?.name}?
-            </Text>
-            <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14 }}
-              onPress={() => setConnectShareWa((v) => !v)}
-              accessibilityRole="checkbox"
-            >
-              <Ionicons name={connectShareWa ? 'checkbox' : 'square-outline'} size={20} color="#FFD700" />
-              <Text style={{ color: '#e2e8f0', flexShrink: 1 }}>
-                {tr('connections.shareMyWhatsapp', 'Compartilhar meu WhatsApp')}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.orderModalFooter}>
-              <TouchableOpacity style={styles.modalButtonCancel} onPress={() => setConnectTarget(null)}>
-                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButtonConfirm} onPress={submitConnect} disabled={connectBusy}>
-                <Text style={styles.modalButtonConfirmText}>{tr('connections.sendRequest', 'Enviar pedido')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
       <Modal
         visible={showGroupActionsModal}
         transparent
