@@ -75,7 +75,7 @@ export default function MemberProfileScreen() {
   const birth = member?.birthData
   const [data, setData] = useState<LocalTransitData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
+  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar' | 'vedico' | 'tzolkin' | 'chines'>('natal')
   // Retorno Solar do membro (no local de NASCIMENTO dele — não temos onde ele mora).
   const [srData, setSrData] = useState<any>(null)
   const [srLoading, setSrLoading] = useState(false)
@@ -232,8 +232,8 @@ export default function MemberProfileScreen() {
           <View style={styles.center}><StarLoader /></View>
         ) : (
           <>
-            {/* Toggle Natal ↔ Trânsitos — mesma experiência do mapa do usuário. */}
-            <View style={styles.modeToggle}>
+            {/* Abas: mapas ocidentais (Natal/Trânsitos/Solar/Lunar) + lentes (Védico/Tzolkin/Chinês). */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modeToggle}>
               <TouchableOpacity style={[styles.modeBtn, westMode === 'natal' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('natal')}>
                 <Text style={[styles.modeBtnText, westMode === 'natal' && styles.modeBtnTextActive]}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
               </TouchableOpacity>
@@ -246,7 +246,20 @@ export default function MemberProfileScreen() {
               <TouchableOpacity style={[styles.modeBtn, westMode === 'lunar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('lunar')}>
                 <Text style={[styles.modeBtnText, westMode === 'lunar' && styles.modeBtnTextActive]}>{tl('Lunar', 'Lunar', 'Lunar', 'Lunare')}</Text>
               </TouchableOpacity>
-            </View>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'vedico' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('vedico')}>
+                <Text style={[styles.modeBtnText, westMode === 'vedico' && styles.modeBtnTextActive]}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
+              </TouchableOpacity>
+              {TZOLKIN_ENABLED ? (
+                <TouchableOpacity style={[styles.modeBtn, westMode === 'tzolkin' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('tzolkin')}>
+                  <Text style={[styles.modeBtnText, westMode === 'tzolkin' && styles.modeBtnTextActive]}>Tzolkin</Text>
+                </TouchableOpacity>
+              ) : null}
+              {CHINESE_ENABLED ? (
+                <TouchableOpacity style={[styles.modeBtn, westMode === 'chines' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('chines')}>
+                  <Text style={[styles.modeBtnText, westMode === 'chines' && styles.modeBtnTextActive]}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </ScrollView>
 
             {westMode === 'solar' ? (
               srLoading || (!srData && !srError) ? (
@@ -272,6 +285,20 @@ export default function MemberProfileScreen() {
                   <AstroProfileContent transitData={lrData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="lunar" />
                 </>
               )
+            ) : westMode === 'vedico' ? (
+              <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
+            ) : westMode === 'tzolkin' ? (
+              chartMeta.birthDate ? (
+                <View style={{ height: 640 }}>
+                  <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
+                </View>
+              ) : null
+            ) : westMode === 'chines' ? (
+              chartMeta.birthDate ? (
+                <View style={{ height: 720 }}>
+                  <ChineseProfileContent birth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} />
+                </View>
+              ) : null
             ) : (
               <>
                 <NatalChartWheelContent transitData={data} loading={false} showLegend={false} showTransits={westMode === 'transitos'} chartMeta={{ skipSelfFetch: true }} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
@@ -281,42 +308,6 @@ export default function MemberProfileScreen() {
                   <PersonalTransitsScreen embedded />
                 ) : null}
                 <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
-                <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
-                {TZOLKIN_ENABLED && chartMeta.birthDate ? (
-                  <View style={{ height: 560, marginTop: 12 }}>
-                    <TzolkinProfileContent birthDateISO={chartMeta.birthDate} />
-                  </View>
-                ) : null}
-                {CHINESE_ENABLED && chartMeta.birthDate ? (
-                  <View style={{ height: 640, marginTop: 12 }}>
-                    <ChineseProfileContent birth={{ birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: member?.birthData?.coordinates?.longitude }} />
-                  </View>
-                ) : null}
-                {(() => {
-                  const first = (member?.displayName || '').split(' ')[0] || undefined
-                  const memberLon = member?.birthData?.coordinates?.longitude
-                  const astralNode = (synAspects && synAspects.length) ? (() => {
-                    const sc = synastryScore(synAspects)
-                    return (
-                      <View>
-                        <Text style={{ color: '#efedfb', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{tl('Compatibilidade', 'Compatibility', 'Compatibilidad', 'Compatibilita')}: {sc.pct}% · {sc.harmonics} {tl('harmônicos', 'harmonics', 'harmonicos', 'armonici')} · {sc.tensions} {tl('tensos', 'tense', 'tensos', 'tesi')}</Text>
-                        {synAspects.slice(0, 8).map((a, i) => (
-                          <Text key={i} style={{ color: '#c9c5e2', fontSize: 13, lineHeight: 19 }}>• {synastryAspectLine(a, language)}</Text>
-                        ))}
-                      </View>
-                    )
-                  })() : null
-                  const tzolkin = (TZOLKIN_ENABLED && chartMeta.birthDate && viewerBirth) ? { aDateISO: viewerBirth, bDateISO: chartMeta.birthDate } : null
-                  const chinese = (CHINESE_ENABLED && chartMeta.birthDate && viewerFull?.birthDate) ? { aBirth: viewerFull, bBirth: { birthDate: chartMeta.birthDate, birthTime: chartMeta.birthTime, longitude: memberLon } } : null
-                  const vedic = (VEDIC_ENABLED && chartMeta.birthDate && viewerFull?.moonLon != null && lrMoonLon != null) ? { aMoonLon: viewerFull.moonLon, aBirthDate: viewerFull.birthDate, bMoonLon: lrMoonLon, bBirthDate: chartMeta.birthDate } : null
-                  if (!astralNode && !tzolkin && !chinese && !vedic) return null
-                  return (
-                    <View style={{ marginTop: 18 }}>
-                      <Text style={{ color: '#f5c542', fontSize: 16, fontWeight: '900', marginBottom: 10, paddingHorizontal: 4 }}>{tl('Sinastria com você', 'Synastry with you', 'Sinastria contigo', 'Sinastria con te')}</Text>
-                      <SynastryTabs aName={tl('Você', 'You', 'Tu', 'Tu')} bName={first} astral={astralNode} tzolkin={tzolkin} chinese={chinese} vedic={vedic} />
-                    </View>
-                  )
-                })()}
               </>
             )}
           </>

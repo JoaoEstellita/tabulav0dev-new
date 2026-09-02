@@ -48,7 +48,11 @@ export default function SynastryModal({ visible, uid, name, onClose }: { visible
     if (!visible || !uid || !user?.uid) { setPeople({}); return }
     const toPerson = (d: any): Person => {
       const loc = d?.birthLocation || d?.birthData?.birthLocation || d?.birthData?.coordinates
-      return { date: d?.birthDate, time: d?.birthTime, lon: typeof loc?.longitude === 'number' ? loc.longitude : undefined }
+      // birthDate top-level ou aninhada (birthData.birthDate / datetime "YYYY-MM-DD...").
+      const dt = String(d?.birthData?.datetime || '')
+      const date = d?.birthDate || d?.birthData?.birthDate || (dt.length >= 10 ? dt.slice(0, 10) : undefined)
+      const time = d?.birthTime || d?.birthData?.birthTime || (dt.length >= 16 ? dt.slice(11, 16) : undefined)
+      return { date, time, lon: typeof loc?.longitude === 'number' ? loc.longitude : undefined }
     }
     Promise.all([
       getDoc(doc(db, 'users', user.uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
