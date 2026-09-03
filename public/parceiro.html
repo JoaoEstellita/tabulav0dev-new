@@ -68,9 +68,19 @@
       <h2>Seus clientes</h2>
       <div class="card scroll">
         <table>
-          <thead><tr><th>Nome</th><th>Plano</th><th>Status</th><th>Desde</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Plano</th><th>Status</th><th class="num">Msgs/mês</th><th class="num">Custo</th><th class="num">A repassar</th></tr></thead>
           <tbody id="clients"></tbody>
         </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Acerto do mês</h2>
+      <div class="tiles">
+        <div class="tile"><div class="k">Já enviado (split)</div><div class="v" id="mAuto">—</div></div>
+        <div class="tile"><div class="k">50% do lucro real</div><div class="v" id="mReal">—</div></div>
+        <div class="tile hi"><div class="k">A repassar (fechamento)</div><div class="v" id="mTop">—</div></div>
+        <div class="tile"><div class="k">Custo médio/cliente</div><div class="v" id="mAvg">—</div></div>
       </div>
     </section>
 
@@ -131,15 +141,23 @@
     el('tCommission').textContent = brl(s.commissionTotal);
     el('tPending').textContent = brl(s.pendingPayout);
 
+    var s2 = d.summary || {};
+    el('mAuto').textContent = brl(s2.monthAutoSplit);
+    el('mReal').textContent = brl(s2.monthRealShare);
+    el('mTop').textContent = brl(s2.monthEndTopup);
+    el('mAvg').textContent = brl(s2.avgCostPerClient);
+
     var cb = el('clients'); cb.innerHTML = '';
     (d.clients || []).forEach(function(c){
       var tr = document.createElement('tr');
       tr.innerHTML = '<td>'+esc(c.name)+'</td><td>'+esc(c.plan)+'</td>' +
         '<td><span class="pill '+(c.active?'on':'off')+'">'+(c.active?'ativo':'inativo')+'</span></td>' +
-        '<td class="muted">'+fmtDate(c.since)+'</td>';
+        '<td class="num muted">'+(c.msgsMonth||0)+'</td>' +
+        '<td class="num muted">'+brl(c.realCost)+'</td>' +
+        '<td class="num" style="color:var(--gold);font-weight:700">'+brl(c.topUp)+'</td>';
       cb.appendChild(tr);
     });
-    if(!(d.clients||[]).length) cb.innerHTML = '<tr><td colspan="4" class="muted">Ainda sem clientes indicados.</td></tr>';
+    if(!(d.clients||[]).length) cb.innerHTML = '<tr><td colspan="6" class="muted">Ainda sem clientes indicados.</td></tr>';
 
     var eb = el('earnings'); eb.innerHTML = '';
     (d.earnings || []).forEach(function(e){
