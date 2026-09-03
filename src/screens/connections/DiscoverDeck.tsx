@@ -17,7 +17,8 @@ import { SvgCss } from 'react-native-svg/css'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { tagLabel } from '../../data/tzolkin/matchText'
 import { LENS } from '../../theme/lenses'
-import { BRANCHES } from '../../astro/chinese'
+import { BRANCHES, buildChineseChart } from '../../astro/chinese'
+import { animalRelation } from '../../astro/chinese/chineseTransit'
 import { ELEMENT_HEX, ANIMAL_ESIT } from '../../data/chinese/chineseText'
 import { SIGN_NAMES_I18N, MOON_SIGN_GLYPH, SIGN_KEYS } from '../../data/moonSignMood'
 
@@ -26,6 +27,23 @@ const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
 const VEDIC_ENABLED = process.env.EXPO_PUBLIC_VEDIC_ENABLED !== '0'
 // Nakshatras (27 mansões lunares) na ordem canônica — a barra mostra a nakshatra da Lua.
 const NAK_NAMES = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati']
+
+// Selo de RELAÇÃO no card (a mais forte). Retorna [pt,en,es,it] | null.
+const TZ_REL_PRI = ['same-kin', 'guide', 'analog', 'antipode', 'occult', 'same-seal', 'same-tone']
+const TZ_REL_LBL: Record<string, [string, string, string, string]> = {
+  'same-kin': ['mesmo Kin', 'same Kin', 'mismo Kin', 'stesso Kin'], guide: ['seu guia', 'your guide', 'tu guia', 'tua guida'],
+  analog: ['seu análogo', 'your analog', 'tu analogo', 'tuo analogo'], antipode: ['sua antípoda', 'your antipode', 'tu antipoda', 'tua antipode'],
+  occult: ['seu oculto', 'your hidden', 'tu oculto', 'tuo occulto'], 'same-seal': ['mesmo selo', 'same seal', 'mismo sello', 'stesso sigillo'], 'same-tone': ['mesmo tom', 'same tone', 'mismo tono', 'stesso tono'],
+}
+function tzRelLabel(rels: string[] | undefined): [string, string, string, string] | null {
+  if (!rels || !rels.length) return null
+  const r = TZ_REL_PRI.find((k) => rels.includes(k))
+  return r ? TZ_REL_LBL[r] : null
+}
+const CH_REL_LBL: Record<string, [string, string, string, string]> = {
+  same: ['mesmo animal', 'same animal', 'mismo animal', 'stesso animale'], 'secret-friend': ['amigo secreto', 'secret friend', 'amigo secreto', 'amico segreto'],
+  ally: ['aliado (San He)', 'ally (San He)', 'aliado (San He)', 'alleato (San He)'], clash: ['choque', 'clash', 'choque', 'scontro'], harm: ['dano', 'harm', 'dano', 'danno'],
+}
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 // planetEn (minúsculo) → nome capitalizado que o AspectGrid espera.
@@ -60,6 +78,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const [showAff, setShowAff] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [myKin, setMyKin] = useState<number | null>(null)
+  const [myBranch, setMyBranch] = useState<number | null>(null)
   // Toggles de privacidade no topo do Descobrir (como era antes): aparecer no
   // baralho + mostrar a roda de sinastria no card.
   const [inDeck, setInDeck] = useState(true)        // !deckHidden
@@ -133,10 +152,20 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const current = cards[idx] || null
   const detail = current ? detailByUid[current.uid] : undefined
 
-  // Meu Kin Tzolkin (para o Tzolkin Match no card).
+  // Meu Kin Tzolkin + meu animal chinês (para os selos de relação no card).
   useEffect(() => {
-    if (!TZOLKIN_ENABLED || !user?.uid) return
-    getDoc(doc(db, 'users', user.uid)).then((sn) => { const bd = sn.data()?.birthDate; setMyKin(bd ? kinOfDate(bd) : null) }).catch(() => { })
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then((sn) => {
+      const bd = sn.data()?.birthDate
+      if (TZOLKIN_ENABLED) setMyKin(bd ? kinOfDate(bd) : null)
+      if (CHINESE_ENABLED && bd) {
+        try {
+          const d = new Date(bd)
+          const c = buildChineseChart({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate(), longitude: 0, utc: d })
+          setMyBranch(c.zodiac.animalBranch)
+        } catch { setMyBranch(null) }
+      }
+    }).catch(() => { })
   }, [user?.uid])
 
   // Auto-carrega a roda/grade quando o card muda (sem toggle — tudo inline).
@@ -316,6 +345,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                               <Text style={s.cosmicSys}>Tzolkin</Text>
                               <Text style={s.cosmicVal} numberOfLines={2}>{getKinDisplayName(tzKin as number, lang)}</Text>
                               {pct(current.tzolkinScore)}
+                              {(() => { const l = tzRelLabel(tzM?.directRelations?.aToB); return l ? <Text style={[s.cosmicSys, { color: LENS.tzolkin.color, marginTop: 1, fontWeight: '800' }]}>{tl(l[0], l[1], l[2], l[3])}</Text> : null })()}
                             </View>
                           ) : null}
                           {vNak != null ? (
@@ -338,6 +368,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                                 <Text style={s.cosmicSys}>{tl('Chinês', 'Chinese', 'Chino', 'Cinese')}</Text>
                                 <Text style={s.cosmicVal} numberOfLines={2}>{cName}</Text>
                                 {pct(current.chineseScore)}
+                                {(() => { if (myBranch == null || cAn == null) return null; const l = CH_REL_LBL[animalRelation(myBranch, cAn)]; return l ? <Text style={[s.cosmicSys, { color: LENS.chinese.color, marginTop: 1, fontWeight: '800' }]}>{tl(l[0], l[1], l[2], l[3])}</Text> : null })()}
                               </View>
                             </>
                           ) : null}
