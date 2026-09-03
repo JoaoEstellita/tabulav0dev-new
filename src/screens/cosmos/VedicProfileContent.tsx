@@ -13,6 +13,8 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import type { LocalTransitData } from '../../services/astrology/LocalAstrologyService'
 import { buildVedicChart, RASHIS, currentDasha, buildDashaTimeline } from '../../astro/vedic'
+import { buildGochara } from '../../astro/vedic/gochara'
+import { gocharaReading, planetNameVedic } from '../../data/vedic/gocharaReadings'
 import {
   resolveLagna, resolveNakshatra, resolveDasha, resolvePlanetInRashi, resolvePlanetInBhava,
   resolveNakshatraDeep, deepReadingReady, planetPt, type VedicLang, type VedicGender,
@@ -56,6 +58,7 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
 
   const ct = transitData?.currentTransits
   const natalPlanets: RealPlanetPosition[] = ct?.natalPlanets ?? []
+  const transitPlanets: RealPlanetPosition[] = (ct as any)?.planets ?? []
 
   const vedic = useMemo(() => {
     if (!birthInfo.date || natalPlanets.length === 0 || !Number.isFinite(natalAscDeg)) return null
@@ -66,8 +69,9 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
     const moonSid = chart.moonNakshatra?.siderealLon
     const dasha = moonSid != null ? resolveDasha(currentDasha(moonSid, bd), lang) : null
     const timeline = moonSid != null ? buildDashaTimeline(moonSid, bd).slice(0, 5) : []
-    return { chart, dasha, timeline }
-  }, [natalPlanets, birthInfo.date, birthInfo.time, natalAscDeg, lang])
+    const gochara = buildGochara(natalPlanets, transitPlanets, bd, new Date())
+    return { chart, dasha, timeline, gochara }
+  }, [natalPlanets, transitPlanets, birthInfo.date, birthInfo.time, natalAscDeg, lang])
 
   if (loading && natalPlanets.length === 0) {
     return (
@@ -90,7 +94,7 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
     )
   }
 
-  const { chart, dasha, timeline } = vedic
+  const { chart, dasha, timeline, gochara } = vedic
   const lagnaKey = RASHIS[chart.lagna.rashiIndex].key
   const grahas = GRAHA_ORDER
     .map((n) => chart.planets.find((p) => p.name === n))
@@ -207,6 +211,24 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
           </View>
         ))}
       </View>
+
+      {/* Trânsitos védicos (Gochara) — lidos a partir da Lua natal */}
+      {gochara && gochara.items.length ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{tl('Trânsitos de hoje (Gochara)', 'Transits today (Gochara)', 'Transitos de hoy (Gochara)', 'Transiti di oggi (Gochara)')}</Text>
+          <Text style={styles.cardText}>{tl(`Lidos a partir da sua Lua em ${gochara.moonRashiName}.`, `Read from your Moon in ${gochara.moonRashiName}.`, `Leidos desde tu Luna en ${gochara.moonRashiName}.`, `Letti dalla tua Luna in ${gochara.moonRashiName}.`)}</Text>
+          {gochara.items.map((it) => (
+            <View key={it.planet} style={styles.grahaBlock}>
+              <View style={styles.grahaHead}>
+                <Text style={styles.grahaName}>{planetNameVedic(it.planet, lang)}{it.retro ? ' ℞' : ''}</Text>
+                <Text style={[styles.grahaMeta, { color: it.favorable ? '#46d39a' : '#f0a58c' }]}>{it.rashiName} · {tl('casa', 'house', 'casa', 'casa')} {it.houseFromMoon} {it.favorable ? '✓' : '·'}</Text>
+              </View>
+              <Text style={styles.cardText}>{gocharaReading(it, lang)}</Text>
+            </View>
+          ))}
+          <Text style={[styles.cardText, { marginTop: 8, fontSize: 12, opacity: 0.7 }]}>{tl('Gochara Phala clássico — favorável ou desafiador também depende do conjunto do seu mapa.', 'Classical Gochara Phala — favorable or challenging also depends on your whole chart.', 'Gochara Phala clasico — favorable o desafiante tambien depende de tu carta completa.', 'Gochara Phala classico — favorevole o sfidante dipende anche dalla tua carta completa.')}</Text>
+        </View>
+      ) : null}
     </View>
   )
 }
