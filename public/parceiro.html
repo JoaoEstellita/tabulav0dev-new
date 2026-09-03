@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parceria Tábula Estelar</title>
+<style>
+  :root{
+    --bg:#0d0d1f; --surface:#16162b; --surface2:#1e1e3a; --line:rgba(255,255,255,.10);
+    --ink:#ece9f7; --dim:#9c96c6; --faint:#6b6690; --gold:#f5c542; --green:#46d39a; --vedic:#6c8cff;
+    --sans:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;
+    background-image:radial-gradient(1100px 600px at 82% -10%,rgba(139,124,246,.14),transparent 60%),radial-gradient(900px 500px at -10% 8%,rgba(108,140,255,.10),transparent 55%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:24px;margin:0;font-weight:800;letter-spacing:.01em}
+  .sub{color:var(--dim);font-size:14px;margin-top:4px}
+  .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:22px}
+  @media(min-width:640px){.tiles{grid-template-columns:repeat(4,1fr)}}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .tile .k{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .tile .v{font-size:26px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+  .tile.hi .v{color:var(--gold)} .tile.ok .v{color:var(--green)}
+  section{margin-top:30px}
+  h2{font-size:16px;margin:0 0 12px;font-weight:700}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:var(--surface2);color:var(--dim);font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+  .pill.on{background:rgba(70,211,154,.16);color:var(--green)} .pill.off{background:rgba(255,255,255,.08);color:var(--dim)}
+  .scroll{overflow-x:auto}
+  .note{margin-top:16px;color:var(--faint);font-size:12.5px;line-height:1.6}
+  .gate{max-width:420px;margin:80px auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px}
+  .gate h1{font-size:20px} .gate p{color:var(--dim);font-size:14px}
+  .gate input{width:100%;margin-top:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px}
+  .gate button,.reload{margin-top:14px;width:100%;padding:12px;border:none;border-radius:10px;background:var(--gold);color:#2b230a;font-weight:800;font-size:15px;cursor:pointer}
+  .err{color:#ff9a9a;font-size:13px;margin-top:10px}
+  .muted{color:var(--faint)}
+  a{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="gate" id="gate" hidden>
+    <h1>Parceria Tábula Estelar</h1>
+    <p>Cole seu <b>token de acesso</b> para ver os dados da sua parceria.</p>
+    <input id="token" type="password" placeholder="Token de acesso" autocomplete="off">
+    <div class="err" id="gateErr" hidden></div>
+    <button id="enter">Entrar</button>
+  </div>
+
+  <div id="dash" hidden>
+    <h1 id="title">Parceria</h1>
+    <div class="sub" id="subtitle"></div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Clientes indicados</div><div class="v" id="tClients">—</div></div>
+      <div class="tile ok"><div class="k">Assinantes ativos</div><div class="v" id="tActive">—</div></div>
+      <div class="tile hi"><div class="k">Comissão total</div><div class="v" id="tCommission">—</div></div>
+      <div class="tile hi"><div class="k">A receber</div><div class="v" id="tPending">—</div></div>
+    </div>
+
+    <section>
+      <h2>Seus clientes</h2>
+      <div class="card scroll">
+        <table>
+          <thead><tr><th>Nome</th><th>Plano</th><th>Status</th><th>Desde</th></tr></thead>
+          <tbody id="clients"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Extrato de comissões</h2>
+      <div class="card scroll">
+        <table>
+          <thead><tr><th>Data</th><th>Tipo</th><th class="num">Valor</th><th class="num">Custo</th><th class="num">Lucro</th><th class="num">Sua parte</th></tr></thead>
+          <tbody id="earnings"></tbody>
+        </table>
+      </div>
+      <p class="note">O <b>split automático</b> repassa a comissão pelo <b>piso de lucro</b> (custo orçado conservador) — nunca a menos. O <b>acerto do mês</b>, com o custo real de uso, é calculado no fechamento e aparece em <b>A receber</b>.</p>
+    </section>
+
+    <button class="reload" id="reload">Atualizar</button>
+  </div>
+</div>
+
+<script>
+  var API = (location.hostname.indexOf('localhost') >= 0)
+    ? 'http://localhost:3000/api/partner-dashboard'
+    : 'https://tabulav0dev-backend.vercel.app/api/partner-dashboard';
+  var params = new URLSearchParams(location.search);
+  var code = (params.get('code') || '').trim();
+  var TKEY = 'tabula_partner_token_' + code;
+
+  var brl = function(n){ return 'R$ ' + (Number(n)||0).toFixed(2).replace('.', ','); };
+  var fmtDate = function(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('pt-BR'); }catch(e){ return '—'; } };
+  var kindLabel = function(k){ return ({subscription:'Assinatura', wamsg:'Mensagens', profile:'Perfil', sale:'Venda'})[k] || k; };
+  var el = function(id){ return document.getElementById(id); };
+
+  function showGate(msg){
+    el('dash').hidden = true; el('gate').hidden = false;
+    if(msg){ el('gateErr').hidden = false; el('gateErr').textContent = msg; }
+  }
+  function tk(){ try{ return sessionStorage.getItem(TKEY) || ''; }catch(e){ return ''; } }
+
+  async function load(){
+    var token = tk();
+    if(!code){ showGate('Link inválido — falta o código da parceria.'); return; }
+    if(!token){ showGate(''); return; }
+    try{
+      var r = await fetch(API + '?code=' + encodeURIComponent(code), { headers: { Authorization: 'Bearer ' + token } });
+      if(r.status === 401){ try{ sessionStorage.removeItem(TKEY); }catch(e){} showGate('Token inválido. Confira e tente de novo.'); return; }
+      if(!r.ok){ showGate('Não foi possível carregar (' + r.status + ').'); return; }
+      var d = await r.json();
+      render(d);
+    }catch(e){ showGate('Erro de conexão. Tente novamente.'); }
+  }
+
+  function render(d){
+    el('gate').hidden = true; el('dash').hidden = false;
+    el('title').textContent = 'Parceria · ' + (d.partner && d.partner.name || '');
+    el('subtitle').textContent = 'Comissão de ' + Math.round((d.partner && d.partner.profitShare || .5) * 100) + '% · atualizado ' + fmtDate(d.generatedAt);
+    var s = d.summary || {};
+    el('tClients').textContent = s.totalClients != null ? s.totalClients : '—';
+    el('tActive').textContent = s.activeSubscribers != null ? s.activeSubscribers : '—';
+    el('tCommission').textContent = brl(s.commissionTotal);
+    el('tPending').textContent = brl(s.pendingPayout);
+
+    var cb = el('clients'); cb.innerHTML = '';
+    (d.clients || []).forEach(function(c){
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+esc(c.name)+'</td><td>'+esc(c.plan)+'</td>' +
+        '<td><span class="pill '+(c.active?'on':'off')+'">'+(c.active?'ativo':'inativo')+'</span></td>' +
+        '<td class="muted">'+fmtDate(c.since)+'</td>';
+      cb.appendChild(tr);
+    });
+    if(!(d.clients||[]).length) cb.innerHTML = '<tr><td colspan="4" class="muted">Ainda sem clientes indicados.</td></tr>';
+
+    var eb = el('earnings'); eb.innerHTML = '';
+    (d.earnings || []).forEach(function(e){
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td class="muted">'+fmtDate(e.createdAt)+'</td><td>'+esc(kindLabel(e.kind))+'</td>' +
+        '<td class="num">'+brl(e.amount)+'</td><td class="num muted">'+brl(e.cost)+'</td>' +
+        '<td class="num">'+brl(e.grossProfit)+'</td><td class="num" style="color:var(--gold);font-weight:700">'+brl(e.partnerCut)+'</td>';
+      eb.appendChild(tr);
+    });
+    if(!(d.earnings||[]).length) eb.innerHTML = '<tr><td colspan="6" class="muted">Ainda sem comissões registradas.</td></tr>';
+  }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  el('enter').addEventListener('click', function(){
+    var t = el('token').value.trim();
+    if(!t) return;
+    try{ sessionStorage.setItem(TKEY, t); }catch(e){}
+    el('gateErr').hidden = true; load();
+  });
+  el('token').addEventListener('keydown', function(e){ if(e.key==='Enter') el('enter').click(); });
+  el('reload').addEventListener('click', load);
+  load();
+</script>
+</body>
+</html>
