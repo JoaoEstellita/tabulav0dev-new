@@ -130,7 +130,8 @@ function KinView({ profile, color, todayKin, lang, tl }: any) {
       <Card title={castleText(profile.castle.key, lang).title}><Text style={s.body}>{castleText(profile.castle.key, lang).text}</Text></Card>
       <Card title={tl('Kin de hoje', 'Kin of the day', 'Kin de hoy', 'Kin di oggi')}>
         <Text style={s.body}>KIN {todayKin} — {getKinDisplayName(todayKin, lang)}</Text>
-        {rel ? <Text style={[s.body, { marginTop: 6, fontStyle: 'italic' }]}>{rel}</Text> : null}
+        <Text style={[s.body, { marginTop: 6 }]}>{readSynthesis(today.seal, today.tone, lang)}</Text>
+        {rel ? <Text style={[s.body, { marginTop: 6, fontStyle: 'italic', color: color.hex }]}>{rel}</Text> : null}
       </Card>
     </>
   )

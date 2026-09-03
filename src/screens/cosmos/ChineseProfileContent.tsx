@@ -15,6 +15,8 @@ import { elementLabel, ELEMENT_HEX, tenGodLabel, pillarTitle, pillarTheme, ANIMA
 import { dayMasterReading } from '../../data/chinese/chineseReading'
 import { animalReading } from '../../data/chinese/chineseAnimalReadings'
 import { tenGodReading } from '../../data/chinese/chineseTenGodReadings'
+import { chineseYearTransit } from '../../astro/chinese/chineseTransit'
+import { yearRelationReading } from '../../data/chinese/chineseTransitReadings'
 
 type Sub = 'geral' | 'bazi' | 'dinamica'
 type Birth = { birthDate?: string; birthTime?: string; longitude?: number }
@@ -125,6 +127,16 @@ function Geral({ profile, lang, tl }: any) {
       <Card title={tl(`Seu signo · ${zAnimal}`, `Your sign · ${zAnimal}`, `Tu signo · ${zAnimal}`, `Il tuo segno · ${zAnimal}`)}>
         <Text style={s.body}>{animalReading(profile.zodiac.animalBranch, lang)}</Text>
       </Card>
+      {(() => {
+        const yt = chineseYearTransit(profile.zodiac.animalBranch)
+        if (!yt) return null
+        const yAnimal = animalName(yt.branch, lang)
+        return (
+          <Card title={tl(`Ano de ${yt.lunarYear} · ${yAnimal} de ${elementLabel(yt.element as any, lang)}`, `Year of ${yt.lunarYear} · ${elementLabel(yt.element as any, lang)} ${yAnimal}`, `Ano de ${yt.lunarYear} · ${yAnimal} de ${elementLabel(yt.element as any, lang)}`, `Anno ${yt.lunarYear} · ${yAnimal} di ${elementLabel(yt.element as any, lang)}`)}>
+            <Text style={s.body}>{yearRelationReading(yt.relation, lang)}</Text>
+          </Card>
+        )
+      })()}
       <Card title={tl('Seu Day Master', 'Your Day Master', 'Tu Day Master', 'Il tuo Day Master')}>
         <Text style={s.body}>{dayMasterReading(b.dayMaster, lang)}</Text>
       </Card>
