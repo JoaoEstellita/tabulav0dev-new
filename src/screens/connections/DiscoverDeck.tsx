@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView, Animated, Alert, Platform, Switch } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -51,7 +51,10 @@ const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', ma
 const CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto', lilith: 'Lilith', northnode: 'NorthNode', southnode: 'SouthNode' }
 const toGridPlanets = (pos?: WheelPos[]) => (pos || []).map((p) => ({ name: CAP[p.planetEn] || p.planetEn, longitude: p.longitude }))
 
-export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?: () => void; onGoProfile?: () => void }) {
+export type DeckHandle = { pass: () => void; like: () => void; friend: () => void }
+type DeckState = { hasCard: boolean; busy: boolean }
+
+const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfile?: () => void; onState?: (s: DeckState) => void }>(function DiscoverDeck({ onOpenList, onGoProfile, onState }, ref) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const lang = language as NetworkLang
@@ -208,6 +211,11 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 
   const applyFilters = (f: DeckFilters) => { setFilters(f); setShowFilters(false); load(f) }
 
+  // Footer de ação FIXO na tela (rodapé) vive no NetworkScreen; expomos os gestos por ref
+  // e avisamos quando há card / está ocupado, pra ele só aparecer com card disponível.
+  useImperativeHandle(ref, () => ({ pass: () => act('pass'), like: () => act('like'), friend: askFriend }))
+  useEffect(() => { onState?.({ hasCard: !!current && !incomplete, busy }) }, [current?.uid, incomplete, busy])
+
   const report = () => {
     if (!current) return
     const advance = () => { reportProfile(current.uid).catch(() => {}); setShowAff(false); setIdx((i) => i + 1) }
@@ -285,19 +293,8 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               ) : null}
             </View>
           </View>
-          {/* Barra de ação dedicada logo abaixo da foto (perfil rolável premium):
-              age imediatamente ao abrir o card; o perfil rico rola abaixo. */}
-          <View style={s.actionBar}>
-            <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
-              <Ionicons name="close" size={30} color="#ff6b6b" />
-            </TouchableOpacity>
-            <TouchableOpacity style={[s.act, s.friend]} disabled={busy} onPress={askFriend} activeOpacity={0.85}>
-              <Text style={s.friendEmoji}>🤝</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
-              <Ionicons name="heart" size={28} color="#fff" />
-            </TouchableOpacity>
-          </View>
+          {/* Botões ✕/🤝/♥ agora num footer FIXO no rodapé da tela (NetworkScreen),
+              sempre acessível enquanto o perfil rola. */}
           {/* Leitura de afinidade — tudo visível (sem toggle) */}
           <View style={s.detail}>
             {(() => {
@@ -430,6 +427,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                         myBranch={myBranch}
                         targetAnimal={current.chineseAnimal ?? null}
                         vedicSynastry={detail.vedicSynastry ?? null}
+                        chineseSynastry={detail.chineseSynastry ?? null}
                         grid={detail.grid}
                       />
                     </>
@@ -489,7 +487,9 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
       <FiltersSheet visible={showFilters} initial={filters} onClose={() => setShowFilters(false)} onApply={applyFilters} tl={tl} lang={lang} />
     </View>
   )
-}
+})
+
+export default DiscoverDeck
 
 function FiltersSheet({ visible, initial, onClose, onApply, tl, lang }: any) {
   const [cityLoc, setCityLoc] = useState<PickedLocation | null>(null)

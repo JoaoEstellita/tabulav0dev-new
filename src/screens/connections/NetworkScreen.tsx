@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, Image, StyleSheet, Alert, Switch, ActivityIndicator, TextInput, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { listConnections, respondConnection, shareWhatsapp, blockConnection, removeConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
 import { listPeople, ensureSelfDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 import NetworkProfileEditor from './NetworkProfileEditor'
-import DiscoverDeck from './DiscoverDeck'
+import DiscoverDeck, { type DeckHandle } from './DiscoverDeck'
 import { getMyMatches, getMyProfile, activateMatch, type MatchRow } from '../../services/DiscoveryService'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
@@ -51,6 +51,9 @@ export default function NetworkScreen() {
   // Match é opt-in: só quem ATIVA aparece/usa. null = ainda carregando.
   const [matchActive, setMatchActive] = useState<boolean | null>(null)
   const [activating, setActivating] = useState(false)
+  // Footer de ação FIXO do Descobrir (rodapé da tela): controla o baralho por ref.
+  const deckRef = useRef<DeckHandle>(null)
+  const [deckState, setDeckState] = useState<{ hasCard: boolean; busy: boolean }>({ hasCard: false, busy: false })
   const [showActivateModal, setShowActivateModal] = useState(false)
   useEffect(() => {
     if (gated) { setMatchActive(false); return }
@@ -350,9 +353,10 @@ export default function NetworkScreen() {
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView
       style={st.screen}
-      contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: page === 'discover' ? 120 : 40 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => load(true)} tintColor={C.gold} />}
     >
       {/* Header */}
@@ -401,7 +405,7 @@ export default function NetworkScreen() {
       ) : page === 'discover' ? (
         <View style={st.pad} {...aDiscover}>
           {/* Só o baralho de swipe. A busca por nome abre pelo botão "Buscar". */}
-          <DiscoverDeck onOpenList={() => setShowList(true)} onGoProfile={() => setPage('profile')} />
+          <DiscoverDeck ref={deckRef} onState={setDeckState} onOpenList={() => setShowList(true)} onGoProfile={() => setPage('profile')} />
         </View>
       ) : page === 'profile' ? (
         <View {...aProfile}><NetworkProfileEditor /></View>
@@ -533,11 +537,31 @@ export default function NetworkScreen() {
 
       <SynastryModal visible={!!synWith} uid={synWith?.uid || null} name={synWith?.name || null} onClose={() => setSynWith(null)} />
     </ScrollView>
+    {/* Footer de ação FIXO na tela — só no Descobrir e com card disponível. */}
+    {page === 'discover' && deckState.hasCard ? (
+      <View style={[st.deckFooter, { paddingBottom: insets.bottom + 10 }]} pointerEvents="box-none">
+        <TouchableOpacity style={[st.fAct, st.fPass]} disabled={deckState.busy} activeOpacity={0.85} onPress={() => deckRef.current?.pass()}>
+          <Ionicons name="close" size={30} color="#ff6b6b" />
+        </TouchableOpacity>
+        <TouchableOpacity style={[st.fAct, st.fFriend]} disabled={deckState.busy} activeOpacity={0.85} onPress={() => deckRef.current?.friend()}>
+          <Text style={{ fontSize: 24 }}>🤝</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[st.fAct, st.fLike]} disabled={deckState.busy} activeOpacity={0.85} onPress={() => deckRef.current?.like()}>
+          <Ionicons name="heart" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    ) : null}
+    </View>
   )
 }
 
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.void },
+  deckFooter: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 24, paddingTop: 12, backgroundColor: 'rgba(15,15,35,0.94)', borderTopWidth: 1, borderTopColor: C.line2 },
+  fAct: { width: 62, height: 62, borderRadius: 31, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
+  fPass: { backgroundColor: C.surface2, borderColor: '#ff6b6b' },
+  fFriend: { width: 54, height: 54, borderRadius: 27, backgroundColor: C.surface2, borderColor: C.good },
+  fLike: { backgroundColor: C.magenta, borderColor: C.magenta },
   actIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,215,0,0.12)', alignItems: 'center', justifyContent: 'center' },
   kindBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 1, marginTop: 3 },
   kindTx: { fontSize: 11, fontWeight: '800' },

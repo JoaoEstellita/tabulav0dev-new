@@ -148,7 +148,8 @@ export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harm
 export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[]; maxKm?: number }
 export type GunaKuta = { key: string; points: number; max: number; dosha?: boolean }
 export type VedicSynastry = { total: number; kutas: GunaKuta[]; band: string; hasNadiDosha: boolean; hasBhakootDosha: boolean }
-export type DeckDetail = { shared: boolean; positions?: WheelPos[]; grid?: GridAspect[]; myPositions?: WheelPos[]; vedicSynastry?: VedicSynastry | null }
+export type ChineseSynastry = { aAnimal: number; bAnimal: number; dayMasterRelation: string; scores: { support: number; rhythm: number; intensity: number; stability: number; overall?: number; growth?: number; communication?: number }; tags: string[] }
+export type DeckDetail = { shared: boolean; positions?: WheelPos[]; grid?: GridAspect[]; myPositions?: WheelPos[]; vedicSynastry?: VedicSynastry | null; chineseSynastry?: ChineseSynastry | null }
 
 /** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial.
  * A roda/grade NÃO vem aqui — é buscada sob demanda por `getDeckDetail` ao abrir os aspectos. */
@@ -163,7 +164,7 @@ export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ card
 export async function getDeckDetail(uid: string): Promise<DeckDetail> {
   const r = await post('deck-detail', { uid })
   if (!r?.ok || r?.shared === false) return { shared: false }
-  return { shared: true, positions: Array.isArray(r?.positions) ? r.positions : [], grid: Array.isArray(r?.grid) ? r.grid : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [], vedicSynastry: r?.vedicSynastry ?? null }
+  return { shared: true, positions: Array.isArray(r?.positions) ? r.positions : [], grid: Array.isArray(r?.grid) ? r.grid : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [], vedicSynastry: r?.vedicSynastry ?? null, chineseSynastry: r?.chineseSynastry ?? null }
 }
 
 /** Curte (like) ou passa. Like recíproco devolve `matched:true`. */

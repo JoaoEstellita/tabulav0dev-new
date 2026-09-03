@@ -12,6 +12,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import TzolkinMatchView from '../cosmos/TzolkinMatchView'
 import VedicMatchView, { type GunaPrecomputed } from '../cosmos/VedicMatchView'
+import ChineseMatchView, { type ChinesePrecomputed } from '../cosmos/ChineseMatchView'
 import { synastryAspectDetail, synastryToneOf } from '../../astro/synastryReading'
 import { animalRelation } from '../../astro/chinese/chineseTransit'
 import { animalCompatReading } from '../../data/chinese/chineseTransitReadings'
@@ -26,13 +27,14 @@ const VEDIC_ENABLED = process.env.EXPO_PUBLIC_VEDIC_ENABLED !== '0'
 
 const TONE_HEX: Record<string, string> = { harmonioso: '#3ecf8e', tenso: '#f0a58c', neutro: '#f5c542' }
 
-export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBranch, targetAnimal, vedicSynastry, grid }: {
+export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBranch, targetAnimal, vedicSynastry, chineseSynastry, grid }: {
   targetName: string
   myKin?: number | null
   targetKin?: number | null
   myBranch?: number | null
   targetAnimal?: number | null
   vedicSynastry?: GunaPrecomputed | null
+  chineseSynastry?: ChinesePrecomputed | null
   grid?: GridAspect[]
 }) {
   const { language } = useAppLanguage()
@@ -47,7 +49,7 @@ export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBr
 
   const hasAstral = astralAspects.length > 0
   const hasTz = TZOLKIN_ENABLED && myKin != null && targetKin != null
-  const hasCh = CHINESE_ENABLED && myBranch != null && targetAnimal != null
+  const hasCh = CHINESE_ENABLED && (!!chineseSynastry || (myBranch != null && targetAnimal != null))
   const hasVe = VEDIC_ENABLED && !!vedicSynastry
 
   const tabs = useMemo(() => {
@@ -100,7 +102,9 @@ export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBr
         ) : null}
 
         {cur?.key === 'chinese' && hasCh ? (
-          <ChineseAffinity myBranch={myBranch as number} targetAnimal={targetAnimal as number} targetName={targetName} lang={lang} tl={tl} />
+          chineseSynastry
+            ? <ChineseMatchView embedded precomputed={chineseSynastry} bName={targetName} aName={tl('Você', 'You', 'Tu', 'Tu')} />
+            : <ChineseAffinity myBranch={myBranch as number} targetAnimal={targetAnimal as number} targetName={targetName} lang={lang} tl={tl} />
         ) : null}
 
         {cur?.key === 'vedic' && hasVe ? (

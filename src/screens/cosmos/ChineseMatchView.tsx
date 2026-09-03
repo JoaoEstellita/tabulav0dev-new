@@ -36,15 +36,26 @@ function Bar({ label, value, color }: { label: string; value: number; color?: st
   )
 }
 
-export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedded }: { aBirth?: Birth; bBirth?: Birth; aName?: string; bName?: string; embedded?: boolean }) {
+/** Sinastria chinesa já computada (privacy-safe, vinda do backend p/ o Match). Date-only:
+ * sem mês/hora → sem distribuição elemental completa; Day Master + ramos ano/dia + Ten Gods. */
+export type ChinesePrecomputed = { aAnimal: number; bAnimal: number; dayMasterRelation: string; scores: { support: number; rhythm: number; intensity: number; stability: number; overall?: number; growth?: number; communication?: number }; tags: string[] }
+
+export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedded, precomputed }: { aBirth?: Birth; bBirth?: Birth; aName?: string; bName?: string; embedded?: boolean; precomputed?: ChinesePrecomputed | null }) {
   const { language } = useAppLanguage()
   const lang = language || 'pt-BR'
   const tl = (pt: string, en: string, es: string, it: string) => (lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt)
 
   const m = useMemo(() => {
+    if (precomputed) return {
+      a: { zodiac: { animalBranch: precomputed.aAnimal } },
+      b: { zodiac: { animalBranch: precomputed.bAnimal } },
+      dayMasterRelation: precomputed.dayMasterRelation,
+      scores: precomputed.scores,
+      tags: precomputed.tags,
+    } as any
     const ia = inputFromBirth(aBirth); const ib = inputFromBirth(bBirth)
     return ia && ib ? getChineseMatch(ia, ib) : null
-  }, [aBirth?.birthDate, aBirth?.birthTime, aBirth?.longitude, bBirth?.birthDate, bBirth?.birthTime, bBirth?.longitude])
+  }, [aBirth?.birthDate, aBirth?.birthTime, aBirth?.longitude, bBirth?.birthDate, bBirth?.birthTime, bBirth?.longitude, precomputed])
 
   if (!m) return null
 
@@ -99,7 +110,7 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
 
       {m.tags.length ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-          {m.tags.map((t) => <View key={t} style={s.tag}><Text style={s.tagTx}>{tagLabel(t)}</Text></View>)}
+          {m.tags.map((t: string) => <View key={t} style={s.tag}><Text style={s.tagTx}>{tagLabel(t)}</Text></View>)}
         </View>
       ) : null}
 
@@ -114,7 +125,9 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
         )
       })()}
 
-      {(!aBirth?.birthTime || !bBirth?.birthTime) ? (
+      {precomputed ? (
+        <Text style={[s.disc, { color: '#f0a58c' }]}>⚠️ {tl('No Match a leitura é date-only (Day Master + animais): o mês e a hora do outro não são usados, por privacidade.', 'In Match this reading is date-only (Day Master + animals): the other person\'s month and hour are not used, for privacy.', 'En Match la lectura es date-only (Day Master + animales): el mes y la hora del otro no se usan, por privacidad.', 'Nel Match la lettura e date-only (Day Master + animali): mese e ora dell\'altro non sono usati, per privacy.')}</Text>
+      ) : (!aBirth?.birthTime || !bBirth?.birthTime) ? (
         <Text style={[s.disc, { color: '#f0a58c' }]}>⚠️ {tl('Sem a hora de nascimento de alguém, o pilar da hora é aproximado (meio-dia).', 'Without someone\'s birth time, the hour pillar is approximate (noon).', 'Sin la hora de nacimiento, el pilar de la hora es aproximado (mediodia).', 'Senza l\'ora di nascita, il pilastro dell\'ora e approssimato (mezzogiorno).')}</Text>
       ) : null}
       <Text style={s.disc}>{tl('Modelo simbólico do app baseado no BaZi (Day Master + pilares).', 'App symbolic model based on BaZi (Day Master + pillars).', 'Modelo simbolico del app basado en BaZi.', 'Modello simbolico del app basato sul BaZi.')}</Text>
