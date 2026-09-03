@@ -23,6 +23,21 @@ import type { LocalTransitData } from "../astrology/LocalAstrologyService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
 import { backendFetch } from "../backend/client"
 import { lerComCache, chaveStatusUsuario, TTL_STATUS_MS } from "./docCache"
+import { getGroupLimit, getProfileLimit } from "../../constants/plans"
+
+/** Erro de limite de plano (perfis/grupos) — a UI captura e mostra o upsell. */
+export class PlanLimitError extends Error {
+  kind: "profile" | "group"
+  cap: number
+  constructor(kind: "profile" | "group", cap: number) {
+    super(kind === "group"
+      ? `Você chegou ao limite de grupos do seu plano (${cap}).`
+      : `Você chegou ao limite de perfis de monitoramento do seu plano (${cap}).`)
+    this.name = "PlanLimitError"
+    this.kind = kind
+    this.cap = cap
+  }
+}
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "https://tabulav0dev-backend.vercel.app").replace(/\/$/, "")
 
@@ -179,6 +194,34 @@ class GroupService {
     }, {} as Record<string, { percentage?: number; status?: string; influences?: string[]; mainPlanets?: string[] }>)
   }
   // Criar grupo
+  /** Lê o plano + contadores de criação do usuário (para as travas de limite). */
+  private async readPlanContext(uid: string): Promise<{ isPremium: boolean; isAdmin: boolean; planId: string | null; created: number; extra: number }> {
+    const snap = await getDoc(doc(db, "users", uid))
+    const d: any = snap.exists() ? (snap.data() || {}) : {}
+    const isAdmin = d?.isAdmin === true || d?.role === "admin" || d?.roles?.admin === true
+    const sub = d?.subscription || {}
+    const isPremium = isAdmin || d?.isPremium === true || sub?.status === "active"
+    const planId = d?.currentPlan || sub?.planId || null
+    return { isPremium, isAdmin, planId, created: Number(d?.monitoringProfilesCreated) || 0, extra: Number(d?.profileCreditsExtra) || 0 }
+  }
+
+  /** Grupos criados pelo usuário (dono). */
+  private async countOwnedGroups(uid: string): Promise<number> {
+    const snap = await getDocs(query(collection(db, "groups"), where("createdBy", "==", uid)))
+    return snap.size
+  }
+
+  /** Perfis de monitoramento vivos criados pelo usuário, somando todos os grupos dele. */
+  private async countCreatedProfiles(uid: string): Promise<number> {
+    const snap = await getDocs(query(collection(db, "groups"), where("createdBy", "==", uid)))
+    let n = 0
+    snap.forEach((g) => {
+      const mp = (g.data() as any)?.managedProfiles
+      if (Array.isArray(mp)) n += mp.filter((p: any) => p?.createdBy === uid).length
+    })
+    return n
+  }
+
   async createGroup(
     name: string,
     description: string,
@@ -187,6 +230,13 @@ class GroupService {
     settings?: { sharedLifeAreas?: string[]; notifiedLifeAreas?: string[] }
   ): Promise<string> {
     try {
+      // Trava de plano: nº de grupos que pode CRIAR (entrar por convite é livre).
+      const ctx = await this.readPlanContext(createdBy)
+      const gLimit = getGroupLimit({ planId: ctx.planId, isPremium: ctx.isPremium, isAdmin: ctx.isAdmin })
+      if (Number.isFinite(gLimit)) {
+        const owned = await this.countOwnedGroups(createdBy)
+        if (owned >= gLimit) throw new PlanLimitError("group", gLimit)
+      }
       const groupData: any = {
         name,
         description,
@@ -211,6 +261,7 @@ class GroupService {
 
       return docRef.id
     } catch (error) {
+      if (error instanceof PlanLimitError) throw error
       console.error("Erro ao criar grupo:", error)
       throw new Error("Nao foi possivel criar o grupo")
     }
@@ -1080,6 +1131,18 @@ class GroupService {
     const groupData = groupDoc.data() as Group
     if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
     const existing = Array.isArray(groupData.managedProfiles) ? groupData.managedProfiles : []
+    // Trava de plano: teto de perfis de monitoramento (criar consome, apagar não
+    // devolve). effective = max(contador monotônico, contagem viva) → auto-seed.
+    const ctx = await this.readPlanContext(requesterId)
+    const pLimit = getProfileLimit({ planId: ctx.planId, isPremium: ctx.isPremium, isAdmin: ctx.isAdmin })
+    if (Number.isFinite(pLimit)) {
+      const live = await this.countCreatedProfiles(requesterId)
+      const effective = Math.max(ctx.created, live)
+      const cap = pLimit + ctx.extra
+      if (effective >= cap) throw new PlanLimitError("profile", cap)
+      // Consome o crédito (monotônico) ANTES do write do perfil.
+      await setDoc(doc(db, "users", requesterId), { monitoringProfilesCreated: effective + 1 }, { merge: true })
+    }
     const id = `mp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
     const entry: ManagedProfile = {
       id,

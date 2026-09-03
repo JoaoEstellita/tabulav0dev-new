@@ -36,6 +36,17 @@ export type PlanDefinition = {
   features: string[]
 }
 
+// ── Limites de criação (espelham backend lib/premium/plan-catalog.js) ──────────
+/** Perfis de monitoramento que cada tier pode CRIAR. */
+export const PROFILE_LIMIT_BY_TIER: Record<PlanTier, number> = { essential: 1, pro: 2, premium: 5 }
+/** Grupos que cada tier pode CRIAR (entrar por convite é livre). */
+export const GROUP_LIMIT_BY_TIER: Record<PlanTier, number> = { essential: 1, pro: 2, premium: 3 }
+/** Limites do NÃO-assinante (grátis). */
+export const FREE_PROFILE_LIMIT = 1
+export const FREE_GROUP_LIMIT = 1
+/** Preço do perfil de monitoramento avulso (espelha PROFILE_PACK.amount). */
+export const PROFILE_EXTRA_PRICE = 14.90
+
 export const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     id: 'essential_monthly',
@@ -44,18 +55,18 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     months: 1,
     name: 'Essential',
     price: 19.90,
-    forecastMaxDays: 7,
+    forecastMaxDays: 30,
     creditsPerMonth: 0,
     includesGroups: true,
     includesChatbot: true,
     requiresWhatsapp: true,
     features: [
-      'Status diário das 8 áreas da vida',
-      'Mapa natal Ocidental e Védico (Jyotish)',
-      'Acesso a grupos',
-      'Rede: match "quem mais combina com você"',
-      'Sinastria detalhada com qualquer pessoa',
-      'Forecast: 7 dias',
+      'Mapa completo (Ocidental, Védico, Tzolkin, Chinês)',
+      'Trânsitos do dia + 8 áreas da vida',
+      'Match + sinastria da dupla',
+      '1 grupo + 1 perfil de monitoramento',
+      'Previsões: 30 dias',
+      'Retorno Solar e Lunar',
       'Astrólogo IA no WhatsApp — 3/dia',
     ],
   },
@@ -73,8 +84,10 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Tudo do Essential +',
-      '1 leitura premium/mês com IA (mapa, trânsitos, sinastria…)',
-      'Forecast: 7/30/90 dias',
+      '2 grupos + 2 perfis de monitoramento',
+      'Previsões: 90 dias',
+      'Momento Certo (a melhor janela pra agir)',
+      'Astrocartografia (seus lugares de poder no mundo)',
       'Astrólogo IA no WhatsApp — 6/dia',
     ],
   },
@@ -92,8 +105,8 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Tudo do Pro +',
-      '10 leituras premium/mês com IA (e compre mais quando quiser)',
-      'Forecast: 7/30/90/360 dias',
+      '3 grupos + 5 perfis de monitoramento',
+      'Previsões: 360 dias',
       'Astrólogo IA no WhatsApp — 10/dia',
     ],
   },
@@ -105,16 +118,18 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     months: 12,
     name: 'Essential',
     price: 199.00, // 10 × 19,90
-    forecastMaxDays: 7,
+    forecastMaxDays: 30,
     creditsPerMonth: 0,
     includesGroups: true,
     includesChatbot: true,
     requiresWhatsapp: true,
     features: [
-      'Status diário das 8 áreas da vida',
-      'Mapa natal Ocidental e Védico (Jyotish)',
-      'Acesso a grupos e Rede (match + sinastria)',
-      'Forecast: 7 dias',
+      'Mapa completo (Ocidental, Védico, Tzolkin, Chinês)',
+      'Trânsitos do dia + 8 áreas da vida',
+      'Match + sinastria da dupla',
+      '1 grupo + 1 perfil de monitoramento',
+      'Previsões: 30 dias',
+      'Retorno Solar e Lunar',
       'Astrólogo IA no WhatsApp — 3/dia',
       '2 meses grátis no plano anual',
     ],
@@ -133,8 +148,10 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Tudo do Essential +',
-      '1 leitura premium/mês com IA (mapa, trânsitos, sinastria…)',
-      'Forecast: 7/30/90 dias',
+      '2 grupos + 2 perfis de monitoramento',
+      'Previsões: 90 dias',
+      'Momento Certo (a melhor janela pra agir)',
+      'Astrocartografia (seus lugares de poder no mundo)',
       'Astrólogo IA no WhatsApp — 6/dia',
       '2 meses grátis no plano anual',
     ],
@@ -153,8 +170,8 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Tudo do Pro +',
-      '10 leituras premium/mês com IA (e compre mais quando quiser)',
-      'Forecast: 7/30/90/360 dias',
+      '3 grupos + 5 perfis de monitoramento',
+      'Previsões: 360 dias',
       'Astrólogo IA no WhatsApp — 10/dia',
       '2 meses grátis no plano anual',
     ],
@@ -186,6 +203,22 @@ export const getYearlyCounterpart = (planId?: string | null) => {
   const plan = getPlanById(planId)
   if (!plan) return null
   return PLAN_DEFINITIONS.find((p) => p.tier === plan.tier && p.billingPeriod === 'yearly') || null
+}
+
+/** Teto de perfis de monitoramento (não-assinante = grátis). */
+export const getProfileLimit = ({ planId, isPremium, isAdmin }: { planId?: string | null; isPremium?: boolean; isAdmin?: boolean }) => {
+  if (isAdmin) return Number.POSITIVE_INFINITY
+  if (!isPremium) return FREE_PROFILE_LIMIT
+  const plan = getPlanById(planId)
+  return plan ? PROFILE_LIMIT_BY_TIER[plan.tier] : FREE_PROFILE_LIMIT
+}
+
+/** Teto de grupos que pode CRIAR (entrar por convite é livre). */
+export const getGroupLimit = ({ planId, isPremium, isAdmin }: { planId?: string | null; isPremium?: boolean; isAdmin?: boolean }) => {
+  if (isAdmin) return Number.POSITIVE_INFINITY
+  if (!isPremium) return FREE_GROUP_LIMIT
+  const plan = getPlanById(planId)
+  return plan ? GROUP_LIMIT_BY_TIER[plan.tier] : FREE_GROUP_LIMIT
 }
 
 export const getForecastMaxDays = ({

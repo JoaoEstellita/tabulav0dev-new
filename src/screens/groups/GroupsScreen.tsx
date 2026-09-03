@@ -27,7 +27,7 @@ import AddManagedProfileModal from "./AddManagedProfileModal"
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { useAuth } from "../../hooks/useAuth"
 import { useSubscriptionCheck } from "../../hooks/useSubscriptionCheck"
-import GroupService, { type Group, type GroupMember, type GroupAlert, type GroupActivity } from "../../services/firebase/GroupService"
+import GroupService, { PlanLimitError, type Group, type GroupMember, type GroupAlert, type GroupActivity } from "../../services/firebase/GroupService"
 import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
 import GroupNotificationService from "../../services/notifications/GroupNotificationService"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
@@ -1069,6 +1069,13 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
       await loadUserGroups()
       if (!fromMatch) Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.groupCreated', 'Grupo criado com sucesso!'))
     } catch (error: any) {
+      if (error instanceof PlanLimitError) {
+        Alert.alert(
+          tr('groups.alert.planLimitTitle', 'Limite do plano'),
+          `${error.message}\n\n${tr('groups.alert.planLimitGroupHint', 'Para criar mais grupos, suba de plano na tela de Assinatura. Entrar em grupos por convite continua livre.')}`
+        )
+        return
+      }
       Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error.message)
     }
   }

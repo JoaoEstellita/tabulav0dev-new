@@ -1098,6 +1098,19 @@ export default function PremiumScreen() {
         ))}
       </View>
 
+      {/* Grátis + avulsos — contexto da escada */}
+      <View style={styles.benefitsCard}>
+        <Text style={[styles.benefitText, { fontWeight: '700', marginBottom: 6, color: '#FFD700' }]}>
+          {tr('premium.freeNote.title', 'Grátis pra sempre')}
+        </Text>
+        <Text style={styles.benefitText}>
+          {tr('premium.freeNote.body', 'Mapa completo (4 sistemas), trânsitos do dia, 8 áreas, Match + sinastria da dupla, 1 grupo e 1 perfil de monitoramento — sem pagar. A assinatura abre previsões, Momento Certo, astrocartografia e mais perfis/grupos.')}
+        </Text>
+        <Text style={[styles.benefitText, { marginTop: 8, color: '#B0B0B0' }]}>
+          {tr('premium.freeNote.avulsos', 'Avulsos (assinante): perfil extra R$ 14,90 · mensagens no WhatsApp 10/R$ 9,90 · 30/R$ 24,90 · 60/R$ 44,90.')}
+        </Text>
+      </View>
+
       {/* Planos */}
       <View style={styles.plansContainer}>
         <Text style={styles.sectionTitle}>{tr('premium.subscriptionPlans.title', 'Planos de assinatura')}</Text>

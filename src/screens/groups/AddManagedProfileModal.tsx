@@ -9,7 +9,7 @@ import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import LocationService, { type LocationSuggestion } from '../../services/LocationService'
-import GroupService from '../../services/firebase/GroupService'
+import GroupService, { PlanLimitError } from '../../services/firebase/GroupService'
 
 type Props = { visible: boolean; onClose: () => void; groupId: string | null; onCreated?: () => void }
 
@@ -85,6 +85,17 @@ export default function AddManagedProfileModal({ visible, onClose, groupId, onCr
       onCreated?.()
       onClose()
     } catch (e: any) {
+      if (e instanceof PlanLimitError) {
+        return Alert.alert(
+          tl('Limite do plano', 'Plan limit', 'Límite del plan', 'Limite del piano'),
+          tl(
+            `${e.message}\n\nPara acompanhar mais alguém, libere um perfil extra por R$ 14,90 ou suba de plano na tela de Assinatura.`,
+            `${e.message}\n\nTo follow one more person, unlock an extra profile for R$ 14,90 or upgrade on the Subscription screen.`,
+            `${e.message}\n\nPara seguir a alguien más, desbloquea un perfil extra por R$ 14,90 o sube de plan en Suscripción.`,
+            `${e.message}\n\nPer seguire un'altra persona, sblocca un profilo extra per R$ 14,90 o cambia piano in Abbonamento.`,
+          )
+        )
+      }
       Alert.alert(tl('Erro', 'Error', 'Error', 'Errore'), e?.message || tl('Não foi possível criar o perfil.', 'Could not create the profile.', 'No se pudo crear.', 'Impossibile creare.'))
     } finally {
       setSaving(false)
