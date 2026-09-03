@@ -326,6 +326,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                                 <Text style={s.cosmicSys}>{tl('Védico', 'Vedic', 'Vedico', 'Vedico')}</Text>
                                 <Text style={s.cosmicVal} numberOfLines={2}>{vName}</Text>
                                 {pct(current.vedicScore)}
+                                {typeof (current as any).vedicGuna === 'number' ? <Text style={[s.cosmicSys, { color: LENS.vedic.color, marginTop: 1, fontWeight: '800' }]}>{(current as any).vedicGuna}/36</Text> : null}
                               </View>
                             </>
                           ) : null}
