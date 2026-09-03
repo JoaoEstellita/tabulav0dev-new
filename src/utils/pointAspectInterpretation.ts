@@ -3,6 +3,12 @@
 // Serve à grade natal (clique nos nódulos) e à seção Pontos Angulares (ASC/MC).
 import { SR_PLANET_YEAR_DOMAIN } from '../data/solarReturnAspectComposer'
 import { POINT_MEANING, POINT_ASPECT_DYNAMIC } from '../data/pointAspectComposer'
+import { pointAspectBody } from '../data/pointAspectReadings'
+
+// Tom do aspecto p/ o catálogo curado. Quincúncio não tem tom → cai no composer.
+const ASPECT_TONE: Record<string, 'harmonioso' | 'tenso' | 'neutro'> = {
+  conjuncao: 'neutro', sextil: 'harmonioso', trigono: 'harmonioso', quadratura: 'tenso', oposicao: 'tenso',
+}
 
 function normLang(language?: string | null): string {
   const l = String(language || 'pt-BR').trim()
@@ -55,10 +61,17 @@ export function resolveNamedPointAspectText(
   else if (nb && !na) { pointKey = nb; planetKey = norm(a) }
   else return null // nenhum ou ambos são pontos nomeados
 
+  const asp = normAspect(aspect)
+  // Leitura CURADA por ponto×planeta×tom tem prioridade; senão, composição genérica.
+  const tone = ASPECT_TONE[asp]
+  if (tone) {
+    const curated = pointAspectBody(pointKey, planetKey, tone, lang)
+    if (curated) return curated
+  }
   const domains = SR_PLANET_YEAR_DOMAIN[lang] || SR_PLANET_YEAR_DOMAIN['pt-BR']
   const domain = domains[planetKey]
   const point = (POINT_MEANING[lang] || POINT_MEANING['pt-BR'])[pointKey]
-  const dyn = (POINT_ASPECT_DYNAMIC[lang] || POINT_ASPECT_DYNAMIC['pt-BR'])[normAspect(aspect)]
+  const dyn = (POINT_ASPECT_DYNAMIC[lang] || POINT_ASPECT_DYNAMIC['pt-BR'])[asp]
   if (!domain || !point || !dyn) return null
 
   return `${point} ${dyn.verb} ${domain}. ${dyn.advice}`
