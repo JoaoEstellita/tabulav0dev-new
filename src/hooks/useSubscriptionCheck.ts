@@ -5,7 +5,7 @@ import { db } from '../config/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { lerComCache, guardarNoCache, chaveUsuario, TTL_PERFIL_MS } from '../services/firebase/docCache'
 
-const TRIAL_DAYS = 7
+const TRIAL_DAYS = 3
 
 interface SubscriptionResult {
   active: boolean

@@ -50,7 +50,7 @@ export default function SubscriptionIntroModal({ visible, onClose, onSeePlans }:
               ))}
             </View>
 
-            <Text style={s.trial}>🎁 {tl('Comece com 7 dias grátis. Cancele quando quiser.', 'Start with 7 days free. Cancel anytime.', 'Empieza con 7 días gratis. Cancela cuando quieras.', 'Inizia con 7 giorni gratis. Disdici quando vuoi.')}</Text>
+            <Text style={s.trial}>🎁 {tl('Comece com 3 dias grátis. Cancele quando quiser.', 'Start with 3 days free. Cancel anytime.', 'Empieza con 3 días gratis. Cancela cuando quieras.', 'Inizia con 3 giorni gratis. Disdici quando vuoi.')}</Text>
 
             <TouchableOpacity style={s.cta} activeOpacity={0.9} onPress={onSeePlans}>
               <Text style={s.ctaTx}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text>

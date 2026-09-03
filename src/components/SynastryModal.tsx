@@ -97,6 +97,12 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
           {loading ? <ActivityIndicator color={C.gold} style={{ marginTop: 30 }} /> : !data ? (
             <Text style={s.empty}>{tl('Não consegui carregar a sinastria.', 'Could not load synastry.', 'No pude cargar la sinastria.', 'Non ho caricato la sinastria.')}</Text>
+          ) : data.premium === false ? (
+            <View style={s.paywall}>
+              <Text style={s.paywallEmoji}>🔒</Text>
+              <Text style={s.paywallTitle}>{tl('Sinastria é da assinatura', 'Synastry is a subscription feature', 'La sinastria es de la suscripcion', 'La sinastria e dell abbonamento')}</Text>
+              <Text style={s.paywallBody}>{tl('No modo gratuito você vê o seu próprio mapa. Comparar com quem você ama — a leitura da dupla nos 4 sistemas — começa no Essential (a partir de R$ 19,90/mês).', 'On the free plan you see your own chart. Comparing with someone you love — the pair reading across the 4 systems — starts on Essential.', 'En el plan gratis ves tu propia carta. Comparar con alguien empieza en Essential.', 'Nel piano gratuito vedi la tua carta. Confrontare con qualcuno inizia con Essential.')}</Text>
+            </View>
           ) : (
             <>
               {typeof data.score === 'number' ? (
@@ -178,6 +184,10 @@ const s = StyleSheet.create({
   scoreSym: { fontSize: 20 },
   scoreLbl: { color: C.dim, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   empty: { color: C.dim, fontSize: 14, textAlign: 'center', marginTop: 16, paddingHorizontal: 20, lineHeight: 20 },
+  paywall: { alignItems: 'center', marginTop: 24, paddingHorizontal: 22, backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', borderRadius: 16, paddingVertical: 26 },
+  paywallEmoji: { fontSize: 34, marginBottom: 8 },
+  paywallTitle: { color: C.gold, fontSize: 18, fontWeight: '900', textAlign: 'center', marginBottom: 8 },
+  paywallBody: { color: C.tx, fontSize: 14, lineHeight: 20, textAlign: 'center' },
   hint: { color: C.dim, fontSize: 12, marginBottom: 8, fontStyle: 'italic' },
   emptyCard: { alignItems: 'center', gap: 12, paddingVertical: 40 },
 })

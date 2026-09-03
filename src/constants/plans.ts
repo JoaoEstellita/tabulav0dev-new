@@ -44,10 +44,13 @@ export const GROUP_LIMIT_BY_TIER: Record<PlanTier, number> = { essential: 1, pro
 /** Teto de mensagens de IA (WhatsApp) por MÊS de cada tier. */
 export const MONTHLY_MSG_CAP_BY_TIER: Record<PlanTier, number> = { essential: 20, pro: 50, premium: 85 }
 /** Degustação semanal do não-assinante (WhatsApp). */
-export const FREE_WEEKLY_MSG = 5
-/** Limites do NÃO-assinante (grátis). */
-export const FREE_PROFILE_LIMIT = 1
-export const FREE_GROUP_LIMIT = 1
+/** Degustação de IA no WhatsApp p/ não-assinante: 3 mensagens NO TOTAL (vitalício). */
+export const FREE_TOTAL_MSG = 3
+/** Duração do modo gratuito (trial self-serve), em dias. Espelha backend TRIAL_DAYS. */
+export const FREE_TRIAL_DAYS = 3
+/** Limites do NÃO-assinante (grátis): só o mapa próprio — sem perfis/grupos/sinastria. */
+export const FREE_PROFILE_LIMIT = 0
+export const FREE_GROUP_LIMIT = 0
 /** Preço do perfil de monitoramento avulso (espelha PROFILE_PACK.amount). */
 export const PROFILE_EXTRA_PRICE = 14.90
 
@@ -225,10 +228,10 @@ export const getGroupLimit = ({ planId, isPremium, isAdmin }: { planId?: string 
   return plan ? GROUP_LIMIT_BY_TIER[plan.tier] : FREE_GROUP_LIMIT
 }
 
-/** Teto de mensagens de IA (WhatsApp) por mês. Não-assinante usa a degustação semanal. */
+/** Teto de mensagens de IA (WhatsApp) por mês. Não-assinante = degustação vitalícia (3 no total). */
 export const getMonthlyMsgCap = ({ planId, isPremium, isAdmin }: { planId?: string | null; isPremium?: boolean; isAdmin?: boolean }) => {
   if (isAdmin) return Number.POSITIVE_INFINITY
-  if (!isPremium) return FREE_WEEKLY_MSG * 4
+  if (!isPremium) return FREE_TOTAL_MSG
   const plan = getPlanById(planId)
   return plan ? MONTHLY_MSG_CAP_BY_TIER[plan.tier] : MONTHLY_MSG_CAP_BY_TIER.essential
 }

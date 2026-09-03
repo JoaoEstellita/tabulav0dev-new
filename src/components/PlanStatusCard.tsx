@@ -20,7 +20,7 @@ const PACKS = [
 ]
 import {
   getPlanById, getProfileLimit, getGroupLimit, getMonthlyMsgCap,
-  PLAN_DEFINITIONS, PROFILE_EXTRA_PRICE, MONTHLY_MSG_CAP_BY_TIER, FREE_WEEKLY_MSG,
+  PLAN_DEFINITIONS, PROFILE_EXTRA_PRICE, MONTHLY_MSG_CAP_BY_TIER, FREE_TOTAL_MSG,
 } from "../constants/plans"
 
 // Paleta cósmica (mesma do app dark).
@@ -204,10 +204,10 @@ function PlanComparison({ tr }: { tr: (k: string, f: string) => string }) {
   const rows: { label: string; vals: (string | boolean)[] }[] = [
     { label: tr("settings.plan.row.map", "Mapa completo (4 sistemas)"), vals: [true, true, true, true] },
     { label: tr("settings.plan.row.transits", "Trânsitos + 8 áreas"), vals: [true, true, true, true] },
-    { label: tr("settings.plan.row.match", "Match + sinastria"), vals: [true, true, true, true] },
-    { label: tr("settings.plan.row.profiles", "Perfis de monitoramento"), vals: ["1", "1", "2", "5"] },
-    { label: tr("settings.plan.row.groups", "Grupos que cria"), vals: ["1", "1", "2", "3"] },
-    { label: tr("settings.plan.row.wa", "IA no WhatsApp"), vals: [`${FREE_WEEKLY_MSG}/sem`, `${MONTHLY_MSG_CAP_BY_TIER.essential}/mês`, `${MONTHLY_MSG_CAP_BY_TIER.pro}/mês`, `${MONTHLY_MSG_CAP_BY_TIER.premium}/mês`] },
+    { label: tr("settings.plan.row.match", "Match + sinastria"), vals: [false, true, true, true] },
+    { label: tr("settings.plan.row.profiles", "Perfis de monitoramento"), vals: ["0", "1", "2", "5"] },
+    { label: tr("settings.plan.row.groups", "Grupos que cria"), vals: ["0", "1", "2", "3"] },
+    { label: tr("settings.plan.row.wa", "IA no WhatsApp"), vals: [`${FREE_TOTAL_MSG} no total`, `${MONTHLY_MSG_CAP_BY_TIER.essential}/mês`, `${MONTHLY_MSG_CAP_BY_TIER.pro}/mês`, `${MONTHLY_MSG_CAP_BY_TIER.premium}/mês`] },
     { label: tr("settings.plan.row.forecast", "Previsões"), vals: [false, "30d", "90d", "360d"] },
     { label: tr("settings.plan.row.returns", "Retorno Solar/Lunar"), vals: [false, true, true, true] },
     { label: tr("settings.plan.row.moment", "Momento Certo"), vals: [false, false, true, true] },
