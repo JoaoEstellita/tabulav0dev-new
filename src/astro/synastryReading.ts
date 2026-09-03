@@ -7,6 +7,7 @@
 import type { SynastryAspect, NatalChart } from './synastry'
 import type { RealPlanetPosition } from '../services/astrology/RealAstrologyEngine'
 import { getHousePositionalFocus } from '../utils/astroInterpretation'
+import { synastryPairBody } from '../data/synastryPairReadings'
 
 type Lang = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
 
@@ -142,9 +143,11 @@ export function synastryAspectDetail(aspect: AspectLike, language: string): { he
   const domA = PLANET_REL[aspect.mine]?.[lang]
   const domB = PLANET_REL[aspect.theirs]?.[lang]
   const tone = aspect.tone || synastryToneOf(aspect.aspect)
+  // Corpo CURADO por par de planetas (específico) tem prioridade; senão, composição genérica.
+  const curated = synastryPairBody(aspect.mine, aspect.theirs, tone, lang)
   const tip = ASPECT_TIP[tone]?.[lang] || ASPECT_TIP.neutro[lang]
   const sides = domA && domB ? SIDES[lang](domA, domB) : ''
-  return { headline, body: `${sides} ${tip}`.trim() }
+  return { headline, body: curated || `${sides} ${tip}`.trim() }
 }
 
 // ─── Sobreposição de casas (a "outra metade" da sinastria ocidental) ─────────
