@@ -26,6 +26,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useAppLanguage } from '../../hooks/useAppLanguage';
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck';
+import PlanStatusCard from '../../components/PlanStatusCard';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import WhatsAppInput from '../../components/WhatsAppInput';
@@ -1597,6 +1598,9 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+
+          {/* Meu plano: status, limites, créditos, comprar/upgrade + tabela completa */}
+          <PlanStatusCard />
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('settings.language.title')}</Text>

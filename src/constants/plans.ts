@@ -41,6 +41,10 @@ export type PlanDefinition = {
 export const PROFILE_LIMIT_BY_TIER: Record<PlanTier, number> = { essential: 1, pro: 2, premium: 5 }
 /** Grupos que cada tier pode CRIAR (entrar por convite é livre). */
 export const GROUP_LIMIT_BY_TIER: Record<PlanTier, number> = { essential: 1, pro: 2, premium: 3 }
+/** Teto de mensagens de IA (WhatsApp) por MÊS de cada tier. */
+export const MONTHLY_MSG_CAP_BY_TIER: Record<PlanTier, number> = { essential: 20, pro: 50, premium: 85 }
+/** Degustação semanal do não-assinante (WhatsApp). */
+export const FREE_WEEKLY_MSG = 5
 /** Limites do NÃO-assinante (grátis). */
 export const FREE_PROFILE_LIMIT = 1
 export const FREE_GROUP_LIMIT = 1
@@ -219,6 +223,14 @@ export const getGroupLimit = ({ planId, isPremium, isAdmin }: { planId?: string 
   if (!isPremium) return FREE_GROUP_LIMIT
   const plan = getPlanById(planId)
   return plan ? GROUP_LIMIT_BY_TIER[plan.tier] : FREE_GROUP_LIMIT
+}
+
+/** Teto de mensagens de IA (WhatsApp) por mês. Não-assinante usa a degustação semanal. */
+export const getMonthlyMsgCap = ({ planId, isPremium, isAdmin }: { planId?: string | null; isPremium?: boolean; isAdmin?: boolean }) => {
+  if (isAdmin) return Number.POSITIVE_INFINITY
+  if (!isPremium) return FREE_WEEKLY_MSG * 4
+  const plan = getPlanById(planId)
+  return plan ? MONTHLY_MSG_CAP_BY_TIER[plan.tier] : MONTHLY_MSG_CAP_BY_TIER.essential
 }
 
 export const getForecastMaxDays = ({
