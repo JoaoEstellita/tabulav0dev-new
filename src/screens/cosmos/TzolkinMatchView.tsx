@@ -7,7 +7,7 @@ import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { SvgCss } from 'react-native-svg/css'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getTzolkinMatch, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
+import { getTzolkinMatch, getTzolkinMatchByKins, getKinDisplayName, sealOf, SEALS, COLOR_LABELS } from '../../astro/tzolkin'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { tagLabel, dimLabel, relationLabel, connLabel, matchDisclaimer } from '../../data/tzolkin/matchText'
 
@@ -42,11 +42,12 @@ function Bar({ label, value }: { label: string; value: number }) {
   )
 }
 
-export default function TzolkinMatchView({ aDateISO, bDateISO, aName, bName, embedded }: { aDateISO: string; bDateISO: string; aName?: string; bName?: string; embedded?: boolean }) {
+export default function TzolkinMatchView({ aDateISO, bDateISO, kins, aName, bName, embedded }: { aDateISO?: string; bDateISO?: string; kins?: { a: number; b: number } | null; aName?: string; bName?: string; embedded?: boolean }) {
   const { language } = useAppLanguage()
   const lang = language || 'pt-BR'
   const tl = (pt: string, en: string, es: string, it: string) => lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt
-  const m = useMemo(() => getTzolkinMatch(aDateISO, bDateISO), [aDateISO, bDateISO])
+  // Match: só temos os Kins (privacidade) → getTzolkinMatchByKins. Grupos/Mapa: datas → getTzolkinMatch.
+  const m = useMemo(() => (kins ? getTzolkinMatchByKins(kins.a, kins.b) : getTzolkinMatch(aDateISO as string, bDateISO as string)), [aDateISO, bDateISO, kins?.a, kins?.b])
 
   const directLines: string[] = [
     ...m.directRelations.aToB.map(k => `${aName || 'A'} → ${bName || 'B'}: ${relationLabel(k, lang)}`),

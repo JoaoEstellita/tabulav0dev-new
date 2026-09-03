@@ -143,10 +143,12 @@ export type MatchResult = {
 // ─── Fase 2: baralho (deck), swipe e matches ────────────────────────────────
 export type AffinityTier = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
 export type WheelPos = { planetEn: string; longitude: number }
-export type GridAspect = { mine: string; theirs: string; labelPt?: string; orb?: number }
+export type GridAspect = { mine: string; theirs: string; aspect?: string; labelPt?: string; orb?: number }
 export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null; chartOpen?: boolean; tzolkinKin?: number | null; tzolkinScore?: number | null; combinedScore?: number; chineseAnimal?: number | null; vedicSunSign?: number | null; vedicNakshatra?: number | null; vedicScore?: number | null; chineseScore?: number | null }
 export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[]; maxKm?: number }
-export type DeckDetail = { shared: boolean; positions?: WheelPos[]; grid?: GridAspect[]; myPositions?: WheelPos[] }
+export type GunaKuta = { key: string; points: number; max: number; dosha?: boolean }
+export type VedicSynastry = { total: number; kutas: GunaKuta[]; band: string; hasNadiDosha: boolean; hasBhakootDosha: boolean }
+export type DeckDetail = { shared: boolean; positions?: WheelPos[]; grid?: GridAspect[]; myPositions?: WheelPos[]; vedicSynastry?: VedicSynastry | null }
 
 /** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial.
  * A roda/grade NÃO vem aqui — é buscada sob demanda por `getDeckDetail` ao abrir os aspectos. */
@@ -161,7 +163,7 @@ export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ card
 export async function getDeckDetail(uid: string): Promise<DeckDetail> {
   const r = await post('deck-detail', { uid })
   if (!r?.ok || r?.shared === false) return { shared: false }
-  return { shared: true, positions: Array.isArray(r?.positions) ? r.positions : [], grid: Array.isArray(r?.grid) ? r.grid : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [] }
+  return { shared: true, positions: Array.isArray(r?.positions) ? r.positions : [], grid: Array.isArray(r?.grid) ? r.grid : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [], vedicSynastry: r?.vedicSynastry ?? null }
 }
 
 /** Curte (like) ou passa. Like recíproco devolve `matched:true`. */

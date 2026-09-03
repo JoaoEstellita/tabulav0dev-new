@@ -26,18 +26,23 @@ const KUTA_LABEL: Record<string, [string, string, string, string]> = {
   nadi: ['Nadi (saúde/genes)', 'Nadi (health)', 'Nadi', 'Nadi'],
 }
 
-export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthDate, aName, bName, embedded }: { aMoonLon?: number | null; aBirthDate?: string; bMoonLon?: number | null; bBirthDate?: string; aName?: string; bName?: string; embedded?: boolean }) {
+/** Guna já computado (privacy-safe, vindo do backend p/ o Match). Sem datas/longitudes. */
+export type GunaPrecomputed = { total: number; kutas: { key: string; points: number; max: number; dosha?: boolean }[]; band: string; hasNadiDosha: boolean; hasBhakootDosha: boolean }
+
+export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthDate, aName, bName, embedded, precomputed }: { aMoonLon?: number | null; aBirthDate?: string; bMoonLon?: number | null; bBirthDate?: string; aName?: string; bName?: string; embedded?: boolean; precomputed?: GunaPrecomputed | null }) {
   const { language } = useAppLanguage()
   const lang = language || 'pt-BR'
   const tl = (pt: string, en: string, es: string, it: string) => (lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt)
   const L = (arr: [string, string, string, string]) => (lang === 'en-US' ? arr[1] : lang === 'es-ES' ? arr[2] : lang === 'it-IT' ? arr[3] : arr[0])
 
   const res = useMemo(() => {
+    // Match: guna já vem pronto do backend (sem expor dados de nascimento) → sem nakshatra/Navamsa.
+    if (precomputed) return { g: precomputed as any, na: null as any, nb: null as any }
     if (aMoonLon == null || bMoonLon == null || !aBirthDate || !bBirthDate) return null
     const na = nakshatraFromTropical(aMoonLon, new Date(`${aBirthDate.slice(0, 10)}T12:00:00Z`))
     const nb = nakshatraFromTropical(bMoonLon, new Date(`${bBirthDate.slice(0, 10)}T12:00:00Z`))
     return { g: computeGunaMilan(na, nb), na, nb }
-  }, [aMoonLon, bMoonLon, aBirthDate, bBirthDate])
+  }, [aMoonLon, bMoonLon, aBirthDate, bBirthDate, precomputed])
 
   if (!res) return null
   const { g, na, nb } = res
@@ -51,20 +56,20 @@ export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthD
     <Wrap {...wrapProps}>
       <View style={s.head}>
         <View style={s.person}>
-          <Text style={s.nakName} numberOfLines={1}>{na.nakshatra.name}</Text>
-          {aName ? <Text style={s.pName} numberOfLines={1}>{aName}</Text> : null}
+          {na ? <Text style={s.nakName} numberOfLines={1}>{na.nakshatra.name}</Text> : null}
+          <Text style={s.pName} numberOfLines={1}>{aName || tl('Você', 'You', 'Tu', 'Tu')}</Text>
         </View>
         <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
           <Text style={s.total}>{g.total}<Text style={s.totalMax}>/36</Text></Text>
           <Text style={s.band}>{pct}% · {bandLabel}</Text>
         </View>
         <View style={s.person}>
-          <Text style={s.nakName} numberOfLines={1}>{nb.nakshatra.name}</Text>
+          {nb ? <Text style={s.nakName} numberOfLines={1}>{nb.nakshatra.name}</Text> : null}
           {bName ? <Text style={s.pName} numberOfLines={1}>{bName}</Text> : null}
         </View>
       </View>
 
-      {g.kutas.map((k) => (
+      {g.kutas.map((k: { key: string; points: number; max: number; dosha?: boolean }) => (
         <View key={k.key} style={s.kutaRow}>
           <Text style={[s.kutaLabel, k.dosha ? { color: '#e4572e' } : null]} numberOfLines={1}>{L(KUTA_LABEL[k.key] || [k.key, k.key, k.key, k.key])}</Text>
           <View style={s.kutaBarBg}><View style={[s.kutaBarFill, { width: `${(k.points / k.max) * 100}%`, backgroundColor: k.dosha ? '#e4572e' : VC }]} /></View>
@@ -77,6 +82,7 @@ export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthD
       ) : null}
 
       {(() => {
+        if (!na || !nb) return null
         const nav = navamsaSynastry((na as any).siderealLon, (nb as any).siderealLon, lang)
         if (!nav) return null
         return (

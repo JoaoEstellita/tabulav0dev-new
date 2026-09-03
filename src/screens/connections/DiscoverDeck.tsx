@@ -12,6 +12,7 @@ import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promp
 import LocationField, { type PickedLocation } from '../../components/LocationField'
 import SynastryWheel from '../../components/SynastryWheel'
 import AspectGrid from '../../components/AspectGrid'
+import MatchSynastryLenses from './MatchSynastryLenses'
 import { getKinDisplayName, sealOf, SEALS, COLOR_LABELS, getTzolkinMatchByKins, kinOfDate } from '../../astro/tzolkin'
 import { SvgCss } from 'react-native-svg/css'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
@@ -415,6 +416,16 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                           <AspectGrid cross rowPlanets={toGridPlanets(detail.myPositions)} colPlanets={toGridPlanets(detail.positions)} aspects={detail.grid.map((g) => ({ planet1: CAP[g.mine] || g.mine, planet2: CAP[g.theirs] || g.theirs, type: g.labelPt || '', orb: g.orb }))} />
                         </View>
                       ) : null}
+                      {/* Sinastria COMPLETA (igual Grupos): Astral · Tzolkin · Chinês · Védico, abaixo da roda. */}
+                      <MatchSynastryLenses
+                        targetName={current.displayName}
+                        myKin={myKin}
+                        targetKin={current.tzolkinKin ?? null}
+                        myBranch={myBranch}
+                        targetAnimal={current.chineseAnimal ?? null}
+                        vedicSynastry={detail.vedicSynastry ?? null}
+                        grid={detail.grid}
+                      />
                     </>
                   ) : null
                 ) : (
