@@ -81,29 +81,46 @@ export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBr
       </View>
 
       <View style={{ paddingTop: 12 }}>
-        {cur?.key === 'astral' ? (
-          <View>
-            {astralAspects.map((a, i) => {
-              const det = synastryAspectDetail({ mine: a.mine, theirs: a.theirs, aspect: a.aspect as string, orb: a.orb }, lang)
-              const tone = synastryToneOf(a.aspect as string)
-              const col = TONE_HEX[tone] || '#f5c542'
-              const sym = getAspectSymbol(a.aspect as string)
-              const pA = translatePlanet(a.mine, lang), pB = translatePlanet(a.theirs, lang)
-              const aspName = a.labelPt || (a.aspect as string)
-              return (
-                <View key={i} style={[s.aspRow, { borderLeftColor: col }]}>
-                  <Text style={s.aspTitle}>
-                    <Text style={{ color: col }}>{pA} {sym} {pB}</Text>
-                    {typeof a.orb === 'number' ? <Text style={s.aspOrb}>  ·  {aspName} {a.orb.toFixed(1)}°</Text> : <Text style={s.aspOrb}>  ·  {aspName}</Text>}
-                  </Text>
-                  {det.headline ? <Text style={s.aspHead}>{det.headline}</Text> : null}
-                  {det.body ? <Text style={s.aspBody}>{det.body}</Text> : null}
-                </View>
-              )
-            })}
-            <Text style={s.disc}>{tl('Aspectos entre os dois mapas (planetas pessoais). O contato mostra a dinâmica — o que fazem com ela é de vocês.', 'Aspects between the two charts (personal planets). The contact shows the dynamic — what you do with it is up to you.', 'Aspectos entre las dos cartas (planetas personales). El contacto muestra la dinamica.', 'Aspetti tra le due carte (pianeti personali). Il contatto mostra la dinamica.')}</Text>
-          </View>
-        ) : null}
+        {cur?.key === 'astral' ? (() => {
+          const renderAspect = (a: GridAspect & { aspect?: string }, i: number) => {
+            const det = synastryAspectDetail({ mine: a.mine, theirs: a.theirs, aspect: a.aspect as string, orb: a.orb }, lang)
+            const tone = synastryToneOf(a.aspect as string)
+            const col = TONE_HEX[tone] || '#f5c542'
+            const sym = getAspectSymbol(a.aspect as string)
+            const pA = translatePlanet(a.mine, lang), pB = translatePlanet(a.theirs, lang)
+            const aspName = a.labelPt || (a.aspect as string)
+            return (
+              <View key={i} style={[s.aspRow, { borderLeftColor: col }]}>
+                <Text style={s.aspTitle}>
+                  <Text style={{ color: col }}>{pA} {sym} {pB}</Text>
+                  {typeof a.orb === 'number' ? <Text style={s.aspOrb}>  ·  {aspName} {a.orb.toFixed(1)}°</Text> : <Text style={s.aspOrb}>  ·  {aspName}</Text>}
+                </Text>
+                {det.headline ? <Text style={s.aspHead}>{det.headline}</Text> : null}
+                {det.body ? <Text style={s.aspBody}>{det.body}</Text> : null}
+              </View>
+            )
+          }
+          const flui = astralAspects.filter((a) => synastryToneOf(a.aspect as string) === 'harmonioso')
+          const atrito = astralAspects.filter((a) => synastryToneOf(a.aspect as string) === 'tenso')
+          const fusao = astralAspects.filter((a) => synastryToneOf(a.aspect as string) === 'neutro')
+          return (
+            <View>
+              {flui.length ? (<>
+                <Text style={[s.groupHead, { color: TONE_HEX.harmonioso }]}>✨ {tl('Onde flui', 'Where it flows', 'Donde fluye', 'Dove scorre')}</Text>
+                {flui.map(renderAspect)}
+              </>) : null}
+              {atrito.length ? (<>
+                <Text style={[s.groupHead, { color: TONE_HEX.tenso, marginTop: flui.length ? 18 : 0 }]}>⚡ {tl('Onde há atrito', 'Where there is friction', 'Donde hay roce', 'Dove c e attrito')}</Text>
+                {atrito.map(renderAspect)}
+              </>) : null}
+              {fusao.length ? (<>
+                <Text style={[s.groupHead, { color: TONE_HEX.neutro, marginTop: (flui.length || atrito.length) ? 18 : 0 }]}>☌ {tl('Fusão — intensifica', 'Fusion — intensifies', 'Fusion — intensifica', 'Fusione — intensifica')}</Text>
+                {fusao.map(renderAspect)}
+              </>) : null}
+              <Text style={s.disc}>{tl('Aspectos entre os dois mapas (planetas pessoais). O contato mostra a dinâmica — o que fazem com ela é de vocês.', 'Aspects between the two charts (personal planets). The contact shows the dynamic — what you do with it is up to you.', 'Aspectos entre las dos cartas (planetas personales). El contacto muestra la dinamica.', 'Aspetti tra le due carte (pianeti personali). Il contatto mostra la dinamica.')}</Text>
+            </View>
+          )
+        })() : null}
 
         {cur?.key === 'tzolkin' && hasTz ? (
           <TzolkinMatchView embedded kins={{ a: myKin as number, b: targetKin as number }} bName={targetName} aName={tl('Você', 'You', 'Tu', 'Tu')} />
@@ -178,6 +195,7 @@ const s = StyleSheet.create({
   bar: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   tab: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.10)', backgroundColor: 'rgba(255,255,255,.04)' },
   tabTx: { color: '#b8b3d6', fontSize: 13, fontWeight: '800' },
+  groupHead: { fontSize: 12.5, fontWeight: '900', letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 2 },
   aspRow: { borderLeftWidth: 3, paddingLeft: 10, marginTop: 12 },
   aspTitle: { fontSize: 14.5, fontWeight: '900', lineHeight: 20 },
   aspOrb: { color: '#8892a4', fontSize: 12, fontWeight: '700' },

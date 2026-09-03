@@ -389,21 +389,26 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
               )
             })()}
             <View style={{ marginTop: 4 }}>
-                {current.harmonics?.length ? (
-                  <>
-                    <Text style={s.detailHead}>{tl('O que flui entre vocês', 'What flows between you', 'Lo que fluye entre ustedes', 'Cosa scorre tra voi')}</Text>
-                    {current.harmonics.map((h, i) => <Text key={'h' + i} style={s.harmonic}>✨ {h}</Text>)}
-                  </>
-                ) : null}
-                {current.tensions?.length ? (
-                  <>
-                    <Text style={s.detailHead}>{tl('Onde há atrito (também atrai)', 'Where there is friction (also attracts)', 'Donde hay roce (tambien atrae)', 'Dove c e attrito (attrae anche)')}</Text>
-                    {current.tensions.map((t, i) => <Text key={'t' + i} style={s.tension}>⚡ {t}</Text>)}
-                  </>
-                ) : null}
-                {!current.harmonics?.length && !current.tensions?.length ? (
-                  <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
-                ) : null}
+                {/* Resumo flui/atrito SÓ como fallback quando o dono não abriu a roda
+                    (sem roda não há aba Ocidental). Com a roda, a lista COMPLETA já
+                    dividida por flui/atrito vive na aba Ocidental abaixo — não repete aqui. */}
+                {!current.chartOpen ? (<>
+                  {current.harmonics?.length ? (
+                    <>
+                      <Text style={s.detailHead}>{tl('O que flui entre vocês', 'What flows between you', 'Lo que fluye entre ustedes', 'Cosa scorre tra voi')}</Text>
+                      {current.harmonics.map((h, i) => <Text key={'h' + i} style={s.harmonic}>✨ {h}</Text>)}
+                    </>
+                  ) : null}
+                  {current.tensions?.length ? (
+                    <>
+                      <Text style={s.detailHead}>{tl('Onde há atrito (também atrai)', 'Where there is friction (also attracts)', 'Donde hay roce (tambien atrae)', 'Dove c e attrito (attrae anche)')}</Text>
+                      {current.tensions.map((t, i) => <Text key={'t' + i} style={s.tension}>⚡ {t}</Text>)}
+                    </>
+                  ) : null}
+                  {!current.harmonics?.length && !current.tensions?.length ? (
+                    <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
+                  ) : null}
+                </>) : null}
                 {/* Roda + grade sob demanda (só quando o dono abriu). Busca na 1ª abertura. */}
                 {current.chartOpen ? (
                   detailLoading && !detail ? (
