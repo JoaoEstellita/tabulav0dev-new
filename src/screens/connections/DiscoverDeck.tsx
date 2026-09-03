@@ -284,18 +284,19 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                 </Text>
               ) : null}
             </View>
-            {/* Botões de ação SOBRE a foto */}
-            <View style={s.actionsOver}>
-              <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
-                <Ionicons name="close" size={28} color="#ff6b6b" />
-              </TouchableOpacity>
-              <TouchableOpacity style={[s.act, s.friend]} disabled={busy} onPress={askFriend} activeOpacity={0.85}>
-                <Text style={s.friendEmoji}>🤝</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
-                <Ionicons name="heart" size={26} color="#fff" />
-              </TouchableOpacity>
-            </View>
+          </View>
+          {/* Barra de ação dedicada logo abaixo da foto (perfil rolável premium):
+              age imediatamente ao abrir o card; o perfil rico rola abaixo. */}
+          <View style={s.actionBar}>
+            <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
+              <Ionicons name="close" size={30} color="#ff6b6b" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.act, s.friend]} disabled={busy} onPress={askFriend} activeOpacity={0.85}>
+              <Text style={s.friendEmoji}>🤝</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
+              <Ionicons name="heart" size={28} color="#fff" />
+            </TouchableOpacity>
           </View>
           {/* Leitura de afinidade — tudo visível (sem toggle) */}
           <View style={s.detail}>
@@ -325,6 +326,17 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               if (current.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(current.chineseScore)}%`)
               return (
                 <>
+                  {/* Herói: compatibilidade integrada em destaque, topo do perfil. */}
+                  <View style={s.heroRow}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={s.heroTier} numberOfLines={1}>💫 {tierLabel(current.tier)}</Text>
+                      {parts.length > 1 ? <Text style={s.heroParts} numberOfLines={2}>{parts.join(' · ')}</Text> : null}
+                    </View>
+                    <View style={s.heroPctBox}>
+                      <Text style={s.heroPct}>{combined}<Text style={s.heroPctSym}>%</Text></Text>
+                      <Text style={s.heroPctLbl}>{tl('integrado', 'integrated', 'integrado', 'integrato')}</Text>
+                    </View>
+                  </View>
                   {showBar ? (
                     <View style={s.cosmicBar}>
                       <Text style={s.cosmicHdr}>{tl('Assinatura cósmica', 'Cosmic signature', 'Firma cosmica', 'Firma cosmica')}</Text>
@@ -375,14 +387,8 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                           ) : null}
                         </View>
                       ) : null}
-                      {parts.length > 1 ? (
-                        <Text style={s.cosmicBreak}>{parts.join(' · ')} → {tl('integrado', 'integrated', 'integrado', 'integrato')} {combined}%</Text>
-                      ) : null}
                     </View>
                   ) : null}
-                  <View style={s.tierRow}>
-                    <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {combined}%</Text>
-                  </View>
                 </>
               )
             })()}
@@ -564,7 +570,7 @@ const s = StyleSheet.create({
   ringPct: { color: '#fff', fontSize: 19, fontWeight: '900', lineHeight: 20 },
   ringSym: { fontSize: 11, fontWeight: '700' },
   ringLbl: { color: '#fff', fontSize: 8, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.85 },
-  overlay: { position: 'absolute', left: 18, right: 18, bottom: 84 },
+  overlay: { position: 'absolute', left: 18, right: 18, bottom: 18 },
   actionsOver: { position: 'absolute', left: 0, right: 0, bottom: 12, flexDirection: 'row', justifyContent: 'center', gap: 22 },
   name: { color: '#fff', fontSize: 25, fontWeight: '900' },
   age: { color: 'rgba(255,255,255,0.92)', fontSize: 15, fontWeight: '700', marginTop: 2 },
@@ -572,6 +578,14 @@ const s = StyleSheet.create({
   near: { color: C.good, fontSize: 13, fontWeight: '700' },
   signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
   detail: { padding: 16 },
+  actionBar: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 26, paddingVertical: 14, backgroundColor: 'rgba(12,8,24,0.35)', borderBottomWidth: 1, borderBottomColor: C.line },
+  heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(214,64,159,0.10)', borderWidth: 1, borderColor: 'rgba(214,64,159,0.28)', borderRadius: 14, padding: 12, marginBottom: 12 },
+  heroTier: { color: C.tx, fontSize: 15, fontWeight: '900' },
+  heroParts: { color: C.dim, fontSize: 11.5, fontWeight: '600', marginTop: 3, lineHeight: 15 },
+  heroPctBox: { alignItems: 'center', minWidth: 66 },
+  heroPct: { color: C.magenta, fontSize: 30, fontWeight: '900', lineHeight: 32 },
+  heroPctSym: { fontSize: 15, fontWeight: '800' },
+  heroPctLbl: { color: C.dim, fontSize: 8.5, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 1 },
   affToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   affToggleRight: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   affToggleTx: { color: C.magenta, fontSize: 12, fontWeight: '700' },
