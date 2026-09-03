@@ -49,7 +49,10 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
   useEffect(() => {
     if (!visible || !uid) return
     setData(null); setLoading(true)
-    getSynastry(uid).then(setData).catch(() => setData(null)).finally(() => setLoading(false))
+    // Sinastria é LIVRE. Em erro/404 (alvo não-descobrível) mantém um objeto mínimo
+    // pra ainda mostrar as lentes (Tzolkin/Chinês/Védico) a partir do birthData.
+    getSynastry(uid).then((d) => setData(d || ({ premium: true, aspects: [] } as any)))
+      .catch(() => setData({ premium: true, aspects: [] } as any)).finally(() => setLoading(false))
   }, [visible, uid])
 
   // Sinastrias simbólicas (Tzolkin/Chinês/Védico): nascimento das 2 pessoas (aditivo, gated).
@@ -94,11 +97,6 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
           {loading ? <ActivityIndicator color={C.gold} style={{ marginTop: 30 }} /> : !data ? (
             <Text style={s.empty}>{tl('Não consegui carregar a sinastria.', 'Could not load synastry.', 'No pude cargar la sinastria.', 'Non ho caricato la sinastria.')}</Text>
-          ) : !data.premium ? (
-            <View style={s.emptyCard}>
-              <Ionicons name="lock-closed" size={30} color={C.gold} />
-              <Text style={s.empty}>{tl('A sinastria completa é para assinantes.', 'Full synastry is for subscribers.', 'La sinastria completa es para suscriptores.', 'La sinastria completa e per abbonati.')}</Text>
-            </View>
           ) : (
             <>
               {typeof data.score === 'number' ? (
