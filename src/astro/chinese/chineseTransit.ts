@@ -19,17 +19,21 @@ export interface ChineseYearTransit {
 const pairHas = (pairs: [number, number][], a: number, b: number) =>
   pairs.some(([x, y]) => (x === a && y === b) || (x === b && y === a))
 
+/** Relação entre 2 animais (0-11): mesmo, amigo secreto, aliados, choque, dano, neutro. */
+export function animalRelation(a: number, b: number): YearRelation {
+  if (a === b) return 'same'
+  if (pairHas(SIX_HARMONIES, a, b)) return 'secret-friend'
+  if (THREE_HARMONIES.some((th: any) => th.branches.includes(a) && th.branches.includes(b))) return 'ally'
+  if (pairHas(SIX_CLASHES, a, b)) return 'clash'
+  if (pairHas(HARMS, a, b)) return 'harm'
+  return 'neutral'
+}
+
 /** Trânsito do ano para um animal natal (0-11). `date` default = hoje. */
 export function chineseYearTransit(natalBranch: number, date: Date = new Date()): ChineseYearTransit | null {
   if (!Number.isFinite(Number(natalBranch))) return null
   // longitude 0 basta: o pilar do ANO (o que usamos) depende só da data + Lì Chūn.
   const chart = buildChineseChart({ year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate(), longitude: 0, utc: date })
   const cur = chart.zodiac.animalBranch
-  let relation: YearRelation = 'neutral'
-  if (cur === natalBranch) relation = 'same'
-  else if (pairHas(SIX_HARMONIES, cur, natalBranch)) relation = 'secret-friend'
-  else if (THREE_HARMONIES.some((th: any) => th.branches.includes(cur) && th.branches.includes(natalBranch))) relation = 'ally'
-  else if (pairHas(SIX_CLASHES, cur, natalBranch)) relation = 'clash'
-  else if (pairHas(HARMS, cur, natalBranch)) relation = 'harm'
-  return { branch: cur, element: chart.zodiac.element, polarity: chart.zodiac.polarity, lunarYear: chart.zodiac.lunarYear, relation }
+  return { branch: cur, element: chart.zodiac.element, polarity: chart.zodiac.polarity, lunarYear: chart.zodiac.lunarYear, relation: animalRelation(cur, natalBranch) }
 }

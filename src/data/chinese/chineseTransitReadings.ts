@@ -47,3 +47,46 @@ const RELATION: Record<YearRelation, Record<Lang, string>> = {
 export function yearRelationReading(relation: YearRelation, lang: string): string {
   return RELATION[relation]?.[L(lang)] || RELATION.neutral[L(lang)]
 }
+
+// ── Compatibilidade de animais na SINASTRIA (2 pessoas) ──────────────────────
+const COMPAT: Record<YearRelation, Record<Lang, string>> = {
+  same: {
+    'pt-BR': 'Mesmo animal — profunda identificação: se entendem no instinto. Cuidado só pra não competir pelo mesmo espaço.',
+    'en-US': 'Same animal — deep identification: you get each other instinctively. Just watch out not to compete for the same space.',
+    'es-ES': 'Mismo animal — identificacion profunda: se entienden por instinto. Cuidado con competir por el mismo espacio.',
+    'it-IT': 'Stesso animale — identificazione profonda: vi capite d\'istinto. Attenti solo a non competere per lo stesso spazio.',
+  },
+  'secret-friend': {
+    'pt-BR': 'Amigos secretos (Liu He) — a dupla mais harmoniosa do zodíaco chinês: apoio natural, lealdade e cumplicidade.',
+    'en-US': 'Secret friends (Liu He) — the most harmonious pair in the Chinese zodiac: natural support, loyalty and complicity.',
+    'es-ES': 'Amigos secretos (Liu He) — la pareja mas armoniosa del zodiaco chino: apoyo natural, lealtad y complicidad.',
+    'it-IT': 'Amici segreti (Liu He) — la coppia piu armoniosa dello zodiaco cinese: sostegno naturale, lealta e complicita.',
+  },
+  ally: {
+    'pt-BR': 'Trígono de aliados (San He) — sintonia de valores e ritmo: parceria que flui e prospera junta.',
+    'en-US': 'Ally trine (San He) — alignment of values and rhythm: a partnership that flows and thrives together.',
+    'es-ES': 'Trigono de aliados (San He) — sintonia de valores y ritmo: una sociedad que fluye y prospera junta.',
+    'it-IT': 'Trigono di alleati (San He) — sintonia di valori e ritmo: una coppia che scorre e prospera insieme.',
+  },
+  clash: {
+    'pt-BR': 'Choque (Chong) — atração intensa e movimento, mas com fricção: crescem se traduzirem a diferença em vez de disputar.',
+    'en-US': 'Clash (Chong) — intense attraction and movement, but with friction: you grow by translating the difference rather than competing.',
+    'es-ES': 'Choque (Chong) — atraccion intensa y movimiento, pero con friccion: crecen si traducen la diferencia en vez de competir.',
+    'it-IT': 'Scontro (Chong) — attrazione intensa e movimento, ma con attrito: crescete traducendo la differenza invece di competere.',
+  },
+  harm: {
+    'pt-BR': 'Dano (Hai) — afinidade com ruídos sutis: funciona com comunicação clara e menos suposição.',
+    'en-US': 'Harm (Hai) — affinity with subtle noise: it works with clear communication and less assumption.',
+    'es-ES': 'Dano (Hai) — afinidad con ruidos sutiles: funciona con comunicacion clara y menos suposicion.',
+    'it-IT': 'Danno (Hai) — affinita con rumori sottili: funziona con comunicazione chiara e meno supposizioni.',
+  },
+  neutral: {
+    'pt-BR': 'Relação neutra entre os animais — nem forte afinidade nem atrito; a base vem dos outros pilares do BaZi.',
+    'en-US': 'Neutral animal relation — neither strong affinity nor friction; the base comes from the other BaZi pillars.',
+    'es-ES': 'Relacion neutral entre los animales — ni fuerte afinidad ni friccion; la base viene de los otros pilares del BaZi.',
+    'it-IT': 'Relazione neutra tra gli animali — ne forte affinita ne attrito; la base viene dagli altri pilastri del BaZi.',
+  },
+}
+export function animalCompatReading(relation: YearRelation, lang: string): string {
+  return COMPAT[relation]?.[L(lang)] || COMPAT.neutral[L(lang)]
+}

@@ -9,6 +9,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getChineseMatch, BRANCHES, type ChineseInput } from '../../astro/chinese'
 import { ELEMENT_HEX, ANIMAL_ESIT } from '../../data/chinese/chineseText'
+import { animalRelation } from '../../astro/chinese/chineseTransit'
+import { animalCompatReading } from '../../data/chinese/chineseTransitReadings'
 import { UI } from '../../theme/ui'
 
 type Birth = { birthDate?: string; birthTime?: string; longitude?: number }
@@ -100,6 +102,17 @@ export default function ChineseMatchView({ aBirth, bBirth, aName, bName, embedde
           {m.tags.map((t) => <View key={t} style={s.tag}><Text style={s.tagTx}>{tagLabel(t)}</Text></View>)}
         </View>
       ) : null}
+
+      {(() => {
+        const rel = animalRelation(m.a.zodiac.animalBranch, m.b.zodiac.animalBranch)
+        const col = rel === 'secret-friend' || rel === 'ally' ? '#3ecf8e' : rel === 'clash' || rel === 'harm' ? '#e4572e' : '#9c96c6'
+        return (
+          <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' }}>
+            <Text style={[s.rel, { textAlign: 'left', color: col }]}>{tl('Afinidade dos animais', 'Animal affinity', 'Afinidad de los animales', 'Affinita degli animali')}</Text>
+            <Text style={s.disc}>{animalCompatReading(rel, lang)}</Text>
+          </View>
+        )
+      })()}
 
       {(!aBirth?.birthTime || !bBirth?.birthTime) ? (
         <Text style={[s.disc, { color: '#f0a58c' }]}>⚠️ {tl('Sem a hora de nascimento de alguém, o pilar da hora é aproximado (meio-dia).', 'Without someone\'s birth time, the hour pillar is approximate (noon).', 'Sin la hora de nacimiento, el pilar de la hora es aproximado (mediodia).', 'Senza l\'ora di nascita, il pilastro dell\'ora e approssimato (mezzogiorno).')}</Text>
