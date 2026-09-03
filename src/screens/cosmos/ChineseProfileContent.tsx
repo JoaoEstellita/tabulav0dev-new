@@ -13,6 +13,8 @@ import { buildChineseChart, STEMS, BRANCHES } from '../../astro/chinese'
 import type { ChineseProfile } from '../../astro/chinese/types'
 import { elementLabel, ELEMENT_HEX, tenGodLabel, pillarTitle, pillarTheme, ANIMAL_ESIT, chineseDisclaimer } from '../../data/chinese/chineseText'
 import { dayMasterReading } from '../../data/chinese/chineseReading'
+import { animalReading } from '../../data/chinese/chineseAnimalReadings'
+import { tenGodReading } from '../../data/chinese/chineseTenGodReadings'
 
 type Sub = 'geral' | 'bazi' | 'dinamica'
 type Birth = { birthDate?: string; birthTime?: string; longitude?: number }
@@ -120,6 +122,9 @@ function Geral({ profile, lang, tl }: any) {
         <PillarBox pk="hour" p={b.hour} lang={lang} />
       </View>
       {!b.hour ? <Text style={s.note}>{tl('Sem horário de nascimento — mapa de 3 pilares (sem Pilar da Hora).', 'No birth time — 3-pillar chart (no Hour Pillar).', 'Sin hora de nacimiento — carta de 3 pilares (sin Pilar de la Hora).', 'Senza ora di nascita — carta a 3 pilastri (senza Pilastro dell Ora).')}</Text> : null}
+      <Card title={tl(`Seu signo · ${zAnimal}`, `Your sign · ${zAnimal}`, `Tu signo · ${zAnimal}`, `Il tuo segno · ${zAnimal}`)}>
+        <Text style={s.body}>{animalReading(profile.zodiac.animalBranch, lang)}</Text>
+      </Card>
       <Card title={tl('Seu Day Master', 'Your Day Master', 'Tu Day Master', 'Il tuo Day Master')}>
         <Text style={s.body}>{dayMasterReading(b.dayMaster, lang)}</Text>
       </Card>
@@ -179,10 +184,17 @@ function Dinamica({ profile, lang, tl }: any) {
   return (
     <>
       <Card title={tl('Dez Deuses', 'Ten Gods', 'Diez Dioses', 'Dieci Dei')}>
-        <Text style={s.body}>{tl('Ano', 'Year', 'Año', 'Anno')}: {tenGodLabel(b.tenGods.year, lang)}</Text>
-        <Text style={s.body}>{tl('Mês', 'Month', 'Mes', 'Mese')}: {tenGodLabel(b.tenGods.month, lang)}</Text>
-        {b.tenGods.hour ? <Text style={s.body}>{tl('Hora', 'Hour', 'Hora', 'Ora')}: {tenGodLabel(b.tenGods.hour, lang)}</Text> : null}
-        <Text style={[s.note, { marginTop: 6 }]}>{tl('Relação de cada pilar com o Day Master.', 'Each pillar\'s relation to the Day Master.', 'Relacion de cada pilar con el Day Master.', 'Relazione di ogni pilastro col Day Master.')}</Text>
+        {[
+          { w: tl('Ano', 'Year', 'Año', 'Anno'), g: b.tenGods.year },
+          { w: tl('Mês', 'Month', 'Mes', 'Mese'), g: b.tenGods.month },
+          ...(b.tenGods.hour ? [{ w: tl('Hora', 'Hour', 'Hora', 'Ora'), g: b.tenGods.hour }] : []),
+        ].map((row: any, i: number) => (
+          <View key={i} style={{ marginBottom: 10 }}>
+            <Text style={[s.body, { fontWeight: '700' }]}>{row.w} · {tenGodLabel(row.g, lang)}</Text>
+            <Text style={s.body}>{tenGodReading(row.g, lang)}</Text>
+          </View>
+        ))}
+        <Text style={[s.note, { marginTop: 2 }]}>{tl('Relação de cada pilar com o Day Master.', 'Each pillar\'s relation to the Day Master.', 'Relacion de cada pilar con el Day Master.', 'Relazione di ogni pilastro col Day Master.')}</Text>
       </Card>
       <Card title={tl('Interações entre ramos', 'Branch interactions', 'Interacciones entre ramos', 'Interazioni tra rami')}>
         {b.interactions.length ? b.interactions.map((it: any, i: number) => (

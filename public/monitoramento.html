@@ -795,7 +795,10 @@
               const m = r.margemMesBRL
               const cor = m == null ? 'var(--muted)' : (m >= 0 ? 'var(--ok)' : 'var(--err)')
               const margemTxt = m == null ? '—' : fmtBRL(m)
-              return `<span title="agente: ${r.agentMsgsMes || 0} msg · leituras: ${r.leiturasMes || 0}">${fmtBRL(r.custoMesBRL)} <span style="color:var(--muted)">·</span> <b style="color:${cor}">${margemTxt}</b></span>`
+              const pl = r.planLimits
+              const cap = (n) => (n == null || !isFinite(n)) ? '∞' : n
+              const plTxt = pl ? ` <span style="color:var(--muted);font-size:11px" title="perfis criados ${pl.profilesCreated}/${cap(pl.profileLimit)}${pl.profileCreditsExtra ? ' (+' + pl.profileCreditsExtra + ' avulso)' : ''} · grupos ≤${cap(pl.groupLimit)} · WhatsApp ${cap(pl.monthlyMsgCap)}/mês">🧩 ${pl.profilesCreated}/${cap(pl.profileLimit)}</span>` : ''
+              return `<span title="agente: ${r.agentMsgsMes || 0} msg · leituras: ${r.leiturasMes || 0}">${fmtBRL(r.custoMesBRL)} <span style="color:var(--muted)">·</span> <b style="color:${cor}">${margemTxt}</b></span>${plTxt}`
             })()}</td>
             <td style="padding:5px 8px">${(() => { const g = trialInfo(r); return g.bg === 'transparent' ? `<span style="color:${g.fg}">${g.txt}</span>` : `<span class="badge" style="background:${g.bg};color:${g.fg};font-size:11px">${g.txt}</span>` })()}</td>
             <td style="padding:5px 8px;white-space:nowrap">${(() => {
