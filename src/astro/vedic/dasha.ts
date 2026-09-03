@@ -62,3 +62,31 @@ export function currentDasha(moonSiderealLon: number, birthDate: Date, now: Date
   const timeline = buildDashaTimeline(moonSiderealLon, birthDate)
   return timeline.find((p) => t >= p.start.getTime() && t < p.end.getTime()) || null
 }
+
+/** Antardashas (Bhukti) DENTRO de uma Mahadasha. Cada uma = total × (anos/120),
+ * em ordem Vimshottari começando pelo lorde da Mahadasha. */
+export function buildAntardashas(maha: DashaPeriod): DashaPeriod[] {
+  const totalMs = maha.end.getTime() - maha.start.getTime()
+  const startIdx = VIMSHOTTARI.findIndex((v) => v.lord === maha.lord)
+  if (startIdx < 0) return []
+  const out: DashaPeriod[] = []
+  let cursor = maha.start.getTime()
+  for (let k = 0; k < VIMSHOTTARI.length; k++) {
+    const v = VIMSHOTTARI[(startIdx + k) % VIMSHOTTARI.length]
+    const end = cursor + totalMs * (v.years / 120)
+    out.push({ lord: v.lord, start: new Date(cursor), end: new Date(end) })
+    cursor = end
+  }
+  return out
+}
+
+/** Antardasha vigente + a lista, dentro da Mahadasha atual. null se fora. */
+export function currentAntardasha(moonSiderealLon: number, birthDate: Date, now: Date = new Date()):
+  { maha: DashaPeriod; antars: DashaPeriod[]; current: DashaPeriod | null } | null {
+  const maha = currentDasha(moonSiderealLon, birthDate, now)
+  if (!maha) return null
+  const antars = buildAntardashas(maha)
+  const t = now.getTime()
+  const current = antars.find((a) => t >= a.start.getTime() && t < a.end.getTime()) || null
+  return { maha, antars, current }
+}

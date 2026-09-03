@@ -12,9 +12,11 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import type { LocalTransitData } from '../../services/astrology/LocalAstrologyService'
-import { buildVedicChart, RASHIS, currentDasha, buildDashaTimeline } from '../../astro/vedic'
+import { buildVedicChart, RASHIS, currentDasha, buildDashaTimeline, currentAntardasha } from '../../astro/vedic'
 import { buildGochara } from '../../astro/vedic/gochara'
 import { gocharaReading, planetNameVedic } from '../../data/vedic/gocharaReadings'
+import { computeDignity, dignityLabel, dignityNote, dignityColor } from '../../astro/vedic/dignity'
+import { navamsaRashi } from '../../astro/vedic/navamsa'
 import {
   resolveLagna, resolveNakshatra, resolveDasha, resolvePlanetInRashi, resolvePlanetInBhava,
   resolveNakshatraDeep, deepReadingReady, planetPt, type VedicLang, type VedicGender,
@@ -69,8 +71,9 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
     const moonSid = chart.moonNakshatra?.siderealLon
     const dasha = moonSid != null ? resolveDasha(currentDasha(moonSid, bd), lang) : null
     const timeline = moonSid != null ? buildDashaTimeline(moonSid, bd).slice(0, 5) : []
+    const antar = moonSid != null ? currentAntardasha(moonSid, bd) : null
     const gochara = buildGochara(natalPlanets, transitPlanets, bd, new Date())
-    return { chart, dasha, timeline, gochara }
+    return { chart, dasha, timeline, antar, gochara }
   }, [natalPlanets, transitPlanets, birthInfo.date, birthInfo.time, natalAscDeg, lang])
 
   if (loading && natalPlanets.length === 0) {
@@ -94,7 +97,7 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
     )
   }
 
-  const { chart, dasha, timeline, gochara } = vedic
+  const { chart, dasha, timeline, antar, gochara } = vedic
   const lagnaKey = RASHIS[chart.lagna.rashiIndex].key
   const grahas = GRAHA_ORDER
     .map((n) => chart.planets.find((p) => p.name === n))
@@ -185,6 +188,11 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
           <Text style={styles.cardTitle}>{tl('Período de vida (Mahadasha)', 'Life period (Mahadasha)', 'Período de vida (Mahadasha)', 'Periodo di vita (Mahadasha)')}</Text>
           <Text style={styles.cardValue}>{dasha.nome}</Text>
           <Text style={styles.cardText}>{dasha.tema}</Text>
+          {antar && antar.current ? (
+            <Text style={[styles.grahaMeta, { marginTop: 6 }]}>
+              {tl('Sub-fase agora (Bhukti)', 'Current sub-phase (Bhukti)', 'Subfase ahora (Bhukti)', 'Sotto-fase ora (Bhukti)')}: <Text style={{ color: '#FFD700' }}>{planetPt(antar.current.lord)}</Text> · {fmtYear(antar.current.start)}–{fmtYear(antar.current.end)}
+            </Text>
+          ) : null}
           {timeline.length ? (
             <View style={styles.timeline}>
               {timeline.map((p, i) => (
@@ -206,10 +214,32 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
               <Text style={styles.grahaName}>{planetPt(p.name.toLowerCase())}{p.retro ? ' ℞' : ''}</Text>
               <Text style={styles.grahaMeta}>{p.rashiName} · {tl('casa', 'house', 'casa', 'casa')} {p.house}</Text>
             </View>
+            {(() => {
+              const dg = computeDignity(p.name, p.rashiIndex)
+              if (dg === 'neutral') return null
+              return <Text style={[styles.grahaMeta, { color: dignityColor(dg), marginTop: 2 }]}>★ {dignityLabel(dg, lang)} — {dignityNote(dg, lang)}</Text>
+            })()}
             <Text style={styles.cardText}>{resolvePlanetInRashi(p.name, RASHIS[p.rashiIndex].key, lang)}</Text>
             <Text style={styles.grahaBhava}>{resolvePlanetInBhava(p.name, p.house, lang)}</Text>
           </View>
         ))}
+      </View>
+
+      {/* Navamsa (D9) — mapa da alma e do casamento */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{tl('Navamsa (D9) — alma e casamento', 'Navamsa (D9) — soul and marriage', 'Navamsa (D9) — alma y matrimonio', 'Navamsa (D9) — anima e matrimonio')}</Text>
+        <Text style={styles.cardText}>{tl('O mapa da alma e das relações profundas. Um planeta no MESMO signo no D1 e no D9 é Vargottama — muito forte.', 'The chart of the soul and deep relationships. A planet in the SAME sign in D1 and D9 is Vargottama — very strong.', 'La carta del alma y las relaciones profundas. Un planeta en el MISMO signo en D1 y D9 es Vargottama — muy fuerte.', 'La carta dell\'anima e delle relazioni profonde. Un pianeta nello STESSO segno in D1 e D9 e Vargottama — molto forte.')}</Text>
+        <Text style={[styles.grahaMeta, { marginTop: 6 }]}>{tl('Lagna D9', 'D9 Lagna', 'Lagna D9', 'Lagna D9')}: {RASHIS[navamsaRashi(chart.lagna.siderealLon)].name}</Text>
+        {grahas.map((p) => {
+          const d9 = navamsaRashi(p.siderealLon)
+          const vargottama = d9 === p.rashiIndex
+          return (
+            <View key={p.name} style={styles.grahaHead}>
+              <Text style={styles.grahaName}>{planetPt(p.name.toLowerCase())}</Text>
+              <Text style={[styles.grahaMeta, vargottama ? { color: '#46d39a' } : null]}>{RASHIS[d9].name}{vargottama ? ' · Vargottama ★' : ''}</Text>
+            </View>
+          )
+        })}
       </View>
 
       {/* Trânsitos védicos (Gochara) — lidos a partir da Lua natal */}
