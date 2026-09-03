@@ -51,6 +51,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Uso do agente WhatsApp (contadores de mês/dia) e carteira de mensagens extra:
+    // o próprio dono LÊ (card "Meu plano" na config); escrita só pelo backend (admin).
+    match /waAgentContext/{userId} {
+      allow read: if isSelf(userId);
+      allow write: if false;
+    }
+
+    match /waMsgCredits/{userId} {
+      allow read: if isSelf(userId);
+      allow write: if false;
+    }
+
     match /groups/{groupId} {
       allow read: if isGroupMember(groupId);
       allow create: if isSignedIn() && request.auth.uid == request.resource.data.createdBy;

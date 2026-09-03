@@ -192,7 +192,7 @@ function PlanComparison({ tr }: { tr: (k: string, f: string) => string }) {
           ))}
         </View>
       </ScrollView>
-      <Text style={s.cmpFoot}>{tr("settings.plan.avulsos", `Avulsos (assinante): perfil extra R$ ${PROFILE_EXTRA_PRICE.toFixed(2).replace(".", ",")} · mensagens 10/R$9,90 · 30/R$24,90 · 60/R$44,90`)}</Text>
+      <Text style={s.cmpFoot}>{tr("settings.plan.avulsos", `Avulsos (assinante): perfil extra R$ ${PROFILE_EXTRA_PRICE.toFixed(2).replace(".", ",")} · mensagens 10/R$9,90 · 30/R$27,90 · 60/R$44,90`)}</Text>
     </View>
   )
 }

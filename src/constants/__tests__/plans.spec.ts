@@ -39,10 +39,10 @@ describe('planos anuais', () => {
     expect(premY.forecastMaxDays).toBe(premM.forecastMaxDays)
   })
 
-  it('não cria Essential anual (só Pro e Premium)', () => {
-    expect(getPlanById('essential_yearly' as any)).toBeNull()
+  it('os 3 tiers têm plano anual', () => {
+    expect(getPlanById('essential_yearly')?.id).toBe('essential_yearly')
     const yearly = getPlansByPeriod('yearly')
-    expect(yearly.map((p) => p.id).sort()).toEqual(['premium_yearly', 'pro_yearly'])
+    expect(yearly.map((p) => p.id).sort()).toEqual(['essential_yearly', 'premium_yearly', 'pro_yearly'])
   })
 
   it('getPlansByPeriod separa mensal e anual', () => {
@@ -62,8 +62,7 @@ describe('planos anuais', () => {
   it('getYearlyCounterpart acha o anual do mesmo tier', () => {
     expect(getYearlyCounterpart('pro_monthly')?.id).toBe('pro_yearly')
     expect(getYearlyCounterpart('premium_monthly')?.id).toBe('premium_yearly')
-    // Essential não tem anual
-    expect(getYearlyCounterpart('essential_monthly')).toBeNull()
+    expect(getYearlyCounterpart('essential_monthly')?.id).toBe('essential_yearly')
   })
 
   it('todo plano tem months >= 1 e price > 0 (exceto se gratuito por design)', () => {
