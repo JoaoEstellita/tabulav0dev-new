@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { nakshatraFromTropical } from '../../astro/vedic/nakshatra'
 import { computeGunaMilan } from '../../astro/vedic/gunaMilan'
+import { navamsaSynastry } from '../../data/vedic/navamsaSynastry'
 import { lensColor } from '../../theme/lenses'
 
 import { UI } from '../../theme/ui'
@@ -75,7 +76,19 @@ export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthD
         <Text style={s.dosha}>⚠️ {[g.hasNadiDosha ? 'Nadi' : null, g.hasBhakootDosha ? 'Bhakoot' : null].filter(Boolean).join(' · ')} {tl('dosha — ponto de atenção tradicional (mitigável).', 'dosha — traditional caution (mitigable).', 'dosha — atencion tradicional.', 'dosha — attenzione tradizionale.')}</Text>
       ) : null}
 
-      <Text style={s.disc}>{tl('Guna Milan clássico (Ashtakoot) sobre a nakshatra da Lua sideral.', 'Classical Guna Milan (Ashtakoot) over the sidereal Moon nakshatra.', 'Guna Milan clasico sobre la nakshatra de la Luna sideral.', 'Guna Milan classico sulla nakshatra della Luna siderale.')}</Text>
+      {(() => {
+        const nav = navamsaSynastry((na as any).siderealLon, (nb as any).siderealLon, lang)
+        if (!nav) return null
+        return (
+          <View style={s.navBox}>
+            <Text style={s.navTitle}>{tl('Navamsa (D9) — afinidade de alma', 'Navamsa (D9) — soul affinity', 'Navamsa (D9) — afinidad de alma', 'Navamsa (D9) — affinita d\'anima')}</Text>
+            <Text style={s.navSigns}>{nav.d9AName} · {nav.d9BName} — <Text style={{ color: nav.color, fontWeight: '800' }}>{nav.levelLabel}</Text></Text>
+            <Text style={s.navRead}>{nav.reading}</Text>
+          </View>
+        )
+      })()}
+
+      <Text style={s.disc}>{tl('Guna Milan clássico (Ashtakoot) sobre a nakshatra da Lua sideral; Navamsa (D9) sobre a Lua no mapa da alma.', 'Classical Guna Milan (Ashtakoot) over the sidereal Moon nakshatra; Navamsa (D9) over the Moon in the soul chart.', 'Guna Milan clasico sobre la nakshatra de la Luna sideral; Navamsa (D9) sobre la Luna en la carta del alma.', 'Guna Milan classico sulla nakshatra della Luna siderale; Navamsa (D9) sulla Luna nella carta dell\'anima.')}</Text>
     </Wrap>
   )
 }
@@ -94,5 +107,9 @@ const s = StyleSheet.create({
   kutaBarFill: { height: 6, borderRadius: 3 },
   kutaPts: { color: '#efedfb', fontSize: 12, fontWeight: '800', width: 38, textAlign: 'right' },
   dosha: { color: '#f0a58c', fontSize: 11, marginTop: 10, lineHeight: 15 },
+  navBox: { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' },
+  navTitle: { color: '#b9c8ff', fontSize: 12.5, fontWeight: '800' },
+  navSigns: { color: '#efedfb', fontSize: 13, fontWeight: '700', marginTop: 3 },
+  navRead: { color: '#c9c5e2', fontSize: 12.5, lineHeight: 18, marginTop: 4 },
   disc: { ...UI.disclaimer, color: '#8892a4', marginTop: 10 },
 })
