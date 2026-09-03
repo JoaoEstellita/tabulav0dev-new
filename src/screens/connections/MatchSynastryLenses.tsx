@@ -14,6 +14,7 @@ import TzolkinMatchView from '../cosmos/TzolkinMatchView'
 import VedicMatchView, { type GunaPrecomputed } from '../cosmos/VedicMatchView'
 import ChineseMatchView, { type ChinesePrecomputed } from '../cosmos/ChineseMatchView'
 import { synastryAspectDetail, synastryToneOf } from '../../astro/synastryReading'
+import { translatePlanet, getAspectSymbol } from '../../utils/astro/pt'
 import { animalRelation } from '../../astro/chinese/chineseTransit'
 import { animalCompatReading } from '../../data/chinese/chineseTransitReadings'
 import { BRANCHES } from '../../astro/chinese'
@@ -54,7 +55,7 @@ export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBr
 
   const tabs = useMemo(() => {
     const t: { key: string; label: string; color: string }[] = []
-    if (hasAstral) t.push({ key: 'astral', label: tl('Astral', 'Astro', 'Astral', 'Astrale'), color: lensColor('astro') })
+    if (hasAstral) t.push({ key: 'astral', label: tl('Ocidental', 'Western', 'Occidental', 'Occidentale'), color: lensColor('astro') })
     if (hasTz) t.push({ key: 'tzolkin', label: 'Tzolkin', color: lensColor('tzolkin') })
     if (hasCh) t.push({ key: 'chinese', label: tl('Chinês', 'Chinese', 'Chino', 'Cinese'), color: lensColor('chinese') })
     if (hasVe) t.push({ key: 'vedic', label: tl('Védico', 'Vedic', 'Vedico', 'Vedico'), color: lensColor('vedic') })
@@ -86,9 +87,16 @@ export default function MatchSynastryLenses({ targetName, myKin, targetKin, myBr
               const det = synastryAspectDetail({ mine: a.mine, theirs: a.theirs, aspect: a.aspect as string, orb: a.orb }, lang)
               const tone = synastryToneOf(a.aspect as string)
               const col = TONE_HEX[tone] || '#f5c542'
+              const sym = getAspectSymbol(a.aspect as string)
+              const pA = translatePlanet(a.mine, lang), pB = translatePlanet(a.theirs, lang)
+              const aspName = a.labelPt || (a.aspect as string)
               return (
                 <View key={i} style={[s.aspRow, { borderLeftColor: col }]}>
-                  <Text style={s.aspHead}>{det.headline || `${cap(a.mine)} ${a.labelPt || ''} ${cap(a.theirs)}`}</Text>
+                  <Text style={s.aspTitle}>
+                    <Text style={{ color: col }}>{pA} {sym} {pB}</Text>
+                    {typeof a.orb === 'number' ? <Text style={s.aspOrb}>  ·  {aspName} {a.orb.toFixed(1)}°</Text> : <Text style={s.aspOrb}>  ·  {aspName}</Text>}
+                  </Text>
+                  {det.headline ? <Text style={s.aspHead}>{det.headline}</Text> : null}
                   {det.body ? <Text style={s.aspBody}>{det.body}</Text> : null}
                 </View>
               )
@@ -170,9 +178,11 @@ const s = StyleSheet.create({
   bar: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   tab: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.10)', backgroundColor: 'rgba(255,255,255,.04)' },
   tabTx: { color: '#b8b3d6', fontSize: 13, fontWeight: '800' },
-  aspRow: { borderLeftWidth: 3, paddingLeft: 10, marginTop: 10 },
-  aspHead: { color: '#efedfb', fontSize: 14, fontWeight: '800', lineHeight: 19 },
-  aspBody: { color: '#c9c5e2', fontSize: 13, lineHeight: 19, marginTop: 3 },
+  aspRow: { borderLeftWidth: 3, paddingLeft: 10, marginTop: 12 },
+  aspTitle: { fontSize: 14.5, fontWeight: '900', lineHeight: 20 },
+  aspOrb: { color: '#8892a4', fontSize: 12, fontWeight: '700' },
+  aspHead: { color: '#d8d4ee', fontSize: 13.5, fontWeight: '700', lineHeight: 19, marginTop: 3 },
+  aspBody: { color: '#a7a2c9', fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   disc: { color: '#8892a4', fontSize: 11, lineHeight: 16, marginTop: 12, fontStyle: 'italic' },
   chHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   chPerson: { alignItems: 'center', flex: 1 },

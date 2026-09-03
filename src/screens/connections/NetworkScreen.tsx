@@ -53,7 +53,7 @@ export default function NetworkScreen() {
   const [activating, setActivating] = useState(false)
   // Footer de ação FIXO do Descobrir (rodapé da tela): controla o baralho por ref.
   const deckRef = useRef<DeckHandle>(null)
-  const [deckState, setDeckState] = useState<{ hasCard: boolean; busy: boolean }>({ hasCard: false, busy: false })
+  const [deckState, setDeckState] = useState<{ hasCard: boolean; busy: boolean; pct: number | null; name: string | null }>({ hasCard: false, busy: false, pct: null, name: null })
   const [showActivateModal, setShowActivateModal] = useState(false)
   useEffect(() => {
     if (gated) { setMatchActive(false); return }
@@ -540,6 +540,12 @@ export default function NetworkScreen() {
     {/* Footer de ação FIXO na tela — só no Descobrir e com card disponível. */}
     {page === 'discover' && deckState.hasCard ? (
       <View style={[st.deckFooter, { paddingBottom: insets.bottom + 10 }]} pointerEvents="box-none">
+        {deckState.pct != null ? (
+          <View style={st.footerPct} pointerEvents="none">
+            <Text style={st.footerPctNum}>{deckState.pct}<Text style={st.footerPctSym}>%</Text></Text>
+            <Text style={st.footerPctLbl} numberOfLines={1}>{deckState.name || tl('afinidade', 'match', 'afinidad', 'affinita')}</Text>
+          </View>
+        ) : null}
         <TouchableOpacity style={[st.fAct, st.fPass]} disabled={deckState.busy} activeOpacity={0.85} onPress={() => deckRef.current?.pass()}>
           <Ionicons name="close" size={30} color="#ff6b6b" />
         </TouchableOpacity>
@@ -562,6 +568,10 @@ const st = StyleSheet.create({
   fPass: { backgroundColor: C.surface2, borderColor: '#ff6b6b' },
   fFriend: { width: 54, height: 54, borderRadius: 27, backgroundColor: C.surface2, borderColor: C.good },
   fLike: { backgroundColor: C.magenta, borderColor: C.magenta },
+  footerPct: { position: 'absolute', left: 18, top: 12, height: 62, justifyContent: 'center', maxWidth: 108 },
+  footerPctNum: { color: C.magenta, fontSize: 20, fontWeight: '900', lineHeight: 22 },
+  footerPctSym: { fontSize: 12, fontWeight: '800' },
+  footerPctLbl: { color: C.dim, fontSize: 11, fontWeight: '700', marginTop: -1 },
   actIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,215,0,0.12)', alignItems: 'center', justifyContent: 'center' },
   kindBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 1, marginTop: 3 },
   kindTx: { fontSize: 11, fontWeight: '800' },

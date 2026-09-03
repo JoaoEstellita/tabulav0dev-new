@@ -52,7 +52,7 @@ const CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercur
 const toGridPlanets = (pos?: WheelPos[]) => (pos || []).map((p) => ({ name: CAP[p.planetEn] || p.planetEn, longitude: p.longitude }))
 
 export type DeckHandle = { pass: () => void; like: () => void; friend: () => void }
-type DeckState = { hasCard: boolean; busy: boolean }
+type DeckState = { hasCard: boolean; busy: boolean; pct: number | null; name: string | null }
 
 const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfile?: () => void; onState?: (s: DeckState) => void }>(function DiscoverDeck({ onOpenList, onGoProfile, onState }, ref) {
   const { user } = useAuth()
@@ -214,7 +214,11 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
   // Footer de ação FIXO na tela (rodapé) vive no NetworkScreen; expomos os gestos por ref
   // e avisamos quando há card / está ocupado, pra ele só aparecer com card disponível.
   useImperativeHandle(ref, () => ({ pass: () => act('pass'), like: () => act('like'), friend: askFriend }))
-  useEffect(() => { onState?.({ hasCard: !!current && !incomplete, busy }) }, [current?.uid, incomplete, busy])
+  useEffect(() => {
+    const pct = current ? Math.round(current.combinedScore ?? current.score) : null
+    const name = current ? (current.displayName || '').split(' ')[0] : null
+    onState?.({ hasCard: !!current && !incomplete, busy, pct, name })
+  }, [current?.uid, incomplete, busy])
 
   const report = () => {
     if (!current) return
@@ -323,16 +327,11 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
               if (current.chineseScore != null) parts.push(`${tl('Chinês', 'Chinese', 'Chino', 'Cinese')} ${Math.round(current.chineseScore)}%`)
               return (
                 <>
-                  {/* Herói: compatibilidade integrada em destaque, topo do perfil. */}
+                  {/* Faixa sutil: tier + breakdown por sistema. O total integrado fica no
+                      ring da foto + na tarja fixa dos botões — aqui não repete o número. */}
                   <View style={s.heroRow}>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={s.heroTier} numberOfLines={1}>💫 {tierLabel(current.tier)}</Text>
-                      {parts.length > 1 ? <Text style={s.heroParts} numberOfLines={2}>{parts.join(' · ')}</Text> : null}
-                    </View>
-                    <View style={s.heroPctBox}>
-                      <Text style={s.heroPct}>{combined}<Text style={s.heroPctSym}>%</Text></Text>
-                      <Text style={s.heroPctLbl}>{tl('integrado', 'integrated', 'integrado', 'integrato')}</Text>
-                    </View>
+                    <Text style={s.heroTier} numberOfLines={1}>💫 {tierLabel(current.tier)}</Text>
+                    {parts.length > 1 ? <Text style={s.heroParts} numberOfLines={2}>{parts.join(' · ')}</Text> : null}
                   </View>
                   {showBar ? (
                     <View style={s.cosmicBar}>
@@ -579,13 +578,9 @@ const s = StyleSheet.create({
   signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
   detail: { padding: 16 },
   actionBar: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 26, paddingVertical: 14, backgroundColor: 'rgba(12,8,24,0.35)', borderBottomWidth: 1, borderBottomColor: C.line },
-  heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(214,64,159,0.10)', borderWidth: 1, borderColor: 'rgba(214,64,159,0.28)', borderRadius: 14, padding: 12, marginBottom: 12 },
-  heroTier: { color: C.tx, fontSize: 15, fontWeight: '900' },
-  heroParts: { color: C.dim, fontSize: 11.5, fontWeight: '600', marginTop: 3, lineHeight: 15 },
-  heroPctBox: { alignItems: 'center', minWidth: 66 },
-  heroPct: { color: C.magenta, fontSize: 30, fontWeight: '900', lineHeight: 32 },
-  heroPctSym: { fontSize: 15, fontWeight: '800' },
-  heroPctLbl: { color: C.dim, fontSize: 8.5, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 1 },
+  heroRow: { marginBottom: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.06)' },
+  heroTier: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  heroParts: { color: C.dim, fontSize: 12, fontWeight: '600', marginTop: 4, lineHeight: 16 },
   affToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   affToggleRight: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   affToggleTx: { color: C.magenta, fontSize: 12, fontWeight: '700' },
