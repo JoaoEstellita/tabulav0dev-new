@@ -9,7 +9,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS, todayISO } from '../../astro/tzolkin'
+import { buildProfile, kinOfDate, getKinDisplayName, sealOf, toneOf, SEALS, COLOR_LABELS, todayISO, getWavespell } from '../../astro/tzolkin'
 import { getSealWords, getToneWords } from '../../data/tzolkin/tzolkinOverridesI18n'
 import { SEAL_SVG, TONE_SVG } from '../../assets/tzolkin/sealGlyphs'
 import { SvgCss } from 'react-native-svg/css'
@@ -131,6 +131,16 @@ function KinView({ profile, color, todayKin, lang, tl }: any) {
       <Card title={tl('Kin de hoje', 'Kin of the day', 'Kin de hoy', 'Kin di oggi')}>
         <Text style={s.body}>KIN {todayKin} — {getKinDisplayName(todayKin, lang)}</Text>
         <Text style={[s.body, { marginTop: 6 }]}>{readSynthesis(today.seal, today.tone, lang)}</Text>
+        {(() => {
+          const w = getWavespell(todayKin)
+          const wsw = getSealWords(w.rulingSeal, lang)
+          return (
+            <>
+              <Text style={[s.body, { marginTop: 6, fontWeight: '700' }]}>{tl('Onda Encantada', 'Wavespell', 'Onda Encantada', 'Onda Incantata')} {tl('de', 'of', 'de', 'di')} {wsw.name} · {tl('dia', 'day', 'dia', 'giorno')} {w.position}/13</Text>
+              <Text style={[s.body, { fontStyle: 'italic', color: '#f5c542' }]}>“{wavespellQuestion(w.position, lang)}”</Text>
+            </>
+          )
+        })()}
         {rel ? <Text style={[s.body, { marginTop: 6, fontStyle: 'italic', color: color.hex }]}>{rel}</Text> : null}
       </Card>
     </>
