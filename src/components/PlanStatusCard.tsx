@@ -1,14 +1,23 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Linking, ActivityIndicator, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "../config/firebase"
+import { backendFetch } from "../services/backend/client"
 import { useAuth } from "../hooks/useAuth"
 import { useSubscriptionCheck } from "../hooks/useSubscriptionCheck"
 import { useAppLanguage } from "../hooks/useAppLanguage"
+
+// Avulsos compráveis na hora (só assinante). Preços espelham o catálogo do backend.
+const PACKS = [
+  { id: "wamsg_10", label: "10 mensagens de IA", price: "9,90", icon: "chatbubbles-outline" as const },
+  { id: "wamsg_30", label: "30 mensagens de IA", price: "27,90", icon: "chatbubbles-outline" as const },
+  { id: "wamsg_60", label: "60 mensagens de IA", price: "44,90", icon: "chatbubbles-outline" as const },
+  { id: "profile_1", label: "1 perfil de monitoramento", price: "14,90", icon: "person-add-outline" as const },
+]
 import {
   getPlanById, getProfileLimit, getGroupLimit, getMonthlyMsgCap,
   PLAN_DEFINITIONS, PROFILE_EXTRA_PRICE, MONTHLY_MSG_CAP_BY_TIER, FREE_WEEKLY_MSG,
@@ -42,7 +51,21 @@ export default function PlanStatusCard() {
   const { subscription, isAdmin, trialActive } = useSubscriptionCheck()
   const navigation = useNavigation<any>()
   const [st, setSt] = useState<Status | null>(null)
-  const [showTable, setShowTable] = useState(false)
+  const [showTable, setShowTable] = useState(true)
+  const [showBuy, setShowBuy] = useState(false)
+  const [buying, setBuying] = useState<string | null>(null)
+
+  const buyPack = async (packId: string) => {
+    setBuying(packId)
+    try {
+      const r = await backendFetch("/api/buy-pack", { method: "POST", auth: true, body: JSON.stringify({ packId }) })
+      const d = await r.json().catch(() => ({}))
+      if (d?.ticket_url) { setShowBuy(false); Linking.openURL(d.ticket_url).catch(() => {}) }
+      else if (d?.error === "subscriber_required") Alert.alert(tr("settings.plan.subFirst", "Assine primeiro"), tr("settings.plan.subFirstBody", "Os avulsos são só para assinantes. Assine um plano para liberar."))
+      else Alert.alert("Ops", tr("settings.plan.buyFail", "Não consegui gerar o pagamento. Tente de novo."))
+    } catch { Alert.alert("Ops", tr("settings.plan.buyFail", "Não consegui gerar o pagamento. Tente de novo.")) }
+    finally { setBuying(null) }
+  }
 
   useEffect(() => {
     let alive = true
@@ -115,7 +138,7 @@ export default function PlanStatusCard() {
           <Ionicons name="rocket-outline" size={16} color="#2b230a" />
           <Text style={s.btnGoldTxt}>{st.isPremium ? tr("settings.plan.upgrade", "Trocar / renovar plano") : tr("settings.plan.subscribe", "Assinar")}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[s.btn, s.btnGhost]} onPress={goPremium}>
+        <TouchableOpacity style={[s.btn, s.btnGhost]} onPress={() => (st.isPremium ? setShowBuy(true) : goPremium())}>
           <Ionicons name="add-circle-outline" size={16} color={C.gold} />
           <Text style={s.btnGhostTxt}>{tr("settings.plan.buyMore", "Comprar mais")}</Text>
         </TouchableOpacity>
@@ -127,6 +150,29 @@ export default function PlanStatusCard() {
         <Ionicons name={showTable ? "chevron-up" : "chevron-down"} size={16} color={C.dim} />
       </TouchableOpacity>
       {showTable && <PlanComparison tr={tr} />}
+
+      {/* Modal de compra de avulsos (só assinante) */}
+      <Modal visible={showBuy} transparent animationType="slide" onRequestClose={() => setShowBuy(false)}>
+        <View style={s.mBackdrop}>
+          <View style={s.mCard}>
+            <View style={s.mHead}>
+              <Text style={s.mTitle}>{tr("settings.plan.buyTitle", "Comprar avulsos")}</Text>
+              <TouchableOpacity onPress={() => setShowBuy(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="close" size={22} color={C.dim} />
+              </TouchableOpacity>
+            </View>
+            <Text style={s.mSub}>{tr("settings.plan.buySub", "Pague por PIX. Cai na sua conta em até 1 minuto.")}</Text>
+            {PACKS.map((p) => (
+              <TouchableOpacity key={p.id} style={s.packRow} disabled={!!buying} onPress={() => buyPack(p.id)}>
+                <Ionicons name={p.icon} size={20} color={C.gold} />
+                <Text style={s.packLabel}>{p.label}</Text>
+                {buying === p.id ? <ActivityIndicator color={C.gold} /> : <Text style={s.packPrice}>R$ {p.price}</Text>}
+              </TouchableOpacity>
+            ))}
+            <Text style={s.mNote}>{tr("settings.plan.buyNote", "Grupos escalam com o plano — para criar mais grupos, troque de plano.")}</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -138,9 +184,9 @@ function Meter({ label, used, total, color }: { label: string; used: number; tot
     <View style={s.meter}>
       <View style={s.meterTop}>
         <Text style={s.meterLabel}>{label}</Text>
-        <Text style={s.meterVal}>{used}{unlimited ? "" : ` / ${total}`}</Text>
+        <Text style={s.meterVal}>{used} / {unlimited ? "∞" : total}</Text>
       </View>
-      <View style={s.track}><View style={[s.fill, { width: `${unlimited ? 6 : pct}%`, backgroundColor: color }]} /></View>
+      <View style={s.track}><View style={[s.fill, { width: `${unlimited ? 100 : pct}%`, backgroundColor: unlimited ? C.green : color }]} /></View>
     </View>
   )
 }
@@ -224,13 +270,22 @@ const s = StyleSheet.create({
   cmpHead: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: C.line, paddingBottom: 8 },
   cmpRow: { flexDirection: "row", alignItems: "center", paddingVertical: 9 },
   cmpRowAlt: { backgroundColor: "rgba(255,255,255,.02)" },
-  cmpLabelCell: { width: 150, paddingRight: 8, justifyContent: "center" },
-  cmpLabel: { color: C.ink, fontSize: 12.5 },
-  cmpCell: { width: 62, alignItems: "center", justifyContent: "center" },
-  cmpColName: { fontSize: 13, fontWeight: "800" },
-  cmpColPrice: { color: C.faint, fontSize: 10.5, marginTop: 2 },
-  cmpVal: { color: C.ink, fontSize: 12, fontWeight: "700" },
+  cmpLabelCell: { width: 118, paddingRight: 6, justifyContent: "center" },
+  cmpLabel: { color: C.ink, fontSize: 11.5 },
+  cmpCell: { width: 55, alignItems: "center", justifyContent: "center" },
+  cmpColName: { fontSize: 12.5, fontWeight: "800" },
+  cmpColPrice: { color: C.faint, fontSize: 10, marginTop: 2 },
+  cmpVal: { color: C.ink, fontSize: 11.5, fontWeight: "700" },
   cdot: { width: 9, height: 9, borderRadius: 5 },
   cno: { color: C.faint, fontSize: 14 },
   cmpFoot: { color: C.faint, fontSize: 11.5, marginTop: 10, lineHeight: 16 },
+  mBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,.6)", justifyContent: "flex-end" },
+  mCard: { backgroundColor: C.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32, borderWidth: 1, borderColor: C.line },
+  mHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  mTitle: { color: C.ink, fontSize: 18, fontWeight: "800" },
+  mSub: { color: C.dim, fontSize: 13.5, marginTop: 4, marginBottom: 8 },
+  packRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line },
+  packLabel: { flex: 1, color: C.ink, fontSize: 15 },
+  packPrice: { color: C.gold, fontSize: 15, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  mNote: { color: C.faint, fontSize: 12, marginTop: 14, lineHeight: 16 },
 })
