@@ -118,6 +118,12 @@ export type SynastryResult = {
  * `myPositions`/`positions` alimentam a roda (mesmo componente do Match/Grupos). */
 export async function getSynastry(uid: string): Promise<SynastryResult> {
   const r = await post('synastry', { uid })
+  // 402 (seção só p/ assinante) = paywall real.
+  if (r?.gated) return { premium: false, aspects: undefined }
+  // ok:false = alvo NÃO-descobrível (ex.: perfil GERENCIADO do grupo) → NÃO é paywall:
+  // as lentes (Tzolkin/Chinês/Védico) se computam client-side pelo birthData. Só
+  // ok:true + premium:false (não-assinante vendo perfil descobrível) trava a leitura.
+  if (!r || r.ok === false) return { premium: true, aspects: undefined }
   return {
     premium: !!r?.premium,
     target: r?.target,
