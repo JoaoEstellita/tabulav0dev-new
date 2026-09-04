@@ -12,6 +12,7 @@
 // ============================================================================
 
 import { AspectName, AspectsConfig } from './aspects.types';
+import { normalizePlanet } from './normalize';
 
 // Definições dos aspectos (nome, ângulo, orbe base)
 export interface AspectDefinition {
@@ -79,6 +80,47 @@ export const ASPECT_WEIGHTS: Record<AspectName, number> = {
 export const ASPECT_ORBS: Record<AspectName, number> = Object.fromEntries(
   ASPECT_DEFINITIONS.map(a => [a.name, a.baseOrb])
 ) as Record<AspectName, number>;
+
+// Luminares: Sol/Lua usam o orbe DELES (largo), não o min do par — evita que
+// planeta rápido (ex.: Marte □ 4°) encolha o contato mais pessoal. Paridade Personare.
+const LUMINARIES = new Set(['Sun', 'Moon'])
+const clampOrb = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+
+/**
+ * Orbe efetivo de um par de corpos para um aspecto — FONTE ÚNICA.
+ * Regra: luminar (Sol/Lua) manda com orbe largo; senão, o MENOR orbe do par
+ * (planet-specific → overrides → planetOrbs legado). Sempre limitado por maxOrbCap.
+ * Usado por detectAspects (grid/sinastria/natal) e pelas janelas/coletivo do engine —
+ * um só lugar pra não divergir.
+ */
+export function effectiveOrb(
+  config: AspectsConfig,
+  aNameRaw: string,
+  bNameRaw: string,
+  angle: number,
+  baseOrb: number,
+): number {
+  const cap = (config as any).maxOrbCap ?? 12
+  const aName = normalizePlanet(aNameRaw)
+  const bName = normalizePlanet(bNameRaw)
+  const pa = (config as any).planetAspectOrbs?.[aName]?.[angle]
+  const pb = (config as any).planetAspectOrbs?.[bName]?.[angle]
+  const aLum = LUMINARIES.has(aName)
+  const bLum = LUMINARIES.has(bName)
+  if (aLum || bLum) {
+    const lums = [aLum ? pa : undefined, bLum ? pb : undefined].filter((v): v is number => v !== undefined)
+    return clampOrb(lums.length ? Math.max(...lums) : baseOrb, 0, cap)
+  }
+  let eff = baseOrb
+  if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
+  const ovrA = (config as any).overrides?.[aName]?.[bName]
+  const ovrB = (config as any).overrides?.[bName]?.[aName]
+  if (ovrA !== undefined || ovrB !== undefined) eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
+  const orbA = (config as any).planetOrbs?.[aName]
+  const orbB = (config as any).planetOrbs?.[bName]
+  if (orbA !== undefined || orbB !== undefined) eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
+  return clampOrb(eff, 0, cap)
+}
 
 // Configuração unificada para uso na engine
 export const ASPECTS_CONFIG: AspectsConfig = {

@@ -22,11 +22,8 @@ import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { getPlanetHouse } from '../../astro/houses.math'
+import { effectiveOrb } from '../../astro/aspect-config'
 // Removido Ephemeris nÃƒÂ£o utilizado
-
-// Luminares: quando Sol/Lua estão no par, o aspecto usa o orbe DELES (largo),
-// não o min do par — evita que planeta rápido encolha o contato mais pessoal.
-const LUMINARIES_RAE = new Set(['Sun', 'Moon'])
 
 export interface RealPlanetPosition {
   name: string
@@ -1228,27 +1225,11 @@ export class RealAstrologyEngine {
       return def?.angle ?? 0
     }
     const maxOrbForPair = (type: string, p1Name: string, p2Name: string): number => {
-      const cap = (aspectsConfig as any).maxOrbCap ?? 12
       const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
-      let eff = def?.baseOrb ?? 5
+      const eff = def?.baseOrb ?? 5
       const ang = def?.angle ?? angleOf(type)
-  const pa = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p1Name)]?.[ang]
-  const pb = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p2Name)]?.[ang]
-      // ORBE GENEROSO PRO LUMINAR (coletivo T→T): Sol/Lua usam o próprio orbe.
-      const p1Lum = LUMINARIES_RAE.has(normalizePlanet(p1Name))
-      const p2Lum = LUMINARIES_RAE.has(normalizePlanet(p2Name))
-      if (p1Lum || p2Lum) {
-        const lums = [p1Lum ? pa : undefined, p2Lum ? pb : undefined].filter((v): v is number => v !== undefined)
-        return Math.max(0, Math.min(cap, lums.length ? Math.max(...lums) : eff))
-      }
-      if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
-  const ovrA = (aspectsConfig as any).overrides?.[normalizePlanet(p1Name)]?.[normalizePlanet(p2Name)]
-  const ovrB = (aspectsConfig as any).overrides?.[normalizePlanet(p2Name)]?.[normalizePlanet(p1Name)]
-      if (ovrA !== undefined || ovrB !== undefined) eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
-  const orbA = (aspectsConfig as any).planetOrbs?.[normalizePlanet(p1Name)]
-  const orbB = (aspectsConfig as any).planetOrbs?.[normalizePlanet(p2Name)]
-      if (orbA !== undefined || orbB !== undefined) eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
-      return Math.max(0, Math.min(cap, eff))
+      // Orbe efetivo (min do par + branch do luminar) — fonte única em aspect-config.
+      return effectiveOrb(aspectsConfig as any, p1Name, p2Name, ang, eff)
     }
     // Mapear planet data
     const get = (name: string) => planets.find(p => p.name === name)
@@ -1682,33 +1663,15 @@ export class RealAstrologyEngine {
   }
 
   private static getAspectOrbAllowed(type: string, p1Name: string, p2Name: string): number {
-    const cap = (aspectsConfig as any).maxOrbCap ?? 12
     const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
-    let eff = def?.baseOrb ?? 5
+    const eff = def?.baseOrb ?? 5
     const angleOf = (name: string): number => {
       const defAngle = (aspectsConfig as any).aspects?.find((d: any) => d.name === name)
       return defAngle?.angle ?? 0
     }
     const ang = def?.angle ?? angleOf(type)
-    const pa = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p1Name)]?.[ang]
-    const pb = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p2Name)]?.[ang]
-    // ORBE GENEROSO PRO LUMINAR: Sol/Lua usam o próprio orbe (largo), não o min do
-    // par (mesma regra do detectAspects em aspects.engine.ts). Mantém a JANELA do
-    // trânsito coerente com a admissão do aspecto.
-    const p1Lum = LUMINARIES_RAE.has(normalizePlanet(p1Name))
-    const p2Lum = LUMINARIES_RAE.has(normalizePlanet(p2Name))
-    if (p1Lum || p2Lum) {
-      const lums = [p1Lum ? pa : undefined, p2Lum ? pb : undefined].filter((v): v is number => v !== undefined)
-      return Math.max(0, Math.min(cap, lums.length ? Math.max(...lums) : eff))
-    }
-    if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
-    const ovrA = (aspectsConfig as any).overrides?.[normalizePlanet(p1Name)]?.[normalizePlanet(p2Name)]
-    const ovrB = (aspectsConfig as any).overrides?.[normalizePlanet(p2Name)]?.[normalizePlanet(p1Name)]
-    if (ovrA !== undefined || ovrB !== undefined) eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
-    const orbA = (aspectsConfig as any).planetOrbs?.[normalizePlanet(p1Name)]
-    const orbB = (aspectsConfig as any).planetOrbs?.[normalizePlanet(p2Name)]
-    if (orbA !== undefined || orbB !== undefined) eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
-    return Math.max(0, Math.min(cap, eff))
+    // Orbe efetivo (min do par + branch do luminar) — fonte única em aspect-config.
+    return effectiveOrb(aspectsConfig as any, p1Name, p2Name, ang, eff)
   }
 
   private static getRelativeSpeed(speedA?: number, speedB?: number): number {

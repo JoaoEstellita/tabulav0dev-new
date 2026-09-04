@@ -1,5 +1,4 @@
-import { ASPECT_WEIGHTS } from './aspect-config';
-import { normalizePlanet } from './normalize';
+import { ASPECT_WEIGHTS, effectiveOrb } from './aspect-config';
 import { AspectInputBody, DetectedAspect, AspectsConfig, AspectName } from './aspects.types'
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
@@ -9,44 +8,9 @@ function angularSeparation(a: number, b: number): number {
   return diff
 }
 
-const LUMINARIES = new Set(['Sun', 'Moon'])
-
+// Orbe efetivo do par (min do par + branch do luminar) — fonte única em aspect-config.
 function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBody, baseOrb: number, angle: number): number {
-  const cap = config.maxOrbCap ?? 12
-  let eff = baseOrb
-  // Normalizar nomes para garantir busca correta
-  const aName = normalizePlanet(a.name)
-  const bName = normalizePlanet(b.name)
-  // Planet-specific por aspecto (se disponível)
-  const pa = config.planetAspectOrbs?.[aName]?.[angle]
-  const pb = config.planetAspectOrbs?.[bName]?.[angle]
-  // ORBE GENEROSO PRO LUMINAR: quando Sol/Lua está no par, o contato usa o orbe
-  // DELE (largo), não o min do par — senão o planeta rápido (ex.: Marte, quadratura
-  // 4°) encolhia o aspecto ao Sol/Lua, os mais pessoais. Astrologicamente, luminar
-  // merece orbe largo (paridade com softwares tradicionais). Ignora os shrinks
-  // (overrides/planetOrbs) e respeita só o cap.
-  const aLum = LUMINARIES.has(aName)
-  const bLum = LUMINARIES.has(bName)
-  if (aLum || bLum) {
-    const lumOrbs = [aLum ? pa : undefined, bLum ? pb : undefined].filter((v): v is number => v !== undefined)
-    return clamp(lumOrbs.length ? Math.max(...lumOrbs) : baseOrb, 0, cap)
-  }
-  if (pa !== undefined || pb !== undefined) {
-    eff = Math.min(eff, pa ?? eff, pb ?? eff)
-  }
-  // Overrides específicos por par (compatibilidade legada)
-  const ovrA = config.overrides?.[aName]?.[bName]
-  const ovrB = config.overrides?.[bName]?.[aName]
-  if (ovrA !== undefined || ovrB !== undefined) {
-    eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
-  }
-  // planetOrbs legado (cap global por planeta)
-  const orbA = config.planetOrbs?.[aName]
-  const orbB = config.planetOrbs?.[bName]
-  if (orbA !== undefined || orbB !== undefined) {
-    eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
-  }
-  return clamp(eff, 0, cap)
+  return effectiveOrb(config, a.name, b.name, angle, baseOrb)
 }
 
 function isApplying(a: AspectInputBody, b: AspectInputBody, exactAngle: number): boolean {
