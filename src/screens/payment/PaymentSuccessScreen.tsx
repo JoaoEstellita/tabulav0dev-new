@@ -6,13 +6,40 @@ import { useAuth } from '../../hooks/useAuth'
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { getPlanById } from '../../constants/plans'
+
+// Benefícios por plano (localizado) — mostrados na tela de sucesso da assinatura.
+function planBenefits(planId: string | null, lang: string): { name: string; lines: string[] } | null {
+  if (!planId) return null
+  const tl = (pt: string, en: string, es: string, it: string) => (lang === 'en-US' ? en : lang === 'es-ES' ? es : lang === 'it-IT' ? it : pt)
+  const id = planId.toLowerCase()
+  const tier = id.startsWith('premium') ? 'premium' : id.startsWith('pro') ? 'pro' : 'essential'
+  const p = getPlanById(planId)
+  const name = p?.name || (tier === 'premium' ? 'Premium' : tier === 'pro' ? 'Pro' : 'Essential')
+  const perfis = tier === 'premium' ? 5 : tier === 'pro' ? 2 : 1
+  const grupos = tier === 'premium' ? 3 : tier === 'pro' ? 2 : 1
+  const forecast = tier === 'premium' ? 360 : tier === 'pro' ? 90 : 30
+  const waDay = tier === 'premium' ? 10 : tier === 'pro' ? 6 : 3
+  const lines = [
+    tl('Sinastria — a leitura da dupla com quem você ama', 'Synastry — the pair reading with those you love', 'Sinastria — la lectura de la pareja con quien amas', 'Sinastria — la lettura della coppia con chi ami'),
+    tl(`${perfis} perfil(is) de monitoramento — acompanhe quem importa`, `${perfis} monitoring profile(s) — follow who matters`, `${perfis} perfil(es) de monitoreo — sigue a quien importa`, `${perfis} profilo/i di monitoraggio — segui chi conta`),
+    tl(`Criar ${grupos} grupo(s)`, `Create ${grupos} group(s)`, `Crear ${grupos} grupo(s)`, `Creare ${grupos} gruppo/i`),
+    tl(`Previsões de ${forecast} dias à frente`, `Forecasts ${forecast} days ahead`, `Previsiones de ${forecast} dias`, `Previsioni di ${forecast} giorni`),
+    tier === 'essential'
+      ? tl('Retorno Solar e Lunar', 'Solar and Lunar Return', 'Retorno Solar y Lunar', 'Ritorno Solare e Lunare')
+      : tl('Momento Certo + Astrocartografia + Retorno Solar/Lunar', 'Right Moment + Astrocartography + Solar/Lunar Return', 'Momento Justo + Astrocartografia + Retorno Solar/Lunar', 'Momento Giusto + Astrocartografia + Ritorno Solare/Lunare'),
+    tl(`Astrólogo no WhatsApp — ${waDay} conversas por dia`, `Astrologer on WhatsApp — ${waDay} chats a day`, `Astrologo en WhatsApp — ${waDay} charlas al dia`, `Astrologo su WhatsApp — ${waDay} chat al giorno`),
+  ]
+  return { name, lines }
+}
 
 export default function PaymentSuccessScreen() {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
   const navigation = useNavigation()
   const { user } = useAuth()
   const [statusMessage, setStatusMessage] = useState(t('payment.success.validating'))
   const [loading, setLoading] = useState(true)
+  const [activePlanId, setActivePlanId] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -52,6 +79,7 @@ export default function PaymentSuccessScreen() {
         if (!active) return
         if (status?.isActive) {
           setStatusMessage(t('payment.success.active'))
+          setActivePlanId((status as any)?.planId || (status as any)?.plan || null)
           try { require('../../services/eventos').registrar('assinou') } catch { /* telemetria */ }
         } else if (status?.status === 'pending') {
           setStatusMessage(t('payment.success.pending'))
@@ -77,6 +105,16 @@ export default function PaymentSuccessScreen() {
       <View style={styles.card}>
         <Text style={styles.title}>{t('payment.success.title')}</Text>
         {loading ? <ActivityIndicator color="#FFD700" /> : <Text style={styles.message}>{statusMessage}</Text>}
+        {!loading && activePlanId ? (() => {
+          const b = planBenefits(activePlanId, language)
+          if (!b) return null
+          return (
+            <View style={styles.benefits}>
+              <Text style={styles.benefitsTitle}>✨ {b.name} — {language === 'en-US' ? 'what you unlocked' : language === 'es-ES' ? 'lo que desbloqueaste' : language === 'it-IT' ? 'cosa hai sbloccato' : 'o que você destravou'}</Text>
+              {b.lines.map((l, i) => <Text key={i} style={styles.benefitLine}>• {l}</Text>)}
+            </View>
+          )
+        })() : null}
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Premium' as never)}>
           <Text style={styles.primaryButtonText}>{t('payment.success.cta')}</Text>
         </TouchableOpacity>
@@ -114,6 +152,27 @@ const styles = StyleSheet.create({
     color: '#E0E0E0',
     fontSize: 14,
     textAlign: 'center',
+  },
+  benefits: {
+    width: '100%',
+    backgroundColor: 'rgba(255,215,0,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.28)',
+    borderRadius: 12,
+    padding: 14,
+    gap: 6,
+    marginTop: 4,
+  },
+  benefitsTitle: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  benefitLine: {
+    color: '#E8E6F3',
+    fontSize: 13,
+    lineHeight: 18,
   },
   primaryButton: {
     marginTop: 8,
