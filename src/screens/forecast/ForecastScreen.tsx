@@ -8,6 +8,7 @@ import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { Calendar, LocaleConfig } from 'react-native-calendars'
 import ForecastEphemerisChart from '../../components/ForecastEphemerisChart'
+import ProfectionCard from '../../components/ProfectionCard'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
@@ -1664,6 +1665,9 @@ export default function ForecastScreen() {
 
       {!loading && !error && data && (
         <ScrollView ref={forecastScrollRef} contentContainerStyle={styles.content}>
+          {/* Ano profeccional (helenístico): a casa do ano + o senhor do ano —
+              espelho ocidental da Dasha védica. Emoldura a Previsão com o timing anual. */}
+          <ProfectionCard />
           {/* Resumo por área (Amor/Saúde/...) — de volta ao topo, mas COLAPSÁVEL:
               fechado por padrão pra não empurrar o gráfico; abre ao tocar. */}
           <View style={styles.areaSummarySection} {...aSummary}>
