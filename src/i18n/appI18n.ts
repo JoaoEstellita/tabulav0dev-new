@@ -2272,7 +2272,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'onboarding.country.it': 'Italia',
     'onboarding.backToLogin': 'Voltar ao login',
     'groupsAccess.title': 'Acesso aos grupos',
-    'groupsAccess.subtitle': 'Ative o Premium para criar e participar de grupos.',
+    'groupsAccess.subtitle': 'Criar grupos e adicionar perfis de acompanhamento é da assinatura — Essential a partir de R$ 19,90.',
     'groupsAccess.cta': 'Ver planos',
 
     // O portão de assinatura, usado em toda tela que trava depois do trial.
@@ -2753,7 +2753,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'onboarding.country.it': 'Italy',
     'onboarding.backToLogin': 'Back to login',
     'groupsAccess.title': 'Group access',
-    'groupsAccess.subtitle': 'Enable Premium to create and join groups.',
+    'groupsAccess.subtitle': 'Creating groups and adding tracking profiles is part of the subscription — Essential from R$ 19.90.',
     'groupsAccess.cta': 'View plans',
 
     'accessGuard.title': 'Your trial has ended',
@@ -3228,7 +3228,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'onboarding.country.it': 'Italia',
     'onboarding.backToLogin': 'Volver al inicio de sesion',
     'groupsAccess.title': 'Acceso a grupos',
-    'groupsAccess.subtitle': 'Activa Premium para crear y participar en grupos.',
+    'groupsAccess.subtitle': 'Crear grupos y agregar perfiles de seguimiento es de la suscripcion — Essential desde R$ 19,90.',
     'groupsAccess.cta': 'Ver planes',
 
     'accessGuard.title': 'Tu periodo de prueba termino',
@@ -3703,7 +3703,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'onboarding.country.it': 'Italia',
     'onboarding.backToLogin': 'Torna al login',
     'groupsAccess.title': 'Accesso ai gruppi',
-    'groupsAccess.subtitle': 'Attiva Premium per creare e partecipare ai gruppi.',
+    'groupsAccess.subtitle': 'Creare gruppi e aggiungere profili di monitoraggio e in abbonamento — Essential da R$ 19,90.',
     'groupsAccess.cta': 'Vedi piani',
 
     'accessGuard.title': 'Il tuo periodo di prova e finito',

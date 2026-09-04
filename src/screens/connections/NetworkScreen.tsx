@@ -37,9 +37,11 @@ export default function NetworkScreen() {
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
-  useSubscriptionCheck()
-  // Match agora é GRÁTIS (isca viral) — sem paywall. O pago fica nos mapas/matriz de grupo e nas Previsões.
-  const gated = false
+  const { isAdmin, subscription } = useSubscriptionCheck()
+  // Match = recurso PAGO (Essential+): participar do Descobrir e dar Match exige
+  // assinatura. NÃO liberado no trial de 3 dias. Grátis/trial veem o carrossel de
+  // venda no paywall. Admin sempre tem acesso.
+  const gated = !(isAdmin || subscription?.active === true)
   const [showTour, setShowTour] = useState(false)
   // Tour holofote da aba Match (só assinante; grátis vê o carrossel de venda no paywall)
   const aMenu = useTourAnchor('match.menu')
@@ -103,13 +105,15 @@ export default function NetworkScreen() {
     // abertura da Rede — o card abaixo é só um acesso.
     const [conns, , ppl] = await Promise.all([
       listConnections().catch(() => ({ connections: [] as Connection[] })),
-      ensureSelfDiscoverable().catch(() => ({ discoverable: true, published: false })), // side-effect: publica meu perfil na vitrine
+      // Não publica não-pagante na vitrine do Match (Essential+): pool só de assinantes.
+      gated ? Promise.resolve({ discoverable: false, published: false })
+            : ensureSelfDiscoverable().catch(() => ({ discoverable: true, published: false })),
       listPeople(force).catch(() => [] as PublicProfile[]),
     ])
     setItems(conns.connections)
     setPeople(ppl)
     setLoading(false)
-  }, [])
+  }, [gated])
   useEffect(() => { load() }, [load])
   useEffect(() => {
     AsyncStorage.getItem(WELCOME_KEY).then((v) => { if (!v) setShowWelcome(true) }).catch(() => {})
@@ -283,7 +287,7 @@ export default function NetworkScreen() {
         <Text style={{ color: C.faint, textAlign: 'center', marginTop: 12, fontSize: 15, lineHeight: 22 }}>
           {tl('Descubra com quem você mais combina e dê match. Esta seção é para assinantes.', 'Discover who matches you most and match. This section is for subscribers.', 'Descubre con quien mas combinas y haz match. Esta seccion es para suscriptores.', 'Scopri con chi combini di piu e fai match. Questa sezione e per abbonati.')}
         </Text>
-        <TouchableOpacity style={st.payCta} onPress={() => navigation.navigate('Premium')} activeOpacity={0.9}>
+        <TouchableOpacity style={st.payCta} onPress={() => navigation.navigate('Premium', { openTab: 'features', highlightPlan: 'essential' })} activeOpacity={0.9}>
           <Text style={st.payCtaTx}>{tl('Assinar para descobrir', 'Subscribe to discover', 'Suscribirse para descubrir', 'Abbonati per scoprire')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={{ marginTop: 16 }} onPress={() => setShowTour(true)}>

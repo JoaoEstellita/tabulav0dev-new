@@ -1171,7 +1171,13 @@ export default function PremiumScreen() {
           </View>
         )}
         {subscriptionPlans.map(plan => {
-          const isRecommended = plan.id === 'pro_monthly'
+          // highlightPlan (param de rota) pré-seleciona o plano que libera o recurso
+          // de onde o usuário veio (ex.: 'essential' ao tentar criar grupo/Match).
+          // Sem param, mantém a recomendação padrão (Pro).
+          const highlightPlanId = String((route?.params as any)?.highlightPlan || '').toLowerCase()
+          const isRecommended = highlightPlanId
+            ? plan.id.toLowerCase().startsWith(highlightPlanId)
+            : plan.id === 'pro_monthly'
           const priceText = plan.price === 0
             ? tr('premium.plans.free', 'Gratis')
             : usesStripePricing

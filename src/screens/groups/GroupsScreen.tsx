@@ -320,7 +320,10 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
     return Math.max(0, Math.min(1, raw))
   })()
 
-  const isPremium = isAdmin || trialActive || subscription?.active === true
+  // Grupos = recurso PAGO: criar grupo e adicionar perfil de acompanhamento
+  // exigem assinatura (Essential+). NÃO liberado no trial de 3 dias (mesma regra
+  // de sinastria/previsão/Retorno Solar). Admin sempre tem acesso.
+  const isPremium = isAdmin || subscription?.active === true
   const expiryInfo = getExpiryBannerInfo({
     featureLabel: tr('groups.title', 'Grupos'),
     trialActive,
@@ -2075,7 +2078,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
             </Text>
             <TouchableOpacity
               style={styles.lockedStateButton}
-              onPress={() => (navigation as any).navigate("Premium", { openTab: "features" })}
+              onPress={() => (navigation as any).navigate("Premium", { openTab: "features", highlightPlan: "essential" })}
             >
               <Text style={styles.lockedStateButtonText}>{tr('groupsAccess.cta', 'Ver planos')}</Text>
             </TouchableOpacity>
@@ -2130,7 +2133,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
           <ExpiryBanner
             message={expiryMessage}
             variant={expiryInfo.variant}
-            onPress={() => (navigation as any).navigate("Premium", { openTab: 'features' })}
+            onPress={() => (navigation as any).navigate("Premium", { openTab: 'features', highlightPlan: 'essential' })}
           />
         )}
 
@@ -2279,7 +2282,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                           accessibilityRole="button"
                           accessibilityLabel={tr('groups.member.viewChart', 'Ver mapa completo')}
                           onPress={() => paidLocked
-                            ? (navigation as any).navigate('Premium', { openTab: 'features' })
+                            ? (navigation as any).navigate('Premium', { openTab: 'features', highlightPlan: 'essential' })
                             : (navigation as any).navigate('MemberProfile', {
                               member: { displayName: member.displayName, profilePhoto: member.profilePhoto, birthData: member.birthData },
                             })}
@@ -2412,7 +2415,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
             </View>
 
             {selectedGroup && paidLocked ? (
-              <TouchableOpacity style={[styles.synastrySection, { alignItems: 'center', gap: 8 }]} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+              <TouchableOpacity style={[styles.synastrySection, { alignItems: 'center', gap: 8 }]} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features', highlightPlan: 'essential' })}>
                 <Ionicons name="lock-closed" size={30} color="#FFD700" />
                 <Text style={[styles.synastryTitle, { textAlign: 'center' }]}>{tr('groups.synastry.lockedTitle', 'Sinastria do grupo — para assinantes')}</Text>
                 <Text style={[styles.synastrySubtitle, { textAlign: 'center' }]}>{tr('groups.synastry.lockedBody', 'Veja de uma vez a compatibilidade sua com cada membro e de todos entre si (aspectos, casas, Guna Milan, Tzolkin e Chinês). A sinastria de você × 1 pessoa é grátis no botão "Sinastria" de cada membro.')}</Text>

@@ -15,6 +15,7 @@ import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import ShareCardModal, { type ShareCardData } from '../../components/ShareCardModal'
 import { useSubscription } from '../../hooks/useSubscription'
+import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
@@ -244,7 +245,8 @@ const SECTION_CHIPS = [
 export default function CosmosScreen() {
   const navigation = useNavigation()
   const { user } = useAuth()
-  const { subscription, isInTrial } = useSubscription()
+  const { subscription } = useSubscription()
+  const { isAdmin } = useSubscriptionCheck()
   const { transitData, loading, backendStatusPersonal } = useLifeAreas()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareName, setShareName] = useState('')
@@ -325,7 +327,9 @@ export default function CosmosScreen() {
 
   const { language } = useAppLanguage()
 
-  const isPremium = subscription?.status === 'active' || isInTrial
+  // Retorno Solar/Lunar = recurso PAGO (não liberado no trial de 3 dias). Mesma
+  // regra da Astrocartografia (AstroMapScreen) e da Previsão (ForecastScreen).
+  const isPremium = isAdmin || subscription?.status === 'active'
 
   const natalPlanets = transitData?.currentTransits?.natalPlanets ?? []
 
@@ -677,7 +681,7 @@ export default function CosmosScreen() {
 
             {westMode === 'solar' ? (
               !isPremium ? (
-                <TouchableOpacity style={styles.srLocked} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+                <TouchableOpacity style={styles.srLocked} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features', highlightPlan: 'essential' })}>
                   <Text style={styles.srLockedTitle}>{tl('Retorno Solar', 'Solar Return', 'Retorno Solar', 'Ritorno Solare')}</Text>
                   <Text style={styles.srLockedBody}>{tl('O mapa do seu ano astrológico — roda, grade e interpretações. Disponível para assinantes.', 'Your astrological year chart — wheel, grid and readings. For subscribers.', 'El mapa de tu año astrológico — rueda, rejilla e interpretaciones. Para suscriptores.', 'La mappa del tuo anno astrologico — ruota, griglia e letture. Per abbonati.')}</Text>
                   <View style={styles.srLockedCta}><Text style={styles.srLockedCtaText}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text></View>
@@ -718,7 +722,7 @@ export default function CosmosScreen() {
               )
             ) : westMode === 'lunar' ? (
               !isPremium ? (
-                <TouchableOpacity style={styles.srLocked} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+                <TouchableOpacity style={styles.srLocked} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features', highlightPlan: 'essential' })}>
                   <Text style={styles.srLockedTitle}>{tl('Retorno Lunar', 'Lunar Return', 'Retorno Lunar', 'Ritorno Lunare')}</Text>
                   <Text style={styles.srLockedBody}>{tl('O mapa do seu mês astrológico — roda, grade e interpretações. Disponível para assinantes.', 'Your astrological month chart — wheel, grid and readings. For subscribers.', 'El mapa de tu mes astrológico — rueda, rejilla e interpretaciones. Para suscriptores.', 'La mappa del tuo mese astrologico — ruota, griglia e letture. Per abbonati.')}</Text>
                   <View style={styles.srLockedCta}><Text style={styles.srLockedCtaText}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text></View>
