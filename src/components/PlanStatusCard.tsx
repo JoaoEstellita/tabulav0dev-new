@@ -109,6 +109,8 @@ export default function PlanStatusCard() {
   if (!st) return null
   const goPremium = () => navigation.navigate("Premium", { openTab: "features" })
   const cap = (n: number) => (Number.isFinite(n) ? String(n) : "∞")
+  // Plano atual (pra destacar na tabela): admin = premium; sem assinatura = grátis.
+  const currentTier: string = st.isAdmin ? "premium" : (!st.isPremium ? "free" : (getPlanById((subscription as any)?.planId)?.tier || "essential"))
 
   return (
     <View style={s.wrap}>
@@ -149,7 +151,7 @@ export default function PlanStatusCard() {
         <Text style={s.tableToggleTxt}>{tr("settings.plan.compare", "Comparar planos e benefícios")}</Text>
         <Ionicons name={showTable ? "chevron-up" : "chevron-down"} size={16} color={C.dim} />
       </TouchableOpacity>
-      {showTable && <PlanComparison tr={tr} />}
+      {showTable && <PlanComparison tr={tr} current={currentTier} />}
 
       {/* Modal de compra de avulsos (só assinante) */}
       <Modal visible={showBuy} transparent animationType="slide" onRequestClose={() => setShowBuy(false)}>
@@ -192,7 +194,7 @@ function Meter({ label, used, total, color }: { label: string; used: number; tot
 }
 
 // Tabela comparativa compacta (grátis + 3 planos). Dados de PLAN_DEFINITIONS + limites.
-function PlanComparison({ tr }: { tr: (k: string, f: string) => string }) {
+function PlanComparison({ tr, current }: { tr: (k: string, f: string) => string; current?: string }) {
   const monthly = PLAN_DEFINITIONS.filter((p) => p.billingPeriod === "monthly")
   const dot = (on: boolean, color: string) => on ? <View style={[s.cdot, { backgroundColor: color }]} /> : <Text style={s.cno}>–</Text>
   const cols = [
@@ -201,6 +203,7 @@ function PlanComparison({ tr }: { tr: (k: string, f: string) => string }) {
     { key: "pro", name: "Pro", color: C.vedic },
     { key: "premium", name: "Premium", color: C.gold },
   ]
+  const curIdx = cols.findIndex((c) => c.key === current)
   const rows: { label: string; vals: (string | boolean)[] }[] = [
     { label: tr("settings.plan.row.map", "Mapa completo (4 sistemas)"), vals: [true, true, true, true] },
     { label: tr("settings.plan.row.transits", "Trânsitos + 8 áreas"), vals: [true, true, true, true] },
@@ -220,8 +223,9 @@ function PlanComparison({ tr }: { tr: (k: string, f: string) => string }) {
           <View style={s.cmpHead}>
             <View style={s.cmpLabelCell} />
             {cols.map((c, i) => (
-              <View key={i} style={s.cmpCell}>
-                <Text style={[s.cmpColName, { color: c.color }]}>{c.name}</Text>
+              <View key={i} style={[s.cmpCell, i === curIdx && s.cmpCellCur]}>
+                {i === curIdx ? <Text style={[s.cmpCurChip, { color: c.color }]}>{tr("settings.plan.yours", "SEU PLANO")}</Text> : null}
+                <Text style={[s.cmpColName, { color: c.color }, i === curIdx && { fontWeight: "900" }]}>{c.name}</Text>
                 <Text style={s.cmpColPrice}>{i === 0 ? "—" : i === 1 ? "19,90" : i === 2 ? "47,90" : "79,90"}</Text>
               </View>
             ))}
@@ -230,8 +234,8 @@ function PlanComparison({ tr }: { tr: (k: string, f: string) => string }) {
             <View key={ri} style={[s.cmpRow, ri % 2 === 0 && s.cmpRowAlt]}>
               <View style={s.cmpLabelCell}><Text style={s.cmpLabel}>{r.label}</Text></View>
               {r.vals.map((v, ci) => (
-                <View key={ci} style={s.cmpCell}>
-                  {typeof v === "boolean" ? dot(v, cols[ci].color) : <Text style={s.cmpVal}>{v}</Text>}
+                <View key={ci} style={[s.cmpCell, ci === curIdx && s.cmpCellCur]}>
+                  {typeof v === "boolean" ? dot(v, cols[ci].color) : <Text style={[s.cmpVal, ci === curIdx && { color: C.ink, fontWeight: "800" }]}>{v}</Text>}
                 </View>
               ))}
             </View>
@@ -273,6 +277,8 @@ const s = StyleSheet.create({
   cmpLabelCell: { width: 118, paddingRight: 6, justifyContent: "center" },
   cmpLabel: { color: C.ink, fontSize: 11.5 },
   cmpCell: { width: 55, alignItems: "center", justifyContent: "center" },
+  cmpCellCur: { backgroundColor: "rgba(255,215,0,.09)" },
+  cmpCurChip: { fontSize: 8, fontWeight: "900", letterSpacing: 0.4, marginBottom: 2 },
   cmpColName: { fontSize: 12.5, fontWeight: "800" },
   cmpColPrice: { color: C.faint, fontSize: 10, marginTop: 2 },
   cmpVal: { color: C.ink, fontSize: 11.5, fontWeight: "700" },

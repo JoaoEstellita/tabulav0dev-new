@@ -670,8 +670,8 @@
           <div style="color:var(--muted);font-size:11px;margin-top:4px">Custo = IA/API R$${p.custoIA_BRL.toFixed(2)} + taxa MP R$${p.custoMP_BRL.toFixed(2)} + infra R$${p.custoInfra_BRL.toFixed(2)}</div>
           <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">ver ${p.clientes.length} clientes</summary>
             <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
-              <tr style="text-align:left;color:var(--muted)"><th>Cliente</th><th>Plano</th><th>Status</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr>
-              ${p.clientes.map(c => `<tr style="border-top:1px solid var(--border)"><td>${c.nome || c.uid}</td><td>${c.plano || '—'}</td><td>${badge(c.status)}</td><td>R$ ${c.receitaBRL.toFixed(2)}</td><td title="IA R$${c.custoIA.toFixed(2)} + MP R$${c.custoMP.toFixed(2)} + infra R$${c.custoInfra.toFixed(2)}">R$ ${c.custoBRL.toFixed(2)}</td><td style="color:${c.lucroBRL >= 0 ? 'var(--ok)' : 'var(--err)'}">R$ ${c.lucroBRL.toFixed(2)}</td></tr>`).join('')}
+              <tr style="text-align:left;color:var(--muted)"><th>Cliente</th><th>E-mail</th><th>Plano</th><th>Status</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr>
+              ${p.clientes.map(c => `<tr style="border-top:1px solid var(--border)"><td>${c.nome || c.uid}</td><td style="color:var(--muted)">${c.email || '—'}</td><td>${c.plano || '—'}</td><td>${badge(c.status)}</td><td>R$ ${c.receitaBRL.toFixed(2)}</td><td title="IA R$${c.custoIA.toFixed(2)} + MP R$${c.custoMP.toFixed(2)} + infra R$${c.custoInfra.toFixed(2)}">R$ ${c.custoBRL.toFixed(2)}</td><td style="color:${c.lucroBRL >= 0 ? 'var(--ok)' : 'var(--err)'}">R$ ${c.lucroBRL.toFixed(2)}</td></tr>`).join('')}
             </table>
           </details>
         </div>`).join('') + `<div style="color:var(--muted);font-size:11px;margin-top:4px">Modelo: custo = IA/API (real) + taxa MP ${((m.mpFeePct || 0) * 100).toFixed(0)}% + infra R$ ${m.infraPorClienteBRL}/cliente · mês ${d.mes}. Grátis/trial não geram receita mas contam custo → puxam o lucro pra baixo (o acordo desconta os custos de todos os clientes dela).</div>`
@@ -717,7 +717,7 @@
   }
   // Prazo do modo gratuito: 7 dias a partir de users.trialStart (espelha
   // useSubscriptionCheck). Assinante ativo não está no gratuito → '—'.
-  const TRIAL_DAYS = 7
+  const TRIAL_DAYS = 3
   function trialInfo(u) {
     if (u.subStatus === 'active' && (isPagante(u) || ADMIN_SOURCES.has(u.subSource))) return { txt: '—', bg: 'transparent', fg: 'var(--muted)' }
     if (u.subStatus === 'trial') return { txt: '—', bg: 'transparent', fg: 'var(--muted)' }

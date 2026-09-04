@@ -27,6 +27,7 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { useAppLanguage } from '../../hooks/useAppLanguage';
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck';
 import PlanStatusCard from '../../components/PlanStatusCard';
+import PWADownloadButton from '../../components/PWADownloadButton';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import WhatsAppInput from '../../components/WhatsAppInput';
@@ -1598,6 +1599,9 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+
+          {/* Instalar o app (PWA) — só aparece na web, quando NÃO instalado e há ação possível. */}
+          <View style={{ marginBottom: 4 }}><PWADownloadButton variant="inline" /></View>
 
           {/* Meu plano: status, limites, créditos, comprar/upgrade + tabela completa */}
           <PlanStatusCard />

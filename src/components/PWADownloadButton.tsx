@@ -5,14 +5,14 @@ import { Ionicons } from '@expo/vector-icons'
 // PWA install utilities are web-only; lazy-load to avoid native crashes
 const getPwaStateSafe = () => ({ canInstall: false, isInstalled: true, isIos: false, isMobile: false, deferredPrompt: null })
 
-export default function PWADownloadButton() {
+export default function PWADownloadButton({ variant = 'banner' }: { variant?: 'banner' | 'inline' } = {}) {
   // This component is exclusively for PWA web — skip entirely on native
   if (Platform.OS !== 'web') return null
 
-  return <PWADownloadButtonInner />
+  return <PWADownloadButtonInner variant={variant} />
 }
 
-function PWADownloadButtonInner() {
+function PWADownloadButtonInner({ variant = 'banner' }: { variant?: 'banner' | 'inline' }) {
   const {
     getPwaState,
     subscribePwaInstall,
@@ -103,13 +103,16 @@ function PWADownloadButtonInner() {
   const isInstagram = /instagram/i.test(ua)
   const isActionable = pwaState.canInstall || pwaState.isIos || isInstagram
 
-  if (!showButton || pwaState.isInstalled || !pwaState.isMobile || !isActionable) {
+  // Banner (Home) só em mobile; inline (Configurações) também no desktop (Chrome
+  // instala PWA no desktop). Em ambos: só quando NÃO instalado e há ação possível.
+  const requireMobile = variant === 'banner'
+  if (!showButton || pwaState.isInstalled || (requireMobile && !pwaState.isMobile) || !isActionable) {
     return null
   }
 
   return (
     <>
-      <TouchableOpacity style={styles.container} onPress={handleInstall}>
+      <TouchableOpacity style={variant === 'inline' ? styles.inline : styles.container} onPress={handleInstall}>
         <View style={styles.content}>
           <Ionicons name="download" size={20} color="#FFD700" />
           <Text style={styles.text}>Instalar App</Text>
@@ -201,6 +204,14 @@ const styles = StyleSheet.create({
     borderColor: '#FFD700',
     padding: 16,
     zIndex: 1000,
+  },
+  // Variante inline (dentro de uma lista, ex.: Configurações): sem position absolute.
+  inline: {
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    padding: 15,
   },
   content: {
     flexDirection: 'row',
