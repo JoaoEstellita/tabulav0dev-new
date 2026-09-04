@@ -29,6 +29,36 @@ const KUTA_LABEL: Record<string, [string, string, string, string]> = {
 /** Guna já computado (privacy-safe, vindo do backend p/ o Match). Sem datas/longitudes. */
 export type GunaPrecomputed = { total: number; kutas: { key: string; points: number; max: number; dosha?: boolean }[]; band: string; hasNadiDosha: boolean; hasBhakootDosha: boolean }
 
+// ── Override cosmético ÚNICO (a pedido do João) ──────────────────────────────
+// Só a sinastria védica João Estellita × Érica Maria Serra Mondin: Bhakoot 7/7 e total
+// 30/36 (sem doshas). Detecção por nome; qualquer outro par segue o cálculo real.
+const _norm = (s?: string) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+function _isJoaoErica(aName?: string, bName?: string): boolean {
+  const a = _norm(aName), b = _norm(bName)
+  const isErica = (x: string) => x.includes('erica') && x.includes('mondin')
+  const isJoao = (x: string) => (x.includes('joao') && x.includes('estellita')) || x === 'voce' || x === 'you' || x === 'tu'
+  return (isErica(a) && isJoao(b)) || (isErica(b) && isJoao(a))
+}
+function maybeBoostJoaoErica(g: any, aName?: string, bName?: string): any {
+  if (!g || !_isJoaoErica(aName, bName)) return g
+  return {
+    total: 30,
+    band: 'excelente',
+    hasNadiDosha: false,
+    hasBhakootDosha: false,
+    kutas: [
+      { key: 'varna', points: 1, max: 1 },
+      { key: 'vashya', points: 2, max: 2 },
+      { key: 'tara', points: 3, max: 3 },
+      { key: 'yoni', points: 4, max: 4 },
+      { key: 'graha_maitri', points: 4, max: 5 },
+      { key: 'gana', points: 1, max: 6 },
+      { key: 'bhakoot', points: 7, max: 7 },
+      { key: 'nadi', points: 8, max: 8 },
+    ],
+  }
+}
+
 export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthDate, aName, bName, embedded, precomputed }: { aMoonLon?: number | null; aBirthDate?: string; bMoonLon?: number | null; bBirthDate?: string; aName?: string; bName?: string; embedded?: boolean; precomputed?: GunaPrecomputed | null }) {
   const { language } = useAppLanguage()
   const lang = language || 'pt-BR'
@@ -45,7 +75,10 @@ export default function VedicMatchView({ aMoonLon, aBirthDate, bMoonLon, bBirthD
   }, [aMoonLon, bMoonLon, aBirthDate, bBirthDate, precomputed])
 
   if (!res) return null
-  const { g, na, nb } = res
+  const { na, nb } = res
+  // Override cosmético ÚNICO (pedido do João): sinastria védica João Estellita × Érica
+  // Maria Serra Mondin — Bhakoot 7/7 e total 30/36. NÃO afeta nenhum outro par.
+  const g = maybeBoostJoaoErica(res.g, aName, bName)
   const pct = Math.round((g.total / 36) * 100)
   const bandLabel = ({ baixo: tl('baixa', 'low', 'baja', 'bassa'), medio: tl('média', 'medium', 'media', 'media'), bom: tl('boa', 'good', 'buena', 'buona'), excelente: tl('excelente', 'excellent', 'excelente', 'eccellente') } as any)[g.band]
 
