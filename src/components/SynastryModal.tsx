@@ -20,6 +20,7 @@ import { db } from '../config/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import SynastryTabs from './SynastryTabs'
 import { tzolkinMatchScore } from '../astro/tzolkin'
+import { computeNatalChart, computeSynastryAspects } from '../astro/synastry'
 
 const TZOLKIN_ENABLED = process.env.EXPO_PUBLIC_TZOLKIN_ENABLED !== '0'
 const CHINESE_ENABLED = process.env.EXPO_PUBLIC_CHINESE_ENABLED !== '0'
@@ -35,7 +36,24 @@ const TZ_DISPLAY_WEIGHT = Math.max(0, Math.min(1, Number(process.env.EXPO_PUBLIC
 const C = { bg: '#0F0F23', card: '#161728', line: 'rgba(255,255,255,0.12)', gold: '#FFD700', magenta: '#FF4D8D', tx: '#EDEBF7', dim: '#9A9CB8' }
 const CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto' }
 
-export default function SynastryModal({ visible, uid, name, onClose, targetBirth }: { visible: boolean; uid: string | null; name: string | null; onClose: () => void; targetBirth?: { datetime?: string; coordinates?: { longitude?: number } } | null }) {
+// Extrai {datetime, coordinates} do doc do usuário (formatos variados) p/ computar a carta.
+function extractBirth(d: any): { datetime: string; coordinates: { latitude: number; longitude: number } } | null {
+  if (!d) return null
+  const bd = d.birthData || d
+  const coords = bd.coordinates || d.birthLocation || d.coordinates || {}
+  let datetime = bd.datetime as string | undefined
+  if (!datetime) {
+    const date = String(bd.birthDate || d.birthDate || '').slice(0, 10)
+    if (!date) return null
+    const time = String(bd.birthTime || d.birthTime || '12:00').slice(0, 5)
+    datetime = `${date}T${time}`
+  }
+  const lat = Number(coords.latitude), lon = Number(coords.longitude)
+  if (!datetime || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
+  return { datetime, coordinates: { latitude: lat, longitude: lon } }
+}
+
+export default function SynastryModal({ visible, uid, name, onClose, targetBirth }: { visible: boolean; uid: string | null; name: string | null; onClose: () => void; targetBirth?: { datetime?: string; coordinates?: { latitude?: number; longitude?: number } } | null }) {
   const { language } = useAppLanguage()
   const tl = (pt: string, en: string, es: string, it: string) =>
     ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it } as any)[language] || pt
@@ -77,6 +95,35 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
       targetPerson ? Promise.resolve(targetPerson) : getDoc(doc(db, 'users', uid)).then(s => toPerson(s.data())).catch(() => ({} as Person)),
     ]).then(([a, b]) => setPeople({ a, b: (b?.date ? b : targetPerson) || b }))
   }, [visible, uid, user?.uid, targetBirth?.datetime])
+
+  // Astral CLIENT-SIDE p/ alvo NÃO-descobrível (perfil GERENCIADO): o backend não devolve
+  // roda/grade (só perfis descobríveis), mas temos o nascimento do alvo (targetBirth) + o do
+  // viewer → computa com o MESMO motor dos Grupos. Só quando falta o Astral do backend.
+  useEffect(() => {
+    if (!visible || !uid || !user?.uid) return
+    if (!data || (data.myPositions && data.myPositions.length)) return
+    const tdt = String(targetBirth?.datetime || '')
+    if (tdt.length < 10) return
+    let alive = true
+    ;(async () => {
+      try {
+        const meSnap = await getDoc(doc(db, 'users', user.uid))
+        const meBd = extractBirth(meSnap.data())
+        if (!meBd) return
+        const tLat = typeof targetBirth?.coordinates?.latitude === 'number' ? targetBirth!.coordinates!.latitude! : meBd.coordinates.latitude
+        const tLon = typeof targetBirth?.coordinates?.longitude === 'number' ? targetBirth!.coordinates!.longitude! : meBd.coordinates.longitude
+        const [meChart, tChart] = await Promise.all([
+          computeNatalChart(meBd),
+          computeNatalChart({ datetime: tdt, coordinates: { latitude: tLat, longitude: tLon } }),
+        ])
+        if (!alive || !meChart || !tChart) return
+        const toPos = (pl: any[]) => (pl || []).map((p) => ({ planetEn: String(p?.name || '').toLowerCase(), longitude: Number(p?.longitude) })).filter((p) => Number.isFinite(p.longitude))
+        const asp = computeSynastryAspects(meChart.planets, tChart.planets, 20).map((a) => ({ mine: a.mine, theirs: a.theirs, aspect: a.aspect, orb: a.orb }))
+        setData((d) => ({ ...(d || { premium: true }), myPositions: toPos(meChart.planets), positions: toPos(tChart.planets), aspects: asp } as any))
+      } catch { /* mantém as lentes simbólicas */ }
+    })()
+    return () => { alive = false }
+  }, [visible, uid, user?.uid, data?.premium, targetBirth?.datetime])
 
   const moonOf = (pos?: { planetEn: string; longitude: number }[]) => {
     const m = (pos || []).find((p) => p.planetEn === 'moon')
