@@ -24,6 +24,10 @@ import { translatePlanetPT } from '../../utils/astro/pt'
 import { getPlanetHouse } from '../../astro/houses.math'
 // Removido Ephemeris nÃƒÂ£o utilizado
 
+// Luminares: quando Sol/Lua estão no par, o aspecto usa o orbe DELES (largo),
+// não o min do par — evita que planeta rápido encolha o contato mais pessoal.
+const LUMINARIES_RAE = new Set(['Sun', 'Moon'])
+
 export interface RealPlanetPosition {
   name: string
   longitude: number // Graus eclÃƒÂ­pticos (0-360)
@@ -1230,6 +1234,13 @@ export class RealAstrologyEngine {
       const ang = def?.angle ?? angleOf(type)
   const pa = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p1Name)]?.[ang]
   const pb = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p2Name)]?.[ang]
+      // ORBE GENEROSO PRO LUMINAR (coletivo T→T): Sol/Lua usam o próprio orbe.
+      const p1Lum = LUMINARIES_RAE.has(normalizePlanet(p1Name))
+      const p2Lum = LUMINARIES_RAE.has(normalizePlanet(p2Name))
+      if (p1Lum || p2Lum) {
+        const lums = [p1Lum ? pa : undefined, p2Lum ? pb : undefined].filter((v): v is number => v !== undefined)
+        return Math.max(0, Math.min(cap, lums.length ? Math.max(...lums) : eff))
+      }
       if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
   const ovrA = (aspectsConfig as any).overrides?.[normalizePlanet(p1Name)]?.[normalizePlanet(p2Name)]
   const ovrB = (aspectsConfig as any).overrides?.[normalizePlanet(p2Name)]?.[normalizePlanet(p1Name)]
@@ -1681,6 +1692,15 @@ export class RealAstrologyEngine {
     const ang = def?.angle ?? angleOf(type)
     const pa = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p1Name)]?.[ang]
     const pb = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p2Name)]?.[ang]
+    // ORBE GENEROSO PRO LUMINAR: Sol/Lua usam o próprio orbe (largo), não o min do
+    // par (mesma regra do detectAspects em aspects.engine.ts). Mantém a JANELA do
+    // trânsito coerente com a admissão do aspecto.
+    const p1Lum = LUMINARIES_RAE.has(normalizePlanet(p1Name))
+    const p2Lum = LUMINARIES_RAE.has(normalizePlanet(p2Name))
+    if (p1Lum || p2Lum) {
+      const lums = [p1Lum ? pa : undefined, p2Lum ? pb : undefined].filter((v): v is number => v !== undefined)
+      return Math.max(0, Math.min(cap, lums.length ? Math.max(...lums) : eff))
+    }
     if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
     const ovrA = (aspectsConfig as any).overrides?.[normalizePlanet(p1Name)]?.[normalizePlanet(p2Name)]
     const ovrB = (aspectsConfig as any).overrides?.[normalizePlanet(p2Name)]?.[normalizePlanet(p1Name)]

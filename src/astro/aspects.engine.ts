@@ -9,6 +9,8 @@ function angularSeparation(a: number, b: number): number {
   return diff
 }
 
+const LUMINARIES = new Set(['Sun', 'Moon'])
+
 function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBody, baseOrb: number, angle: number): number {
   const cap = config.maxOrbCap ?? 12
   let eff = baseOrb
@@ -18,6 +20,17 @@ function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBod
   // Planet-specific por aspecto (se disponível)
   const pa = config.planetAspectOrbs?.[aName]?.[angle]
   const pb = config.planetAspectOrbs?.[bName]?.[angle]
+  // ORBE GENEROSO PRO LUMINAR: quando Sol/Lua está no par, o contato usa o orbe
+  // DELE (largo), não o min do par — senão o planeta rápido (ex.: Marte, quadratura
+  // 4°) encolhia o aspecto ao Sol/Lua, os mais pessoais. Astrologicamente, luminar
+  // merece orbe largo (paridade com softwares tradicionais). Ignora os shrinks
+  // (overrides/planetOrbs) e respeita só o cap.
+  const aLum = LUMINARIES.has(aName)
+  const bLum = LUMINARIES.has(bName)
+  if (aLum || bLum) {
+    const lumOrbs = [aLum ? pa : undefined, bLum ? pb : undefined].filter((v): v is number => v !== undefined)
+    return clamp(lumOrbs.length ? Math.max(...lumOrbs) : baseOrb, 0, cap)
+  }
   if (pa !== undefined || pb !== undefined) {
     eff = Math.min(eff, pa ?? eff, pb ?? eff)
   }

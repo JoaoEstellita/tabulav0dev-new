@@ -55,19 +55,26 @@ describe('synastryAspectLine', () => {
 })
 
 describe('synastryAspectDetail', () => {
-  it('headline + body relacional; tip pela natureza', () => {
+  it('pares curados retornam headline + leitura relacional profunda', () => {
+    // venus×uranus e sun×moon estão no catálogo curado (data/synastryPairReadings)
     const tenso = synastryAspectDetail(asp('venus', 'uranus', 'quadratura', 'tenso', 2), 'pt-BR')
     expect(tenso.headline.length).toBeGreaterThan(0)
-    expect(tenso.body).toContain('fricção')
+    expect(tenso.body.length).toBeGreaterThan(20)
     const harm = synastryAspectDetail(asp('sun', 'moon', 'trigono', 'harmonioso', 1), 'pt-BR')
-    expect(harm.body).toContain('flui')
+    expect(harm.body.length).toBeGreaterThan(20)
+  })
+  it('par sem curadoria cai no fallback com a dica pela natureza', () => {
+    // jupiter+saturn NÃO está nos 40 pares curados → body = fallback (tip do tom)
+    const d = synastryAspectDetail({ mine: 'jupiter', theirs: 'saturn', aspect: 'quadratura', tone: 'tenso', orb: 2 }, 'pt-BR')
+    expect(d.body).toContain('fricção')
   })
   it('deriva o tom quando o aspecto vem sem tone (endpoint /synastry)', () => {
     expect(synastryToneOf('quadratura')).toBe('tenso')
     expect(synastryToneOf('sextil')).toBe('harmonioso')
     expect(synastryToneOf('conjuncao')).toBe('neutro')
+    // venus×mars é curado → leitura profunda (não o fallback genérico)
     const d = synastryAspectDetail({ mine: 'venus', theirs: 'mars', aspect: 'oposicao', orb: 3 }, 'pt-BR')
-    expect(d.body).toContain('fricção')
+    expect(d.body.length).toBeGreaterThan(20)
   })
 })
 
