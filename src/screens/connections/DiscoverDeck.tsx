@@ -413,6 +413,12 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
                 {current.chartOpen ? (
                   detailLoading && !detail ? (
                     <ActivityIndicator color={C.magenta} style={{ marginVertical: 14 }} />
+                  ) : detail?.gated ? (
+                    <View style={s.synPaywall}>
+                      <Text style={s.synPaywallEmoji}>🔒</Text>
+                      <Text style={s.synPaywallTitle}>{tl('Sinastria é da assinatura', 'Synastry is a subscription feature', 'La sinastria es de la suscripcion', 'La sinastria e dell abbonamento')}</Text>
+                      <Text style={s.synPaywallBody}>{tl('A leitura da dupla nos 4 sistemas começa no Essential (a partir de R$ 19,90/mês).', 'The pair reading across the 4 systems starts on Essential.', 'La lectura de la pareja empieza en Essential.', 'La lettura della coppia inizia con Essential.')}</Text>
+                    </View>
                   ) : detail?.shared && detail.myPositions?.length && detail.positions?.length ? (
                     <>
                       <Text style={s.detailHead}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
@@ -614,6 +620,10 @@ const s = StyleSheet.create({
   tzTag: { backgroundColor: 'rgba(139,124,246,.18)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 3 },
   tzTagTx: { color: '#c7bdff', fontSize: 11, fontWeight: '700' },
   detailHead: { color: C.dim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 10, marginBottom: 4 },
+  synPaywall: { alignItems: 'center', marginTop: 14, paddingVertical: 22, paddingHorizontal: 18, backgroundColor: 'rgba(232,184,75,0.06)', borderWidth: 1, borderColor: 'rgba(232,184,75,0.3)', borderRadius: 14 },
+  synPaywallEmoji: { fontSize: 30, marginBottom: 6 },
+  synPaywallTitle: { color: C.gold, fontSize: 16, fontWeight: '900', textAlign: 'center', marginBottom: 6 },
+  synPaywallBody: { color: C.tx, fontSize: 13, lineHeight: 18, textAlign: 'center' },
   harmonic: { color: C.tx, fontSize: 13, lineHeight: 19 },
   tension: { color: C.gold, fontSize: 13, lineHeight: 19 },
   reason: { color: C.dim, fontSize: 13 },
