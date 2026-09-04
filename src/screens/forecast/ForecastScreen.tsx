@@ -1567,6 +1567,15 @@ export default function ForecastScreen() {
           </TouchableOpacity>
           <MomentoCertoView premium={isPremium} initialIntention={momentoIntention} />
         </View>
+      ) : !isPremium ? (
+        <View style={styles.forecastPaywall}>
+          <Text style={styles.forecastPaywallEmoji}>🔒</Text>
+          <Text style={styles.forecastPaywallTitle}>{tr('forecast.paywall.title', 'Previsões são da assinatura')}</Text>
+          <Text style={styles.forecastPaywallBody}>{tr('forecast.paywall.body', 'Veja seus trânsitos até 30, 90 ou 360 dias à frente — a partir do Essential (R$ 19,90/mês). No seu período grátis você já tem o mapa completo, os trânsitos de hoje e as 8 áreas da vida.')}</Text>
+          <TouchableOpacity style={styles.forecastPaywallBtn} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+            <Text style={styles.forecastPaywallBtnTxt}>{tr('forecast.paywall.cta', 'Ver planos')}</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
       <>
       <View style={styles.periodRow} {...aPeriod}>
@@ -1917,6 +1926,12 @@ function eventPriorityScore(event: ForecastEvent, selectedDate: string | null) {
 }
 
 const styles = StyleSheet.create({
+  forecastPaywall: { margin: 16, padding: 24, alignItems: 'center', backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', borderRadius: 16 },
+  forecastPaywallEmoji: { fontSize: 36, marginBottom: 8 },
+  forecastPaywallTitle: { color: '#FFD700', fontSize: 18, fontWeight: '900', textAlign: 'center', marginBottom: 8 },
+  forecastPaywallBody: { color: '#E8E6F3', fontSize: 14, lineHeight: 20, textAlign: 'center', marginBottom: 16 },
+  forecastPaywallBtn: { backgroundColor: '#FFD700', paddingHorizontal: 22, paddingVertical: 11, borderRadius: 12 },
+  forecastPaywallBtnTxt: { color: '#0F0F23', fontWeight: '900', fontSize: 14 },
   container: {
     flex: 1,
     backgroundColor: '#0F0F23',

@@ -2287,8 +2287,8 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.gratis': 'Grátis · {n} dias restantes.',
     'trialBanner.cta': 'Assinar',
     'settings.item.trialStatus.title': 'Período de teste',
-    'trialWelcome.title': '3 dias grátis de tudo ✨',
-    'trialWelcome.body': 'Seu mapa está pronto! Por 3 dias você tem acesso a TUDO — previsões de até 360 dias, trânsitos e leituras completas. Sem cartão.',
+    'trialWelcome.title': 'Seus 3 dias grátis ✨',
+    'trialWelcome.body': 'Seu mapa está pronto! Por 3 dias você explora, sem pagar, seu mapa completo nos 4 sistemas, os trânsitos de hoje e as 8 áreas da sua vida. Sinastria e previsões vêm com a assinatura.',
     'trialWelcome.cta': 'Explorar agora',
     'trialWelcome.plans': 'Ver planos',
 
@@ -2765,8 +2765,8 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.gratis': 'Free · {n} days left.',
     'trialBanner.cta': 'Subscribe',
     'settings.item.trialStatus.title': 'Trial period',
-    'trialWelcome.title': '3 days of everything, free',
-    'trialWelcome.body': 'Your chart is ready! For 3 days you get access to EVERYTHING — forecasts up to 360 days, transits and full readings. No card needed.',
+    'trialWelcome.title': 'Your 3 free days',
+    'trialWelcome.body': 'Your chart is ready! For 3 days, explore for free your full chart across the 4 systems, today\'s transits and your 8 life areas. Synastry and forecasts come with the subscription.',
     'trialWelcome.cta': 'Explore now',
     'trialWelcome.plans': 'See plans',
 
@@ -3240,8 +3240,8 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.gratis': 'Gratis · {n} dias restantes.',
     'trialBanner.cta': 'Suscribirse',
     'settings.item.trialStatus.title': 'Periodo de prueba',
-    'trialWelcome.title': '3 dias de todo, gratis',
-    'trialWelcome.body': 'Tu carta esta lista! Por 3 dias tienes acceso a TODO — previsiones de hasta 360 dias, transitos y lecturas completas. Sin tarjeta.',
+    'trialWelcome.title': 'Tus 3 dias gratis',
+    'trialWelcome.body': 'Tu carta esta lista! Por 3 dias exploras gratis tu carta completa en los 4 sistemas, los transitos de hoy y tus 8 areas de vida. La sinastria y las previsiones son de la suscripcion.',
     'trialWelcome.cta': 'Explorar ahora',
     'trialWelcome.plans': 'Ver planes',
 
@@ -3715,8 +3715,8 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.gratis': 'Gratis · {n} giorni rimasti.',
     'trialBanner.cta': 'Abbonati',
     'settings.item.trialStatus.title': 'Periodo di prova',
-    'trialWelcome.title': '3 giorni di tutto, gratis',
-    'trialWelcome.body': 'La tua carta e pronta! Per 3 giorni hai accesso a TUTTO — previsioni fino a 360 giorni, transiti e letture complete. Senza carta.',
+    'trialWelcome.title': 'I tuoi 3 giorni gratis',
+    'trialWelcome.body': 'La tua carta e pronta! Per 3 giorni esplori gratis la tua carta completa nei 4 sistemi, i transiti di oggi e le tue 8 aree di vita. Sinastria e previsioni sono dell\'abbonamento.',
     'trialWelcome.cta': 'Esplora ora',
     'trialWelcome.plans': 'Vedi piani',
 
