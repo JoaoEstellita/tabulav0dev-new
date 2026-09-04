@@ -47,8 +47,11 @@ export const PLANET_ORBS: Record<string, number> = {
 
 // Orbes específicos por planeta e aspecto (graus)
 export const PLANET_ASPECT_ORBS: Record<string, Record<number, number>> = {
-  Sun:   { 0: 9, 180: 9, 120: 8, 90: 6, 60: 5, 150: 5, 30: 3 },
-  Moon:  { 0: 9, 180: 9, 120: 8, 90: 6, 60: 5, 150: 5, 30: 3 },
+  // Luminares com orbe GENEROSO (paridade Personare): Sol/Lua sempre entram pelo
+  // "branch do luminar" (resolveOrb), então estes valores regem os aspectos ao
+  // Sol/Lua sem serem encolhidos pelo planeta rápido. Ex.: Marte □ Sol agora até 8°.
+  Sun:   { 0: 10, 180: 10, 120: 9, 90: 8, 60: 6, 150: 4, 30: 3 },
+  Moon:  { 0: 10, 180: 10, 120: 9, 90: 8, 60: 6, 150: 4, 30: 3 },
   Mercury: { 0: 7, 180: 7, 120: 6.2222, 90: 4.6667, 60: 3.8889, 150: 3.8889, 30: 2.3333 },
   Venus:   { 0: 7, 180: 7, 120: 6.2222, 90: 4.6667, 60: 3.8889, 150: 3.8889, 30: 2.3333 },
   Jupiter: { 0: 7, 180: 7, 120: 6.2222, 90: 4.6667, 60: 3.8889, 150: 3.8889, 30: 2.3333 },
