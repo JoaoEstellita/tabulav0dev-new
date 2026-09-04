@@ -30,9 +30,10 @@ const aspectsConfig: AspectsConfig = {
   // Orbes específicos por planeta e aspecto (graus)
   // Se um planeta não estiver listado, usa baseOrb
   planetAspectOrbs: {
-    // 1) Sol e Lua (luminares)
-    Sun:   { 0: 9, 180: 9, 120: 8, 90: 6, 60: 5, 150: 5, 30: 3 },
-    Moon:  { 0: 9, 180: 9, 120: 8, 90: 6, 60: 5, 150: 5, 30: 3 },
+    // 1) Sol e Lua (luminares) — orbe GENEROSO (paridade Personare + aspect-config.ts
+    // singular + backend). Sol/Lua entram pelo branch do luminar (não encolhem no min).
+    Sun:   { 0: 10, 180: 10, 120: 9, 90: 8, 60: 6, 150: 4, 30: 3 },
+    Moon:  { 0: 10, 180: 10, 120: 9, 90: 8, 60: 6, 150: 4, 30: 3 },
     // 2) Mercúrio, Vênus e Júpiter (7/9 dos luminares → arredondado conforme pedido)
     Mercury: { 0: 7, 180: 7, 120: 6.2222, 90: 4.6667, 60: 3.8889, 150: 3.8889, 30: 2.3333 },
     Venus:   { 0: 7, 180: 7, 120: 6.2222, 90: 4.6667, 60: 3.8889, 150: 3.8889, 30: 2.3333 },
