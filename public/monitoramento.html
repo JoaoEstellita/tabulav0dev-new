@@ -566,7 +566,9 @@
         <div class="card-title">🤝 Parcerias · <span style="color:var(--muted)">clientes · receita − custo → repasse</span></div>
         <button onclick="loadPartners()" style="padding:6px 12px;background:#2a2550;color:#c9c4ea;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px">↻ Atualizar parcerias</button>
         <button onclick="diagLLM()" style="padding:6px 12px;background:#3a2550;color:#e0c4ea;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;margin-left:8px">🔍 Diagnosticar IA</button>
+        <button onclick="loadFunnel()" style="padding:6px 12px;background:#25503a;color:#c4ead2;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;margin-left:8px">📊 Funil de conversão</button>
         <pre id="diag-box" style="display:none;white-space:pre-wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;font-size:12px;overflow-x:auto"></pre>
+        <div id="funnel-box" style="display:none;margin-top:12px"></div>
         <div id="partners-box" style="overflow-x:auto;margin-top:12px"></div>
       </div>
       <script>
@@ -574,6 +576,26 @@
           const box=document.getElementById('diag-box'); box.style.display='block'; box.textContent='Testando modelos…';
           try{ const r=await fetch(BACKEND+'/api/monitoring?diag=llm',{headers:{'Authorization':'Bearer '+getPassword()}}); const j=await r.json(); box.textContent=JSON.stringify(j,null,2); }
           catch(e){ box.textContent='Erro: '+e.message; }
+        }
+        async function loadFunnel(){
+          const box=document.getElementById('funnel-box'); box.style.display='block'; box.innerHTML='<div style="color:var(--muted)">Carregando funil…</div>';
+          try{
+            const r=await fetch(BACKEND+'/api/monitoring?funnel=1',{headers:{'Authorization':'Bearer '+getPassword()}}); const j=await r.json();
+            if(!j.funil){ box.textContent=JSON.stringify(j); return; }
+            const f=j.funil; const t=f.taxas||{};
+            const stage=(label,n,pct)=>`<div style="flex:1;min-width:110px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px"><div style="color:var(--muted);font-size:11px">${label}</div><div style="font-size:20px;font-weight:800">${n}</div>${pct!=null?`<div style="font-size:11px;color:#46d39a">${pct}%</div>`:''}</div>`;
+            let html='<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+              stage('Leads (WhatsApp)',f.leads,null)+
+              stage('Cadastraram',f.cadastro,t.cadastroPct)+
+              stage('Degustaram',f.degustaram,t.degustaramPct)+
+              stage('Esgotaram as 3',f.esgotaram3,null)+
+              stage('Assinantes (WA)',f.assinantesWA,t.conversaoWApct)+
+              stage('Assinantes (total)',f.assinantesTotal,null)+'</div>';
+            const src=f.porOrigem||{}; const keys=Object.keys(src);
+            if(keys.length){ html+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:12px"><tr style="text-align:left;color:var(--muted)"><th>Origem</th><th>Leads</th><th>Cadastro</th><th>Degustaram</th><th>Esgotaram</th></tr>'+
+              keys.sort((a,b)=>src[b].leads-src[a].leads).map(k=>`<tr style="border-top:1px solid var(--border)"><td>${k}</td><td>${src[k].leads}</td><td>${src[k].cadastro}</td><td>${src[k].degustaram}</td><td>${src[k].esgotaram}</td></tr>`).join('')+'</table>'; }
+            box.innerHTML=html;
+          }catch(e){ box.textContent='Erro: '+e.message; }
         }
       </script>
 
