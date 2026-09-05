@@ -565,8 +565,17 @@
       <div class="card card-full">
         <div class="card-title">🤝 Parcerias · <span style="color:var(--muted)">clientes · receita − custo → repasse</span></div>
         <button onclick="loadPartners()" style="padding:6px 12px;background:#2a2550;color:#c9c4ea;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px">↻ Atualizar parcerias</button>
+        <button onclick="diagLLM()" style="padding:6px 12px;background:#3a2550;color:#e0c4ea;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;margin-left:8px">🔍 Diagnosticar IA</button>
+        <pre id="diag-box" style="display:none;white-space:pre-wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;font-size:12px;overflow-x:auto"></pre>
         <div id="partners-box" style="overflow-x:auto;margin-top:12px"></div>
       </div>
+      <script>
+        async function diagLLM(){
+          const box=document.getElementById('diag-box'); box.style.display='block'; box.textContent='Testando modelos…';
+          try{ const r=await fetch(BACKEND+'/api/monitoring?diag=llm',{headers:{'Authorization':'Bearer '+getPassword()}}); const j=await r.json(); box.textContent=JSON.stringify(j,null,2); }
+          catch(e){ box.textContent='Erro: '+e.message; }
+        }
+      </script>
 
       <!-- Erros 24h -->
       <div class="card">
