@@ -26,6 +26,7 @@ import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import ReadingService from '../../services/firebase/ReadingService'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import PWAInstallModal from '../../components/PWAInstallModal'
+import TrialWelcomeModal from '../../components/TrialWelcomeModal'
 import { AnimatedMount } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
@@ -658,6 +659,8 @@ export default function HomeScreen() {
       <PWADownloadButton />
       {/* Modal de 1º acesso pelo navegador: convite a instalar/adicionar à tela inicial */}
       <PWAInstallModal />
+      {/* Boas-vindas do trial: explica o grátis × pago no 1º acesso (sem cadeado surpresa) */}
+      <TrialWelcomeModal />
 
     </LinearGradient>
   )
