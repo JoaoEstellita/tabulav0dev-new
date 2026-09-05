@@ -25,6 +25,7 @@ import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import ReadingService from '../../services/firebase/ReadingService'
 import PWADownloadButton from '../../components/PWADownloadButton'
+import PWAInstallModal from '../../components/PWAInstallModal'
 import { AnimatedMount } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
@@ -655,6 +656,8 @@ export default function HomeScreen() {
       {/* Banners flutuantes: descoberta do agente + instalação do PWA */}
       <WhatsAppAgentBanner />
       <PWADownloadButton />
+      {/* Modal de 1º acesso pelo navegador: convite a instalar/adicionar à tela inicial */}
+      <PWAInstallModal />
 
     </LinearGradient>
   )
