@@ -17,6 +17,9 @@ import { buildGochara } from '../../astro/vedic/gochara'
 import { gocharaReading, planetNameVedic } from '../../data/vedic/gocharaReadings'
 import { computeDignity, dignityLabel, dignityNote, dignityColor } from '../../astro/vedic/dignity'
 import { navamsaRashi } from '../../astro/vedic/navamsa'
+import { buildVargaChart, type VargaId } from '../../astro/vedic/vargas'
+import { detectYogas } from '../../astro/vedic/yogas'
+import { vargaDomain, signName as vSignName, signTrait as vSignTrait, yogaText, type VLang } from '../../data/vedicVargaYogaReadings'
 import {
   resolveLagna, resolveNakshatra, resolveDasha, resolvePlanetInRashi, resolvePlanetInBhava,
   resolveNakshatraDeep, deepReadingReady, planetPt, type VedicLang, type VedicGender,
@@ -241,6 +244,57 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMe
           )
         })}
       </View>
+
+      {/* Vargas (D10/D7/D12) — mapas divisionais de carreira, filhos e ancestralidade */}
+      {(() => {
+        const vlang = lang as VLang
+        const bodies = [
+          { name: 'Lagna', siderealLon: chart.lagna.siderealLon },
+          ...grahas.map((p) => ({ name: p.name, siderealLon: p.siderealLon })),
+        ]
+        return (['D10', 'D7', 'D12'] as VargaId[]).map((id) => {
+          const vc = buildVargaChart(id, bodies)
+          const dom = vargaDomain(id, vlang)
+          if (!vc || !dom) return null
+          return (
+            <View key={id} style={styles.card}>
+              <Text style={styles.cardTitle}>{dom.title}</Text>
+              <Text style={styles.cardText}>{dom.intro}</Text>
+              <Text style={[styles.grahaMeta, { marginTop: 6 }]}>
+                {tl('Ascendente do varga', 'Varga Ascendant', 'Ascendente del varga', 'Ascendente del varga')}: <Text style={{ color: '#FFD700' }}>{vSignName(vc.lagnaRashiIndex, vlang)}</Text> — {vSignTrait(vc.lagnaRashiIndex, vlang)}
+              </Text>
+              {vc.positions.map((p) => (
+                <View key={p.name} style={styles.grahaHead}>
+                  <Text style={styles.grahaName}>{planetPt(p.name.toLowerCase())}</Text>
+                  <Text style={styles.grahaMeta}>{vSignName(p.rashiIndex, vlang)}</Text>
+                </View>
+              ))}
+            </View>
+          )
+        })
+      })()}
+
+      {/* Yogas — combinações nomeadas do Jyotish */}
+      {(() => {
+        const vlang = lang as VLang
+        const yogas = detectYogas(chart as any)
+        if (!yogas.length) return null
+        return (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>{tl('Yogas (combinações especiais)', 'Yogas (special combinations)', 'Yogas (combinaciones especiales)', 'Yoga (combinazioni speciali)')}</Text>
+            {yogas.map((y) => {
+              const t = yogaText(y.id, vlang)
+              if (!t) return null
+              return (
+                <View key={y.id} style={styles.grahaBlock}>
+                  <Text style={styles.grahaName}>✨ {t.name}</Text>
+                  <Text style={styles.cardText}>{t.meaning}</Text>
+                </View>
+              )
+            })}
+          </View>
+        )
+      })()}
 
       {/* Trânsitos védicos (Gochara) — lidos a partir da Lua natal */}
       {gochara && gochara.items.length ? (
