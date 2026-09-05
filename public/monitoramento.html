@@ -640,7 +640,7 @@
       const ps = d.parceiros || []
       if (!ps.length) { box.innerHTML = '<div style="color:var(--muted)">Nenhum parceiro cadastrado ainda.</div>'; return }
       const m = d.custoModelo || {}
-      const badge = (s) => s === 'pagante' ? '<span style="color:var(--ok)">● Pagante</span>' : s === 'trial' ? '<span style="color:#fbbf24">● Trial</span>' : '<span style="color:var(--muted)">○ Grátis</span>'
+      const badge = (s) => s === 'pagante' ? '<span style="color:var(--ok)">● Pagante</span>' : s === 'trial' ? '<span style="color:#fbbf24">● Trial</span>' : s === 'pendente' ? '<span style="color:#8b7cf6">◐ Pendente (WhatsApp)</span>' : '<span style="color:var(--muted)">○ Grátis</span>'
       // Resumo geral (todos os parceiros)
       const T = ps.reduce((a, p) => ({
         clientes: a.clientes + p.totalClientes, pagantes: a.pagantes + p.pagantes,
@@ -664,9 +664,10 @@
             <span>Receita: <b>R$ ${p.receitaMesBRL.toFixed(2)}</b></span>
             <span title="IA R$${p.custoIA_BRL.toFixed(2)} + taxa MP R$${p.custoMP_BRL.toFixed(2)} + infra R$${p.custoInfra_BRL.toFixed(2)}">Custo: <b>R$ ${p.custoMesBRL.toFixed(2)}</b></span>
             <span>Lucro: <b style="color:${p.lucroMesBRL >= 0 ? 'var(--ok)' : 'var(--err)'}">R$ ${p.lucroMesBRL.toFixed(2)}</b></span>
-            <span>Repasse Vanessa (${p.sharePct}%): <b style="color:#e879f9">R$ ${p.repasseParceiroBRL.toFixed(2)}</b></span>
+            <span>Repasse ${p.nome} (${p.sharePct}%): <b style="color:#e879f9">R$ ${p.repasseParceiroBRL.toFixed(2)}</b></span>
             <span>Nosso: <b>R$ ${p.nossoBRL.toFixed(2)}</b></span>
           </div>
+          ${(p.adiantamentoBRL > 0) ? `<div style="margin-top:8px;padding:8px 12px;border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.08);border-radius:8px;font-size:13px">⚠️ <b>Adiantamento a descontar:</b> <b style="color:#fbbf24">R$ ${p.adiantamentoBRL.toFixed(2)}</b> (pago à mais, ex.: split cheio) · <b>Repasse líquido:</b> <b style="color:#e879f9">R$ ${(p.repasseLiquidoBRL != null ? p.repasseLiquidoBRL : 0).toFixed(2)}</b>${p.jaPagoBRL ? ` · já pago: R$ ${p.jaPagoBRL.toFixed(2)}` : ''}</div>` : ''}
           <div style="color:var(--muted);font-size:11px;margin-top:4px">Custo = IA/API R$${p.custoIA_BRL.toFixed(2)} + taxa MP R$${p.custoMP_BRL.toFixed(2)} + infra R$${p.custoInfra_BRL.toFixed(2)}</div>
           <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">ver ${p.clientes.length} clientes</summary>
             <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
