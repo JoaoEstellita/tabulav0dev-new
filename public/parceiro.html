@@ -82,7 +82,7 @@
     <section>
       <h2>Acerto do mês</h2>
       <div class="tiles">
-        <div class="tile"><div class="k">Já enviado (split)</div><div class="v" id="mAuto">—</div></div>
+        <div class="tile"><div class="k">Já pago</div><div class="v" id="mAuto">—</div></div>
         <div class="tile"><div class="k">50% do lucro real</div><div class="v" id="mReal">—</div></div>
         <div class="tile hi"><div class="k">A repassar (fechamento)</div><div class="v" id="mTop">—</div></div>
         <div class="tile"><div class="k">Custo médio/cliente</div><div class="v" id="mAvg">—</div></div>
@@ -97,7 +97,7 @@
           <tbody id="earnings"></tbody>
         </table>
       </div>
-      <p class="note">O <b>split automático</b> repassa a comissão pelo <b>piso de lucro</b> (custo orçado conservador) — nunca a menos. O <b>acerto do mês</b>, com o custo real de uso, é calculado no fechamento e aparece em <b>A receber</b>.</p>
+      <p class="note">Sua comissão é <b>50% do lucro real</b> de cada cliente (receita − custos de IA, taxa de pagamento e infraestrutura). O acerto é <b>fechado e pago no mês</b>, e o valor a receber aparece em <b>A receber</b>. O que já foi pago fica em <b>Já pago</b>.</p>
     </section>
 
     <button class="reload" id="reload">Atualizar</button>
@@ -150,7 +150,7 @@
     else { el('advanceRow').style.display = 'none'; }
 
     var s2 = d.summary || {};
-    el('mAuto').textContent = brl(s2.monthAutoSplit);
+    el('mAuto').textContent = brl(s2.paidOut);
     el('mReal').textContent = brl(s2.monthRealShare);
     el('mTop').textContent = brl(s2.monthEndTopup);
     el('mAvg').textContent = brl(s2.avgCostPerClient);

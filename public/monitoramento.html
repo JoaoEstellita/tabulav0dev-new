@@ -677,13 +677,17 @@
       const T = ps.reduce((a, p) => ({
         clientes: a.clientes + p.totalClientes, pagantes: a.pagantes + p.pagantes,
         receita: a.receita + p.receitaMesBRL, lucro: a.lucro + p.lucroMesBRL, repasse: a.repasse + p.repasseParceiroBRL,
-      }), { clientes: 0, pagantes: 0, receita: 0, lucro: 0, repasse: 0 })
+        // líquido = repasse − adiantamento já descontado (usa repasseLiquido quando houver adiantamento)
+        repasseLiq: a.repasseLiq + (p.repasseLiquidoBRL != null ? p.repasseLiquidoBRL : p.repasseParceiroBRL),
+        adiant: a.adiant + (p.adiantamentoBRL || 0), jaPago: a.jaPago + (p.jaPagoBRL || 0),
+      }), { clientes: 0, pagantes: 0, receita: 0, lucro: 0, repasse: 0, repasseLiq: 0, adiant: 0, jaPago: 0 })
       const summary = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Parceiros</div><div style="font-size:22px;font-weight:800">${fmtNum(ps.length)}</div></div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Clientes (pagantes)</div><div style="font-size:22px;font-weight:800">${fmtNum(T.clientes)} <span style="font-size:13px;color:var(--ok)">(${fmtNum(T.pagantes)})</span></div></div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Lucro do mês</div><div style="font-size:22px;font-weight:800;color:var(--ok)">R$ ${T.lucro.toFixed(2)}</div></div>
           <div style="background:rgba(232,121,249,.12);border:1px solid rgba(232,121,249,.4);border-radius:12px;padding:12px"><div style="color:#e879f9;font-size:11px;font-weight:700">A REPASSAR (total)</div><div style="font-size:22px;font-weight:900;color:#e879f9">R$ ${T.repasse.toFixed(2)}</div></div>
+          <div style="background:rgba(232,121,249,.08);border:1px solid rgba(232,121,249,.3);border-radius:12px;padding:12px"><div style="color:#e879f9;font-size:11px;font-weight:700">LÍQUIDO (− adiant.)</div><div style="font-size:22px;font-weight:900;color:#e879f9">R$ ${T.repasseLiq.toFixed(2)}</div><div style="color:var(--muted);font-size:10px;margin-top:2px">adiant. R$ ${T.adiant.toFixed(2)} · já pago R$ ${T.jaPago.toFixed(2)}</div></div>
           <div onclick="backfillTzolkin()" style="cursor:pointer;background:rgba(139,124,246,.12);border:1px solid rgba(139,124,246,.4);border-radius:12px;padding:12px"><div style="color:#8b7cf6;font-size:11px;font-weight:700">🔄 Backfill Tzolkin</div><div id="tzbf" style="font-size:13px;color:var(--muted);margin-top:4px">clique p/ rodar</div></div>
         </div>`
       box.innerHTML = summary + ps.map(p => `
@@ -701,6 +705,10 @@
           </div>
           ${(p.adiantamentoBRL > 0) ? `<div style="margin-top:8px;padding:8px 12px;border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.08);border-radius:8px;font-size:13px">⚠️ <b>Adiantamento a descontar:</b> <b style="color:#fbbf24">R$ ${p.adiantamentoBRL.toFixed(2)}</b> (pago à mais, ex.: split cheio) · <b>Repasse líquido:</b> <b style="color:#e879f9">R$ ${(p.repasseLiquidoBRL != null ? p.repasseLiquidoBRL : 0).toFixed(2)}</b>${p.jaPagoBRL ? ` · já pago: R$ ${p.jaPagoBRL.toFixed(2)}` : ''}</div>` : ''}
           <div style="color:var(--muted);font-size:11px;margin-top:4px">Custo = IA/API R$${p.custoIA_BRL.toFixed(2)} + taxa MP R$${p.custoMP_BRL.toFixed(2)} + infra R$${p.custoInfra_BRL.toFixed(2)}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button onclick="partnerPayout('${p.code}', ${(p.repasseLiquidoBRL != null ? p.repasseLiquidoBRL : p.repasseParceiroBRL).toFixed(2)})" style="padding:5px 10px;background:#25503a;color:#c4ead2;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px">💰 Registrar repasse pago</button>
+            <button onclick="partnerSetAdvance('${p.code}', ${(p.adiantamentoBRL || 0).toFixed(2)})" style="padding:5px 10px;background:#3a3417;color:#f0e08f;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px">✏️ Ajustar adiantamento</button>
+          </div>
           <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">ver ${p.clientes.length} clientes</summary>
             <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
               <tr style="text-align:left;color:var(--muted)"><th>Cliente</th><th>E-mail</th><th>Plano</th><th>Status</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr>
@@ -748,7 +756,7 @@
     }
     return r
   }
-  // Prazo do modo gratuito: 7 dias a partir de users.trialStart (espelha
+  // Prazo do modo gratuito: 3 dias a partir de users.trialStart (espelha
   // useSubscriptionCheck). Assinante ativo não está no gratuito → '—'.
   const TRIAL_DAYS = 3
   function trialInfo(u) {
@@ -866,6 +874,45 @@
       const j = await res.json();
       if (el) el.textContent = j.ok ? `${j.set} preenchidos · ${j.skipped} pulados` : (j.error || 'erro');
     } catch (e) { if (el) el.textContent = 'falha de rede'; }
+  }
+
+  // Registra um repasse pago ao parceiro (incrementa paidOut). Não zera o pendente
+  // sozinho (o acerto é por custo real), mas fica no histórico "já pago".
+  async function partnerPayout(code, sugerido) {
+    const v = prompt(`Valor do repasse pago agora a "${code}" (R$):`, Number(sugerido || 0).toFixed(2))
+    if (v == null) return
+    const amount = Number(String(v).replace(',', '.'))
+    if (!Number.isFinite(amount) || amount <= 0) { alert('Valor inválido.'); return }
+    try {
+      const res = await fetch(`${BACKEND}/api/monitoring-action`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getPassword()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'partner_payout', code, addPaidBRL: amount }),
+      })
+      const j = await res.json()
+      if (!j.ok) { alert('Erro: ' + (j.error || res.status)); return }
+      alert(`✅ Registrado. Já pago total: R$ ${Number(j.paidOut).toFixed(2)}`)
+      loadPartners()
+    } catch (e) { alert('Falha de rede: ' + e.message) }
+  }
+
+  // Ajusta o adiantamento a descontar do parceiro (ex.: split cheio pago à mais).
+  async function partnerSetAdvance(code, atual) {
+    const v = prompt(`Adiantamento a descontar de "${code}" (R$) — valor pago à mais que será abatido:`, Number(atual || 0).toFixed(2))
+    if (v == null) return
+    const adv = Number(String(v).replace(',', '.'))
+    if (!Number.isFinite(adv) || adv < 0) { alert('Valor inválido.'); return }
+    try {
+      const res = await fetch(`${BACKEND}/api/monitoring-action`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getPassword()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'partner_payout', code, setAdvanceBRL: adv }),
+      })
+      const j = await res.json()
+      if (!j.ok) { alert('Erro: ' + (j.error || res.status)); return }
+      alert(`✅ Adiantamento atualizado: R$ ${Number(j.advanceOwedBRL).toFixed(2)}`)
+      loadPartners()
+    } catch (e) { alert('Falha de rede: ' + e.message) }
   }
 
   async function userAction(uid, action) {
