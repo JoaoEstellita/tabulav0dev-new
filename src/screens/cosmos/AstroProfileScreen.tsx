@@ -20,6 +20,11 @@ import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
+import { natalMoonPhase } from '../../astro/moonPhase'
+import { resolveNatalMoonPhase } from '../../data/natalMoonPhaseReadings'
+import { resolveNatalRetrograde } from '../../data/natalRetrogradeReadings'
+import { computeChartSynthesis } from '../../astro/chartSynthesis'
+import { composeChartSynthesis } from '../../data/chartSynthesisReadings'
 import { detectAspects } from '../../astro/aspects.engine'
 import aspectsConfig from '../../astro/aspects.config'
 import { normalizeSign } from '../../astro/normalize'
@@ -32,6 +37,17 @@ const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
   Mars: '♂', Jupiter: '♃', Saturn: '♄', Uranus: '♅',
   Neptune: '♆', Pluto: '♇', Lilith: '⚸',
+}
+
+const PLANET_LABELS: Record<string, Record<string, string>> = {
+  Mercury: { 'pt-BR': 'Mercúrio', 'en-US': 'Mercury', 'es-ES': 'Mercurio', 'it-IT': 'Mercurio' },
+  Venus: { 'pt-BR': 'Vênus', 'en-US': 'Venus', 'es-ES': 'Venus', 'it-IT': 'Venere' },
+  Mars: { 'pt-BR': 'Marte', 'en-US': 'Mars', 'es-ES': 'Marte', 'it-IT': 'Marte' },
+  Jupiter: { 'pt-BR': 'Júpiter', 'en-US': 'Jupiter', 'es-ES': 'Júpiter', 'it-IT': 'Giove' },
+  Saturn: { 'pt-BR': 'Saturno', 'en-US': 'Saturn', 'es-ES': 'Saturno', 'it-IT': 'Saturno' },
+  Uranus: { 'pt-BR': 'Urano', 'en-US': 'Uranus', 'es-ES': 'Urano', 'it-IT': 'Urano' },
+  Neptune: { 'pt-BR': 'Netuno', 'en-US': 'Neptune', 'es-ES': 'Neptuno', 'it-IT': 'Nettuno' },
+  Pluto: { 'pt-BR': 'Plutão', 'en-US': 'Pluto', 'es-ES': 'Plutón', 'it-IT': 'Plutone' },
 }
 
 const PLANET_ORDER = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Lilith']
@@ -469,6 +485,33 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     [language],
   )
 
+  // Fase lunar de NASCIMENTO (Sol↔Lua) — camada de propósito/ritmo de vida. Só no natal.
+  const moonPhaseReading = useMemo(() => {
+    const sun = natalPlanets.find(p => p.name === 'Sun')
+    const moon = natalPlanets.find(p => p.name === 'Moon')
+    const phase = natalMoonPhase(sun?.longitude, moon?.longitude)
+    if (!phase) return null
+    const r = resolveNatalMoonPhase(phase.key, language)
+    return { emoji: phase.emoji, label: r.label, text: r.text }
+  }, [natalPlanets, language])
+
+  // Visão Geral do mapa — temperamento (elemento/modalidade), falta, stellium e
+  // hemisfério, num parágrafo que amarra as partes. Só no natal.
+  const chartOverview = useMemo(() => {
+    if (!elemental || !modality) return ''
+    const planets = natalPlanets.map(p => ({ name: p.name, sign: p.sign, house: p.house }))
+    const s = computeChartSynthesis({ elemental, modality, planets })
+    return composeChartSynthesis(s, language, (sign) => sign)
+  }, [natalPlanets, elemental, modality, language])
+
+  // Planetas retrógrados de nascimento — energia internalizada. Só no natal.
+  const natalRetrogrades = useMemo(() => {
+    return natalPlanets
+      .filter(p => p.isRetrograde && p.name !== 'Sun' && p.name !== 'Moon' && p.name !== 'Lilith')
+      .map(p => ({ name: p.name, symbol: PLANET_SYMBOLS[p.name] || '', label: PLANET_LABELS[p.name]?.[language] || p.name, text: resolveNatalRetrograde(p.name, language) }))
+      .filter(p => p.text)
+  }, [natalPlanets, language])
+
   // Signo na cúspide de CADA uma das 12 casas. O catálogo signo-na-casa tem 12×12
   // entradas curadas, mas a tela só usava a casa 1 (via ASC) — as outras 11 nunca
   // chegavam ao usuário.
@@ -546,6 +589,16 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
 
   return (
     <>
+        {/* Visão Geral — síntese do mapa (temperamento + ênfases). Abre a leitura. Só no natal. */}
+        {interpMode === 'natal' && chartOverview ? (
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:overview', n)}>
+            <Text style={styles.cardTitle}>
+              {tl('Visão Geral do Mapa', 'Chart Overview', 'Visión General del Mapa', 'Panoramica del Tema')}
+            </Text>
+            <Text style={styles.angularInterpretationText}>{chartOverview}</Text>
+          </View>
+        ) : null}
+
         {/* Regente do Mapa */}
         {chartRuler ? (
           <View style={styles.card} ref={(n) => registerAnchor?.('section:ruler', n)}>
@@ -878,6 +931,34 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
             ) : null}
           </View>
         ) : null}
+
+        {/* Fase lunar de nascimento (propósito / ritmo de vida) — só no natal */}
+        {interpMode === 'natal' && moonPhaseReading && (
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:moonphase', n)}>
+            <Text style={styles.cardTitle}>
+              {tl('Fase Lunar de Nascimento', 'Birth Moon Phase', 'Fase Lunar de Nacimiento', 'Fase Lunare di Nascita')}
+            </Text>
+            <Text style={[styles.angularValue, { marginBottom: 6 }]}>
+              {moonPhaseReading.emoji} {moonPhaseReading.label}
+            </Text>
+            <Text style={styles.angularInterpretationText}>{moonPhaseReading.text}</Text>
+          </View>
+        )}
+
+        {/* Planetas retrógrados de nascimento — energia internalizada. Só no natal. */}
+        {interpMode === 'natal' && natalRetrogrades.length > 0 && (
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:retrogrades', n)}>
+            <Text style={styles.cardTitle}>
+              {tl('Planetas Retrógrados de Nascimento', 'Natal Retrograde Planets', 'Planetas Retrógrados de Nacimiento', 'Pianeti Retrogradi di Nascita')}
+            </Text>
+            {natalRetrogrades.map(p => (
+              <View key={p.name} style={{ marginBottom: 12 }}>
+                <Text style={[styles.angularValue, { marginBottom: 4 }]}>{p.symbol} {p.label} ℞</Text>
+                <Text style={styles.angularInterpretationText}>{p.text}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Análise elemental */}
         {elemental && (
