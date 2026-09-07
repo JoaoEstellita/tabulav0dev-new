@@ -152,8 +152,15 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
     }
   }
   useEffect(() => { load(filters) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Deu a volta no baralho → recarrega (novos perfis / % atualizada) e volta ao topo.
+  useEffect(() => {
+    if (!loading && cards.length > 0 && idx >= cards.length) load(filters)
+  }, [idx]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const current = cards[idx] || null
+  // Loop: ao passar do fim, volta ao início (módulo) em vez de mostrar "acabaram".
+  // Só fica vazio se NÃO houver ninguém no baralho. Ao dar a volta, recarrega em
+  // segundo plano pra puxar quem entrou novo / reavaliar %.
+  const current = cards.length ? cards[idx % cards.length] : null
   const detail = current ? detailByUid[current.uid] : undefined
 
   // Meu Kin Tzolkin + meu animal chinês (para os selos de relação no card).
