@@ -41,6 +41,7 @@ import MatchInviteCard from './MatchInviteCard'
 import HomeCollectiveGrid from './HomeCollectiveGrid'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
+import AstrologerFab from '../../components/AstrologerFab'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
 import SubscriptionIntroModal from '../../components/SubscriptionIntroModal'
 import { useSubscription } from '../../hooks/useSubscription'
@@ -623,10 +624,13 @@ export default function HomeScreen() {
         {/* Espa\u00E7amento final */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+      {/* Voltar ao topo fica ACIMA do botão da IA (que só existe aqui, na Home). */}
       <ScrollTopButton
         visible={showTop}
+        bottom={Platform.OS === 'ios' ? 168 : 150}
         onPress={() => (scrollRef.current as any)?.scrollTo({ y: 0, animated: true })}
       />
+      <AstrologerFab />
 
       {/* ?? MODAL DE DETALHES DA \u00C1REA */}
       <SubscriptionIntroModal

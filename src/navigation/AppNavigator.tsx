@@ -23,7 +23,6 @@ import SettingsScreen from "../screens/settings/SettingsScreen"
 import NotificationPreferencesScreen from "../screens/settings/NotificationPreferencesScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
 import AstrologerChatScreen from "../screens/chat/AstrologerChatScreen"
-import AstrologerFab from "../components/AstrologerFab"
 import ForecastScreen from "../screens/forecast/ForecastScreen"
 import ForecastPeriodEventsScreen from "../screens/forecast/ForecastPeriodEventsScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
@@ -364,7 +363,6 @@ function MainTabs() {
       </Tab.Screen>
     </Tab.Navigator>
     <TourOverlay />
-    <AstrologerFab />
     </View>
     </TourProvider>
   )
