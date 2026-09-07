@@ -36,7 +36,7 @@ import { casasPorAscendente } from './lib/fatos.mjs'
 import { chaveDoEvento, textoDoEvento } from './lib/textosEvento.mjs'
 import { POR_CASA } from './lib/textosEclipse.mjs'
 import { assuntoDoDia, chaveDoAssunto } from './lib/assuntoDoDia.mjs'
-import { eventosDoDia, ingressosProximos } from './lib/eventos.mjs'
+import { eventosDoDia, ingressosProximos, ingressosDaLua } from './lib/eventos.mjs'
 import { temaEducativo } from './lib/educativo.mjs'
 import { idDoAssunto } from './lib/pautas.mjs'
 import { conceitoDoDia, CONCEITO, CHAVES_DE_CONCEITO } from './lib/textosConceito.mjs'
@@ -224,6 +224,17 @@ function acharPorId(data, mapa, id, { catalogos, iso, usadas }) {
       jaVistas.add(tema.chave)
     }
     return null
+  }
+
+  /**
+   * A Lua entrando em signo vem de `ingressosDaLua`, não de `eventosDoDia`
+   * (a mesma separação de `pautas.mjs`, onde `opcoesDoDia` junta as duas
+   * fontes). Sem isto, marcar "Lua entra em Leão" na editorial não achava o
+   * evento e a peça caía no assunto de maior peso.
+   */
+  if (id.startsWith('ingresso:Moon:')) {
+    const daLua = ingressosDaLua(data, 1).find((ev) => idDoAssunto(ev) === id)
+    if (daLua) return daLua
   }
 
   return doDia.find((ev) => idDoAssunto(ev) === id) || null
