@@ -672,7 +672,8 @@
       const ps = d.parceiros || []
       if (!ps.length) { box.innerHTML = '<div style="color:var(--muted)">Nenhum parceiro cadastrado ainda.</div>'; return }
       const m = d.custoModelo || {}
-      const badge = (s) => s === 'pagante' ? '<span style="color:var(--ok)">● Pagante</span>' : s === 'trial' ? '<span style="color:#fbbf24">● Trial</span>' : s === 'pendente' ? '<span style="color:#8b7cf6">◐ Pendente (WhatsApp)</span>' : '<span style="color:var(--muted)">○ Grátis</span>'
+      const badge = (s) => s === 'pagante' ? '<span style="color:var(--ok)">● Pagante</span>' : s === 'cortesia' ? '<span style="color:#a78bfa">◆ Cortesia</span>' : s === 'trial' ? '<span style="color:#fbbf24">● Trial</span>' : s === 'pendente' ? '<span style="color:#8b7cf6">◐ Pendente (WhatsApp)</span>' : '<span style="color:var(--muted)">○ Grátis</span>'
+      const G = d.totalGeral || {}
       // Resumo geral (todos os parceiros)
       const T = ps.reduce((a, p) => ({
         clientes: a.clientes + p.totalClientes, pagantes: a.pagantes + p.pagantes,
@@ -683,6 +684,7 @@
       }), { clientes: 0, pagantes: 0, receita: 0, lucro: 0, repasse: 0, repasseLiq: 0, adiant: 0, jaPago: 0 })
       const summary = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
+          <div style="background:${G.saudavel ? 'rgba(52,211,153,.1)' : 'rgba(248,113,113,.1)'};border:1px solid ${G.saudavel ? 'var(--ok)' : 'var(--err)'};border-radius:12px;padding:12px"><div style="color:${G.saudavel ? 'var(--ok)' : 'var(--err)'};font-size:11px;font-weight:700">${G.saudavel ? '✅ CUSTO < GANHOS' : '⚠️ CUSTO > GANHOS'}</div><div style="font-size:22px;font-weight:900;color:${G.saudavel ? 'var(--ok)' : 'var(--err)'}">R$ ${(G.lucroLiquidoBRL || 0).toFixed(2)}</div><div style="color:var(--muted);font-size:10px;margin-top:2px">líquido após parceiros · margem ${G.margemPct || 0}%</div></div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Parceiros</div><div style="font-size:22px;font-weight:800">${fmtNum(ps.length)}</div></div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Clientes (pagantes)</div><div style="font-size:22px;font-weight:800">${fmtNum(T.clientes)} <span style="font-size:13px;color:var(--ok)">(${fmtNum(T.pagantes)})</span></div></div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="color:var(--muted);font-size:11px">Lucro do mês</div><div style="font-size:22px;font-weight:800;color:var(--ok)">R$ ${T.lucro.toFixed(2)}</div></div>
@@ -694,7 +696,7 @@
         <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <strong>${p.nome} <span style="color:var(--muted);font-weight:400">(${p.code} · ${p.sharePct}%)</span></strong>
-            <span style="color:var(--muted)">${fmtNum(p.totalClientes)} clientes · <span style="color:var(--ok)">${fmtNum(p.pagantes)} pagantes</span> · ${fmtNum(p.trial)} trial · ${fmtNum(p.gratis)} grátis</span>
+            <span style="color:var(--muted)">${fmtNum(p.totalClientes)} clientes · <span style="color:var(--ok)">${fmtNum(p.pagantes)} pagantes</span>${p.cortesia ? ` · <span style="color:#a78bfa">${fmtNum(p.cortesia)} cortesia</span>` : ''} · ${fmtNum(p.trial)} trial · ${fmtNum(p.gratis)} grátis · ${p.saudavel ? '<span style="color:var(--ok)">✅ lucra</span>' : '<span style="color:var(--err)">⚠️ no vermelho</span>'}</span>
           </div>
           <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-variant-numeric:tabular-nums;font-size:13px">
             <span>Receita: <b>R$ ${p.receitaMesBRL.toFixed(2)}</b></span>

@@ -159,7 +159,7 @@
     (d.clients || []).forEach(function(c){
       var tr = document.createElement('tr');
       tr.innerHTML = '<td>'+esc(c.name)+'</td><td>'+esc(c.plan)+'</td>' +
-        '<td><span class="pill '+(c.active?'on':(c.pending?'pend':'off'))+'">'+(c.active?'ativo':(c.pending?'pendente':'inativo'))+'</span></td>' +
+        '<td><span class="pill '+(c.comp?'pend':(c.active?'on':(c.pending?'pend':'off')))+'">'+(c.comp?'cortesia':(c.active?'ativo':(c.pending?'pendente':'inativo')))+'</span></td>' +
         '<td class="num muted">'+(c.msgsMonth||0)+'</td>' +
         '<td class="num muted">'+brl(c.realCost)+'</td>' +
         '<td class="num" style="color:var(--gold);font-weight:700">'+brl(c.topUp)+'</td>';
