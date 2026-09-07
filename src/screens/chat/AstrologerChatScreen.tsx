@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView,
-  Platform, ActivityIndicator, Animated, Easing,
+  Platform, ActivityIndicator, Animated, Easing, Image, ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -20,6 +20,18 @@ const C = {
   gold: '#FFD700', goldSoft: '#E9C46A', tx: '#EDEBF7', dim: '#9AA0C0', ink: '#241A05',
   head: '#12122A',
 }
+
+const AVATAR = require('../../../assets/astrologer-avatar.png')
+
+// Perguntas prévias — mostram TUDO que a IA responde. Preenchem a tela vazia.
+const SUGGESTIONS: { cat: string; qs: string[] }[] = [
+  { cat: 'Seu dia', qs: ['Como está o meu dia?', 'O que pesa mais hoje?', 'Onde tá minha melhor energia agora?'] },
+  { cat: 'Amor & relações', qs: ['Qual meu melhor dia pro amor?', 'Como tá meu coração hoje?', 'Com quem eu mais combino?'] },
+  { cat: 'Carreira & decisões', qs: ['Como está minha carreira?', 'Qual o melhor dia pra decidir algo?', 'É bom momento pra começar um projeto?'] },
+  { cat: 'Seu mapa', qs: ['Me mostra meu mapa natal', 'Qual é o meu propósito de vida?', 'O que minha Lua diz de mim?', 'Como sou nos 4 sistemas (védico, maia, chinês)?'] },
+  { cat: 'O céu agora', qs: ['O que Marte está mexendo em mim?', 'Tem algum trânsito forte no meu céu?', 'O que vem pela frente pra mim?', 'Estou numa fase difícil, por quê?'] },
+  { cat: 'Lugares, grupos & ciclos', qs: ['Onde no mundo o céu me favorece?', 'Como estão meus grupos?', 'Como está meu ano (retorno solar)?'] },
+]
 
 type Msg = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[]; paywall?: boolean }
 let _seq = 0
@@ -117,6 +129,31 @@ function PaywallCard() {
   )
 }
 
+// Tela inicial (chat vazio): herói + MUITAS perguntas prévias por categoria.
+function EmptyState({ onPick }: { onPick: (q: string) => void }) {
+  return (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 18, paddingBottom: 10 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <View style={{ alignItems: 'center', marginTop: 6, marginBottom: 18 }}>
+        <Image source={AVATAR} style={s.hero} />
+        <Text style={s.heroName}>Seu astrólogo ✦</Text>
+        <Text style={s.heroSub}>Pergunte o que quiser do seu céu, ou comece por um destes:</Text>
+      </View>
+      {SUGGESTIONS.map((g) => (
+        <View key={g.cat} style={{ marginBottom: 15 }}>
+          <Text style={s.catTitle}>{g.cat}</Text>
+          <View style={s.catChips}>
+            {g.qs.map((q) => (
+              <TouchableOpacity key={q} style={s.sugChip} activeOpacity={0.85} onPress={() => onPick(q)}>
+                <Text style={s.sugChipTx}>{q}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  )
+}
+
 export default function AstrologerChatScreen() {
   const navigation = useNavigation<any>()
   const { user } = useAuth()
@@ -166,6 +203,7 @@ export default function AstrologerChatScreen() {
 
   // FlatList invertida: dados mais novos primeiro; render normal fica na ordem certa.
   const data = sending ? ([{ id: '__typing__', role: 'assistant', text: '' } as Msg, ...messages]) : messages
+  const fresh = messages.length <= 1 // só a saudação → mostra a tela de perguntas prévias
 
   return (
     <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
@@ -173,7 +211,7 @@ export default function AstrologerChatScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="chevron-back" size={26} color={C.tx} />
         </TouchableOpacity>
-        <View style={s.avatar}><Text style={{ fontSize: 18 }}>✦</Text></View>
+        <Image source={AVATAR} style={s.avatarImg} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.hName}>Astrólogo</Text>
           <Text style={s.hStatus}>online</Text>
@@ -181,6 +219,7 @@ export default function AstrologerChatScreen() {
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
+        {fresh ? <EmptyState onPick={send} /> : (
         <FlatList
           ref={listRef}
           data={data}
@@ -208,14 +247,15 @@ export default function AstrologerChatScreen() {
             )
           }}
         />
+        )}
 
-        {quota && typeof quota.dailyRemaining === 'number' && (
+        {!fresh && quota && typeof quota.dailyRemaining === 'number' && (
           <View style={s.saldoWrap}>
             <Text style={s.saldoTx}>{quota.dailyRemaining > 0 ? `🌙 ${quota.dailyRemaining} conversa${quota.dailyRemaining === 1 ? '' : 's'} hoje` : '🌙 Seu saldo volta amanhã'}</Text>
           </View>
         )}
 
-        {chips.length > 0 && (
+        {!fresh && chips.length > 0 && (
           <View style={s.chips}>
             {chips.map((c, i) => (
               <TouchableOpacity key={i} style={s.chip} activeOpacity={0.85} onPress={() => send(c)} disabled={sending}>
@@ -250,6 +290,14 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: C.head, borderBottomWidth: 1, borderBottomColor: C.cardBorder },
   avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#0B0B1E', borderWidth: 1, borderColor: 'rgba(255,215,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  avatarImg: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: 'rgba(255,215,0,0.5)' },
+  hero: { width: 104, height: 104, borderRadius: 52, borderWidth: 2, borderColor: 'rgba(255,215,0,0.6)' },
+  heroName: { color: C.tx, fontSize: 18, fontWeight: '900', marginTop: 12 },
+  heroSub: { color: C.dim, fontSize: 13.5, textAlign: 'center', marginTop: 6, lineHeight: 19, maxWidth: 300 },
+  catTitle: { color: C.goldSoft, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, marginLeft: 2 },
+  catChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  sugChip: { backgroundColor: C.card, borderWidth: 1, borderColor: C.cardBorder, borderRadius: 14, paddingVertical: 9, paddingHorizontal: 13 },
+  sugChipTx: { color: C.tx, fontSize: 13.5, fontWeight: '600' },
   hName: { color: C.tx, fontSize: 15.5, fontWeight: '800' },
   hStatus: { color: '#5BD6A0', fontSize: 11.5, fontWeight: '600' },
   row: { flexDirection: 'row', width: '100%' },
