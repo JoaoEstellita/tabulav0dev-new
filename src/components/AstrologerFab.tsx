@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { getAstrologerHint } from '../services/AstrologerChatService'
 
 const OPEN_KEY = 'astrologer_last_open'
 const today = () => new Date().toISOString().slice(0, 10)
@@ -17,7 +18,12 @@ export default function AstrologerFab() {
   const [badge, setBadge] = useState(false)
 
   useEffect(() => {
-    AsyncStorage.getItem(OPEN_KEY).then((d) => setBadge(d !== today())).catch(() => {})
+    // Badge só quando há NOVIDADE real (leitura do dia fresca) E a pessoa ainda
+    // não abriu o chat hoje. Evita badge à toa.
+    Promise.all([
+      AsyncStorage.getItem(OPEN_KEY).catch(() => null),
+      getAstrologerHint(),
+    ]).then(([d, hasNews]) => setBadge(!!hasNews && d !== today())).catch(() => {})
   }, [])
 
   const open = useCallback(() => {

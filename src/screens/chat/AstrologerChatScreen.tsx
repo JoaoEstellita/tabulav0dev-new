@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
-import { sendToAstrologer, type ChatCard } from '../../services/AstrologerChatService'
+import { sendToAstrologer, type ChatCard, type ChatQuota } from '../../services/AstrologerChatService'
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 
 /**
@@ -21,7 +21,7 @@ const C = {
   head: '#12122A',
 }
 
-type Msg = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[] }
+type Msg = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[]; paywall?: boolean }
 let _seq = 0
 const nid = () => `${Date.now()}_${_seq++}`
 
@@ -105,6 +105,18 @@ function CardBlock({ card }: { card: ChatCard }) {
   )
 }
 
+// Paywall bonito inline (não muro): aparece quando a resposta é de não-assinante.
+function PaywallCard() {
+  const navigation = useNavigation<any>()
+  return (
+    <TouchableOpacity style={s.paywallCard} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
+      <Text style={s.paywallTitle}>✦ Destrave o astrólogo completo</Text>
+      <Text style={s.paywallSub}>Leituras à vontade, sinastria, previsões e seus grupos. A partir de R$ 19,90/mês.</Text>
+      <View style={s.paywallCta}><Text style={s.paywallCtaTx}>Ver planos</Text><Ionicons name="arrow-forward" size={14} color="#241A05" /></View>
+    </TouchableOpacity>
+  )
+}
+
 export default function AstrologerChatScreen() {
   const navigation = useNavigation<any>()
   const { user } = useAuth()
@@ -114,6 +126,7 @@ export default function AstrologerChatScreen() {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [streamingId, setStreamingId] = useState<string | null>(null)
+  const [quota, setQuota] = useState<ChatQuota | null>(null)
   const [chips, setChips] = useState<string[]>(['Como está o meu dia', 'Meu melhor dia pro amor', 'Como estão meus grupos'])
   const listRef = useRef<FlatList<Msg>>(null)
   const storeKey = `astrologer_chat_${(user as any)?.uid || 'anon'}`
@@ -143,8 +156,9 @@ export default function AstrologerChatScreen() {
     setSending(true)
     const r = await sendToAstrologer(text)
     setSending(false)
+    setQuota(r.quota || null)
     const aid = nid()
-    setMessages((m) => [{ id: aid, role: 'assistant', text: r.reply || '🌙', cards: r.cards }, ...m])
+    setMessages((m) => [{ id: aid, role: 'assistant', text: r.reply || '🌙', cards: r.cards, paywall: r.status === 'not_premium' }, ...m])
     setStreamingId(aid)
     if (r.quickReplies && r.quickReplies.length) setChips(r.quickReplies.slice(0, 3))
     scrollDown()
@@ -189,10 +203,17 @@ export default function AstrologerChatScreen() {
                   </View>
                 </View>
                 {!mine && item.id !== streamingId && item.cards?.map((c, i) => <CardBlock key={i} card={c} />)}
+                {!mine && item.id !== streamingId && item.paywall && <PaywallCard />}
               </View>
             )
           }}
         />
+
+        {quota && typeof quota.dailyRemaining === 'number' && (
+          <View style={s.saldoWrap}>
+            <Text style={s.saldoTx}>{quota.dailyRemaining > 0 ? `🌙 ${quota.dailyRemaining} conversa${quota.dailyRemaining === 1 ? '' : 's'} hoje` : '🌙 Seu saldo volta amanhã'}</Text>
+          </View>
+        )}
 
         {chips.length > 0 && (
           <View style={s.chips}>
@@ -243,6 +264,13 @@ const s = StyleSheet.create({
   cardTitle: { color: C.goldSoft, fontSize: 13, fontWeight: '800', marginBottom: 6, marginLeft: 4 },
   actionCard: { alignSelf: 'flex-start', maxWidth: '84%', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
   actionLabel: { color: C.tx, fontSize: 14, fontWeight: '700' },
+  paywallCard: { alignSelf: 'stretch', backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,215,0,0.4)', borderRadius: 16, padding: 16, marginRight: 8 },
+  paywallTitle: { color: C.gold, fontSize: 15, fontWeight: '900' },
+  paywallSub: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 6 },
+  paywallCta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.gold, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18, marginTop: 12 },
+  paywallCtaTx: { color: C.ink, fontSize: 13.5, fontWeight: '800' },
+  saldoWrap: { alignItems: 'center', paddingBottom: 6 },
+  saldoTx: { color: C.dim, fontSize: 11.5, fontWeight: '600' },
   inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.cardBorder, backgroundColor: C.head },
   input: { flex: 1, color: C.tx, fontSize: 15, maxHeight: 120, paddingVertical: 8, paddingHorizontal: 6 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' },
