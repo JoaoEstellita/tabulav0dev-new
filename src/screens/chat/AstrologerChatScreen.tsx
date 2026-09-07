@@ -38,6 +38,26 @@ function RichText({ text, color }: { text: string; color: string }) {
   )
 }
 
+// Revela o texto progressivamente (sensação de digitação ao vivo, sem SSE).
+function TypewriterText({ text, color, onTick, onDone }: { text: string; color: string; onTick?: () => void; onDone?: () => void }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    setN(0)
+    if (!text) { onDone?.(); return }
+    const step = Math.max(2, Math.round(text.length / 90)) // ~90 quadros
+    const id = setInterval(() => {
+      setN((x) => {
+        const nx = x + step
+        if (nx >= text.length) { clearInterval(id); onDone?.(); return text.length }
+        onTick?.()
+        return nx
+      })
+    }, 22)
+    return () => clearInterval(id)
+  }, [text]) // eslint-disable-line react-hooks/exhaustive-deps
+  return <RichText text={text.slice(0, n)} color={color} />
+}
+
 function TypingDots() {
   const a = useRef(new Animated.Value(0)).current
   useEffect(() => {
@@ -92,6 +112,7 @@ export default function AstrologerChatScreen() {
   const [messages, setMessages] = useState<Msg[]>([{ id: nid(), role: 'assistant', text: greeting }])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [streamingId, setStreamingId] = useState<string | null>(null)
   const [chips, setChips] = useState<string[]>(['Como está o meu dia', 'Meu melhor dia pro amor', 'Como estão meus grupos'])
   const listRef = useRef<FlatList<Msg>>(null)
 
@@ -107,7 +128,9 @@ export default function AstrologerChatScreen() {
     setSending(true)
     const r = await sendToAstrologer(text)
     setSending(false)
-    setMessages((m) => [{ id: nid(), role: 'assistant', text: r.reply || '🌙', cards: r.cards }, ...m])
+    const aid = nid()
+    setMessages((m) => [{ id: aid, role: 'assistant', text: r.reply || '🌙', cards: r.cards }, ...m])
+    setStreamingId(aid)
     if (r.quickReplies && r.quickReplies.length) setChips(r.quickReplies.slice(0, 3))
     scrollDown()
   }, [sending, scrollDown])
@@ -145,10 +168,12 @@ export default function AstrologerChatScreen() {
               <View style={{ gap: 8 }}>
                 <View style={[s.row, { justifyContent: mine ? 'flex-end' : 'flex-start' }]}>
                   <View style={[s.bubble, mine ? s.bubbleU : s.bubbleA]}>
-                    <RichText text={item.text} color={mine ? C.ink : C.tx} />
+                    {!mine && item.id === streamingId
+                      ? <TypewriterText text={item.text} color={C.tx} onTick={scrollDown} onDone={() => setStreamingId(null)} />
+                      : <RichText text={item.text} color={mine ? C.ink : C.tx} />}
                   </View>
                 </View>
-                {!mine && item.cards?.map((c, i) => <CardBlock key={i} card={c} />)}
+                {!mine && item.id !== streamingId && item.cards?.map((c, i) => <CardBlock key={i} card={c} />)}
               </View>
             )
           }}

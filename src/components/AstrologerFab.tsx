@@ -1,14 +1,30 @@
-import React, { useEffect, useRef } from 'react'
-import { Animated, Easing, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const OPEN_KEY = 'astrologer_last_open'
+const today = () => new Date().toISOString().slice(0, 10)
 
 /**
  * Botão flutuante ✦ que abre o Astrólogo (chat no app). Fica sobre as abas
- * principais; um brilho pulsa devagar pra convidar sem incomodar.
+ * principais; um brilho pulsa devagar. Um badge sutil aparece quando a pessoa
+ * ainda não abriu o chat HOJE (nudge do céu do dia) e some ao abrir.
  */
 export default function AstrologerFab() {
   const navigation = useNavigation<any>()
   const pulse = useRef(new Animated.Value(0)).current
+  const [badge, setBadge] = useState(false)
+
+  useEffect(() => {
+    AsyncStorage.getItem(OPEN_KEY).then((d) => setBadge(d !== today())).catch(() => {})
+  }, [])
+
+  const open = useCallback(() => {
+    setBadge(false)
+    AsyncStorage.setItem(OPEN_KEY, today()).catch(() => {})
+    navigation.navigate('AstrologerChat')
+  }, [navigation])
 
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([
@@ -28,11 +44,12 @@ export default function AstrologerFab() {
     <TouchableOpacity
       style={s.wrap}
       activeOpacity={0.85}
-      onPress={() => navigation.navigate('AstrologerChat')}
+      onPress={open}
       accessibilityLabel="Falar com o astrólogo"
     >
       <Animated.View style={[s.glow, glowStyle]} />
       <Text style={s.icon}>✦</Text>
+      {badge && <View style={s.badge} />}
     </TouchableOpacity>
   )
 }
@@ -50,4 +67,5 @@ const s = StyleSheet.create({
   },
   glow: { position: 'absolute', width: 58, height: 58, borderRadius: 29, backgroundColor: '#FFD700' },
   icon: { fontSize: 26, color: '#241A05', fontWeight: '900' },
+  badge: { position: 'absolute', top: 6, right: 6, width: 14, height: 14, borderRadius: 7, backgroundColor: '#FF4D6D', borderWidth: 2, borderColor: '#0F0F23' },
 })
