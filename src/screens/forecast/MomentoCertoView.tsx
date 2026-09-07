@@ -166,6 +166,14 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(winTitle)}&dates=${dates}&details=${encodeURIComponent(details)}`
     Linking.openURL(url).catch(() => {})
   }
+  // Intenção com o maior score (≥50) → recebe o selo "🔥 melhor agora" no seletor.
+  // Não reordena os tiles: só marca, preservando as posições fixas.
+  const topK = (() => {
+    if (!overview) return null
+    let bk: MomentoIntention | null = null, bs = 49
+    for (const it of INTENTIONS) { const sc = overview[it.k]?.score ?? -1; if (sc > bs) { bs = sc; bk = it.k } }
+    return bk
+  })()
   const scoreColor = (s: number) => (s >= 70 ? C.good : s >= 50 ? C.gold : C.dim)
   const scoreBand = (s: number) => (
     s >= 70 ? tl('Momento forte', 'Strong window', 'Momento fuerte', 'Momento forte')
@@ -182,43 +190,39 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
         <Text style={s.heroSub}>{tl('Escolha uma intenção e veja os melhores dias — em que o céu te apoia para aquilo.', 'Pick an intention and see the best days — when the sky supports you for it.', 'Elige una intencion y ve los mejores dias — cuando el cielo te apoya.', 'Scegli un\'intenzione e vedi i giorni migliori — quando il cielo ti sostiene.')}</Text>
       </View>
 
-      <View style={s.grid} {...aIntentions}>
-        {INTENTIONS.map((it) => {
-          const on = intention === it.k
-          return (
-            <TouchableOpacity key={it.k} style={[s.card, on && s.cardOn]} activeOpacity={0.85} onPress={() => setIntention(it.k)}>
-              <Ionicons name={it.icon as any} size={20} color={on ? '#0F0F23' : C.gold} />
-              <Text style={[s.cardTx, on && s.cardTxOn]}>{it.label}</Text>
-            </TouchableOpacity>
-          )
-        })}
-      </View>
-
-      {premium && overview && INTENTIONS.some((it) => overview[it.k]) ? (
-        <View style={s.ovWrap}>
-          <Text style={s.ovTitle}>{tl('Melhor dia por intenção', 'Best day per intention', 'Mejor dia por intencion', 'Giorno migliore per intenzione')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
-            {INTENTIONS.map((it) => {
-              const o = overview[it.k]
-              const on = intention === it.k
-              return (
-                <TouchableOpacity key={'ov' + it.k} style={[s.ovChip, on && s.ovChipOn]} activeOpacity={0.85} onPress={() => setIntention(it.k)}>
-                  <Ionicons name={it.icon as any} size={14} color={on ? '#0F0F23' : C.gold} />
-                  <Text style={[s.ovChipLabel, on && { color: '#0F0F23' }]} numberOfLines={1}>{it.label}</Text>
-                  {o ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                      <Text style={[s.ovChipDate, on && { color: '#0F0F23' }]}>{fmtShort(o.dateISO)}</Text>
-                      <View style={[s.ovDot, { backgroundColor: scoreColor(o.score) }]} />
-                    </View>
-                  ) : (
-                    <Text style={[s.ovChipDate, on && { color: '#0F0F23' }]}>—</Text>
-                  )}
-                </TouchableOpacity>
-              )
-            })}
-          </ScrollView>
+      {/* Seletor unificado: seleciona a intenção E mostra o melhor dia por intenção
+          (funde o antigo grid + a régua "melhor dia por intenção"). */}
+      <View style={s.selWrap}>
+        <View style={s.selHead}>
+          <Text style={s.selTitle}>{tl('Escolha sua intenção', 'Pick your intention', 'Elige tu intencion', 'Scegli la tua intenzione')}</Text>
+          {premium ? <Text style={s.selCaption}>{tl('Melhor dia · próximos 45 dias', 'Best day · next 45 days', 'Mejor dia · proximos 45 dias', 'Giorno migliore · prossimi 45 giorni')}</Text> : null}
         </View>
-      ) : null}
+        <View style={s.grid} {...aIntentions}>
+          {INTENTIONS.map((it) => {
+            const on = intention === it.k
+            const o = overview ? overview[it.k] : null
+            const isTop = topK === it.k && !on
+            return (
+              <TouchableOpacity key={it.k} style={[s.tile, on && s.tileOn, isTop && s.tileTop]} activeOpacity={0.85} onPress={() => setIntention(it.k)}>
+                <View style={s.tileHead}>
+                  <Ionicons name={it.icon as any} size={18} color={on ? '#0F0F23' : C.gold} />
+                  <Text style={[s.tileTx, on && s.tileTxOn]} numberOfLines={1}>{it.label}</Text>
+                </View>
+                {o ? (
+                  <View style={s.tileMeta}>
+                    {isTop ? <Text style={s.tileHot}>🔥</Text> : null}
+                    <Text style={[s.tileDate, on && s.tileMetaOn]}>{fmtShort(o.dateISO)}</Text>
+                    <View style={[s.tileDot, { backgroundColor: on ? '#0F0F23' : scoreColor(o.score) }]} />
+                    <Text style={[s.tileScore, { color: on ? '#0F0F23' : scoreColor(o.score) }]}>{o.score}</Text>
+                  </View>
+                ) : premium ? (
+                  <Text style={[s.tileDate, on && s.tileMetaOn, { opacity: 0.5 }]}>—</Text>
+                ) : null}
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+      </View>
 
       {!premium ? (
         <TouchableOpacity style={s.paywall} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
@@ -236,11 +240,13 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
           {(windows || []).length > 0 ? (
             <View style={s.horizonRow}>
               <Text style={s.horizonLabel}>{tl('Horizonte', 'Horizon', 'Horizonte', 'Orizzonte')}</Text>
-              {HORIZONS.map((h) => (
-                <TouchableOpacity key={'h' + h} style={[s.horizonChip, horizon === h && s.horizonChipOn]} activeOpacity={0.85} onPress={() => setHorizon(h)}>
-                  <Text style={[s.horizonChipTx, horizon === h && s.horizonChipTxOn]}>{h}{tl('d', 'd', 'd', 'g')}</Text>
-                </TouchableOpacity>
-              ))}
+              <View style={s.segment}>
+                {HORIZONS.map((h) => (
+                  <TouchableOpacity key={'h' + h} style={[s.segItem, horizon === h && s.segItemOn]} activeOpacity={0.85} onPress={() => setHorizon(h)}>
+                    <Text style={[s.segTx, horizon === h && s.segTxOn]}>{h}{tl('d', 'd', 'd', 'g')}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           ) : null}
           {shown.length === 0 ? (
@@ -404,25 +410,31 @@ const s = StyleSheet.create({
   heroKicker: { color: C.gold, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
   heroTitle: { color: C.tx, fontSize: 24, fontWeight: '900', marginTop: 4 },
   heroSub: { color: C.dim, fontSize: 13.5, lineHeight: 19, marginTop: 8 },
+  selWrap: {},
+  selHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 },
+  selTitle: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  selCaption: { color: C.dim, fontSize: 11.5, fontWeight: '700' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  card: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 13 },
-  cardOn: { backgroundColor: C.gold, borderColor: C.gold },
-  cardTx: { color: C.tx, fontSize: 14, fontWeight: '700' },
-  cardTxOn: { color: '#0F0F23', fontWeight: '800' },
+  tile: { width: '47%', flexGrow: 1, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 12, gap: 9 },
+  tileOn: { backgroundColor: C.gold, borderColor: C.gold },
+  tileTop: { borderColor: 'rgba(255,215,0,0.55)' },
+  tileHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tileTx: { color: C.tx, fontSize: 14, fontWeight: '700', flexShrink: 1 },
+  tileTxOn: { color: '#0F0F23', fontWeight: '800' },
+  tileMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tileMetaOn: { color: '#0F0F23' },
+  tileHot: { fontSize: 12 },
+  tileDate: { color: C.dim, fontSize: 12.5, fontWeight: '800', textTransform: 'capitalize' },
+  tileDot: { width: 8, height: 8, borderRadius: 4 },
+  tileScore: { fontSize: 12.5, fontWeight: '900' },
   label: { color: C.tx, fontSize: 14, fontWeight: '800' },
-  ovWrap: { marginTop: 14 },
-  ovTitle: { color: C.dim, fontSize: 12, fontWeight: '800', letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 8 },
-  ovChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingVertical: 8, paddingHorizontal: 11 },
-  ovChipOn: { backgroundColor: C.gold, borderColor: C.gold },
-  ovChipLabel: { color: C.tx, fontSize: 12.5, fontWeight: '700', maxWidth: 90 },
-  ovChipDate: { color: C.dim, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
-  ovDot: { width: 8, height: 8, borderRadius: 4 },
-  horizonRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  horizonRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   horizonLabel: { color: C.dim, fontSize: 12.5, fontWeight: '700', marginRight: 2 },
-  horizonChip: { backgroundColor: C.card, borderRadius: 10, borderWidth: 1, borderColor: C.line, paddingVertical: 6, paddingHorizontal: 13 },
-  horizonChipOn: { backgroundColor: C.card2, borderColor: C.gold },
-  horizonChipTx: { color: C.dim, fontSize: 13, fontWeight: '800' },
-  horizonChipTxOn: { color: C.gold },
+  segment: { flexDirection: 'row', backgroundColor: C.card, borderRadius: 10, borderWidth: 1, borderColor: C.line, overflow: 'hidden' },
+  segItem: { paddingVertical: 6, paddingHorizontal: 15 },
+  segItemOn: { backgroundColor: C.card2 },
+  segTx: { color: C.dim, fontSize: 13, fontWeight: '800' },
+  segTxOn: { color: C.gold },
   win: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
   winDate: { color: C.tx, fontSize: 15, fontWeight: '800', textTransform: 'capitalize' },
   winHuman: { color: C.tx, fontSize: 13.5, fontWeight: '700', lineHeight: 18, marginTop: 3 },
