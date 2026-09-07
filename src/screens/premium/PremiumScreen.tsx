@@ -1329,24 +1329,49 @@ export default function PremiumScreen() {
             <Text style={styles.compareValue}>{tr('premium.plan.premium', 'Premium')}</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>{tr('premium.compare.statusForecast', 'Previsoes de Status')}</Text>
-            <Text style={styles.compareValue}>7d</Text>
-            <Text style={styles.compareValue}>7/30/90</Text>
-            <Text style={styles.compareValue}>7/30/90/360</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.statusForecast', 'Previsões')}</Text>
+            <Text style={styles.compareValue}>30d</Text>
+            <Text style={styles.compareValue}>90d</Text>
+            <Text style={[styles.compareValue, styles.compareValueHighlight]}>360d</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>{tr('premium.compare.profiles', 'Perfis de monitoramento')}</Text>
+            <Text style={styles.compareValue}>1</Text>
+            <Text style={styles.compareValue}>2</Text>
+            <Text style={[styles.compareValue, styles.compareValueHighlight]}>5</Text>
           </View>
           <View style={styles.compareRow}>
             <Text style={styles.compareLabel}>{tr('premium.compare.groups', 'Grupos')}</Text>
+            <Text style={styles.compareValue}>1</Text>
+            <Text style={styles.compareValue}>2</Text>
+            <Text style={[styles.compareValue, styles.compareValueHighlight]}>3</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>{tr('premium.compare.momento', 'Momento Certo')}</Text>
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappAgent', 'Astrologo IA no WhatsApp')}</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.astroMap', 'Astrocartografia')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>{tr('premium.compare.solarReturn', 'Retorno Solar/Lunar')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappAgent', 'Astrólogo IA no WhatsApp')}</Text>
             <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitEssential', '3/dia')}</Text>
             <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitPro', '6/dia')}</Text>
             <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappLimitPremium', '10/dia')}</Text>
           </View>
         </View>
+        <Text style={styles.compareFootnote}>{tr('premium.compare.footnote', 'Todos os recursos (Momento Certo, Astrocartografia, Retorno Solar) já vêm no Essential. Os planos maiores ampliam perfis, grupos, previsão e conversas no WhatsApp.')}</Text>
       </View>
 
       {/* FAQ curto */}
@@ -2297,6 +2322,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     textAlign: 'center',
+  },
+  compareFootnote: {
+    color: '#8A8A99',
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 10,
+    fontStyle: 'italic',
   },
   planPhoneRow: {
     marginTop: 6,

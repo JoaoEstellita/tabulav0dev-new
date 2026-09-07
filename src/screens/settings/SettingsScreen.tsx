@@ -1606,6 +1606,32 @@ export default function SettingsScreen() {
           {/* Meu plano: status, limites, créditos, comprar/upgrade + tabela completa */}
           <PlanStatusCard />
 
+          {/* Parceria: chamativo, abre a landing de parceria (indicação = 50% do lucro) */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => Linking.openURL('https://www.tabulaestelar.com.br/parceria')}
+            style={styles.partnerCard}
+          >
+            <LinearGradient
+              colors={['#FFDD8A', '#E9C46A', '#C9A24B']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.partnerGradient}
+            >
+              <View style={styles.partnerIcon}>
+                <Ionicons name="sparkles" size={22} color="#4A3608" />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.partnerTitle}>{tr('settings.partner.title', 'Seja parceiro(a) ✦')}</Text>
+                <Text style={styles.partnerSub}>{tr('settings.partner.sub', 'Indique o Tábula e ganhe 50% do lucro de cada assinante — recorrente.')}</Text>
+                <View style={styles.partnerCta}>
+                  <Text style={styles.partnerCtaText}>{tr('settings.partner.cta', 'Quero ser parceiro(a)')}</Text>
+                  <Ionicons name="arrow-forward" size={14} color="#4A3608" />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('settings.language.title')}</Text>
             <View style={styles.languagePills}>
@@ -1866,6 +1892,54 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 30,
     paddingHorizontal: 20,
+  },
+  partnerCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#E9C46A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  partnerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+  },
+  partnerIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partnerTitle: {
+    color: '#3A2A05',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  partnerSub: {
+    color: '#5A4410',
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: 3,
+    fontWeight: '600',
+  },
+  partnerCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 8,
+  },
+  partnerCtaText: {
+    color: '#4A3608',
+    fontSize: 13,
+    fontWeight: '800',
   },
   sectionTitle: {
     fontSize: 18,
