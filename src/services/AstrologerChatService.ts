@@ -1,6 +1,9 @@
 import { backendFetch } from './backend/client'
 
-export type ChatReply = { reply: string; quickReplies?: string[]; status?: string; error?: string }
+export type ChatCard =
+  | { type: 'natal_wheel' }
+  | { type: 'action'; action: 'momento' | 'forecast' | 'groups'; label: string }
+export type ChatReply = { reply: string; quickReplies?: string[]; cards?: ChatCard[]; status?: string; error?: string }
 
 /**
  * Fala com o Astrólogo (agente) DENTRO do app — mesmo cérebro/cota/memória do
@@ -20,7 +23,7 @@ export async function sendToAstrologer(message: string): Promise<ChatReply> {
     }
     if (!res.ok) return { reply: 'Tive uma instabilidade agora 🌙 me manda de novo daqui a pouco.', error: 'http_' + res.status }
     const j = await res.json()
-    return { reply: j.reply || '', quickReplies: Array.isArray(j.quickReplies) ? j.quickReplies : undefined, status: j.status }
+    return { reply: j.reply || '', quickReplies: Array.isArray(j.quickReplies) ? j.quickReplies : undefined, cards: Array.isArray(j.cards) ? j.cards : undefined, status: j.status }
   } catch {
     return { reply: 'Não consegui te responder agora. Confere sua conexão e tenta de novo 🌙', error: 'network' }
   }

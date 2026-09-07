@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
-import { sendToAstrologer } from '../../services/AstrologerChatService'
+import { sendToAstrologer, type ChatCard } from '../../services/AstrologerChatService'
+import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 
 /**
  * Astrólogo no app — chat com o mesmo agente do WhatsApp (via /api/app-chat).
@@ -19,7 +20,7 @@ const C = {
   head: '#12122A',
 }
 
-type Msg = { id: string; role: 'user' | 'assistant'; text: string }
+type Msg = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[] }
 let _seq = 0
 const nid = () => `${Date.now()}_${_seq++}`
 
@@ -58,6 +59,31 @@ function TypingDots() {
   )
 }
 
+// Fase 2: card rico embaixo do balão do astrólogo — roda natal NATIVA inline (o
+// componente busca o mapa do usuário logado sozinho) ou atalho tappável.
+function CardBlock({ card }: { card: ChatCard }) {
+  const navigation = useNavigation<any>()
+  if (card.type === 'natal_wheel') {
+    return (
+      <View style={s.wheelCard}>
+        <Text style={s.cardTitle}>✦ Seu mapa natal</Text>
+        <NatalChartWheelContent transitData={null} loading={false} showLegend={false} />
+      </View>
+    )
+  }
+  const go = () => {
+    if (card.action === 'momento') navigation.navigate('Tabs', { screen: 'Forecast', params: { momentoIntention: 'amor' } })
+    else if (card.action === 'forecast') navigation.navigate('Tabs', { screen: 'Forecast' })
+    else if (card.action === 'groups') navigation.navigate('Tabs', { screen: 'Groups' })
+  }
+  return (
+    <TouchableOpacity style={s.actionCard} onPress={go} activeOpacity={0.85}>
+      <Text style={s.actionLabel}>{card.label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={C.gold} />
+    </TouchableOpacity>
+  )
+}
+
 export default function AstrologerChatScreen() {
   const navigation = useNavigation<any>()
   const { user } = useAuth()
@@ -81,7 +107,7 @@ export default function AstrologerChatScreen() {
     setSending(true)
     const r = await sendToAstrologer(text)
     setSending(false)
-    setMessages((m) => [{ id: nid(), role: 'assistant', text: r.reply || '🌙' }, ...m])
+    setMessages((m) => [{ id: nid(), role: 'assistant', text: r.reply || '🌙', cards: r.cards }, ...m])
     if (r.quickReplies && r.quickReplies.length) setChips(r.quickReplies.slice(0, 3))
     scrollDown()
   }, [sending, scrollDown])
@@ -116,10 +142,13 @@ export default function AstrologerChatScreen() {
             }
             const mine = item.role === 'user'
             return (
-              <View style={[s.row, { justifyContent: mine ? 'flex-end' : 'flex-start' }]}>
-                <View style={[s.bubble, mine ? s.bubbleU : s.bubbleA]}>
-                  <RichText text={item.text} color={mine ? C.ink : C.tx} />
+              <View style={{ gap: 8 }}>
+                <View style={[s.row, { justifyContent: mine ? 'flex-end' : 'flex-start' }]}>
+                  <View style={[s.bubble, mine ? s.bubbleU : s.bubbleA]}>
+                    <RichText text={item.text} color={mine ? C.ink : C.tx} />
+                  </View>
                 </View>
+                {!mine && item.cards?.map((c, i) => <CardBlock key={i} card={c} />)}
               </View>
             )
           }}
@@ -170,6 +199,10 @@ const s = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingBottom: 8 },
   chip: { borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', backgroundColor: 'rgba(255,215,0,0.06)', borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
   chipTx: { color: C.goldSoft, fontSize: 13, fontWeight: '700' },
+  wheelCard: { alignSelf: 'stretch', backgroundColor: C.card, borderWidth: 1, borderColor: C.cardBorder, borderRadius: 16, padding: 10, marginRight: 8 },
+  cardTitle: { color: C.goldSoft, fontSize: 13, fontWeight: '800', marginBottom: 6, marginLeft: 4 },
+  actionCard: { alignSelf: 'flex-start', maxWidth: '84%', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  actionLabel: { color: C.tx, fontSize: 14, fontWeight: '700' },
   inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.cardBorder, backgroundColor: C.head },
   input: { flex: 1, color: C.tx, fontSize: 15, maxHeight: 120, paddingVertical: 8, paddingHorizontal: 6 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' },
