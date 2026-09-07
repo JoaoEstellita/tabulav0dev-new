@@ -213,8 +213,8 @@ function PlanComparison({ tr, current }: { tr: (k: string, f: string) => string;
     { label: tr("settings.plan.row.wa", "IA no WhatsApp"), vals: [`${FREE_TOTAL_MSG} no total`, `${MONTHLY_MSG_CAP_BY_TIER.essential}/mês`, `${MONTHLY_MSG_CAP_BY_TIER.pro}/mês`, `${MONTHLY_MSG_CAP_BY_TIER.premium}/mês`] },
     { label: tr("settings.plan.row.forecast", "Previsões"), vals: [false, "30d", "90d", "360d"] },
     { label: tr("settings.plan.row.returns", "Retorno Solar/Lunar"), vals: [false, true, true, true] },
-    { label: tr("settings.plan.row.moment", "Momento Certo"), vals: [false, false, true, true] },
-    { label: tr("settings.plan.row.astromap", "Astrocartografia"), vals: [false, false, true, true] },
+    { label: tr("settings.plan.row.moment", "Momento Certo"), vals: [false, true, true, true] },
+    { label: tr("settings.plan.row.astromap", "Astrocartografia"), vals: [false, true, true, true] },
   ]
   return (
     <View style={s.cmpWrap}>
