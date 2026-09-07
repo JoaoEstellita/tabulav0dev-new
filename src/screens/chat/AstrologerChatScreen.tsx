@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
 import { sendToAstrologer, type ChatCard } from '../../services/AstrologerChatService'
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
@@ -115,6 +116,20 @@ export default function AstrologerChatScreen() {
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [chips, setChips] = useState<string[]>(['Como está o meu dia', 'Meu melhor dia pro amor', 'Como estão meus grupos'])
   const listRef = useRef<FlatList<Msg>>(null)
+  const storeKey = `astrologer_chat_${(user as any)?.uid || 'anon'}`
+  const loaded = useRef(false)
+
+  // Continuidade: carrega o histórico salvo ao abrir; salva a cada mudança (últimas 40).
+  useEffect(() => {
+    AsyncStorage.getItem(storeKey).then((raw) => {
+      if (raw) { try { const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length) setMessages(arr) } catch {} }
+      loaded.current = true
+    }).catch(() => { loaded.current = true })
+  }, [storeKey])
+  useEffect(() => {
+    if (!loaded.current) return
+    AsyncStorage.setItem(storeKey, JSON.stringify(messages.slice(0, 40))).catch(() => {})
+  }, [messages, storeKey])
 
   const scrollDown = useCallback(() => { requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true })) }, [])
 
