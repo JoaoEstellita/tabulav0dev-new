@@ -103,6 +103,10 @@
       "destination": "/estudio.html"
     },
     {
+      "source": "/parceria",
+      "destination": "/parceria.html"
+    },
+    {
       "source": "/",
       "destination": "/landing.html"
     }
