@@ -64,7 +64,7 @@ const s = StyleSheet.create({
   wrap: {
     position: 'absolute',
     right: 18,
-    bottom: Platform.OS === 'ios' ? 96 : 78, // acima da barra de abas
+    bottom: Platform.OS === 'ios' ? 24 : 18, // logo acima da barra de abas (dentro da Home)
     width: 58, height: 58, borderRadius: 29,
     backgroundColor: '#FFD700',
     alignItems: 'center', justifyContent: 'center',

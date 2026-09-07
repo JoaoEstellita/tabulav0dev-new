@@ -627,7 +627,7 @@ export default function HomeScreen() {
       {/* Voltar ao topo fica ACIMA do botão da IA (que só existe aqui, na Home). */}
       <ScrollTopButton
         visible={showTop}
-        bottom={Platform.OS === 'ios' ? 168 : 150}
+        bottom={Platform.OS === 'ios' ? 94 : 88}
         onPress={() => (scrollRef.current as any)?.scrollTo({ y: 0, animated: true })}
       />
       <AstrologerFab />
