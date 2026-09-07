@@ -22,6 +22,8 @@ import NetworkScreen from "../screens/connections/NetworkScreen"
 import SettingsScreen from "../screens/settings/SettingsScreen"
 import NotificationPreferencesScreen from "../screens/settings/NotificationPreferencesScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
+import AstrologerChatScreen from "../screens/chat/AstrologerChatScreen"
+import AstrologerFab from "../components/AstrologerFab"
 import ForecastScreen from "../screens/forecast/ForecastScreen"
 import ForecastPeriodEventsScreen from "../screens/forecast/ForecastPeriodEventsScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
@@ -362,6 +364,7 @@ function MainTabs() {
       </Tab.Screen>
     </Tab.Navigator>
     <TourOverlay />
+    <AstrologerFab />
     </View>
     </TourProvider>
   )
@@ -372,6 +375,7 @@ function RootNavigator() {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, cardStyle: { flex: 1 } }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
+      <RootStack.Screen name="AstrologerChat" component={AstrologerChatScreen} options={{ headerShown: false }} />
       <RootStack.Screen name="Premium" component={PremiumScreen} options={{ headerShown: true, title: 'Assinatura', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen
         name="ForecastPeriodEvents"
