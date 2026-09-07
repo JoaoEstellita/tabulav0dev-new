@@ -55,6 +55,94 @@ export const TEXTO_DO_EVENTO = {
     'pesar os dois lados. Boa fase para negociar e desfazer mal-entendido, ' +
     'desde que decidir não vire adiar.',
 
+  // ── A LUA ENTRANDO EM CADA SIGNO ───────────────────────────────────────────
+  // A Lua troca de signo a cada ~2 dias e meio, treze vezes por mês. É o clima
+  // emocional do período, não o mapa de quem nasce com a Lua ali. Período +
+  // virada de tom + uso + risco, curto porque a passagem é curta.
+  'ingresso:Moon:Áries':
+    'Por dois dias e meio o clima emocional acelera. A Lua passa por Áries e o ' +
+    'sentir vira impulso: vontade de agir agora, pavio mais curto, coragem que ' +
+    'vem fácil. É um bom tempo para começar o que estava parado e encarar o que ' +
+    'vinha adiando. O risco é responder no calor da hora, porque o que se diz ' +
+    'com raiva não costuma voltar atrás.',
+
+  'ingresso:Moon:Touro':
+    'Por dois dias e meio o humor desacelera e pede chão. A Lua em Touro puxa ' +
+    'conforto, calma e corpo: comida boa, descanso, um tempo sem pressa e perto ' +
+    'da natureza. O afeto quer estabilidade e presença, e gestos simples valem ' +
+    'mais que promessas. O risco é a teimosia, insistir no que já não serve só ' +
+    'para não ter de mudar.',
+
+  'ingresso:Moon:Gêmeos':
+    'Por dois dias e meio a cabeça fica agitada. A Lua em Gêmeos espalha a ' +
+    'atenção: vontade de conversar, trocar mensagem, saber de tudo ao mesmo ' +
+    'tempo. O emocional vira palavra, e falar sobre o que se sente já alivia ' +
+    'metade. O risco é a dispersão, começar dez coisas e não terminar nenhuma ' +
+    'por não escolher um foco.',
+
+  'ingresso:Moon:Câncer':
+    'Por dois dias e meio o sentir fica em casa. A Lua volta ao próprio signo, ' +
+    'Câncer, e tudo pesa um pouco mais: memória, família, a vontade de recolher ' +
+    'no ninho. É um bom tempo para cuidar de quem se ama e de si, baixar o ritmo ' +
+    'e ouvir a intuição. O risco é levar tudo para o lado pessoal e remoer o que ' +
+    'nem era com você.',
+
+  'ingresso:Moon:Leão':
+    'Por dois dias e meio o coração quer aparecer. A Lua em Leão pede calor, ' +
+    'reconhecimento e um gesto generoso, vontade de brilhar e de fazer o outro ' +
+    'brilhar junto. É um ótimo tempo para se expressar, criar e celebrar sem ' +
+    'economizar o afeto. O risco é a mágoa quando ninguém repara, e o orgulho ' +
+    'que cobra em silêncio o que não pediu em voz alta.',
+
+  'ingresso:Moon:Virgem':
+    'Por dois dias e meio a emoção vira organização. A Lua em Virgem acalma ' +
+    'arrumando: rotina em ordem, listas, cuidar do corpo e resolver o detalhe ' +
+    'que incomodava. Servir e ser útil faz bem, e a mente encontra paz quando ' +
+    'as coisas ficam no lugar. O risco é a autocrítica, cobrar perfeição de si ' +
+    'e dos outros até o cuidado virar peso.',
+
+  'ingresso:Moon:Libra':
+    'Por dois dias e meio o humor busca harmonia. A Lua em Libra pede beleza, ' +
+    'companhia e paz nas relações, vontade de estar junto e de deixar o clima ' +
+    'leve. É um bom tempo para reconciliar, combinar e resolver no diálogo o que ' +
+    'ficou torto. O risco é adiar a própria vontade só para agradar, e fugir do ' +
+    'conflito necessário em nome da paz.',
+
+  'ingresso:Moon:Escorpião':
+    'Por dois dias e meio o sentir mergulha fundo. A Lua em Escorpião ' +
+    'intensifica tudo: nada de superfície, o que estava guardado sobe e pede ' +
+    'para ser olhado de frente. É um bom tempo para verdade, intimidade e para ' +
+    'encarar o que se evitava. O risco é o ciúme, a desconfiança e o hábito de ' +
+    'remoer a mesma ferida sem soltar.',
+
+  'ingresso:Moon:Sagitário':
+    'Por dois dias e meio o ânimo quer respirar. A Lua em Sagitário puxa ' +
+    'liberdade, humor e horizonte: vontade de sair, aprender algo novo, rir e ' +
+    'ver a vida de longe. É um ótimo tempo para desanuviar, planejar uma escapada ' +
+    'e recuperar o otimismo. O risco é prometer mais do que cabe e escapar do ' +
+    'que incomoda em vez de resolver.',
+
+  'ingresso:Moon:Capricórnio':
+    'Por dois dias e meio a emoção fica contida. A Lua em Capricórnio pede ' +
+    'responsabilidade, foco e controle: sentir com o pé no chão e cuidar do que ' +
+    'é sério. É um bom tempo para assumir compromisso, organizar o futuro e ' +
+    'fazer o que precisa ser feito. O risco é a frieza e a autocobrança, tratar ' +
+    'o afeto como tarefa e esquecer de sentir.',
+
+  'ingresso:Moon:Aquário':
+    'Por dois dias e meio o sentir toma distância. A Lua em Aquário ' +
+    'racionaliza: vontade de espaço, de grupo e de ideias mais que de abraço. É ' +
+    'um bom tempo para ver as coisas de fora, pensar no coletivo e dar ar a quem ' +
+    'estava sufocado. O risco é parecer indiferente justamente com quem ' +
+    'precisava de você por perto naquele momento.',
+
+  'ingresso:Moon:Peixes':
+    'Por dois dias e meio tudo fica mais sensível. A Lua em Peixes dissolve as ' +
+    'bordas: intuição em alta, sonho, empatia e também um cansaço que chega sem ' +
+    'aviso. É um bom tempo para descansar, criar, rezar ou apenas sentir sem ' +
+    'ter de explicar. O risco é absorver o que não é seu, confundir a dor do ' +
+    'outro com a sua e se perder no nevoeiro.',
+
   'fase:Lua Nova:Virgem':
     'Recomeçar é mais fácil quando ninguém está vendo, e o céu concorda. Na ' +
     'Lua Nova a Lua e o Sol se alinham e o céu fica escuro: é o zero do ' +
