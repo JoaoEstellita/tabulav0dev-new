@@ -1,8 +1,9 @@
 import { getApp, getApps, initializeApp } from 'firebase/app'
-import { getAuth, setPersistence } from 'firebase/auth'
+import { getAuth, initializeAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import { Platform } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM',
@@ -92,13 +93,28 @@ export const getAppCheckToken = async (): Promise<string | null> => {
   }
 }
 
-const auth = getAuth(app)
+// Persistência do login:
+// - WEB: browserLocalPersistence (IndexedDB/localStorage) — já funcionava.
+// - NATIVO (APK/Expo): SEM isto o Firebase usa persistência EM MEMÓRIA → o login
+//   some ao fechar o app (a pessoa tinha que logar toda vez). initializeAuth com
+//   getReactNativePersistence(AsyncStorage) grava a sessão no dispositivo.
+let auth: ReturnType<typeof getAuth>
 if (Platform.OS === 'web') {
+  auth = getAuth(app)
+  try { setPersistence(auth, browserLocalPersistence).catch(() => { }) } catch { /* noop */ }
+} else {
   try {
-    import('firebase/auth').then(({ browserLocalPersistence }) => {
-      setPersistence(auth, browserLocalPersistence).catch(() => { })
-    }).catch(() => { })
-  } catch { }
+    // getReactNativePersistence só existe no build react-native do firebase (fora dos
+    // tipos do build web) → pego via require. Se cair no build errado (undefined),
+    // cai no getAuth pra não quebrar.
+    const rnPersistence = (require('firebase/auth') as any).getReactNativePersistence
+    auth = rnPersistence
+      ? initializeAuth(app, { persistence: rnPersistence(AsyncStorage) })
+      : getAuth(app)
+  } catch {
+    // Já inicializado (fast refresh) ou persistência indisponível → reaproveita.
+    auth = getAuth(app)
+  }
 }
 
 const db = initializeFirestore(app, {
