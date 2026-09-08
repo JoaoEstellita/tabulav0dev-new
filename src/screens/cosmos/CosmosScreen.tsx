@@ -32,6 +32,7 @@ import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTo
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
+import ProfectionCard from '../../components/ProfectionCard'
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
@@ -716,6 +717,9 @@ export default function CosmosScreen() {
                       )}</Text>
                     </TouchableOpacity>
                   ) : null}
+                  {/* Ano profeccional: a casa/senhor do ano ancora a leitura do Retorno
+                      Solar (o senhor do ano é o planeta-chave a observar na roda). */}
+                  <ProfectionCard />
                   <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
                   <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="solar" />
                 </>
