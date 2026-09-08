@@ -139,18 +139,54 @@ function CardBlock({ card }: { card: ChatCard }) {
 }
 
 // Paywall bonito inline (não muro): aparece quando a resposta é de não-assinante.
-function PaywallCard() {
+// No PWA/web (onde vender é permitido) fecha a venda DENTRO do chat: "Assinar agora"
+// puxa os planos no próprio fio → escolhe o número → PIX no chat. No Android some o
+// preço e o botão de assinar (anti-steering Play); só leva à tela de Assinatura.
+function PaywallCard({ onSubscribe }: { onSubscribe?: () => void }) {
   const navigation = useNavigation<any>()
-  // Play-safe: no APK Android não mostra preço nem "planos" (anti-steering) — só leva
-  // à tela de Assinatura do app. No PWA/web mostra o preço e o pitch completo.
   const androidSafe = Platform.OS === 'android'
   return (
-    <TouchableOpacity style={s.paywallCard} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
+    <View style={s.paywallCard}>
       <Text style={s.paywallTitle}>✦ Destrave o astrólogo completo</Text>
       <Text style={s.paywallSub}>{androidSafe
         ? 'Leituras à vontade, sinastria, previsões e seus grupos.'
         : 'Leituras à vontade, sinastria, previsões e seus grupos. A partir de R$ 19,90/mês.'}</Text>
-      <View style={s.paywallCta}><Text style={s.paywallCtaTx}>{androidSafe ? 'Ver assinatura' : 'Ver planos'}</Text><Ionicons name="arrow-forward" size={14} color="#241A05" /></View>
+      {androidSafe ? (
+        <TouchableOpacity style={s.paywallCta} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
+          <Text style={s.paywallCtaTx}>Ver assinatura</Text><Ionicons name="arrow-forward" size={14} color="#241A05" />
+        </TouchableOpacity>
+      ) : (
+        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <TouchableOpacity style={s.paywallCta} activeOpacity={0.9} onPress={() => onSubscribe?.()}>
+            <Text style={s.paywallCtaTx}>Assinar agora</Text><Ionicons name="arrow-forward" size={14} color="#241A05" />
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
+            <Text style={s.paywallSecondary}>Ver planos</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  )
+}
+
+// Copia-e-cola do PIX (só no web/PWA, onde a venda acontece): detecta o código EMV
+// na resposta do astrólogo e mostra um botão de copiar (usa navigator.clipboard).
+function extractPixCode(text: string): string | null {
+  const m = String(text || '').match(/0002\d[^\s]{30,}/)
+  return m ? m[0] : null
+}
+function CopyPix({ code }: { code: string }) {
+  const [done, setDone] = useState(false)
+  const copy = () => {
+    try {
+      const nav: any = typeof navigator !== 'undefined' ? navigator : null
+      if (nav?.clipboard?.writeText) { nav.clipboard.writeText(code); setDone(true); setTimeout(() => setDone(false), 2000) }
+    } catch { /* clipboard indisponível */ }
+  }
+  return (
+    <TouchableOpacity style={s.copyBtn} activeOpacity={0.85} onPress={copy}>
+      <Ionicons name={done ? 'checkmark-circle' : 'copy-outline'} size={16} color={C.gold} />
+      <Text style={s.copyTx}>{done ? 'Código copiado!' : 'Copiar código PIX'}</Text>
     </TouchableOpacity>
   )
 }
@@ -175,6 +211,7 @@ function RatingStars({ onRate }: { onRate: (n: number) => void }) {
 function ProactiveCta({ cta }: { cta: ProCta }) {
   const navigation = useNavigation<any>()
   const go = () => {
+    if (cta.action === 'open_premium' || cta.deepLink === '/premium') { navigation.navigate('Premium', { openTab: 'features' }); return }
     const tab = cta.deepLink ? DEEPLINK_TAB[cta.deepLink] : null
     if (tab) navigation.navigate('Tabs', { screen: tab })
   }
@@ -353,10 +390,11 @@ export default function AstrologerChatScreen() {
                       : <RichText text={item.text} color={mine ? C.ink : C.tx} />}
                   </View>
                 </View>
+                {!mine && item.id !== streamingId && Platform.OS === 'web' && extractPixCode(item.text) && <CopyPix code={extractPixCode(item.text)!} />}
                 {!mine && item.id !== streamingId && item.cards?.map((c, i) => <CardBlock key={i} card={c} />)}
                 {!mine && item.id !== streamingId && item.kind === 'rating' && <RatingStars onRate={onRate} />}
                 {!mine && item.id !== streamingId && item.cta && <ProactiveCta cta={item.cta} />}
-                {!mine && item.id !== streamingId && item.paywall && <PaywallCard />}
+                {!mine && item.id !== streamingId && item.paywall && <PaywallCard onSubscribe={() => send('quais os planos')} />}
               </View>
             )
           }}
@@ -440,6 +478,9 @@ const s = StyleSheet.create({
   paywallSub: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 6 },
   paywallCta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.gold, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18, marginTop: 12 },
   paywallCtaTx: { color: C.ink, fontSize: 13.5, fontWeight: '800' },
+  paywallSecondary: { color: C.goldSoft, fontSize: 13, fontWeight: '700', textDecorationLine: 'underline' },
+  copyBtn: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,215,0,0.1)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.45)', borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14, marginTop: 2 },
+  copyTx: { color: C.gold, fontSize: 13.5, fontWeight: '800' },
   qPill: { borderWidth: 1, borderColor: C.cardBorder, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 999, paddingVertical: 5, paddingHorizontal: 11 },
   qPillTx: { color: C.tx, fontSize: 12.5, fontWeight: '800' },
   qPillHot: { borderColor: 'rgba(255,215,0,0.6)', backgroundColor: 'rgba(255,215,0,0.12)' },
