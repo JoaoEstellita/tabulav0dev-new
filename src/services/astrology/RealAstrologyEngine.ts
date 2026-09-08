@@ -9,6 +9,7 @@
  * GARANTIA: Dados 100% reais, sem simulaÃƒÂ§ÃƒÂµes ou aproximaÃƒÂ§ÃƒÂµes
  */
 
+import { Platform } from 'react-native'
 import * as Astronomy from 'astronomy-engine'
 import aspectsConfig from '../../astro/aspects.config'
 import { normalizePlanet, normalizeSign, normalizeHouse } from '../../astro/normalize'
@@ -383,6 +384,11 @@ export class RealAstrologyEngine {
   private static canUseLocalFallback(): boolean {
     const forceEnable = String(process.env.EXPO_PUBLIC_ALLOW_LOCAL_ASTRO_FALLBACK || '').toLowerCase()
     if (forceEnable === '1' || forceEnable === 'true') return true
+    // NATIVO (APK/iOS): o motor local é astronomy-engine (JS puro, roda no Hermes) —
+    // a mesma engine que já calcula Previsão/eventos client-side no app. Sem esta rede,
+    // qualquer falha do bundle do backend deixava Perfil/Mapa presos em "mapa em
+    // processamento" (sem WASM, sem nada). Habilitado pra garantir o mapa sempre calcular.
+    if (Platform.OS !== 'web') return true
     return process.env.NODE_ENV !== 'production'
   }
 
