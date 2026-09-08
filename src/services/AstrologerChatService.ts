@@ -12,20 +12,50 @@ export type ChatQuota = {
   isPaidPremium?: boolean    // assinante pagante → saldo + "comprar mais"; senão "assinar"
 }
 export type ChatReply = { reply: string; quickReplies?: string[]; cards?: ChatCard[]; quota?: ChatQuota; status?: string; error?: string }
+export type ChatInboxItem = {
+  id: string
+  type: string
+  text: string
+  cta?: { label: string; action?: string | null; deepLink?: string } | null
+  deepLink?: string
+  kind?: 'message' | 'rating' | 'match'
+}
+export type AstrologerState = { hasNews: boolean; quota: ChatQuota | null; unread: number; inbox: ChatInboxItem[] }
 
-/** Hint pro badge do FAB: há novidade real (leitura do dia fresca)? */
+/** Hint pro badge do FAB: quantas não-lidas (0 = sem badge). Compat: também há novidade do dia. */
+export async function getAstrologerUnread(): Promise<number> {
+  return (await getAstrologerState()).unread
+}
+/** Compat antiga (bool). */
 export async function getAstrologerHint(): Promise<boolean> {
-  return (await getAstrologerState()).hasNews
+  const st = await getAstrologerState()
+  return st.hasNews || st.unread > 0
 }
 
-/** Estado do chat na abertura: novidade do dia (badge) + saldo/entitlement (cabeçalho). */
-export async function getAstrologerState(): Promise<{ hasNews: boolean; quota: ChatQuota | null }> {
+/** Estado do chat na abertura: novidade + saldo/entitlement (cabeçalho) + inbox (proativas). */
+export async function getAstrologerState(): Promise<AstrologerState> {
   try {
     const res = await backendFetch('/api/app-chat', { auth: true, method: 'GET' })
-    if (!res.ok) return { hasNews: false, quota: null }
+    if (!res.ok) return { hasNews: false, quota: null, unread: 0, inbox: [] }
     const j = await res.json()
-    return { hasNews: !!j.hasNews, quota: (j.quota && typeof j.quota === 'object') ? j.quota : null }
-  } catch { return { hasNews: false, quota: null } }
+    return {
+      hasNews: !!j.hasNews,
+      quota: (j.quota && typeof j.quota === 'object') ? j.quota : null,
+      unread: typeof j.unread === 'number' ? j.unread : 0,
+      inbox: Array.isArray(j.inbox) ? j.inbox : [],
+    }
+  } catch { return { hasNews: false, quota: null, unread: 0, inbox: [] } }
+}
+
+/** Marca proativas da inbox como lidas (some o número do ícone). ids vazio = todas. */
+export async function markAstrologerInboxRead(ids?: string[]): Promise<void> {
+  try {
+    await backendFetch('/api/app-chat', {
+      auth: true, method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ack: ids && ids.length ? ids : true }),
+    })
+  } catch { /* best-effort */ }
 }
 
 /**

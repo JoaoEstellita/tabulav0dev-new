@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView,
-  Platform, ActivityIndicator, Animated, Easing, Image, ScrollView,
+  Platform, ActivityIndicator, Animated, Easing, Image, ScrollView, Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
-import { sendToAstrologer, getAstrologerState, type ChatCard, type ChatQuota } from '../../services/AstrologerChatService'
+import { sendToAstrologer, getAstrologerState, markAstrologerInboxRead, type ChatCard, type ChatQuota } from '../../services/AstrologerChatService'
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 
 /**
@@ -33,9 +33,14 @@ const SUGGESTIONS: { cat: string; qs: string[] }[] = [
   { cat: 'Lugares, grupos & ciclos', qs: ['Onde no mundo o céu me favorece?', 'Como estão meus grupos?', 'Como está meu ano (retorno solar)?'] },
 ]
 
-type Msg = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[]; paywall?: boolean }
+type ProCta = { label: string; deepLink?: string; action?: string | null }
+type Msg = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[]; paywall?: boolean; kind?: 'message' | 'rating' | 'match'; cta?: ProCta | null }
 let _seq = 0
 const nid = () => `${Date.now()}_${_seq++}`
+
+const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.estellita.tabulaestelar'
+// Deep-link da proativa → tab do app (Descobrir = tab Network).
+const DEEPLINK_TAB: Record<string, string> = { '/home': 'Home', '/previsao': 'Forecast', '/grupos': 'Groups', '/descobrir': 'Network', '/mapa': 'Cosmos' }
 
 // Renderiza *negrito* + quebras de linha (o agente usa markdown leve do WhatsApp).
 // Limpa o texto do agente pra exibir: travessao vira virgula (o modelo as vezes
@@ -145,6 +150,37 @@ function PaywallCard() {
   )
 }
 
+// Card de avaliação (proativa kind='rating'): 5 estrelas tocáveis.
+function RatingStars({ onRate }: { onRate: (n: number) => void }) {
+  return (
+    <View style={s.ratingCard}>
+      <Text style={s.ratingHint}>Toque para dar sua nota</Text>
+      <View style={s.starsRow}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <TouchableOpacity key={n} onPress={() => onRate(n)} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+            <Text style={s.star}>⭐</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )
+}
+
+// Botão de ação de uma proativa (ex.: "Abrir Descobrir" no match) → leva à tab certa.
+function ProactiveCta({ cta }: { cta: ProCta }) {
+  const navigation = useNavigation<any>()
+  const go = () => {
+    const tab = cta.deepLink ? DEEPLINK_TAB[cta.deepLink] : null
+    if (tab) navigation.navigate('Tabs', { screen: tab })
+  }
+  return (
+    <TouchableOpacity style={s.actionCard} onPress={go} activeOpacity={0.85}>
+      <Text style={s.actionLabel}>{cta.label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={C.gold} />
+    </TouchableOpacity>
+  )
+}
+
 // Tela inicial (chat vazio): herói + MUITAS perguntas prévias por categoria.
 function EmptyState({ onPick }: { onPick: (q: string) => void }) {
   return (
@@ -184,25 +220,44 @@ export default function AstrologerChatScreen() {
   const listRef = useRef<FlatList<Msg>>(null)
   const storeKey = `astrologer_chat_${(user as any)?.uid || 'anon'}`
   const loaded = useRef(false)
+  const [histReady, setHistReady] = useState(false)
 
   // Continuidade: carrega o histórico salvo ao abrir; salva a cada mudança (últimas 40).
   useEffect(() => {
     AsyncStorage.getItem(storeKey).then((raw) => {
       if (raw) { try { const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length) setMessages(arr) } catch {} }
       loaded.current = true
-    }).catch(() => { loaded.current = true })
+      setHistReady(true)
+    }).catch(() => { loaded.current = true; setHistReady(true) })
   }, [storeKey])
   useEffect(() => {
     if (!loaded.current) return
     AsyncStorage.setItem(storeKey, JSON.stringify(messages.slice(0, 40))).catch(() => {})
   }, [messages, storeKey])
 
-  // Saldo/entitlement já na abertura (cabeçalho) — antes mesmo da 1ª mensagem.
+  // Abertura: saldo (cabeçalho) + INBOX de proativas (matinal, picos, match, avaliação).
+  // Roda só depois do histórico carregar (senão o load do histórico sobrescreveria).
+  // Injeta as proativas como balões do astrólogo e marca lidas (zera o número do ícone).
   useEffect(() => {
+    if (!histReady) return
     let alive = true
-    getAstrologerState().then(({ quota: q }) => { if (alive && q) setQuota(q) }).catch(() => {})
+    getAstrologerState().then((st) => {
+      if (!alive) return
+      if (st.quota) setQuota(st.quota)
+      if (st.inbox && st.inbox.length) {
+        const msgs: Msg[] = st.inbox
+          .map((it) => ({ id: 'inbox_' + it.id, role: 'assistant' as const, text: it.text, kind: it.kind, cta: it.cta || null }))
+          .reverse() // mais nova no índice 0 (fica embaixo na lista invertida)
+        setMessages((m) => {
+          const have = new Set(m.map((x) => x.id))
+          const add = msgs.filter((x) => !have.has(x.id))
+          return add.length ? [...add, ...m] : m
+        })
+        markAstrologerInboxRead(st.inbox.map((i) => i.id))
+      }
+    }).catch(() => {})
     return () => { alive = false }
-  }, [])
+  }, [histReady])
 
   const scrollDown = useCallback(() => { requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true })) }, [])
 
@@ -224,6 +279,13 @@ export default function AstrologerChatScreen() {
     if (r.quickReplies && r.quickReplies.length) setChips(r.quickReplies.slice(0, 3))
     scrollDown()
   }, [sending, scrollDown])
+
+  // Nota do card de avaliação: 4-5 abre a Play direto (review público) + registra a
+  // nota no agente; 1-3 só envia o número (o agente pergunta o que faltou, privado).
+  const onRate = useCallback((n: number) => {
+    if (n >= 4) Linking.openURL(PLAY_URL).catch(() => {})
+    send(String(n))
+  }, [send])
 
   // FlatList invertida: dados mais novos primeiro; render normal fica na ordem certa.
   const data = sending ? ([{ id: '__typing__', role: 'assistant', text: '' } as Msg, ...messages]) : messages
@@ -287,6 +349,8 @@ export default function AstrologerChatScreen() {
                   </View>
                 </View>
                 {!mine && item.id !== streamingId && item.cards?.map((c, i) => <CardBlock key={i} card={c} />)}
+                {!mine && item.id !== streamingId && item.kind === 'rating' && <RatingStars onRate={onRate} />}
+                {!mine && item.id !== streamingId && item.cta && <ProactiveCta cta={item.cta} />}
                 {!mine && item.id !== streamingId && item.paywall && <PaywallCard />}
               </View>
             )
@@ -362,6 +426,10 @@ const s = StyleSheet.create({
   cardTitle: { color: C.goldSoft, fontSize: 13, fontWeight: '800', marginBottom: 6, marginLeft: 4 },
   actionCard: { alignSelf: 'flex-start', maxWidth: '84%', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
   actionLabel: { color: C.tx, fontSize: 14, fontWeight: '700' },
+  ratingCard: { alignSelf: 'flex-start', maxWidth: '84%', backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  ratingHint: { color: C.dim, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  starsRow: { flexDirection: 'row', gap: 6 },
+  star: { fontSize: 30 },
   paywallCard: { alignSelf: 'stretch', backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,215,0,0.4)', borderRadius: 16, padding: 16, marginRight: 8 },
   paywallTitle: { color: C.gold, fontSize: 15, fontWeight: '900' },
   paywallSub: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 6 },
