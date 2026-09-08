@@ -3,17 +3,29 @@ import { backendFetch } from './backend/client'
 export type ChatCard =
   | { type: 'natal_wheel' }
   | { type: 'action'; action: 'momento' | 'forecast' | 'groups'; label: string }
-export type ChatQuota = { dailyRemaining?: number; dailyLimit?: number; monthlyRemaining?: number }
+export type ChatQuota = {
+  dailyRemaining?: number
+  dailyLimit?: number
+  monthlyRemaining?: number
+  unlimited?: boolean       // admin — sem teto, esconde saldo
+  isPremium?: boolean
+  isPaidPremium?: boolean    // assinante pagante → saldo + "comprar mais"; senão "assinar"
+}
 export type ChatReply = { reply: string; quickReplies?: string[]; cards?: ChatCard[]; quota?: ChatQuota; status?: string; error?: string }
 
 /** Hint pro badge do FAB: há novidade real (leitura do dia fresca)? */
 export async function getAstrologerHint(): Promise<boolean> {
+  return (await getAstrologerState()).hasNews
+}
+
+/** Estado do chat na abertura: novidade do dia (badge) + saldo/entitlement (cabeçalho). */
+export async function getAstrologerState(): Promise<{ hasNews: boolean; quota: ChatQuota | null }> {
   try {
     const res = await backendFetch('/api/app-chat', { auth: true, method: 'GET' })
-    if (!res.ok) return false
+    if (!res.ok) return { hasNews: false, quota: null }
     const j = await res.json()
-    return !!j.hasNews
-  } catch { return false }
+    return { hasNews: !!j.hasNews, quota: (j.quota && typeof j.quota === 'object') ? j.quota : null }
+  } catch { return { hasNews: false, quota: null } }
 }
 
 /**

@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
-import { sendToAstrologer, type ChatCard, type ChatQuota } from '../../services/AstrologerChatService'
+import { sendToAstrologer, getAstrologerState, type ChatCard, type ChatQuota } from '../../services/AstrologerChatService'
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 
 /**
@@ -38,15 +38,31 @@ let _seq = 0
 const nid = () => `${Date.now()}_${_seq++}`
 
 // Renderiza *negrito* + quebras de linha (o agente usa markdown leve do WhatsApp).
+// Limpa o texto do agente pra exibir: travessao vira virgula (o modelo as vezes
+// insiste no "-"), virgulas duplicadas somem. Mantem **x**/*x* pro negrito real.
+function cleanAgentText(text: string): string {
+  return String(text || "")
+    .replace(/\s*[—–]\s*/g, ", ") // travessao -> virgula (pausa natural)
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+,/g, ",")
+}
+
 function RichText({ text, color }: { text: string; color: string }) {
-  const parts = String(text || '').split(/(\*[^*]+\*)/g)
+  const clean = cleanAgentText(text)
+  // Tokeniza **negrito** e *negrito* -> segmentos com/sem peso; asterisco solto some.
+  const nodes: { t: string; b: boolean }[] = []
+  const re = /\*\*(.+?)\*\*|\*(.+?)\*/g
+  let lastIdx = 0
+  let mm: RegExpExecArray | null
+  while ((mm = re.exec(clean)) !== null) {
+    if (mm.index > lastIdx) nodes.push({ t: clean.slice(lastIdx, mm.index), b: false })
+    nodes.push({ t: mm[1] ?? mm[2] ?? "", b: true })
+    lastIdx = re.lastIndex
+  }
+  if (lastIdx < clean.length) nodes.push({ t: clean.slice(lastIdx).replace(/\*/g, ""), b: false })
   return (
     <Text style={{ color, fontSize: 15, lineHeight: 21 }}>
-      {parts.map((p, i) =>
-        p.startsWith('*') && p.endsWith('*') && p.length > 2
-          ? <Text key={i} style={{ fontWeight: '800' }}>{p.slice(1, -1)}</Text>
-          : <Text key={i}>{p}</Text>,
-      )}
+      {nodes.map((n, i) => <Text key={i} style={n.b ? { fontWeight: "800" } : undefined}>{n.t}</Text>)}
     </Text>
   )
 }
@@ -181,6 +197,13 @@ export default function AstrologerChatScreen() {
     AsyncStorage.setItem(storeKey, JSON.stringify(messages.slice(0, 40))).catch(() => {})
   }, [messages, storeKey])
 
+  // Saldo/entitlement já na abertura (cabeçalho) — antes mesmo da 1ª mensagem.
+  useEffect(() => {
+    let alive = true
+    getAstrologerState().then(({ quota: q }) => { if (alive && q) setQuota(q) }).catch(() => {})
+    return () => { alive = false }
+  }, [])
+
   const scrollDown = useCallback(() => { requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true })) }, [])
 
   const send = useCallback(async (raw: string) => {
@@ -193,7 +216,8 @@ export default function AstrologerChatScreen() {
     setSending(true)
     const r = await sendToAstrologer(text)
     setSending(false)
-    setQuota(r.quota || null)
+    // Mescla só os números novos; preserva unlimited/isPaidPremium vindos do GET.
+    if (r.quota) setQuota((prev) => ({ ...(prev || {}), ...r.quota }))
     const aid = nid()
     setMessages((m) => [{ id: aid, role: 'assistant', text: r.reply || '🌙', cards: r.cards, paywall: r.status === 'not_premium' }, ...m])
     setStreamingId(aid)
@@ -204,6 +228,14 @@ export default function AstrologerChatScreen() {
   // FlatList invertida: dados mais novos primeiro; render normal fica na ordem certa.
   const data = sending ? ([{ id: '__typing__', role: 'assistant', text: '' } as Msg, ...messages]) : messages
   const fresh = messages.length <= 1 // só a saudação → mostra a tela de perguntas prévias
+
+  // Saldo de mensagens: admin ilimitado esconde tudo; assinante vê contagem + "comprar
+  // mais"; não-assinante vê "assinar". Link forte aparece quando o saldo zera.
+  const unlimited = quota?.unlimited === true
+  const paid = quota?.isPaidPremium === true
+  const remaining = typeof quota?.dailyRemaining === 'number' ? quota.dailyRemaining : null
+  const outOfBalance = !unlimited && remaining === 0
+  const goBuy = () => navigation.navigate('Premium', { openTab: paid ? 'credits' : 'features' })
 
   return (
     <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
@@ -216,6 +248,19 @@ export default function AstrologerChatScreen() {
           <Text style={s.hName}>Astrólogo</Text>
           <Text style={s.hStatus}>online</Text>
         </View>
+        {!unlimited && quota && (
+          paid ? (
+            <TouchableOpacity style={[s.qPill, outOfBalance && s.qPillHot]} activeOpacity={0.85} onPress={goBuy}>
+              <Text style={[s.qPillTx, outOfBalance && s.qPillHotTx]} numberOfLines={1}>
+                {remaining !== null && remaining > 0 ? `🌙 ${remaining}` : '＋ Comprar'}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={s.qPillGold} activeOpacity={0.85} onPress={goBuy}>
+              <Text style={s.qPillGoldTx} numberOfLines={1}>✦ Assinar</Text>
+            </TouchableOpacity>
+          )
+        )}
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
@@ -249,10 +294,15 @@ export default function AstrologerChatScreen() {
         />
         )}
 
-        {!fresh && quota && typeof quota.dailyRemaining === 'number' && (
-          <View style={s.saldoWrap}>
-            <Text style={s.saldoTx}>{quota.dailyRemaining > 0 ? `🌙 ${quota.dailyRemaining} conversa${quota.dailyRemaining === 1 ? '' : 's'} hoje` : '🌙 Seu saldo volta amanhã'}</Text>
-          </View>
+        {outOfBalance && (
+          <TouchableOpacity style={s.ctaBar} activeOpacity={0.9} onPress={goBuy}>
+            <Text style={s.ctaTx} numberOfLines={2}>
+              {paid
+                ? 'Você usou suas conversas de hoje ✨ Toque pra comprar mais e seguir agora'
+                : 'Sua degustação terminou ✨ Assine pra conversar com o astrólogo à vontade'}
+            </Text>
+            <Ionicons name="arrow-forward" size={16} color="#241A05" />
+          </TouchableOpacity>
         )}
 
         {!fresh && chips.length > 0 && (
@@ -317,8 +367,14 @@ const s = StyleSheet.create({
   paywallSub: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 6 },
   paywallCta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.gold, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18, marginTop: 12 },
   paywallCtaTx: { color: C.ink, fontSize: 13.5, fontWeight: '800' },
-  saldoWrap: { alignItems: 'center', paddingBottom: 6 },
-  saldoTx: { color: C.dim, fontSize: 11.5, fontWeight: '600' },
+  qPill: { borderWidth: 1, borderColor: C.cardBorder, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 999, paddingVertical: 5, paddingHorizontal: 11 },
+  qPillTx: { color: C.tx, fontSize: 12.5, fontWeight: '800' },
+  qPillHot: { borderColor: 'rgba(255,215,0,0.6)', backgroundColor: 'rgba(255,215,0,0.12)' },
+  qPillHotTx: { color: C.gold },
+  qPillGold: { backgroundColor: C.gold, borderRadius: 999, paddingVertical: 5, paddingHorizontal: 12 },
+  qPillGoldTx: { color: C.ink, fontSize: 12.5, fontWeight: '900' },
+  ctaBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 12, marginBottom: 8, backgroundColor: C.gold, borderRadius: 14, paddingVertical: 11, paddingHorizontal: 14 },
+  ctaTx: { flex: 1, color: '#241A05', fontSize: 13, fontWeight: '800', lineHeight: 17 },
   inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.cardBorder, backgroundColor: C.head },
   input: { flex: 1, color: C.tx, fontSize: 15, maxHeight: 120, paddingVertical: 8, paddingHorizontal: 6 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' },
