@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { backendFetch } from './backend/client'
 
 export type ChatCard =
@@ -68,7 +69,9 @@ export async function sendToAstrologer(message: string): Promise<ChatReply> {
       auth: true,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      // platform: no APK Android o backend fica Play-safe (sem PIX/preço/steering);
+      // no PWA (web) mantém o checkout completo.
+      body: JSON.stringify({ message, platform: Platform.OS }),
     })
     if (res.status === 429) {
       const j = await res.json().catch(() => ({} as any))

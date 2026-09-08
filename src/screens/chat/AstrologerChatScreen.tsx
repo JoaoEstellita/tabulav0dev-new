@@ -141,11 +141,16 @@ function CardBlock({ card }: { card: ChatCard }) {
 // Paywall bonito inline (não muro): aparece quando a resposta é de não-assinante.
 function PaywallCard() {
   const navigation = useNavigation<any>()
+  // Play-safe: no APK Android não mostra preço nem "planos" (anti-steering) — só leva
+  // à tela de Assinatura do app. No PWA/web mostra o preço e o pitch completo.
+  const androidSafe = Platform.OS === 'android'
   return (
     <TouchableOpacity style={s.paywallCard} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
       <Text style={s.paywallTitle}>✦ Destrave o astrólogo completo</Text>
-      <Text style={s.paywallSub}>Leituras à vontade, sinastria, previsões e seus grupos. A partir de R$ 19,90/mês.</Text>
-      <View style={s.paywallCta}><Text style={s.paywallCtaTx}>Ver planos</Text><Ionicons name="arrow-forward" size={14} color="#241A05" /></View>
+      <Text style={s.paywallSub}>{androidSafe
+        ? 'Leituras à vontade, sinastria, previsões e seus grupos.'
+        : 'Leituras à vontade, sinastria, previsões e seus grupos. A partir de R$ 19,90/mês.'}</Text>
+      <View style={s.paywallCta}><Text style={s.paywallCtaTx}>{androidSafe ? 'Ver assinatura' : 'Ver planos'}</Text><Ionicons name="arrow-forward" size={14} color="#241A05" /></View>
     </TouchableOpacity>
   )
 }
