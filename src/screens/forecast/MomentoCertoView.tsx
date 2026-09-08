@@ -38,6 +38,8 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
   // Resumo "melhor dia por intenção" (as 8 de uma vez) + horizonte ajustável.
   const [overview, setOverview] = useState<MomentoOverview | null>(null)
   const [horizon, setHorizon] = useState<15 | 30 | 45>(45)
+  // Ordenação da lista: por SCORE (melhores no topo) ou por DATA (mais próximas).
+  const [sortBy, setSortBy] = useState<'score' | 'date'>('score')
   // "Pra vocês dois": conexões aceitas + parceiro escolhido + janelas do par.
   const [conns, setConns] = useState<Connection[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -147,6 +149,13 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
   const favorable = inHorizon.filter((w) => Number(w.score) >= 50)
   const weak = favorable.length === 0
   const shown = weak ? inHorizon.slice(0, 2) : favorable
+  // Ordena a lista conforme o filtro: DATA (a mais próxima primeiro) ou SCORE
+  // (o mais forte primeiro; empate desempata pela data mais próxima).
+  const shownSorted = [...shown].sort((a, b) =>
+    sortBy === 'date'
+      ? a.dateISO.localeCompare(b.dateISO)
+      : (Number(b.score) - Number(a.score)) || a.dateISO.localeCompare(b.dateISO),
+  )
   const HORIZONS: (15 | 30 | 45)[] = [15, 30, 45]
   // Par: favoráveis pros dois (≥50) ou, se nenhum, os 2 melhores.
   const pairFav = (pairWindows || []).filter((w) => Number(w.score) >= 50)
@@ -249,16 +258,28 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
               </View>
             </View>
           ) : null}
+          {shown.length > 1 ? (
+            <View style={s.horizonRow}>
+              <Text style={s.horizonLabel}>{tl('Ordenar', 'Sort', 'Ordenar', 'Ordina')}</Text>
+              <View style={s.segment}>
+                {(['score', 'date'] as const).map((k) => (
+                  <TouchableOpacity key={k} style={[s.segItem, sortBy === k && s.segItemOn]} activeOpacity={0.85} onPress={() => setSortBy(k)}>
+                    <Text style={[s.segTx, sortBy === k && s.segTxOn]}>{k === 'score' ? tl('Melhores', 'Best', 'Mejores', 'Migliori') : tl('Próximas', 'Soonest', 'Proximas', 'Vicine')}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : null}
           {shown.length === 0 ? (
             <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas no período. Tente outra intenção ou volte mais pra frente.', 'No windows in this period. Try another intention or check back later.', 'Sin ventanas en el periodo. Prueba otra intencion o vuelve mas adelante.', 'Nessuna finestra nel periodo. Prova un\'altra intenzione o torna piu avanti.')}</Text></View>
           ) : (
             <>
               <Text style={s.label} {...aWindows}>{weak ? tl('Nenhum dia forte por aqui', 'No strong day here', 'Ningun dia fuerte aqui', 'Nessun giorno forte qui') : bestDaysTitle(intention)}</Text>
               {weak ? <Text style={s.weakNote}>{tl('Mostrando o dia mais favorável do período — mesmo sem ser forte.', 'Showing the most favorable day of the period — even if not strong.', 'Mostrando el dia mas favorable del periodo — aunque no sea fuerte.', 'Mostro il giorno piu favorevole del periodo — anche se non forte.')}</Text> : null}
-              {shown.map((w, i) => (
+              {shownSorted.map((w, i) => (
                 <TouchableOpacity key={w.dateISO + i} style={s.win} activeOpacity={0.85} onPress={() => setDetail(w)}>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
+                    <Text style={s.winDate}>{(sortBy === 'score' && i === 0) ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
                     {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
                     {w.reasons.slice(0, 2).map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
                     {w.cautions.slice(0, 1).map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
