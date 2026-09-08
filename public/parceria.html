@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // /parceria?code=<código> → painel da parceira. Sem código = página de pitch normal.
+  (function () {
+    try {
+      var c = new URLSearchParams(location.search).get('code');
+      c = String(c || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40);
+      if (c) location.replace('/parceiro.html?code=' + encodeURIComponent(c));
+    } catch (e) {}
+  })();
+</script>
 <title>Parceria Estelar · Tábula Estelar</title>
 <meta name="description" content="Programa de parceria do Tábula Estelar — indique astrologia de verdade e receba 50% do lucro de cada assinante.">
 <link rel="icon" href="/icon-512.svg">
