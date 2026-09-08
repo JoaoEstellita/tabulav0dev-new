@@ -107,6 +107,10 @@
       "destination": "/parceria.html"
     },
     {
+      "source": "/baixar",
+      "destination": "/baixar.html"
+    },
+    {
       "source": "/",
       "destination": "/landing.html"
     }

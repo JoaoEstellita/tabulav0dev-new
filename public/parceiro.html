@@ -140,6 +140,25 @@
     el('gate').hidden = true; el('dash').hidden = false;
     el('title').textContent = 'Parceria · ' + (d.partner && d.partner.name || '');
     el('subtitle').textContent = 'Comissão de ' + Math.round((d.partner && d.partner.profitShare || .5) * 100) + '% · atualizado ' + fmtDate(d.generatedAt);
+
+    // Link de indicação: quem baixar/entrar por ele é atribuído a esta parceria
+    // (Play Install Referrer no Android + ?ref no navegador). First-touch.
+    var shareUrl = 'https://www.tabulaestelar.com.br/baixar?ref=' + encodeURIComponent(code);
+    var box = document.getElementById('shareBox');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'shareBox';
+      box.style.cssText = 'margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)';
+      el('subtitle').parentNode.insertBefore(box, el('subtitle').nextSibling);
+    }
+    box.innerHTML = '<div style="font-size:13px;color:var(--gold);font-weight:800;margin-bottom:8px">🔗 Seu link de indicação</div>' +
+      '<div id="shareUrlTxt" style="font-size:13px;word-break:break-all;color:var(--ink);margin-bottom:10px">' + shareUrl + '</div>' +
+      '<button id="copyLink" style="background:var(--gold);color:#241A05;border:none;border-radius:10px;padding:9px 16px;font-weight:800;cursor:pointer">Copiar link</button>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:8px">Compartilhe onde quiser. Quem baixar o app por ele conta como sua indicação, no Android e no navegador.</div>';
+    document.getElementById('copyLink').onclick = function(){
+      var b = this;
+      navigator.clipboard.writeText(shareUrl).then(function(){ b.textContent = 'Copiado!'; setTimeout(function(){ b.textContent = 'Copiar link'; }, 2000); }).catch(function(){});
+    };
     var s = d.summary || {};
     el('tClients').textContent = s.totalClients != null ? s.totalClients : '—';
     el('tActive').textContent = s.activeSubscribers != null ? s.activeSubscribers : '—';

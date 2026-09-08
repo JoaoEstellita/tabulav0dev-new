@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Baixe o Tábula Estelar</title>
+<meta name="description" content="Seu mapa astral com voz, que te acompanha todo dia. Baixe o Tábula Estelar." />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(120% 100% at 50% 0%, #1a1a3a 0%, #0f0f23 55%, #0a0a1a 100%);
+    color: #EDEBF7; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { width: 100%; max-width: 440px; text-align: center; }
+  .logo { width: 88px; height: 88px; border-radius: 22px; margin: 0 auto 18px; display: block; object-fit: contain;
+    background: #12122a; border: 1px solid rgba(255,215,0,0.35); padding: 8px; }
+  h1 { font-size: 26px; font-weight: 900; line-height: 1.15; margin-bottom: 10px; }
+  .gold { color: #FFD700; }
+  p.sub { color: #B9BCD8; font-size: 15px; line-height: 1.5; margin-bottom: 8px; }
+  .by { color: #8E8FB0; font-size: 13px; margin: 14px 0 26px; min-height: 18px; }
+  .by b { color: #E9C46A; }
+  a.btn { display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none;
+    border-radius: 14px; padding: 15px 18px; font-size: 16px; font-weight: 800; margin: 10px 0; }
+  a.play { background: #FFD700; color: #241A05; }
+  a.web { background: transparent; color: #E9C46A; border: 1px solid rgba(233,196,106,0.45); font-weight: 700; }
+  .feat { text-align: left; margin: 26px auto 0; max-width: 360px; }
+  .feat li { list-style: none; color: #C9CBE0; font-size: 14px; line-height: 1.5; margin: 9px 0; padding-left: 26px; position: relative; }
+  .feat li::before { content: "✦"; position: absolute; left: 0; color: #FFD700; }
+  .foot { color: #6E6F8C; font-size: 12px; margin-top: 26px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <img class="logo" src="/icon-512.svg" alt="Tábula Estelar" onerror="this.style.display='none'" />
+    <h1>Seu mapa astral com <span class="gold">voz</span>, que te acompanha todo dia</h1>
+    <p class="sub">Tábula Estelar: seu céu lido de verdade, um astrólogo no seu bolso.</p>
+    <p class="by" id="by"></p>
+
+    <a class="btn play" id="play" href="#">📲 Baixar no Google Play</a>
+    <a class="btn web" id="web" href="#">Abrir no navegador</a>
+
+    <ul class="feat">
+      <li>Seu mapa natal completo, de graça</li>
+      <li>Um astrólogo que conversa com você no dia a dia</li>
+      <li>Previsões, Momento Certo e seus grupos</li>
+      <li>Compatibilidade (sinastria) com quem você ama</li>
+    </ul>
+
+    <p class="foot">Ao instalar, você concorda com nossos termos. Feito com carinho 🌙</p>
+  </main>
+
+  <script>
+    (function () {
+      var PKG = 'com.estellita.tabulaestelar';
+      // Mesma limpeza do ReferralService (a-z 0-9 _ - , máx 40).
+      function clean(v) { return String(v || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40); }
+      var params = new URLSearchParams(location.search);
+      var code = clean(params.get('ref') || params.get('parceria') || params.get('partner'));
+
+      // Guarda o código (first-touch) na MESMA chave que o app lê (tabula_partner_ref),
+      // pra atribuir a parceria quando a pessoa abrir o PWA neste navegador.
+      if (code) { try { if (!localStorage.getItem('tabula_partner_ref')) localStorage.setItem('tabula_partner_ref', code); } catch (e) {} }
+
+      // Play: o referrer 'partner=<code>' é lido na instalação (Play Install Referrer).
+      var playUrl = 'https://play.google.com/store/apps/details?id=' + PKG +
+        (code ? '&referrer=' + encodeURIComponent('partner=' + code) : '');
+      // Web/PWA: ?ref=<code> é capturado pelo app ao abrir.
+      var webUrl = '/app' + (code ? '?ref=' + encodeURIComponent(code) : '');
+
+      document.getElementById('play').href = playUrl;
+      document.getElementById('web').href = webUrl;
+
+      // Nome amigável da parceira, se vier legível no código (ex.: vanessaaguiar → Vanessa).
+      if (code) {
+        var pretty = code.replace(/[-_]/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+        document.getElementById('by').innerHTML = 'Indicação de <b>' + pretty + '</b> ✨';
+      }
+    })();
+  </script>
+</body>
+</html>
