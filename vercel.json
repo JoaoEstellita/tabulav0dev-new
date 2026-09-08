@@ -111,6 +111,10 @@
       "destination": "/baixar.html"
     },
     {
+      "source": "/parceiro",
+      "destination": "/parceiro.html"
+    },
+    {
       "source": "/",
       "destination": "/landing.html"
     }
