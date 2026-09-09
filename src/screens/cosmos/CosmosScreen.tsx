@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { doc, getDoc } from 'firebase/firestore'
@@ -256,6 +257,7 @@ export default function CosmosScreen() {
   // measureLayout para achar a posição real dentro do ScrollView. Não dá para usar
   // âncora DOM como a Home faz — é web-only e colidiria com os IDs de lá.
   const scrollRef = useRef<ScrollView>(null)
+  const insets = useSafeAreaInsets() // topo respeita a status bar (senão o "?" cola na bateria)
   const anchorsRef = useRef<Record<string, any>>({})
   const aSystem = useTourAnchor('cosmos.system')
   const aModes = useTourAnchor('cosmos.modes')
@@ -609,7 +611,7 @@ export default function CosmosScreen() {
   }
 
   return (
-    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
