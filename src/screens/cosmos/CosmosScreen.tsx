@@ -772,6 +772,16 @@ export default function CosmosScreen() {
             <View {...aWheel}>
             <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} onOpenTransits={() => (navigation as any).navigate('PersonalTransits')} />
             </View>
+            {/* DEBUG TEMPORÁRIO (device) — visível sem rolar. Estado do transitData no APK. Remover depois. */}
+            <Text style={{ color: '#FFD700', fontSize: 11, textAlign: 'center', paddingVertical: 6 }} selectable>
+              {`DBG td:${transitData ? 1 : 0} ct:${transitData?.currentTransits ? 1 : 0} `}
+              {`natal:${(transitData?.currentTransits as any)?.natalPlanets?.length ?? 'x'} `}
+              {`asp:${(transitData?.currentTransits as any)?.aspectsNatalToNatal?.length ?? 'x'} `}
+              {`load:${loading ? 1 : 0}`}
+            </Text>
+            <Text style={{ color: '#9aa2b8', fontSize: 10, textAlign: 'center', paddingBottom: 6 }} selectable>
+              {`ctKeys:${transitData?.currentTransits ? Object.keys(transitData.currentTransits as any).slice(0, 12).join(',') : '-'}`}
+            </Text>
 
             {westMode === 'transitos' ? (
               <>
