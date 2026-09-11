@@ -589,6 +589,24 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
 
   return (
     <>
+        {/* DEBUG TEMPORÁRIO (device): quando não há planetas natais, mostra o estado real
+            do transitData/currentTransits pra achar o campo vazio no APK. Remover depois. */}
+        {orderedPlanets.length === 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>DEBUG</Text>
+            <Text style={{ color: '#FFD700', fontSize: 12 }} selectable>
+              {`td:${transitData ? 1 : 0} ct:${ct ? 1 : 0} natal:${natalPlanets.length} `}
+              {`aspN:${Array.isArray(ct?.aspectsNatalToNatal) ? ct!.aspectsNatalToNatal.length : 'x'} `}
+              {`ctNatal:${Array.isArray((ct as any)?.natalPlanets) ? (ct as any).natalPlanets.length : 'x'}`}
+            </Text>
+            <Text style={{ color: '#9aa2b8', fontSize: 11, marginTop: 6 }} selectable>
+              {`ctKeys: ${ct ? Object.keys(ct as any).join(',') : '(sem ct)'}`}
+            </Text>
+            <Text style={{ color: '#9aa2b8', fontSize: 11, marginTop: 6 }} selectable>
+              {`tdKeys: ${transitData ? Object.keys(transitData as any).join(',') : '(sem td)'}`}
+            </Text>
+          </View>
+        ) : null}
         {/* Visão Geral — síntese do mapa (temperamento + ênfases). Abre a leitura. Só no natal. */}
         {interpMode === 'natal' && chartOverview ? (
           <View style={styles.card} ref={(n) => registerAnchor?.('section:overview', n)}>
