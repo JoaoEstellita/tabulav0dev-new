@@ -966,11 +966,23 @@ export class RealAstrologyEngine {
 
     console.log('Ã°Å¸â€ºÂ°Ã¯Â¸Â ASTRO DEBUG - Request posiÃƒÂ§ÃƒÂµes/houses (backend)', requestBody)
 
-  const resp = await fetch(`${backend}/api/astro/positions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    })
+  // Timeout DURO (AbortController): no APK essa fetch às vezes PENDURA (não responde,
+    // não rejeita) → o await nunca resolvia, loading ficava true pra sempre e a Home/Mapa
+    // travava em "Calculando…" (o fallback só dispara em ERRO, não em hang). Aborta em 12s
+    // → vira erro → cai no fallback local (astronomy-engine).
+    const _ctrl = new AbortController()
+    const _timer = setTimeout(() => { try { _ctrl.abort() } catch {} }, 12000)
+    let resp: Response
+    try {
+      resp = await fetch(`${backend}/api/astro/positions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: _ctrl.signal,
+      })
+    } finally {
+      clearTimeout(_timer)
+    }
     if (!resp.ok) throw new Error('backend error')
     const data = await resp.json()
 
