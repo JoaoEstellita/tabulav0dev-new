@@ -38,6 +38,7 @@ export interface UseLifeAreasReturn {
   sendCriticalAlerts: () => Promise<void>
   isUsingLocalEngine: boolean
   localOverrideActive: boolean
+  loadStage: string
 }
 
 export function useLifeAreas(): UseLifeAreasReturn {
@@ -51,6 +52,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
+  const [loadStage, setLoadStage] = useState<string>('init') // DEBUG: onde o load trava no APK
   const [localOverrideActive, setLocalOverrideActive] = useState(false)
   const localOverrideActiveRef = useRef(false)
   const lastStatusKeyRef = useRef<string | null>(null)
@@ -102,9 +104,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
     try {
       setLoading(true)
       setError(null)
+      setLoadStage('profile')
 
       // Buscar dados de nascimento do usuario
       const userProfile = await UserService.getUserProfile(user.uid, { forcar: forceRefresh })
+      setLoadStage('profileOK')
 
       if (!userProfile?.birthDate || !userProfile?.birthTime || !userProfile?.birthLocation) {
         setError('Dados de nascimento incompletos')
@@ -140,6 +144,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
           },
           { forcar: forceRefresh }
         )
+        setLoadStage('statusRead')
         if (statusData) {
           backendLifeAreasValue = statusData?.lifeAreas || null
           backendCurrentTransitsValue = statusData?.currentTransits || null
@@ -172,6 +177,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       if (!backendFresh && BACKEND_URL && !statusRefreshInFlightRef.current) {
         statusRefreshInFlightRef.current = true
+        setLoadStage('refresh')
         try {
           const refreshResponse = await backendFetch(`/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
             method: 'POST',
@@ -364,13 +370,16 @@ export function useLifeAreas(): UseLifeAreasReturn {
         return
       }
 
+      setLoadStage(`preEngine:${shouldRunLocal ? 'run' : 'skip'}`)
       if (shouldRunLocal && (canUseLocalEngineFallback || allowEmergencyLocalFallback || debugLocalOverride)) {
         if (__DEV__) console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
+        setLoadStage('engine')
         const result = await LocalAstrologyService.getCurrentTransits(
           birthData,
           user.uid,
           forceRefresh || houseSystemChanged || debugLocalOverride
         )
+        setLoadStage('engineOK')
         setTransitData(result.data)
         setCacheStatus(result.cacheStatus)
         setIsUsingLocalEngine(true)
@@ -537,6 +546,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     sendCriticalAlerts,
     isUsingLocalEngine,
     localOverrideActive,
+    loadStage,
   }
 }
 

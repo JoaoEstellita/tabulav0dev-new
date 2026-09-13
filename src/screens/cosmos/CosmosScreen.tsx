@@ -249,7 +249,7 @@ export default function CosmosScreen() {
   const { user } = useAuth()
   const { subscription } = useSubscription()
   const { isAdmin } = useSubscriptionCheck()
-  const { transitData, loading, backendStatusPersonal } = useLifeAreas()
+  const { transitData, loading, backendStatusPersonal, loadStage } = useLifeAreas()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareName, setShareName] = useState('')
 
@@ -777,7 +777,7 @@ export default function CosmosScreen() {
               {`DBG td:${transitData ? 1 : 0} ct:${transitData?.currentTransits ? 1 : 0} `}
               {`natal:${(transitData?.currentTransits as any)?.natalPlanets?.length ?? 'x'} `}
               {`asp:${(transitData?.currentTransits as any)?.aspectsNatalToNatal?.length ?? 'x'} `}
-              {`load:${loading ? 1 : 0}`}
+              {`load:${loading ? 1 : 0} stage:${loadStage}`}
             </Text>
             <Text style={{ color: '#9aa2b8', fontSize: 10, textAlign: 'center', paddingBottom: 6 }} selectable>
               {`ctKeys:${transitData?.currentTransits ? Object.keys(transitData.currentTransits as any).slice(0, 12).join(',') : '-'}`}
