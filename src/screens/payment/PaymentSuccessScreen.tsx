@@ -15,7 +15,7 @@ function planBenefits(planId: string | null, lang: string): { name: string; line
   const id = planId.toLowerCase()
   const tier = id.startsWith('premium') ? 'premium' : id.startsWith('pro') ? 'pro' : 'essential'
   const p = getPlanById(planId)
-  const name = p?.name || (tier === 'premium' ? 'Premium' : tier === 'pro' ? 'Pro' : 'Essential')
+  const name = p?.name || (tier === 'premium' ? 'Cosmos' : tier === 'pro' ? 'Constelação' : 'Órbita')
   const perfis = tier === 'premium' ? 5 : tier === 'pro' ? 2 : 1
   const grupos = tier === 'premium' ? 3 : tier === 'pro' ? 2 : 1
   const forecast = tier === 'premium' ? 360 : tier === 'pro' ? 90 : 30

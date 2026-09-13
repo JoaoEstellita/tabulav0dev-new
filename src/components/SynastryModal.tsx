@@ -148,7 +148,7 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
             <View style={s.paywall}>
               <Text style={s.paywallEmoji}>🔒</Text>
               <Text style={s.paywallTitle}>{tl('Sinastria é da assinatura', 'Synastry is a subscription feature', 'La sinastria es de la suscripcion', 'La sinastria e dell abbonamento')}</Text>
-              <Text style={s.paywallBody}>{tl('No modo gratuito você vê o seu próprio mapa. Comparar com quem você ama — a leitura da dupla nos 4 sistemas — começa no Essential (a partir de R$ 19,90/mês).', 'On the free plan you see your own chart. Comparing with someone you love — the pair reading across the 4 systems — starts on Essential.', 'En el plan gratis ves tu propia carta. Comparar con alguien empieza en Essential.', 'Nel piano gratuito vedi la tua carta. Confrontare con qualcuno inizia con Essential.')}</Text>
+              <Text style={s.paywallBody}>{tl('No modo gratuito você vê o seu próprio mapa. Comparar com quem você ama — a leitura da dupla nos 4 sistemas — começa no Órbita (a partir de R$ 24,90/mês).', 'On the free plan you see your own chart. Comparing with someone you love — the pair reading across the 4 systems — starts on Órbita.', 'En el plan gratis ves tu propia carta. Comparar con alguien empieza en Órbita.', 'Nel piano gratuito vedi la tua carta. Confrontare con qualcuno inizia con Órbita.')}</Text>
             </View>
           ) : (
             <>

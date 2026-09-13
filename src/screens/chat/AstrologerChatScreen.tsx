@@ -150,7 +150,7 @@ function PaywallCard({ onSubscribe }: { onSubscribe?: () => void }) {
       <Text style={s.paywallTitle}>✦ Destrave o astrólogo completo</Text>
       <Text style={s.paywallSub}>{androidSafe
         ? 'Leituras à vontade, sinastria, previsões e seus grupos.'
-        : 'Leituras à vontade, sinastria, previsões e seus grupos. A partir de R$ 19,90/mês.'}</Text>
+        : 'Leituras à vontade, sinastria, previsões e seus grupos. A partir de R$ 24,90/mês.'}</Text>
       {androidSafe ? (
         <TouchableOpacity style={s.paywallCta} activeOpacity={0.9} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
           <Text style={s.paywallCtaTx}>Ver assinatura</Text><Ionicons name="arrow-forward" size={14} color="#241A05" />

@@ -1452,7 +1452,7 @@ export default function SettingsScreen() {
                     onPress={canUseWhatsApp ? undefined : () => {
                       Alert.alert(
                         tr('settings.profile.whatsappPremiumTitle', 'Recurso Premium'),
-                        tr('settings.profile.whatsappPremiumMsg', 'Notificações via WhatsApp estão disponíveis nos planos pagos (Essential, Pro e Premium).'),
+                        tr('settings.profile.whatsappPremiumMsg', 'Notificações via WhatsApp estão disponíveis nos planos pagos (Órbita, Constelação e Cosmos).'),
                         [
                           { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
                           { text: tr('settings.profile.whatsappUpgradeCta', 'Ver Planos'), onPress: () => (navigation as any).navigate('Premium', { openTab: 'features' }) },

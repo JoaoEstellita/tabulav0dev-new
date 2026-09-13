@@ -1354,7 +1354,7 @@ export default function PremiumScreen() {
           </View>
           <View style={styles.compareRow}>
             <Text style={styles.compareLabel}>{tr('premium.compare.astroMap', 'Astrocartografia')}</Text>
-            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.no', 'Não')}</Text>
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
           </View>
@@ -1371,7 +1371,7 @@ export default function PremiumScreen() {
             <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappLimitPremium', '10/dia')}</Text>
           </View>
         </View>
-        <Text style={styles.compareFootnote}>{tr('premium.compare.footnote', 'Todos os recursos (Momento Certo, Astrocartografia, Retorno Solar) já vêm no Essential. Os planos maiores ampliam perfis, grupos, previsão e conversas no WhatsApp.')}</Text>
+        <Text style={styles.compareFootnote}>{tr('premium.compare.footnote', 'Momento Certo e Retorno Solar já vêm no Órbita. A Astrocartografia entra a partir do Constelação. Os planos maiores ampliam perfis, grupos, previsão e conversas no WhatsApp.')}</Text>
       </View>
 
       {/* FAQ curto */}

@@ -424,7 +424,7 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
                     <View style={s.synPaywall}>
                       <Text style={s.synPaywallEmoji}>🔒</Text>
                       <Text style={s.synPaywallTitle}>{tl('Sinastria é da assinatura', 'Synastry is a subscription feature', 'La sinastria es de la suscripcion', 'La sinastria e dell abbonamento')}</Text>
-                      <Text style={s.synPaywallBody}>{tl('A leitura da dupla nos 4 sistemas começa no Essential (a partir de R$ 19,90/mês).', 'The pair reading across the 4 systems starts on Essential.', 'La lectura de la pareja empieza en Essential.', 'La lettura della coppia inizia con Essential.')}</Text>
+                      <Text style={s.synPaywallBody}>{tl('A leitura da dupla nos 4 sistemas começa no Órbita (a partir de R$ 24,90/mês).', 'The pair reading across the 4 systems starts on Órbita.', 'La lectura de la pareja empieza en Órbita.', 'La lettura della coppia inizia con Órbita.')}</Text>
                     </View>
                   ) : detail?.shared && detail.myPositions?.length && detail.positions?.length ? (
                     <>

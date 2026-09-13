@@ -199,9 +199,9 @@ function PlanComparison({ tr, current }: { tr: (k: string, f: string) => string;
   const dot = (on: boolean, color: string) => on ? <View style={[s.cdot, { backgroundColor: color }]} /> : <Text style={s.cno}>–</Text>
   const cols = [
     { key: "free", name: tr("settings.plan.free", "Grátis"), color: C.green },
-    { key: "essential", name: "Essential", color: C.dim },
-    { key: "pro", name: "Pro", color: C.vedic },
-    { key: "premium", name: "Premium", color: C.gold },
+    { key: "essential", name: monthly[0]?.name || "Órbita", color: C.dim },
+    { key: "pro", name: monthly[1]?.name || "Constelação", color: C.vedic },
+    { key: "premium", name: monthly[2]?.name || "Cosmos", color: C.gold },
   ]
   const curIdx = cols.findIndex((c) => c.key === current)
   const rows: { label: string; vals: (string | boolean)[] }[] = [
@@ -214,7 +214,7 @@ function PlanComparison({ tr, current }: { tr: (k: string, f: string) => string;
     { label: tr("settings.plan.row.forecast", "Previsões"), vals: [false, "30d", "90d", "360d"] },
     { label: tr("settings.plan.row.returns", "Retorno Solar/Lunar"), vals: [false, true, true, true] },
     { label: tr("settings.plan.row.moment", "Momento Certo"), vals: [false, true, true, true] },
-    { label: tr("settings.plan.row.astromap", "Astrocartografia"), vals: [false, true, true, true] },
+    { label: tr("settings.plan.row.astromap", "Astrocartografia"), vals: [false, false, true, true] },
   ]
   return (
     <View style={s.cmpWrap}>
@@ -226,7 +226,7 @@ function PlanComparison({ tr, current }: { tr: (k: string, f: string) => string;
               <View key={i} style={[s.cmpCell, i === curIdx && s.cmpCellCur]}>
                 {i === curIdx ? <Text style={[s.cmpCurChip, { color: c.color }]}>{tr("settings.plan.yours", "SEU PLANO")}</Text> : null}
                 <Text style={[s.cmpColName, { color: c.color }, i === curIdx && { fontWeight: "900" }]}>{c.name}</Text>
-                <Text style={s.cmpColPrice}>{i === 0 ? "—" : i === 1 ? "19,90" : i === 2 ? "47,90" : "79,90"}</Text>
+                <Text style={s.cmpColPrice}>{i === 0 ? "—" : (monthly[i - 1]?.price ?? 0).toFixed(2).replace(".", ",")}</Text>
               </View>
             ))}
           </View>

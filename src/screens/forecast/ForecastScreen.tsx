@@ -777,6 +777,8 @@ export default function ForecastScreen() {
 
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
+  // GATE: Astro Map é do Constelação (Pro) pra cima. Órbita (essential) não tem.
+  const canAstroMap = isAdmin || planId.startsWith('pro') || planId.startsWith('premium')
   const currentPlan = useMemo(() => {
     if (isAdmin) return { name: 'Admin' }
     if (subscription?.active) return getPlanById(planId) || { name: 'Premium' }
@@ -1554,12 +1556,23 @@ export default function ForecastScreen() {
       </View>
 
       {forecastView === 'astromap' ? (
-        <View style={{ flex: 1 }}>
-          <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
-          </TouchableOpacity>
-          <AstroMapView />
-        </View>
+        canAstroMap ? (
+          <View style={{ flex: 1 }}>
+            <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
+            </TouchableOpacity>
+            <AstroMapView />
+          </View>
+        ) : (
+          <View style={styles.forecastPaywall}>
+            <Text style={styles.forecastPaywallEmoji}>🌍</Text>
+            <Text style={styles.forecastPaywallTitle}>{tr('forecast.astroPaywall.title', 'Astro Map é do Constelação')}</Text>
+            <Text style={styles.forecastPaywallBody}>{tr('forecast.astroPaywall.body', 'A astrocartografia — onde no mundo o céu te favorece pra amor, carreira e prosperar — faz parte do plano Constelação pra cima. No Órbita você já tem o mapa completo, os trânsitos, o Momento Certo e o Retorno Solar.')}</Text>
+            <TouchableOpacity style={styles.forecastPaywallBtn} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+              <Text style={styles.forecastPaywallBtnTxt}>{tr('forecast.astroPaywall.cta', 'Ver planos')}</Text>
+            </TouchableOpacity>
+          </View>
+        )
       ) : forecastView === 'momento' ? (
         <View style={{ flex: 1 }}>
           <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -1571,7 +1584,7 @@ export default function ForecastScreen() {
         <View style={styles.forecastPaywall}>
           <Text style={styles.forecastPaywallEmoji}>🔒</Text>
           <Text style={styles.forecastPaywallTitle}>{tr('forecast.paywall.title', 'Previsões são da assinatura')}</Text>
-          <Text style={styles.forecastPaywallBody}>{tr('forecast.paywall.body', 'Veja seus trânsitos até 30, 90 ou 360 dias à frente — a partir do Essential (R$ 19,90/mês). No seu período grátis você já tem o mapa completo, os trânsitos de hoje e as 8 áreas da vida.')}</Text>
+          <Text style={styles.forecastPaywallBody}>{tr('forecast.paywall.body', 'Veja seus trânsitos até 30, 90 ou 360 dias à frente — a partir do Órbita (R$ 24,90/mês). No seu período grátis você já tem o mapa completo, os trânsitos de hoje e as 8 áreas da vida.')}</Text>
           <TouchableOpacity style={styles.forecastPaywallBtn} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
             <Text style={styles.forecastPaywallBtnTxt}>{tr('forecast.paywall.cta', 'Ver planos')}</Text>
           </TouchableOpacity>
