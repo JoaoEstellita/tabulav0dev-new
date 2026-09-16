@@ -30,6 +30,26 @@ interface Entrada {
 const cache = new Map<string, Entrada>()
 const emVoo = new Map<string, Promise<unknown>>()
 
+/**
+ * Teto de espera do fetcher (getDoc). No APK (Hermes/New Arch) uma leitura
+ * Firestore pode PENDURAR indefinidamente quando a rede estola — e como este
+ * cache alimenta oito telas via `useLifeAreas`, um getDoc pendurado deixava o
+ * Mapa/Perfil presos em "processando" (roda natal aparece, grade e
+ * interpretacoes nunca). Com o teto, a leitura estola rapido e o consumidor cai
+ * no stale ou no motor local em vez de travar. Firestore normal responde <2s.
+ */
+const TIMEOUT_FETCH_MS = 8_000
+
+function comTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('doc_cache_timeout')), ms)
+    p.then(
+      (v) => { clearTimeout(t); resolve(v) },
+      (e) => { clearTimeout(t); reject(e) }
+    )
+  })
+}
+
 export interface OpcoesLeitura {
   /** Ignora o que estiver guardado e forca uma leitura nova (usado por refresh manual). */
   forcar?: boolean
@@ -58,14 +78,22 @@ export async function lerComCache<T>(
     if (jaEmVoo) return jaEmVoo as Promise<T>
   }
 
-  const promessa = carregar()
-    .then((valor) => {
+  const promessa = (async () => {
+    try {
+      const valor = await comTimeout(carregar(), TIMEOUT_FETCH_MS)
       cache.set(chave, { valor, expiraEm: Date.now() + ttlMs })
       return valor
-    })
-    .finally(() => {
+    } catch (e) {
+      // Timeout ou erro do fetcher: se houver valor guardado (mesmo expirado),
+      // devolve o stale em vez de pendurar ou estourar — melhor um dado velho que
+      // uma tela travada. So propaga o erro quando nao ha nada em cache.
+      const guardado = cache.get(chave)
+      if (guardado) return guardado.valor as T
+      throw e
+    } finally {
       emVoo.delete(chave)
-    })
+    }
+  })()
 
   emVoo.set(chave, promessa)
   return promessa
