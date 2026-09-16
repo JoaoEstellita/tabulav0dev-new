@@ -668,6 +668,19 @@
             const src=f.porOrigem||{}; const keys=Object.keys(src);
             if(keys.length){ html+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:12px"><tr style="text-align:left;color:var(--muted)"><th>Origem</th><th>Leads</th><th>Cadastro</th><th>Degustaram</th><th>Esgotaram</th></tr>'+
               keys.sort((a,b)=>src[b].leads-src[a].leads).map(k=>`<tr style="border-top:1px solid var(--border)"><td>${k}</td><td>${src[k].leads}</td><td>${src[k].cadastro}</td><td>${src[k].degustaram}</td><td>${src[k].esgotaram}</td></tr>`).join('')+'</table>'; }
+            const c=j.cohort;
+            if(c){ const ct=c.taxas||{};
+              const leak=(label,n)=>`<div style="flex:1;min-width:110px;background:var(--bg2);border:1px solid #b8443c66;border-radius:10px;padding:10px"><div style="color:var(--muted);font-size:11px">${label}</div><div style="font-size:20px;font-weight:800;color:#e56a60">${n}</div></div>`;
+              html+='<div style="margin-top:18px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em">FUNIL DO APP — cadastro → trial → pago</div>';
+              html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+
+                stage('Total usuários',c.totalUsers,null)+
+                stage('Em trial',c.emTrial,null)+
+                leak('Trial expirou (perdidos)',c.trialExpirado)+
+                stage('Pagantes',c.ativosPagos,ct.trialParaPagoPct)+
+                stage('Cortesias',c.cortesias,null)+
+                stage('Churn',c.expirados,ct.churnPct)+'</div>';
+              html+=`<div style="margin-top:8px;font-size:13px"><b style="color:#46d39a">Trial→pago: ${ct.trialParaPagoPct}%</b> &nbsp;·&nbsp; Churn: ${ct.churnPct}% &nbsp;·&nbsp; Planos: ${c.porPlano.essential} Órbita / ${c.porPlano.pro} Constelação / ${c.porPlano.premium} Cosmos</div>`;
+            }
             box.innerHTML=html;
           }catch(e){ box.textContent='Erro: '+e.message; }
         }
