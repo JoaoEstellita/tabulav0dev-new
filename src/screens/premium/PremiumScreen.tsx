@@ -114,12 +114,23 @@ export default function PremiumScreen() {
     let vivo = true
     getDoc(doc(db, 'users', user.uid))
       .then((snap) => {
-        const wp = snap.exists() ? (snap.data() as any)?.whatsappPhone : null
-        if (vivo && wp) setPremiumPhone((prev) => prev || String(wp))
+        const d = snap.exists() ? (snap.data() as any) : null
+        if (!d) return
+        if (vivo && d.whatsappPhone) setPremiumPhone((prev) => prev || String(d.whatsappPhone))
+        // Signo solar pro hero personalizado (a tela de assinatura fica sobre O MAPA
+        // dela, não genérica). Deriva do natalPlanets já salvo — sem cálculo novo.
+        const planets = Array.isArray(d.natalPlanets) ? d.natalPlanets : []
+        const sun = planets.find((p: any) => ['sun', 'sol'].includes(String(p?.name || '').toLowerCase()))
+        const lon = Number(sun?.longitude)
+        if (vivo && Number.isFinite(lon)) {
+          const PT_SIGNS = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+          setSunSign(PT_SIGNS[Math.floor((((lon % 360) + 360) % 360) / 30)] || '')
+        }
       })
       .catch(() => {})
     return () => { vivo = false }
   }, [user?.uid])
+  const [sunSign, setSunSign] = useState<string>('')
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
@@ -1076,6 +1087,11 @@ export default function PremiumScreen() {
             ? tr('premium.hero.trialEndedTitle', 'Seu período grátis acabou — mas seu mapa continua aqui')
             : tr('premium.hero.title', 'Seu astrologo pessoal, todos os dias')}
         </Text>
+        {sunSign ? (
+          <Text style={[styles.heroSubtitle, { color: '#FFD700', fontStyle: 'italic', marginBottom: 4 }]}>
+            {tr('premium.hero.personalSun', 'Seu Sol em {sign} continua aqui — e o céu não para de se mover.', { sign: sunSign })}
+          </Text>
+        ) : null}
         <Text style={styles.heroSubtitle}>
           {trialEnded
             ? tr('premium.hero.trialEndedSubtitle', 'Desbloqueie a Tabula completa: status diario das 8 areas, previsoes, transitos e o astrologo no WhatsApp. Seu mapa natal continua gratis, sempre.')
