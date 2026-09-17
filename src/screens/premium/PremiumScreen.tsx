@@ -1073,7 +1073,7 @@ export default function PremiumScreen() {
         <Text style={styles.heroKicker}>✦ {tr('premium.header.title', 'Premium')}</Text>
         <Text style={styles.heroTitle}>
           {trialEnded
-            ? tr('premium.hero.trialEndedTitle', 'Seu teste de 7 dias acabou')
+            ? tr('premium.hero.trialEndedTitle', 'Seu período grátis acabou — mas seu mapa continua aqui')
             : tr('premium.hero.title', 'Seu astrologo pessoal, todos os dias')}
         </Text>
         <Text style={styles.heroSubtitle}>
@@ -1263,45 +1263,53 @@ export default function PremiumScreen() {
                     const anualSemRecorrente = plan.billingPeriod === 'yearly' && !ANNUAL_RECURRING_ENABLED
                     if (anualSemRecorrente) {
                       return (
-                        <TouchableOpacity
-                          style={[styles.subscribeButton, { backgroundColor: plan.color }]}
-                          onPress={() => handleAvulso(plan)}
-                          activeOpacity={0.85}
-                        >
-                          <Text style={styles.subscribeButtonText}>
-                            {tr('premium.cta.subscribeOnceYearly', 'Pagar 12 meses (PIX, sem renovar)')}
-                            {plan.price ? ` · R$ ${(plan.price).toFixed(2)}` : ''}
+                        <>
+                          <TouchableOpacity
+                            style={[styles.subscribeButton, { backgroundColor: plan.color }]}
+                            onPress={() => handleAvulso(plan)}
+                            activeOpacity={0.85}
+                          >
+                            <Text style={styles.subscribeButtonText}>
+                              {tr('premium.cta.pixYear', 'Assinar 12 meses com PIX')}
+                              {plan.price ? ` · R$ ${(plan.price).toFixed(2)}` : ''}
+                            </Text>
+                          </TouchableOpacity>
+                          <Text style={{ color: '#9aa2b8', fontSize: 12, textAlign: 'center', marginTop: 6 }}>
+                            {tr('premium.cta.reassureYear', 'PIX à vista dos 12 meses · sem renovação automática · sem fidelidade')}
                           </Text>
-                        </TouchableOpacity>
+                        </>
                       )
                     }
                     return (
                       <>
-                        {/* Recorrente: renova sozinho (cartão). CTA principal.
-                            Mensal = todo mês; Anual = todo ano. */}
+                        {/* PIX à vista = o caminho que CONVERTE no BR (cai na hora). CTA
+                            PRINCIPAL. Mensal = 1 mês; Anual = 12 meses. */}
                         <TouchableOpacity
                           style={[styles.subscribeButton, { backgroundColor: plan.color }]}
-                          onPress={() => handleSubscribeRecurring(plan)}
+                          onPress={() => handleAvulso(plan)}
                           activeOpacity={0.85}
                         >
                           <Text style={styles.subscribeButtonText}>
                             {plan.billingPeriod === 'yearly'
-                              ? tr('premium.cta.subscribeRecurringYearly', 'Assinar anual')
-                              : tr('premium.cta.subscribeRecurring', 'Assinar mensal')}
-                            {plan.price ? ` · R$ ${(plan.price).toFixed(2)}/${plan.billingPeriod === 'yearly' ? tr('premium.plans.yearShort', 'ano') : tr('premium.plans.monthShort', 'mes')}` : ''}
+                              ? tr('premium.cta.pixYear', 'Assinar 12 meses com PIX')
+                              : tr('premium.cta.pixMonth', 'Assinar com PIX')}
+                            {plan.price ? ` · R$ ${(plan.price).toFixed(2)}` : ''}
                           </Text>
                         </TouchableOpacity>
-                        {/* Avulso: paga à vista, sem renovar (PIX/único). Secundário.
-                            Mensal = 1 mês; Anual = 12 meses. */}
+                        {/* Reversão de risco + âncora por dia — desarma o medo e enquadra o preço. */}
+                        <Text style={{ color: '#9aa2b8', fontSize: 12, textAlign: 'center', marginTop: 6 }}>
+                          {plan.billingPeriod === 'yearly'
+                            ? tr('premium.cta.reassureYear', 'PIX à vista dos 12 meses · sem renovação automática · sem fidelidade')
+                            : (plan.price ? `${tr('premium.cta.perDay', 'Menos de R$ {v}/dia', { v: (plan.price / 30).toFixed(2) })} · ${tr('premium.cta.reassure', 'sem renovação automática · cancele quando quiser')}` : tr('premium.cta.reassure', 'sem renovação automática · cancele quando quiser'))}
+                        </Text>
+                        {/* Recorrente (cartão, renova sozinho) = opção SECUNDÁRIA. */}
                         <TouchableOpacity
                           style={styles.subscribeAvulsoButton}
-                          onPress={() => handleAvulso(plan)}
+                          onPress={() => handleSubscribeRecurring(plan)}
                           activeOpacity={0.85}
                         >
                           <Text style={styles.subscribeAvulsoText}>
-                            {plan.billingPeriod === 'yearly'
-                              ? tr('premium.cta.subscribeOnceYearly', 'Pagar 12 meses (PIX, sem renovar)')
-                              : tr('premium.cta.subscribeOnce', 'Pagar 1 mês (PIX, sem renovar)')}
+                            {tr('premium.cta.preferRecurring', 'Prefiro renovação automática (cartão)')}
                           </Text>
                         </TouchableOpacity>
                       </>
