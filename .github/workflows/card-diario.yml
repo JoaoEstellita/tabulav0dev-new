@@ -128,7 +128,7 @@ jobs:
       # Sem restaurar isso, todo dia começaria do zero e o mesmo trânsito voltaria.
       - name: Restaurar histórico anti-repetição
         if: ${{ github.event.inputs.apenas_calendario != 'true' }}
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: marketing/out/.historico.json
           key: card-historico-${{ github.run_id }}
