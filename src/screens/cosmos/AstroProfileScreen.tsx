@@ -589,21 +589,20 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
 
   return (
     <>
-        {/* DEBUG TEMPORÁRIO (device): quando não há planetas natais, mostra o estado real
-            do transitData/currentTransits pra achar o campo vazio no APK. Remover depois. */}
+        {/* Sem planetas natais: o bundle astral não chegou (rede lenta/offline). Diz o
+            que houve em vez de deixar a tela muda — era um card "DEBUG" técnico aqui. */}
         {orderedPlanets.length === 0 ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>DEBUG</Text>
-            <Text style={{ color: '#FFD700', fontSize: 12 }} selectable>
-              {`td:${transitData ? 1 : 0} ct:${ct ? 1 : 0} natal:${natalPlanets.length} `}
-              {`aspN:${Array.isArray(ct?.aspectsNatalToNatal) ? ct!.aspectsNatalToNatal.length : 'x'} `}
-              {`ctNatal:${Array.isArray((ct as any)?.natalPlanets) ? (ct as any).natalPlanets.length : 'x'}`}
+            <Text style={styles.cardTitle}>
+              {tl('Mapa indisponível agora', 'Chart unavailable right now', 'Mapa no disponible ahora', 'Tema non disponibile ora')}
             </Text>
-            <Text style={{ color: '#9aa2b8', fontSize: 11, marginTop: 6 }} selectable>
-              {`ctKeys: ${ct ? Object.keys(ct as any).join(',') : '(sem ct)'}`}
-            </Text>
-            <Text style={{ color: '#9aa2b8', fontSize: 11, marginTop: 6 }} selectable>
-              {`tdKeys: ${transitData ? Object.keys(transitData as any).join(',') : '(sem td)'}`}
+            <Text style={styles.emptyStateText}>
+              {tl(
+                'Não consegui carregar os dados do seu mapa. Verifique a conexão e puxe a tela para baixo para tentar de novo.',
+                'I could not load your chart data. Check your connection and pull down to try again.',
+                'No pude cargar los datos de tu mapa. Revisa la conexion y desliza hacia abajo para reintentar.',
+                'Non sono riuscito a caricare i dati del tuo tema. Controlla la connessione e trascina verso il basso per riprovare.',
+              )}
             </Text>
           </View>
         ) : null}
@@ -1037,6 +1036,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: '#8892a4', fontSize: 14 },
+  emptyStateText: { color: '#8892a4', fontSize: 14, lineHeight: 20, marginTop: 6 },
 
   card: {
     backgroundColor: '#161a22',

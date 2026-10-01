@@ -25,11 +25,18 @@ describe('appI18n — regra de acentuação', () => {
   // Caracteres acentuados latinos (inclui ñ e tildes). pt-BR e en-US ficam livres.
   const ACCENTED = /[áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ]/
 
+  // NOMES PRÓPRIOS passam: os planos se chamam Órbita / Constelação / Cosmos em
+  // TODO idioma (é marca, não texto traduzível) — desacentuar viraria outro nome.
+  // A regra do projeto vale pra texto corrido, não pra nome de produto.
+  const NOMES_PROPRIOS = ['Órbita', 'Constelação', 'Cosmos']
+  const semNomesProprios = (txt: string) =>
+    NOMES_PROPRIOS.reduce((acc, nome) => acc.split(nome).join(''), txt)
+
   for (const lang of ['es-ES', 'it-IT'] as const) {
     it(`${lang} não usa acentos`, () => {
       const offenders: string[] = []
       for (const [k, v] of Object.entries(dictionaries[lang])) {
-        if (typeof v === 'string' && ACCENTED.test(v)) offenders.push(`${k} = ${v}`)
+        if (typeof v === 'string' && ACCENTED.test(semNomesProprios(v))) offenders.push(`${k} = ${v}`)
       }
       expect(offenders, `${lang} com acento:\n${offenders.slice(0, 20).join('\n')}`).toEqual([])
     })
