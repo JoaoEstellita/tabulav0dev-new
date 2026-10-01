@@ -1,4 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// `synastry.ts` importa RealAstrologyEngine, que puxa `react-native` — e o
+// react-native é escrito em Flow, que o Vitest não parseia. O arquivo inteiro
+// falhava em CARREGAR ("Flow is not supported"), então esta suíte nunca rodou.
+// Metro/EAS lidam com Flow normalmente, ou seja: era só o teste, nunca o app.
+//
+// Estes testes cobrem `computeSynastryAspects`, que é função pura de geometria e
+// não encosta no engine (só `fetchSynastryFor` usa, pra calcular o mapa). Mockar
+// o módulo corta a cadeia de import antes do react-native aparecer.
+vi.mock('../../services/astrology/RealAstrologyEngine', () => ({
+  RealAstrologyEngine: { calculateRealAstrology: vi.fn() },
+}))
+
 import { computeSynastryAspects } from '../synastry'
 
 // Helper: monta um RealPlanetPosition mínimo (só o que o util lê: name + longitude).
