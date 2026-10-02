@@ -53,6 +53,14 @@ const CELL = 30
 const glyphOf = (name: string) => PLANET_SYMBOLS[name] || name.slice(0, 2)
 
 // ScrollView horizontal que centraliza quando cabe e rola quando não cabe.
+//
+// ⚠️ Quem usa isto PRECISA passar `style={{ height: H }}` no ScrollView.
+// Sendo horizontal, o eixo cruzado é o VERTICAL — então `alignItems: "center"`
+// centraliza o SVG na vertical. Sem altura explícita, a New Architecture
+// (Fabric) não encolhe o ScrollView para o filho como o web faz: ele estica,
+// e o conteúdo fica boiando no meio de um vão enorme em cima e embaixo.
+// Era exatamente o sintoma do APK — grade "sumida" entre dois vazios, com a
+// tabela intacta lá no meio — enquanto no navegador tudo parecia certo.
 const centeredScroll = { flexGrow: 1, justifyContent: "center" as const, alignItems: "center" as const, paddingHorizontal: 8 }
 
 function AspectLegend({ present, extra }: { present: string[]; extra?: React.ReactNode }) {
@@ -121,7 +129,7 @@ function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; 
 
   return (
     <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={centeredScroll}>
+      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={centeredScroll} style={{ height: H }}>
         <Svg width={W} height={H}>
           {names.map((rowName, i) => {
             const top = pad + i * CELL
@@ -191,7 +199,7 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
 
   return (
     <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={centeredScroll}>
+      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={centeredScroll} style={{ height: H }}>
         <Svg width={W} height={H}>
           {/* canto */}
           <Rect x={pad} y={pad} width={hdr} height={hdr} fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} />
