@@ -162,12 +162,15 @@ function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; 
   return (
     <View onLayout={sonda.onRoot}>
       <Text style={sondaStyle} selectable>{sonda.texto}</Text>
+      {/* A gaiola: o ScrollView ignora o próprio `height` sob Fabric (medido no
+          device: height=364 virando 12353px de altura real), mas não atravessa um
+          pai de altura fixa que recorta o excedente. */}
+      <View style={{ height: H, overflow: "hidden" }} onLayout={sonda.onSv}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator
         contentContainerStyle={centeredScroll(H)}
         style={{ height: H }}
-        onLayout={sonda.onSv}
         onContentSizeChange={(_w, h) => sonda.onCc({ nativeEvent: { layout: { height: h } } })}
       >
         <Svg width={W} height={H}>
@@ -200,6 +203,7 @@ function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; 
           })}
         </Svg>
       </ScrollView>
+      </View>
       <AspectLegend present={presentAspects(list)} />
     </View>
   )
@@ -242,12 +246,15 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
   return (
     <View onLayout={sonda.onRoot}>
       <Text style={sondaStyle} selectable>{sonda.texto}</Text>
+      {/* A gaiola: o ScrollView ignora o próprio `height` sob Fabric (medido no
+          device: height=364 virando 12353px de altura real), mas não atravessa um
+          pai de altura fixa que recorta o excedente. */}
+      <View style={{ height: H, overflow: "hidden" }} onLayout={sonda.onSv}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator
         contentContainerStyle={centeredScroll(H)}
         style={{ height: H }}
-        onLayout={sonda.onSv}
         onContentSizeChange={(_w, h) => sonda.onCc({ nativeEvent: { layout: { height: h } } })}
       >
         <Svg width={W} height={H}>
@@ -291,6 +298,7 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
           })}
         </Svg>
       </ScrollView>
+      </View>
       <AspectLegend
         present={presentAspects(list)}
         extra={
