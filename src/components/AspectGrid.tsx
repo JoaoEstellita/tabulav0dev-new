@@ -1,5 +1,6 @@
 import React from "react"
 import { ScrollView, View, Text } from "react-native"
+import { useState } from "react"
 import Svg, { Rect, Text as SvgText } from "react-native-svg"
 
 /**
@@ -51,6 +52,24 @@ const ASPECT_LABEL: Record<string, string> = {
 const CELL = 30
 
 const glyphOf = (name: string) => PLANET_SYMBOLS[name] || name.slice(0, 2)
+
+// ⚠️ DIAGNOSTICO TEMPORARIO (remover depois) — mede a altura REAL de cada nivel
+// para achar quem infla o vao em volta da grade no APK. H = altura calculada do
+// SVG; se "root" ou "sv" vierem muito maiores que H, o culpado esta identificado.
+function useSonda(H: number) {
+  const [root, setRoot] = useState(0)
+  const [sv, setSv] = useState(0)
+  const [cc, setCc] = useState(0)
+  const texto = `H=${Math.round(H)} root=${Math.round(root)} sv=${Math.round(sv)} cc=${Math.round(cc)}`
+  return {
+    texto,
+    onRoot: (e: any) => setRoot(e.nativeEvent.layout.height),
+    onSv: (e: any) => setSv(e.nativeEvent.layout.height),
+    onCc: (e: any) => setCc(e.nativeEvent.layout.height),
+  }
+}
+
+const sondaStyle = { color: "#FFD700", fontSize: 10, textAlign: "center" as const, paddingVertical: 2 }
 
 // ScrollView horizontal que centraliza quando cabe e rola quando não cabe.
 //
@@ -127,9 +146,19 @@ function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; 
   const W = pad * 2 + n * CELL
   const H = pad * 2 + n * CELL
 
+  const sonda = useSonda(H)
+
   return (
-    <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={centeredScroll} style={{ height: H }}>
+    <View onLayout={sonda.onRoot}>
+      <Text style={sondaStyle} selectable>{sonda.texto}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator
+        contentContainerStyle={centeredScroll}
+        style={{ height: H }}
+        onLayout={sonda.onSv}
+        onContentSizeChange={(_w, h) => sonda.onCc({ nativeEvent: { layout: { height: h } } })}
+      >
         <Svg width={W} height={H}>
           {names.map((rowName, i) => {
             const top = pad + i * CELL
@@ -197,9 +226,19 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
   const W = pad * 2 + hdr + cols.length * CELL
   const H = pad * 2 + hdr + rows.length * CELL
 
+  const sonda = useSonda(H)
+
   return (
-    <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={centeredScroll} style={{ height: H }}>
+    <View onLayout={sonda.onRoot}>
+      <Text style={sondaStyle} selectable>{sonda.texto}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator
+        contentContainerStyle={centeredScroll}
+        style={{ height: H }}
+        onLayout={sonda.onSv}
+        onContentSizeChange={(_w, h) => sonda.onCc({ nativeEvent: { layout: { height: h } } })}
+      >
         <Svg width={W} height={H}>
           {/* canto */}
           <Rect x={pad} y={pad} width={hdr} height={hdr} fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} />
