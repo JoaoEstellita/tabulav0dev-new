@@ -1,4 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 import {
   View,
   Text,
@@ -64,6 +66,38 @@ interface SettingsItem {
   onPress?: () => void;
   onToggle?: (value: boolean) => void;
 }
+
+// Versão e origem do JS em execução. Fica fora do componente: é constante por
+// processo e não precisa recalcular a cada render.
+const appVersion = Constants.expoConfig?.version || '?';
+const buildNumber =
+  (Constants.expoConfig as any)?.android?.versionCode ??
+  (Constants as any)?.nativeBuildVersion ??
+  null;
+
+/**
+ * De onde veio o JS que está rodando agora.
+ *
+ * `isEmbeddedLaunch` = true → o bundle que veio dentro do APK da loja.
+ * false → uma atualização OTA já aplicada (mostra o id e a data dela).
+ *
+ * Existe porque "publiquei o fix e nada mudou" era ambíguo: podia ser correção
+ * errada ou correção que não chegou ao aparelho. Agora dá para ler na tela.
+ * Nunca lança: em dev o módulo responde diferente e isso não pode quebrar as
+ * Configurações.
+ */
+const bundleInfo = (() => {
+  try {
+    if (Updates.isEmbeddedLaunch) return 'JS do build (sem atualização aplicada)';
+    const id = Updates.updateId ? String(Updates.updateId).slice(0, 8) : '?';
+    const data = Updates.createdAt
+      ? new Date(Updates.createdAt).toLocaleDateString('pt-BR')
+      : null;
+    return `Atualização ${id}${data ? ` · ${data}` : ''}`;
+  } catch {
+    return 'JS do build';
+  }
+})();
 
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
@@ -1713,7 +1747,15 @@ export default function SettingsScreen() {
           {/* App Info */}
           <View style={styles.appInfo}>
             <Text style={styles.appInfoText}>
-              {tr('settings.appInfo.version', 'Tabula Estelar v1.0.0')}
+              {`Tábula Estelar v${appVersion}${buildNumber ? ` (${buildNumber})` : ''}`}
+            </Text>
+            {/* Qual JS está REALMENTE rodando: o embutido no build da loja ou uma
+                atualização OTA. Sem isto não dá para saber se um fix publicado
+                chegou ao aparelho — e "não mudou nada" fica ambíguo entre
+                "a correção falhou" e "a correção nem chegou". Selecionável para
+                poder ser copiado num relato de bug. */}
+            <Text style={styles.appInfoSubtext} selectable>
+              {bundleInfo}
             </Text>
             <Text style={styles.appInfoSubtext}>
               {tr('settings.appInfo.tagline', 'Desenvolvido com cuidado para sua jornada astrológica')}
