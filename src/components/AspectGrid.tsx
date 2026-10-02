@@ -80,7 +80,18 @@ const sondaStyle = { color: "#FFD700", fontSize: 10, textAlign: "center" as cons
 // e o conteúdo fica boiando no meio de um vão enorme em cima e embaixo.
 // Era exatamente o sintoma do APK — grade "sumida" entre dois vazios, com a
 // tabela intacta lá no meio — enquanto no navegador tudo parecia certo.
-const centeredScroll = { flexGrow: 1, justifyContent: "center" as const, alignItems: "center" as const, paddingHorizontal: 8 }
+//
+// `flexGrow: 1` fazia o contentContainer crescer; trocado por `minWidth: "100%"`,
+// que centraliza igual quando cabe e deixa rolar quando não cabe, sem pedir
+// crescimento. E a altura é travada aqui TAMBÉM — travar só no ScrollView não
+// bastou (medido no device: ScrollView com height=364 e conteúdo de 12353px).
+const centeredScroll = (H: number) => ({
+  minWidth: "100%" as const,
+  height: H,
+  justifyContent: "center" as const,
+  alignItems: "center" as const,
+  paddingHorizontal: 8,
+})
 
 function AspectLegend({ present, extra }: { present: string[]; extra?: React.ReactNode }) {
   if (present.length === 0 && !extra) return null
@@ -154,7 +165,7 @@ function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator
-        contentContainerStyle={centeredScroll}
+        contentContainerStyle={centeredScroll(H)}
         style={{ height: H }}
         onLayout={sonda.onSv}
         onContentSizeChange={(_w, h) => sonda.onCc({ nativeEvent: { layout: { height: h } } })}
@@ -234,7 +245,7 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator
-        contentContainerStyle={centeredScroll}
+        contentContainerStyle={centeredScroll(H)}
         style={{ height: H }}
         onLayout={sonda.onSv}
         onContentSizeChange={(_w, h) => sonda.onCc({ nativeEvent: { layout: { height: h } } })}
