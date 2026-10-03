@@ -141,8 +141,22 @@
     el('title').textContent = 'Parceria · ' + (d.partner && d.partner.name || '');
     el('subtitle').textContent = 'Comissão de ' + Math.round((d.partner && d.partner.profitShare || .5) * 100) + '% · atualizado ' + fmtDate(d.generatedAt);
 
-    // Link de indicação: quem baixar/entrar por ele é atribuído a esta parceria
-    // (Play Install Referrer no Android + ?ref no navegador). First-touch.
+    // DOIS links, e a ordem importa.
+    //
+    // O link do WhatsApp é o principal porque é o ÚNICO que garante a atribuição:
+    // o texto "parceria <codigo>" é lido pelo agente (attributeWaPartner), que
+    // grava referredBy no waOnboarding do número — e isso sobrevive mesmo que a
+    // pessoa depois crie a conta por e-mail, porque o vínculo é por telefone.
+    //
+    // O link do site NÃO atribui quem instala pela Play: a loja não repassa o
+    // `?ref=` ao app (só a Play Install Referrer API faria isso, e ela não está
+    // no projeto). Fica como alternativa para quem prefere ver a página antes,
+    // com o texto honesto sobre o que cada um faz.
+    //
+    // De quebra, o caminho do WhatsApp converte melhor: o agente já coleta os
+    // dados de nascimento conversando, que é a parte chata do cadastro.
+    var WA_NUMBER = '5522988237163';
+    var waUrl = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent('parceria ' + code);
     var shareUrl = 'https://www.tabulaestelar.com.br/baixar?ref=' + encodeURIComponent(code);
     var box = document.getElementById('shareBox');
     if (!box) {
@@ -152,13 +166,28 @@
       el('subtitle').parentNode.insertBefore(box, el('subtitle').nextSibling);
     }
     box.innerHTML = '<div style="font-size:13px;color:var(--gold);font-weight:800;margin-bottom:8px">🔗 Seu link de indicação</div>' +
-      '<div id="shareUrlTxt" style="font-size:13px;word-break:break-all;color:var(--ink);margin-bottom:10px">' + shareUrl + '</div>' +
-      '<button id="copyLink" style="background:var(--gold);color:#241A05;border:none;border-radius:10px;padding:9px 16px;font-weight:800;cursor:pointer">Copiar link</button>' +
-      '<div style="font-size:12px;color:var(--muted);margin-top:8px">Compartilhe onde quiser. Quem baixar o app por ele conta como sua indicação, no Android e no navegador.</div>';
-    document.getElementById('copyLink').onclick = function(){
-      var b = this;
-      navigator.clipboard.writeText(shareUrl).then(function(){ b.textContent = 'Copiado!'; setTimeout(function(){ b.textContent = 'Copiar link'; }, 2000); }).catch(function(){});
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Use este. A indicação fica registrada assim que a pessoa manda a mensagem.</div>' +
+      '<div id="waUrlTxt" style="font-size:13px;word-break:break-all;color:var(--ink);margin-bottom:10px">' + waUrl + '</div>' +
+      '<button id="copyWa" style="background:var(--gold);color:#241A05;border:none;border-radius:10px;padding:9px 16px;font-weight:800;cursor:pointer">Copiar link</button>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:8px">Abre a conversa com o astrólogo já com o seu código. Ele monta o mapa da pessoa conversando e manda o link do app depois.</div>' +
+      '<details style="margin-top:14px"><summary style="font-size:12px;color:var(--muted);cursor:pointer">Link do site (atribuição parcial)</summary>' +
+      '<div id="shareUrlTxt" style="font-size:13px;word-break:break-all;color:var(--ink);margin:8px 0">' + shareUrl + '</div>' +
+      '<button id="copyLink" style="background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer">Copiar</button>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:8px">Conta a indicação de quem entrar pelo navegador. Quem instalar pela Play Store <b>não</b> é atribuído — a loja não repassa o código para o app.</div></details>';
+
+    var liga = function(botaoId, url){
+      var b = document.getElementById(botaoId);
+      if (!b) return;
+      var rotulo = b.textContent;
+      b.onclick = function(){
+        navigator.clipboard.writeText(url).then(function(){
+          b.textContent = 'Copiado!';
+          setTimeout(function(){ b.textContent = rotulo; }, 2000);
+        }).catch(function(){});
+      };
     };
+    liga('copyWa', waUrl);
+    liga('copyLink', shareUrl);
     var s = d.summary || {};
     el('tClients').textContent = s.totalClients != null ? s.totalClients : '—';
     el('tActive').textContent = s.activeSubscribers != null ? s.activeSubscribers : '—';

@@ -17,7 +17,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "fire
 import { captureReferralFromUrl, attributeReferralIfAny, hydrateReferral } from "../services/ReferralService"
 import { capturePlayInstallReferrer } from "../services/PlayInstallReferrer"
 import LoadingScreen from "../components/LoadingScreen"
-import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
+import { ouvirLinkDeVinculo, captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
 import { capturarTokenDoQuiz, consumirTokenDoQuiz } from "../services/claimQuiz"
 import { lerPerfilPendente, fundirNaConta } from "../services/vincularConta"
 import { backendFetch } from "../services/backend/client"
@@ -54,6 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     captureClaimTokenFromUrl().catch(() => {})
     // Mesma captura, para quem chegou pelo quiz num outro aparelho.
     capturarTokenDoQuiz().catch(() => {})
+    // E links que chegam com o app JÁ aberto: `getInitialURL` só pega o que
+    // abriu o app, então sem o listener tocar no link com ele em segundo plano
+    // traz a pessoa para a tela sem o token.
+    return ouvirLinkDeVinculo()
   }, [])
 
   const ensureUserDocuments = async (authUser: User) => {
