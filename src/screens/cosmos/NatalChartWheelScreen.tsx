@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import Svg, { Circle, Line, Path, Text as SvgText, G } from 'react-native-svg'
+import { getSignMeaning, getHouseMeaning, type SignificadoRoda } from '../../data/signHouseMeaning'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
@@ -105,6 +106,9 @@ function declutterRing<T extends { longitude: number }>(
     .map((p) => ({ item: p, trueAngle: lonToSvgAngle(p.longitude, ascDeg) }))
     .sort((a, b) => a.trueAngle - b.trueAngle)
   const radius = new Array<number>(withAngle.length).fill(R)
+  // Ângulo de DESENHO. Começa no verdadeiro e só muda se o afastamento radial
+  // não der conta — a posição real do planeta continua sendo `trueAngle`.
+  const angulo = withAngle.map((w) => w.trueAngle)
   let i = 0
   while (i < withAngle.length) {
     let j = i
@@ -112,15 +116,51 @@ function declutterRing<T extends { longitude: number }>(
     const n = j - i + 1
     for (let k = 0; k < n; k++) {
       const r = R + (k - (n - 1) / 2) * step
-      radius[i + k] = Math.max(minR, Math.min(maxR, r))
+      const rClamp = Math.max(minR, Math.min(maxR, r))
+      radius[i + k] = rClamp
+      // Só o afastamento radial não bastava: quando o grupo é grande, os
+      // extremos batem no limite de raio, o clamp empilha vários no MESMO
+      // raio e eles voltam a se sobrepor — foi o que o João viu, com planetas
+      // encavalados e impossíveis de tocar. Quando o clamp mordeu, abre também
+      // em ângulo, que é espaço que o anel sempre tem.
+      if (n > 1 && Math.abs(rClamp - r) > 0.5) {
+        angulo[i + k] = withAngle[i + k].trueAngle + (k - (n - 1) / 2) * (glyphDeg * 0.85)
+      }
     }
     i = j + 1
   }
   return withAngle.map((w, idx) => {
-    const pos = polarToXY(cx, cy, radius[idx], w.trueAngle)
+    const pos = polarToXY(cx, cy, radius[idx], angulo[idx])
     return { ...(w.item as T), trueAngle: w.trueAngle, sx: pos.x, sy: pos.y, radius: radius[idx] }
   })
 }
+
+/**
+ * Caminho de um setor do anel (uma fatia de rosca), de `r1` a `r2`.
+ *
+ * Serve de área de toque para signo e casa: o desenho deles é só um símbolo
+ * solto no anel, pequeno demais para acertar com o dedo. O setor cobre a fatia
+ * inteira, então tocar em qualquer ponto dela funciona.
+ */
+function setorAnelar(cx: number, cy: number, r1: number, r2: number, a1: number, a2: number): string {
+  const varrer = ((a2 - a1) % 360 + 360) % 360
+  const grande = varrer > 180 ? 1 : 0
+  const p1 = polarToXY(cx, cy, r2, a1)
+  const p2 = polarToXY(cx, cy, r2, a2)
+  const p3 = polarToXY(cx, cy, r1, a2)
+  const p4 = polarToXY(cx, cy, r1, a1)
+  return [
+    `M ${p1.x} ${p1.y}`,
+    `A ${r2} ${r2} 0 ${grande} 1 ${p2.x} ${p2.y}`,
+    `L ${p3.x} ${p3.y}`,
+    `A ${r1} ${r1} 0 ${grande} 0 ${p4.x} ${p4.y}`,
+    'Z',
+  ].join(' ')
+}
+
+// Preenchimento invisível mas TOCÁVEL. `fill="none"` não recebe toque; um alfa
+// mínimo recebe sem pintar nada na tela.
+const TOQUE_INVISIVEL = 'rgba(0,0,0,0.001)'
 
 // ─── Componente principal ─────────────────────────────────────────────────
 type ChartContentProps = {
@@ -199,6 +239,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const { width } = useWindowDimensions()
 
   const [selectedPlanet, setSelectedPlanet] = useState<RealPlanetPosition | null>(null)
+  // Signo e casa ocupam quase toda a área da roda e não respondiam a nada.
+  const [infoRoda, setInfoRoda] = useState<SignificadoRoda | null>(null)
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [firestoreCusps, setFirestoreCusps] = useState<number[] | null>(null)
 
@@ -426,6 +468,19 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {/* Anel do zodíaco */}
             <Circle cx={cx} cy={cy} r={R_ZODIAC_IN} fill="none" stroke="#252b38" strokeWidth={1} />
 
+            {/* Áreas de toque dos signos. Vêm ANTES dos símbolos para ficarem por
+                baixo: no SVG o último desenhado fica na frente, e o setor cobriria
+                o glifo se viesse depois. O setor inteiro é tocável porque o símbolo
+                sozinho é pequeno demais para o dedo. */}
+            {zodiacSections.map(z => (
+              <Path
+                key={`toque-signo-${z.i}`}
+                d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
+                fill={TOQUE_INVISIVEL}
+                onPress={() => setInfoRoda(getSignMeaning(ZODIAC_NAMES[z.i], language))}
+              />
+            ))}
+
             {/* Símbolos dos signos */}
             {zodiacSections.map(z => (
               <SvgText
@@ -455,6 +510,21 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {/* Anel das casas */}
             <Circle cx={cx} cy={cy} r={R_HOUSE_OUT} fill="none" stroke="#252b38" strokeWidth={1} />
             <Circle cx={cx} cy={cy} r={R_HOUSE_IN} fill="#10131c" stroke="#252b38" strokeWidth={1} />
+
+            {/* Áreas de toque das casas. Usam as cúspides REAIS: em Placidus as casas
+                têm tamanhos diferentes, então fatiar de 30 em 30 erraria o alvo. */}
+            {houseLines.map((h, i) => {
+              const proxima = houseLines[(i + 1) % houseLines.length]
+              if (!proxima) return null
+              return (
+                <Path
+                  key={`toque-casa-${h.i}`}
+                  d={setorAnelar(cx, cy, R_HOUSE_IN, R_HOUSE_OUT, h.angle, proxima.angle)}
+                  fill={TOQUE_INVISIVEL}
+                  onPress={() => setInfoRoda(getHouseMeaning(h.i + 1, language))}
+                />
+              )
+            })}
 
             {/* Linhas de cúspide das casas */}
             {houseLines.map(h => (
@@ -639,6 +709,24 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           ))}
         </View>
         ) : null}
+
+      {/* Modal de signo ou casa tocada na roda.
+          Fecha tocando FORA do card e pelo botão voltar do Android
+          (onRequestClose) — não exige mirar num X pequeno. */}
+      <Modal visible={infoRoda != null} transparent animationType="fade" onRequestClose={() => setInfoRoda(null)}>
+        <TouchableOpacity style={styles.aspectModalOverlay} activeOpacity={1} onPress={() => setInfoRoda(null)}>
+          <TouchableOpacity style={styles.aspectModalCard} activeOpacity={1} onPress={() => {}}>
+            <Text style={styles.aspectModalTitle}>{infoRoda?.nome}</Text>
+            <Text style={styles.aspectModalSubtitle}>{infoRoda?.palavras}</Text>
+            <ScrollView style={{ maxHeight: 280 }}>
+              <TextoComGlossario style={styles.aspectModalBody}>{infoRoda?.texto || ''}</TextoComGlossario>
+            </ScrollView>
+            <TouchableOpacity style={styles.aspectModalClose} onPress={() => setInfoRoda(null)}>
+              <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Modal de interpretação do aspecto clicado na grade */}
       <Modal visible={aspectModal != null} transparent animationType="fade" onRequestClose={() => setAspectModal(null)}>

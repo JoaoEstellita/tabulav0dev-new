@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, BackHandler } from 'react-native'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { useTourState, useTourControls } from '../tour/TourProvider'
 
@@ -70,26 +70,50 @@ export default function TourOverlay() {
 
   const isLast = index >= steps.length - 1
 
+  // Botão voltar do aparelho fecha o guia em vez de sair do app. Sem isto, a
+  // pessoa que quer apenas se livrar do tour é jogada para fora do aplicativo —
+  // o reflexo de voltar é o primeiro que todo mundo tenta.
+  useEffect(() => {
+    if (!active || Platform.OS !== 'android') return
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      stop()
+      return true // consumido: não propaga para a navegação nem encerra o app
+    })
+    return () => sub.remove()
+  }, [active, stop])
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {hole ? (
         <>
-          {/* 4 retângulos escuros ao redor do buraco */}
-          <View style={[s.dim, { top: 0, left: 0, right: 0, height: hole.y }]} />
-          <View style={[s.dim, { top: hole.y + hole.h, left: 0, right: 0, bottom: 0 }]} />
-          <View style={[s.dim, { top: hole.y, left: 0, width: hole.x, height: hole.h }]} />
-          <View style={[s.dim, { top: hole.y, left: hole.x + hole.w, right: 0, height: hole.h }]} />
+          {/* 4 retângulos escuros ao redor do buraco — tocáveis: tocar fora do
+              balão fecha o guia, que é o gesto que todo mundo tenta primeiro. */}
+          <TouchableOpacity activeOpacity={1} onPress={stop} style={[s.dim, { top: 0, left: 0, right: 0, height: hole.y }]} />
+          <TouchableOpacity activeOpacity={1} onPress={stop} style={[s.dim, { top: hole.y + hole.h, left: 0, right: 0, bottom: 0 }]} />
+          <TouchableOpacity activeOpacity={1} onPress={stop} style={[s.dim, { top: hole.y, left: 0, width: hole.x, height: hole.h }]} />
+          <TouchableOpacity activeOpacity={1} onPress={stop} style={[s.dim, { top: hole.y, left: hole.x + hole.w, right: 0, height: hole.h }]} />
           {/* bloqueia toques no recurso durante o tour (evita abrir modais por engano) */}
           <View style={{ position: 'absolute', top: hole.y, left: hole.x, width: hole.w, height: hole.h }} />
           {/* anel dourado no recurso */}
           <View pointerEvents="none" style={[s.ring, { top: hole.y, left: hole.x, width: hole.w, height: hole.h }]} />
         </>
       ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: DIM }]} />
+        <TouchableOpacity activeOpacity={1} onPress={stop} style={[StyleSheet.absoluteFill, { backgroundColor: DIM }]} />
       )}
 
       {/* Balão */}
       <View style={[s.balloon, { top: balloonTop, width: Math.min(SW - 24, 420) }]}>
+        {/* X no canto: saída óbvia à primeira vista. O "Sair" de texto embaixo
+            continua, mas ninguém procura por ele — procura-se o X. */}
+        <TouchableOpacity
+          onPress={stop}
+          style={s.fechar}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel={tl('Fechar o guia', 'Close the guide', 'Cerrar la guia', 'Chiudi la guida')}
+        >
+          <Text style={s.fecharTx}>✕</Text>
+        </TouchableOpacity>
         <Text style={s.counter}>{tl('Passo', 'Step', 'Paso', 'Passo')} {index + 1}/{steps.length}</Text>
         <Text style={s.title}>{step.title}</Text>
         <Text style={s.body}>{step.body}</Text>
@@ -113,6 +137,8 @@ export default function TourOverlay() {
 
 const s = StyleSheet.create({
   dim: { position: 'absolute', backgroundColor: DIM },
+  fechar: { position: 'absolute', top: 6, right: 8, width: 32, height: 32, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  fecharTx: { color: '#9aa2b8', fontSize: 18, fontWeight: '700', lineHeight: 20 },
   ring: { position: 'absolute', borderWidth: 2, borderColor: GOLD, borderRadius: 14, ...(Platform.OS === 'web' ? { boxShadow: '0 0 0 3px rgba(255,215,0,0.25)' } as any : {}) },
   balloon: { position: 'absolute', alignSelf: 'center', backgroundColor: '#161728', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', padding: 18, shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 12 },
   counter: { color: GOLD, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 },
