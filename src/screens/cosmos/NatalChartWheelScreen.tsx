@@ -578,6 +578,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 <Text style={[styles.aspectGridTitle, { textAlign: 'center', marginBottom: 0, paddingHorizontal: 46 }]}>
                   {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
                 </Text>
+                {/* idem: a tabela cruza dois conjuntos de planetas e isso não é
+                    óbvio para ninguém de fora. */}
                 {onOpenTransits ? (
                   <TouchableOpacity style={styles.gridBookBtn} onPress={onOpenTransits} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button"
                     accessibilityLabel={tl('Abrir trânsitos completos', 'Open full transits', 'Abrir transitos completos', 'Apri transiti completi')}>
@@ -585,6 +587,14 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   </TouchableOpacity>
                 ) : null}
               </View>
+              <Text style={styles.aspectGridHint}>
+                {tl(
+                  'Linhas são os planetas de hoje; colunas, os do seu nascimento. Cada símbolo é um encontro entre os dois — toque para ler.',
+                  'Rows are today\'s planets; columns, the ones from your birth. Each symbol is a meeting between the two — tap to read.',
+                  'Las filas son los planetas de hoy; las columnas, los de tu nacimiento. Cada simbolo es un encuentro entre ambos — toca para leer.',
+                  'Le righe sono i pianeti di oggi; le colonne, quelli della tua nascita. Ogni simbolo e un incontro tra i due — tocca per leggere.',
+                )}
+              </Text>
               <AspectGrid cross rowPlanets={transitGridPoints} colPlanets={natalGridPoints} aspects={tnAspectsWithNodes} onSelectCell={openTransitAspectModal} />
             </View>
           ) : null
@@ -595,6 +605,17 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           >
             <Text style={styles.aspectGridTitle}>
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
+            </Text>
+            {/* Sem esta linha a grade é uma tabela de 100 símbolos sem legenda — o
+                ponto mais hostil do app para quem não estuda astrologia. Diz o que é
+                e que dá para tocar, antes de a pessoa decidir que não é para ela. */}
+            <Text style={styles.aspectGridHint}>
+              {tl(
+                'Cada símbolo é uma conversa entre dois planetas do seu mapa. Toque em um para ler o que significa.',
+                'Each symbol is a conversation between two planets of your chart. Tap one to read what it means.',
+                'Cada simbolo es una conversacion entre dos planetas de tu mapa. Toca uno para leer que significa.',
+                'Ogni simbolo e una conversazione tra due pianeti del tuo tema. Toccane uno per leggere cosa significa.',
+              )}
             </Text>
             {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
             <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} onSelectAspect={openNatalAspectModal} />
@@ -715,6 +736,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#222836',
     paddingVertical: 10,
+  },
+  aspectGridHint: {
+    color: '#8d94a8',
+    fontSize: 11.5,
+    lineHeight: 16,
+    textAlign: 'center',
+    paddingHorizontal: 18,
+    marginBottom: 8,
   },
   gridBookBtn: {
     position: 'absolute',
