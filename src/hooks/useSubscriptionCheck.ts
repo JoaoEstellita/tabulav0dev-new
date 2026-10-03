@@ -56,26 +56,27 @@ export function useSubscriptionCheck() {
       const diff = (Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24)
       const trialEndDate = new Date(new Date(trialStart).getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
       setTrialEndsAt(trialEndDate)
-      if (diff < TRIAL_DAYS) {
-        setTrialActive(true)
-        setShowModal(false)
-        setLoading(false)
-        return
-      }
+      const dentroDoTrial = diff < TRIAL_DAYS
+      setTrialActive(dentroDoTrial)
 
-      setTrialActive(false)
-
+      // A assinatura é consultada SEMPRE, inclusive durante o trial. Antes havia um
+      // `return` antes desta linha quando o trial estava correndo: quem assinava (ou
+      // ganhava cortesia pelo painel) nos 3 primeiros dias ficava com `subscription`
+      // nulo, e o app tratava a pessoa como se não tivesse plano nenhum. Aconteceu de
+      // verdade: conta liberada como Pro no mesmo dia do cadastro seguia vendo o app
+      // como plano nenhum até o trial acabar.
+      //
+      // O trial decide só se o paywall aparece — nunca se o plano é conhecido.
       const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
-      const result = {
+      setSubscription({
         active: status.isActive,
         status: status.status,
         planId: status.planId,
         expiresAt: status.expiresAt,
         nextBillingDate: status.nextBillingDate,
         trialEndsAt: status.trialEndsAt,
-      }
-      setSubscription(result)
-      setShowModal(!status.isActive && !adminFlag)
+      })
+      setShowModal(!dentroDoTrial && !status.isActive && !adminFlag)
       setLoading(false)
     }
 

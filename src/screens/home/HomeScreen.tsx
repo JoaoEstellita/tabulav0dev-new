@@ -45,6 +45,7 @@ import AstrologerFab from '../../components/AstrologerFab'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
 import SubscriptionIntroModal from '../../components/SubscriptionIntroModal'
 import { useSubscription } from '../../hooks/useSubscription'
+import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
@@ -325,12 +326,17 @@ export default function HomeScreen() {
   // interesse. Não mostra a quem já assina; "Agora não" fecha e não repete.
   const { subscription: _subForIntro, loading: _subLoading } = useSubscription()
   const [showSubIntro, setShowSubIntro] = useState(false)
+  // Quem está no trial NÃO vê o convite de planos: acabou de entrar, já recebeu as
+  // boas-vindas do trial, e dois avisos de assinatura seguidos no primeiro acesso
+  // afastam em vez de converter. O convite volta quando o trial termina — que é
+  // quando ele de fato tem o que dizer.
+  const { trialActive: _trialParaIntro } = useSubscriptionCheck()
   useEffect(() => {
-    if (_subLoading || _subForIntro?.isActive) return
+    if (_subLoading || _subForIntro?.isActive || _trialParaIntro) return
     let cancelled = false
     AsyncStorage.getItem('subIntroSeen_v1').then((v) => { if (!cancelled && !v) setShowSubIntro(true) }).catch(() => {})
     return () => { cancelled = true }
-  }, [_subLoading, _subForIntro])
+  }, [_subLoading, _subForIntro, _trialParaIntro])
   const dismissSubIntro = () => { setShowSubIntro(false); AsyncStorage.setItem('subIntroSeen_v1', '1').catch(() => {}) }
 
   // Headline = trânsito pessoal (trânsito→natal) de maior força. Mesma fonte da tela
@@ -664,7 +670,9 @@ export default function HomeScreen() {
       {/* Modal de 1º acesso pelo navegador: convite a instalar/adicionar à tela inicial */}
       <PWAInstallModal />
       {/* Boas-vindas do trial: explica o grátis × pago no 1º acesso (sem cadeado surpresa) */}
-      <TrialWelcomeModal />
+      {/* TrialWelcomeModal NAO entra aqui: já existe uma instância global no
+          AppNavigator, que cobre todas as telas. Montar as duas fazia o mesmo
+          modal abrir DUAS vezes na Home — cada cópia com seu próprio estado. */}
 
     </LinearGradient>
   )
