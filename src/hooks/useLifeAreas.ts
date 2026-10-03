@@ -39,6 +39,8 @@ export interface UseLifeAreasReturn {
   isUsingLocalEngine: boolean
   localOverrideActive: boolean
   loadStage: string
+  /** Motor local falhou com o backend ok: a tela fica incompleta, não quebrada. */
+  engineFailed: boolean
 }
 
 export function useLifeAreas(): UseLifeAreasReturn {
@@ -49,6 +51,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [backendCurrentTransits, setBackendCurrentTransits] = useState<any | null>(null)
   const [backendStatusPersonal, setBackendStatusPersonal] = useState<{ score?: number; level?: string } | null>(null)
   const [backendFreshState, setBackendFreshState] = useState(false)
+  // Falha do motor LOCAL com backend respondendo bem. Não é erro fatal (o
+  // snapshot do backend cobre parte da tela), mas também não pode sumir: era
+  // justamente o que deixava a grade e as interpretações vazias SEM nada no
+  // Sentry nem na tela, e o que fez a caça ao bug do Mapa durar quatro rodadas.
+  const [engineFailed, setEngineFailed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
@@ -129,6 +136,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         lastHouseSystemRef.current && lastHouseSystemRef.current !== normalizedHouseSystem
       lastHouseSystemRef.current = normalizedHouseSystem
 
+      setEngineFailed(false)
       let backendComputedAtMs: number | null = null
       let backendValidUntilMs: number | null = null
       let backendCalcVersion: string | null = null
@@ -436,11 +444,30 @@ export function useLifeAreas(): UseLifeAreasReturn {
       }
     } catch (err) {
       console.error(' Erro ao carregar dados de transito:', err)
-      // Captura o stack real no device — este catch estava silenciando erros do
-      // motor local (Hermes/newArch) e deixando a Home presa em "Mapa em processamento".
-      try { Sentry.captureException(err, { tags: { area: 'useLifeAreas.loadTransitData' } }) } catch { }
-      const fallbackAllowed = backendLifeAreasValue && Object.keys(backendLifeAreasValue).length > 0
-      if (!fallbackAllowed) {
+      const temSnapshotBackend = !!backendLifeAreasValue && Object.keys(backendLifeAreasValue).length > 0
+
+      // O Sentry já era chamado aqui e mesmo assim não ajudou a achar o bug do
+      // Mapa: o evento chegava sem contexto nenhum, indistinguível de uma queda de
+      // rede qualquer. Agora vai com o estado que permite separar "o motor local
+      // quebrou" de "a internet caiu" — que são investigações opostas.
+      try {
+        Sentry.captureException(err, {
+          tags: {
+            area: 'useLifeAreas.loadTransitData',
+            // Este é o caso perigoso: a tela NÃO mostra erro (o backend cobre) e o
+            // usuário só vê seções vazias. Permite filtrar exatamente por ele.
+            silenciado: String(temSnapshotBackend),
+          },
+          extra: { loadStage, temSnapshotBackend },
+        })
+      } catch { }
+
+      // Falhou o motor local, mas o backend respondeu: a tela não quebra, só fica
+      // incompleta (sem grade, sem interpretações, sem tabela de trânsitos). Marca
+      // para quem consome poder dizer isso a quem está olhando, em vez de exibir
+      // uma seção muda que parece defeito aleatório.
+      setEngineFailed(true)
+      if (!temSnapshotBackend) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrologicos')
       }
     } finally {
@@ -547,6 +574,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     isUsingLocalEngine,
     localOverrideActive,
     loadStage,
+    engineFailed,
   }
 }
 
