@@ -136,7 +136,7 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Una de las 12 areas de la vida en el mapa: dinero, amor, trabajo, familia. Dice DONDE ocurre el asunto.',
       'it-IT': 'Una delle 12 aree della vita nel tema: denaro, amore, lavoro, famiglia. Dice DOVE accade la cosa.',
     },
-    simples: { 'pt-BR': 'área da vida', 'en-US': 'area of life', 'es-ES': 'area de la vida', 'it-IT': 'area della vita' },
+    simples: { 'pt-BR': 'área da vida', 'en-US': 'area of life', 'es-ES': 'area de vida', 'it-IT': 'area della vita' },
   },
   'meio do ceu': {
     explicacao: {

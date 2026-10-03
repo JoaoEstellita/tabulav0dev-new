@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
+import { useModoLeitura } from '../../hooks/useModoLeitura';
 import {
   View,
   Text,
@@ -101,6 +102,7 @@ const bundleInfo = (() => {
 
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
+  const { explicado: leituraExplicada, trocar: trocarModoLeitura } = useModoLeitura();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const { language, languages, setLanguage, t } = useAppLanguage();
   const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
@@ -270,6 +272,21 @@ export default function SettingsScreen() {
       id: 'app',
       title: t('settings.section.app'),
       items: [
+        {
+          // Quem estuda astrologia espera a nomenclatura certa e merece tê-la; quem
+          // chegou agora precisa de português comum. O padrão é explicado porque
+          // quem conhece os termos encontra este botão — quem não conhece nem sabe
+          // que ele existe.
+          id: 'modo_leitura',
+          title: tr('settings.item.modoLeitura.title', 'Linguagem simples'),
+          subtitle: leituraExplicada
+            ? tr('settings.item.modoLeitura.on', 'Termos técnicos aparecem em português comum. Toque num termo para ver o nome técnico.')
+            : tr('settings.item.modoLeitura.off', 'Nomenclatura astrológica completa (quadratura, sextil, orbe).'),
+          icon: 'book-outline',
+          type: 'toggle',
+          value: leituraExplicada,
+          onToggle: (v: boolean) => trocarModoLeitura(v ? 'explicado' : 'tecnico'),
+        },
         {
           id: 'app_version',
           title: t('settings.item.appVersion.title'),

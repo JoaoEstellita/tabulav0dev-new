@@ -21,6 +21,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER } from '../../constants/lifeAreas'
+import FraseDoDia from '../../components/FraseDoDia'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import ReadingService from '../../services/firebase/ReadingService'
@@ -541,6 +542,11 @@ export default function HomeScreen() {
             onPressHelp={openHomeTour}
           />
         </View>
+
+        {/* A ponte entre o número e a vida: um leigo olha "Carreira 34%" e não
+            tira nada dali. Usa as MESMAS áreas dos cards abaixo, só traduz em
+            conselho — e some quando não há dado para dizer algo específico. */}
+        <FraseDoDia areas={orderedLifeAreas} />
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <View {...aNotif}><NotificationOptInBanner /></View>

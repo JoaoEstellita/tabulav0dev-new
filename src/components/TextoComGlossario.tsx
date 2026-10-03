@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAppLanguage } from '../hooks/useAppLanguage'
+import { useModoLeitura } from '../hooks/useModoLeitura'
 import {
   GLOSSARIO,
   TERMOS_ORDENADOS,
@@ -31,6 +32,15 @@ interface Props {
 }
 
 type Pedaco = { texto: string; termo?: string }
+
+/** No modo explicado o rótulo vira a palavra comum; o termo técnico aparece no toque. */
+function rotulo(bruto: string, chave: string, explicado: boolean, idioma: IdiomaGlossario): string {
+  if (!explicado) return bruto
+  const comum = GLOSSARIO[chave]?.simples?.[idioma]
+  if (!comum) return bruto
+  // Preserva a caixa: "Quadratura" no início da frase não vira "atrito".
+  return bruto[0] === bruto[0]?.toUpperCase() ? comum.charAt(0).toUpperCase() + comum.slice(1) : comum
+}
 
 /** Quebra o texto em pedaços, marcando a 1ª ocorrência de cada termo do glossário. */
 function fatiar(texto: string): Pedaco[] {
@@ -67,6 +77,7 @@ function escaparRegex(s: string): string {
 
 export default function TextoComGlossario({ children, style, simples, selectable, numberOfLines }: Props) {
   const { language } = useAppLanguage()
+  const { explicado } = useModoLeitura()
   const idioma = (language as IdiomaGlossario) || 'pt-BR'
   const [aberto, setAberto] = useState<string | null>(null)
 
@@ -89,7 +100,7 @@ export default function TextoComGlossario({ children, style, simples, selectable
         {pedacos.map((p, i) =>
           p.termo ? (
             <Text key={i} style={s.termo} onPress={() => setAberto(p.termo!)} suppressHighlighting>
-              {p.texto}
+              {rotulo(p.texto, p.termo, explicado, idioma)}
             </Text>
           ) : (
             <Text key={i}>{p.texto}</Text>
@@ -106,6 +117,14 @@ export default function TextoComGlossario({ children, style, simples, selectable
             <Text style={s.cardTexto}>
               {entrada ? entrada.explicacao[idioma] || entrada.explicacao['pt-BR'] : ''}
             </Text>
+            {/* Em modo explicado a pessoa leu a palavra comum; dizer o nome técnico
+                aqui ensina o vocabulário em vez de escondê-lo dela para sempre. */}
+            {explicado && aberto && GLOSSARIO[aberto]?.simples ? (
+              <Text style={s.cardTecnico}>
+                {tl('Nome técnico: ', 'Technical name: ', 'Nombre tecnico: ', 'Nome tecnico: ')}
+                {aberto.charAt(0).toUpperCase() + aberto.slice(1)}
+              </Text>
+            ) : null}
             <Text style={s.fechar} onPress={() => setAberto(null)}>
               {tl('Entendi', 'Got it', 'Entendido', 'Capito')}
             </Text>
@@ -142,5 +161,6 @@ const s = StyleSheet.create({
   },
   cardTermo: { color: '#FFD700', fontSize: 16, fontWeight: '700', marginBottom: 8 },
   cardTexto: { color: '#d6dae6', fontSize: 14.5, lineHeight: 21 },
+  cardTecnico: { color: '#8d94a8', fontSize: 12.5, marginTop: 10, fontStyle: 'italic' },
   fechar: { color: '#FFD700', fontSize: 14, fontWeight: '700', textAlign: 'right', marginTop: 16 },
 })
