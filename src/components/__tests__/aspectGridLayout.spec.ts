@@ -24,6 +24,15 @@ const blocosScrollView = (): string[] =>
     .filter((b) => /\bhorizontal\b/.test(b))
 
 describe('AspectGrid — layout sob Fabric', () => {
+  it('cada grade fica dentro de um container que recorta a altura', () => {
+    // A correção que de fato resolveu. Travar o height do ScrollView não bastou:
+    // medido no device, ele reportava 12353px com `style={{height:364}}` aplicado —
+    // sob Fabric ele ignora a própria altura. Quem segura é o pai com height fixo
+    // e overflow hidden. Sem ele, o vão volta e empurra a tela inteira.
+    const gaiolas = FONTE.match(/<View style=\{\{\s*height:\s*H,\s*overflow:\s*"hidden"\s*\}\}>/g) || []
+    expect(gaiolas.length, 'as duas grades precisam da gaiola de altura fixa').toBe(2)
+  })
+
   it('tem as duas grades (simples e cruzada)', () => {
     expect(blocosScrollView().length).toBe(2)
   })

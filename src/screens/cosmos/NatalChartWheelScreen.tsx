@@ -570,10 +570,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {showTransits ? (
           transitPlanets.length >= 1 && natalPlanets.length >= 1 && tnAspectsWithNodes.length > 0 ? (
-            <View
-              style={styles.aspectGridWrap}
-              onLayout={(e) => console.log("[sonda] card transitos h=", Math.round(e.nativeEvent.layout.height))}
-            >
+            <View style={styles.aspectGridWrap}>
               <View style={{ alignSelf: 'stretch', height: 30, justifyContent: 'center', marginBottom: 6 }}>
                 <Text style={[styles.aspectGridTitle, { textAlign: 'center', marginBottom: 0, paddingHorizontal: 46 }]}>
                   {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
@@ -599,10 +596,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             </View>
           ) : null
         ) : natalPlanets.length >= 2 && natalAspectsWithNodes.length > 0 ? (
-          <View
-            style={styles.aspectGridWrap}
-            onLayout={(e) => console.log("[sonda] card natal h=", Math.round(e.nativeEvent.layout.height))}
-          >
+          <View style={styles.aspectGridWrap}>
             <Text style={styles.aspectGridTitle}>
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
             </Text>
