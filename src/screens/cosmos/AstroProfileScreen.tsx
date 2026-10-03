@@ -17,6 +17,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
+import TextoComGlossario from '../../components/TextoComGlossario'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
@@ -171,10 +172,12 @@ function AspectList({
     <View>
       {entries.map((a, i) => (
         <View key={`${a.label}-${i}`} style={i > 0 ? expandStyles.aspectSpacer : undefined}>
-          <Text style={expandStyles.aspectLabel}>
-            {a.label}{a.orb !== null ? `  ·  ${a.orb.toFixed(1)}°` : ''}
-          </Text>
-          {a.text ? <Text style={expandStyles.aspectText}>{a.text}</Text> : null}
+          {/* O rótulo é onde o jargão mora: "Sol quadratura Lua". É aqui que o
+              glossário e o modo Linguagem simples fazem diferença de verdade. */}
+          <TextoComGlossario style={expandStyles.aspectLabel}>
+            {`${a.label}${a.orb !== null ? `  ·  ${a.orb.toFixed(1)}°` : ''}`}
+          </TextoComGlossario>
+          {a.text ? <TextoComGlossario style={expandStyles.aspectText}>{a.text}</TextoComGlossario> : null}
         </View>
       ))}
     </View>
@@ -711,10 +714,10 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
                   </Text>
                 ) : null}
                 {signText ? (
-                  <Text style={styles.planetSignText}>{signText}</Text>
+                  <TextoComGlossario style={styles.planetSignText}>{signText}</TextoComGlossario>
                 ) : null}
                 {houseText ? (
-                  <Text style={styles.planetHouseText}>{houseText}</Text>
+                  <TextoComGlossario style={styles.planetHouseText}>{houseText}</TextoComGlossario>
                 ) : null}
                 {aspectsByPlanet[p.name]?.length ? (
                   <View style={styles.planetAspectsBlock}>

@@ -19,6 +19,7 @@ import type { LocalTransitData } from '../../services/astrology/LocalAstrologySe
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
+import TextoComGlossario from '../../components/TextoComGlossario'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import AspectGrid from '../../components/AspectGrid'
@@ -646,7 +647,9 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             <Text style={styles.aspectModalTitle}>{aspectModal?.title}</Text>
             <Text style={styles.aspectModalSubtitle}>{aspectModal?.subtitle}</Text>
             <ScrollView style={{ maxHeight: 320 }}>
-              <Text style={styles.aspectModalBody}>{aspectModal?.body}</Text>
+              {/* A leitura que abre ao tocar numa célula da grade — é o texto que a
+                  pessoa lê com mais atenção, e o que mais vale ter o termo explicado. */}
+              <TextoComGlossario style={styles.aspectModalBody}>{aspectModal?.body || ''}</TextoComGlossario>
             </ScrollView>
             <TouchableOpacity style={styles.aspectModalClose} onPress={() => setAspectModal(null)}>
               <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>

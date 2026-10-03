@@ -1,5 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import TextoComGlossario from './TextoComGlossario'
 import { Ionicons } from '@expo/vector-icons'
 import ReadingOpenIcon from './ReadingOpenIcon'
 
@@ -136,9 +137,9 @@ export default function TransitInsightCard({
       {dense ? (
         <>
           {technicalTypeLabel ? (
-            <Text style={[styles.techDense, isDark ? styles.techDenseDark : styles.techDenseLight]}>
+            <TextoComGlossario style={[styles.techDense, isDark ? styles.techDenseDark : styles.techDenseLight]}>
               {technicalTypeLabel}
-            </Text>
+            </TextoComGlossario>
           ) : null}
           {metaDenseLine ? <Text style={styles.metaDense}>{metaDenseLine}</Text> : null}
           {areasLabel ? (
@@ -156,9 +157,9 @@ export default function TransitInsightCard({
             </Text>
           ) : null}
           {technicalTypeLabel ? (
-            <Text style={[styles.technicalLine, isDark ? styles.technicalLineDark : styles.technicalLineLight]}>
-              Tipo: {technicalTypeLabel}
-            </Text>
+            <TextoComGlossario style={[styles.technicalLine, isDark ? styles.technicalLineDark : styles.technicalLineLight]}>
+              {`Tipo: ${technicalTypeLabel}`}
+            </TextoComGlossario>
           ) : null}
           {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
           {normalizedImpact !== null ? (
