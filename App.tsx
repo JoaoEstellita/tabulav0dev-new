@@ -15,6 +15,7 @@ import { ensureStatusPolicyLoaded } from './src/services/status/StatusPolicyServ
 import { initMetaPixel } from './src/services/metaPixel';
 import ErrorReportingService from './src/services/firebase/ErrorReportingService';
 import * as Sentry from '@sentry/react-native';
+import { useAtualizacaoAutomatica } from './src/hooks/useAtualizacaoAutomatica'
 
 // Sentry.init agora vive em `src/instrument.ts`, importado na PRIMEIRA linha do
 // index.ts — arma o handler antes da avaliação dos módulos deste arquivo, para
@@ -47,6 +48,11 @@ function AppContent() {
 }
 
 function App() {
+  // Aplica a atualização sozinho ao voltar do segundo plano. Sem isto, a correção
+  // publicada só entrava na SEGUNDA abertura — e quem não sabe disso conclui que
+  // o fix não funcionou.
+  useAtualizacaoAutomatica()
+
   // Captura erros JS não tratados fora do React tree (async, native bridge).
   useEffect(() => {
     if (Platform.OS === 'web') return
