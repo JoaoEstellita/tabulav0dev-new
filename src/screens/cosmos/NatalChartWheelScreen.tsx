@@ -922,6 +922,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             <Text style={styles.aspectModalSubtitle}>{infoRoda?.palavras}</Text>
             <ScrollView style={{ maxHeight: 280 }}>
               <TextoComGlossario style={styles.aspectModalBody}>{infoRoda?.texto || ''}</TextoComGlossario>
+              {/* Ficha técnica depois do parágrafo e em tipo menor: quem chegou
+                  agora lê a explicação e ignora; quem estuda procura exatamente
+                  isto e não achava em lugar nenhum. */}
+              {infoRoda?.ficha ? (
+                <Text style={styles.fichaTecnica}>{infoRoda.ficha}</Text>
+              ) : null}
             </ScrollView>
             <TouchableOpacity style={styles.aspectModalClose} onPress={() => setInfoRoda(null)}>
               <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>
@@ -1023,6 +1029,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#222836',
     paddingVertical: 10,
+  },
+  fichaTecnica: {
+    color: '#8d94a8',
+    fontSize: 13,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#2a3142',
   },
   planetaLinha: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 },
   planetaRotulo: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, minWidth: 104 },

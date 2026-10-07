@@ -19,80 +19,89 @@ export interface SignificadoRoda {
   palavras: string
   /** O parágrafo, em linguagem comum. */
   texto: string
+  /**
+   * Ficha técnica: elemento, modalidade e regente — só para signo.
+   *
+   * Fica DEPOIS do parágrafo e em tipo menor, de propósito. Quem chegou agora lê
+   * a explicação e ignora esta linha; quem estuda astrologia procura exatamente
+   * ela e não encontrava em lugar nenhum. Serve aos dois sem obrigar um a
+   * engolir o conteúdo do outro.
+   */
+  ficha?: string
 }
 
 const SIGNOS: Record<string, Record<Lang, SignificadoRoda>> = {
   aries: {
-    'pt-BR': { nome: 'Áries', palavras: 'início · coragem · impulso', texto: 'A energia de começar. Áries age antes de pensar demais, encara o novo de peito aberto e não tem paciência com rodeios. Onde ele está no seu mapa, você avança sozinho.' },
-    'en-US': { nome: 'Aries', palavras: 'beginning · courage · drive', texto: 'The energy of starting. Aries acts before overthinking, faces the new head-on and has no patience for detours. Where it sits in your chart, you move on your own.' },
-    'es-ES': { nome: 'Aries', palavras: 'inicio · coraje · impulso', texto: 'La energia de empezar. Aries actua antes de pensar demasiado, enfrenta lo nuevo de frente y no tiene paciencia para rodeos. Donde esta en tu mapa, avanzas solo.' },
-    'it-IT': { nome: 'Ariete', palavras: 'inizio · coraggio · slancio', texto: 'L energia di cominciare. Ariete agisce prima di pensarci troppo, affronta il nuovo a viso aperto e non ha pazienza per i giri di parole. Dove sta nel tuo tema, avanzi da solo.' },
+    'pt-BR': { nome: 'Áries', palavras: 'início · coragem · impulso', texto: 'A energia de começar. Áries age antes de pensar demais, encara o novo de peito aberto e não tem paciência com rodeios. Onde ele está no seu mapa, você avança sozinho.', ficha: 'Fogo · Cardinal · regido por Marte' },
+    'en-US': { nome: 'Aries', palavras: 'beginning · courage · drive', texto: 'The energy of starting. Aries acts before overthinking, faces the new head-on and has no patience for detours. Where it sits in your chart, you move on your own.', ficha: 'Fire · Cardinal · ruled by Mars' },
+    'es-ES': { nome: 'Aries', palavras: 'inicio · coraje · impulso', texto: 'La energia de empezar. Aries actua antes de pensar demasiado, enfrenta lo nuevo de frente y no tiene paciencia para rodeos. Donde esta en tu mapa, avanzas solo.', ficha: 'Fuego · Cardinal · regido por Marte' },
+    'it-IT': { nome: 'Ariete', palavras: 'inizio · coraggio · slancio', texto: 'L energia di cominciare. Ariete agisce prima di pensarci troppo, affronta il nuovo a viso aperto e non ha pazienza per i giri di parole. Dove sta nel tuo tema, avanzi da solo.', ficha: 'Fuoco · Cardinale · governato da Marte' },
   },
   taurus: {
-    'pt-BR': { nome: 'Touro', palavras: 'estabilidade · prazer · constância', texto: 'A energia de construir devagar e manter. Touro quer segurança, conforto e o que dura. Onde ele está, você não tem pressa — e o que faz, faz para ficar.' },
-    'en-US': { nome: 'Taurus', palavras: 'stability · pleasure · constancy', texto: 'The energy of building slowly and keeping. Taurus wants security, comfort and what lasts. Where it sits, you are in no hurry — and what you make, you make to stay.' },
-    'es-ES': { nome: 'Tauro', palavras: 'estabilidad · placer · constancia', texto: 'La energia de construir despacio y mantener. Tauro quiere seguridad, comodidad y lo que dura. Donde esta, no tienes prisa — y lo que haces, lo haces para quedarse.' },
-    'it-IT': { nome: 'Toro', palavras: 'stabilita · piacere · costanza', texto: 'L energia di costruire piano e mantenere. Toro vuole sicurezza, comfort e cio che dura. Dove sta, non hai fretta — e cio che fai, lo fai per restare.' },
+    'pt-BR': { nome: 'Touro', palavras: 'estabilidade · prazer · constância', texto: 'A energia de construir devagar e manter. Touro quer segurança, conforto e o que dura. Onde ele está, você não tem pressa — e o que faz, faz para ficar.', ficha: 'Terra · Fixo · regido por Vênus' },
+    'en-US': { nome: 'Taurus', palavras: 'stability · pleasure · constancy', texto: 'The energy of building slowly and keeping. Taurus wants security, comfort and what lasts. Where it sits, you are in no hurry — and what you make, you make to stay.', ficha: 'Earth · Fixed · ruled by Venus' },
+    'es-ES': { nome: 'Tauro', palavras: 'estabilidad · placer · constancia', texto: 'La energia de construir despacio y mantener. Tauro quiere seguridad, comodidad y lo que dura. Donde esta, no tienes prisa — y lo que haces, lo haces para quedarse.', ficha: 'Tierra · Fijo · regido por Venus' },
+    'it-IT': { nome: 'Toro', palavras: 'stabilita · piacere · costanza', texto: 'L energia di costruire piano e mantenere. Toro vuole sicurezza, comfort e cio che dura. Dove sta, non hai fretta — e cio che fai, lo fai per restare.', ficha: 'Terra · Fisso · governato da Venere' },
   },
   gemini: {
-    'pt-BR': { nome: 'Gêmeos', palavras: 'curiosidade · troca · versatilidade', texto: 'A energia de perguntar e conectar. Gêmeos quer saber de tudo um pouco, conversa com qualquer um e muda de ideia sem culpa. Onde ele está, você aprende circulando.' },
-    'en-US': { nome: 'Gemini', palavras: 'curiosity · exchange · versatility', texto: 'The energy of asking and connecting. Gemini wants a bit of everything, talks to anyone and changes its mind without guilt. Where it sits, you learn by circulating.' },
-    'es-ES': { nome: 'Geminis', palavras: 'curiosidad · intercambio · versatilidad', texto: 'La energia de preguntar y conectar. Geminis quiere saber un poco de todo, conversa con cualquiera y cambia de idea sin culpa. Donde esta, aprendes circulando.' },
-    'it-IT': { nome: 'Gemelli', palavras: 'curiosita · scambio · versatilita', texto: 'L energia di chiedere e collegare. Gemelli vuole sapere un po di tutto, parla con chiunque e cambia idea senza colpa. Dove sta, impari circolando.' },
+    'pt-BR': { nome: 'Gêmeos', palavras: 'curiosidade · troca · versatilidade', texto: 'A energia de perguntar e conectar. Gêmeos quer saber de tudo um pouco, conversa com qualquer um e muda de ideia sem culpa. Onde ele está, você aprende circulando.', ficha: 'Ar · Mutável · regido por Mercúrio' },
+    'en-US': { nome: 'Gemini', palavras: 'curiosity · exchange · versatility', texto: 'The energy of asking and connecting. Gemini wants a bit of everything, talks to anyone and changes its mind without guilt. Where it sits, you learn by circulating.', ficha: 'Air · Mutable · ruled by Mercury' },
+    'es-ES': { nome: 'Geminis', palavras: 'curiosidad · intercambio · versatilidad', texto: 'La energia de preguntar y conectar. Geminis quiere saber un poco de todo, conversa con cualquiera y cambia de idea sin culpa. Donde esta, aprendes circulando.', ficha: 'Aire · Mutable · regido por Mercurio' },
+    'it-IT': { nome: 'Gemelli', palavras: 'curiosita · scambio · versatilita', texto: 'L energia di chiedere e collegare. Gemelli vuole sapere un po di tutto, parla con chiunque e cambia idea senza colpa. Dove sta, impari circolando.', ficha: 'Aria · Mobile · governato da Mercurio' },
   },
   cancer: {
-    'pt-BR': { nome: 'Câncer', palavras: 'cuidado · memória · pertencimento', texto: 'A energia de acolher e proteger. Câncer sente antes de entender, guarda o que viveu e cria laços de família onde passa. Onde ele está, você se envolve de verdade.' },
-    'en-US': { nome: 'Cancer', palavras: 'care · memory · belonging', texto: 'The energy of sheltering and protecting. Cancer feels before it understands, keeps what it lived and makes family wherever it goes. Where it sits, you get truly involved.' },
-    'es-ES': { nome: 'Cancer', palavras: 'cuidado · memoria · pertenencia', texto: 'La energia de acoger y proteger. Cancer siente antes de entender, guarda lo que vivio y crea lazos de familia donde pasa. Donde esta, te involucras de verdad.' },
-    'it-IT': { nome: 'Cancro', palavras: 'cura · memoria · appartenenza', texto: 'L energia di accogliere e proteggere. Cancro sente prima di capire, custodisce cio che ha vissuto e crea legami di famiglia dove passa. Dove sta, ti coinvolgi davvero.' },
+    'pt-BR': { nome: 'Câncer', palavras: 'cuidado · memória · pertencimento', texto: 'A energia de acolher e proteger. Câncer sente antes de entender, guarda o que viveu e cria laços de família onde passa. Onde ele está, você se envolve de verdade.', ficha: 'Água · Cardinal · regido pela Lua' },
+    'en-US': { nome: 'Cancer', palavras: 'care · memory · belonging', texto: 'The energy of sheltering and protecting. Cancer feels before it understands, keeps what it lived and makes family wherever it goes. Where it sits, you get truly involved.', ficha: 'Water · Cardinal · ruled by the Moon' },
+    'es-ES': { nome: 'Cancer', palavras: 'cuidado · memoria · pertenencia', texto: 'La energia de acoger y proteger. Cancer siente antes de entender, guarda lo que vivio y crea lazos de familia donde pasa. Donde esta, te involucras de verdad.', ficha: 'Agua · Cardinal · regido por la Luna' },
+    'it-IT': { nome: 'Cancro', palavras: 'cura · memoria · appartenenza', texto: 'L energia di accogliere e proteggere. Cancro sente prima di capire, custodisce cio che ha vissuto e crea legami di famiglia dove passa. Dove sta, ti coinvolgi davvero.', ficha: 'Acqua · Cardinale · governato dalla Luna' },
   },
   leo: {
-    'pt-BR': { nome: 'Leão', palavras: 'presença · criação · generosidade', texto: 'A energia de aparecer e dar. Leão quer ser visto pelo que tem de melhor, cria com o coração e não economiza afeto. Onde ele está, você brilha sem pedir licença.' },
-    'en-US': { nome: 'Leo', palavras: 'presence · creation · generosity', texto: 'The energy of showing up and giving. Leo wants to be seen at its best, creates with the heart and does not ration affection. Where it sits, you shine without asking permission.' },
-    'es-ES': { nome: 'Leo', palavras: 'presencia · creacion · generosidad', texto: 'La energia de aparecer y dar. Leo quiere ser visto por lo mejor que tiene, crea con el corazon y no escatima afecto. Donde esta, brillas sin pedir permiso.' },
-    'it-IT': { nome: 'Leone', palavras: 'presenza · creazione · generosita', texto: 'L energia di farsi vedere e dare. Leone vuole essere visto per il suo meglio, crea col cuore e non risparmia affetto. Dove sta, brilli senza chiedere permesso.' },
+    'pt-BR': { nome: 'Leão', palavras: 'presença · criação · generosidade', texto: 'A energia de aparecer e dar. Leão quer ser visto pelo que tem de melhor, cria com o coração e não economiza afeto. Onde ele está, você brilha sem pedir licença.', ficha: 'Fogo · Fixo · regido pelo Sol' },
+    'en-US': { nome: 'Leo', palavras: 'presence · creation · generosity', texto: 'The energy of showing up and giving. Leo wants to be seen at its best, creates with the heart and does not ration affection. Where it sits, you shine without asking permission.', ficha: 'Fire · Fixed · ruled by the Sun' },
+    'es-ES': { nome: 'Leo', palavras: 'presencia · creacion · generosidad', texto: 'La energia de aparecer y dar. Leo quiere ser visto por lo mejor que tiene, crea con el corazon y no escatima afecto. Donde esta, brillas sin pedir permiso.', ficha: 'Fuego · Fijo · regido por el Sol' },
+    'it-IT': { nome: 'Leone', palavras: 'presenza · creazione · generosita', texto: 'L energia di farsi vedere e dare. Leone vuole essere visto per il suo meglio, crea col cuore e non risparmia affetto. Dove sta, brilli senza chiedere permesso.', ficha: 'Fuoco · Fisso · governato dal Sole' },
   },
   virgo: {
-    'pt-BR': { nome: 'Virgem', palavras: 'cuidado prático · método · melhoria', texto: 'A energia de aperfeiçoar e servir. Virgem repara no detalhe que ninguém viu e quer deixar as coisas funcionando. Onde ele está, você caprichar é o jeito de cuidar.' },
-    'en-US': { nome: 'Virgo', palavras: 'practical care · method · refinement', texto: 'The energy of refining and serving. Virgo notices the detail nobody saw and wants things working. Where it sits, doing it well is your way of caring.' },
-    'es-ES': { nome: 'Virgo', palavras: 'cuidado practico · metodo · mejora', texto: 'La energia de perfeccionar y servir. Virgo repara en el detalle que nadie vio y quiere dejar las cosas funcionando. Donde esta, esmerarte es tu forma de cuidar.' },
-    'it-IT': { nome: 'Vergine', palavras: 'cura pratica · metodo · miglioramento', texto: 'L energia di perfezionare e servire. Vergine nota il dettaglio che nessuno ha visto e vuole le cose funzionanti. Dove sta, farlo bene e il tuo modo di prenderti cura.' },
+    'pt-BR': { nome: 'Virgem', palavras: 'cuidado prático · método · melhoria', texto: 'A energia de aperfeiçoar e servir. Virgem repara no detalhe que ninguém viu e quer deixar as coisas funcionando. Onde ele está, você caprichar é o jeito de cuidar.', ficha: 'Terra · Mutável · regido por Mercúrio' },
+    'en-US': { nome: 'Virgo', palavras: 'practical care · method · refinement', texto: 'The energy of refining and serving. Virgo notices the detail nobody saw and wants things working. Where it sits, doing it well is your way of caring.', ficha: 'Earth · Mutable · ruled by Mercury' },
+    'es-ES': { nome: 'Virgo', palavras: 'cuidado practico · metodo · mejora', texto: 'La energia de perfeccionar y servir. Virgo repara en el detalle que nadie vio y quiere dejar las cosas funcionando. Donde esta, esmerarte es tu forma de cuidar.', ficha: 'Tierra · Mutable · regido por Mercurio' },
+    'it-IT': { nome: 'Vergine', palavras: 'cura pratica · metodo · miglioramento', texto: 'L energia di perfezionare e servire. Vergine nota il dettaglio che nessuno ha visto e vuole le cose funzionanti. Dove sta, farlo bene e il tuo modo di prenderti cura.', ficha: 'Terra · Mobile · governato da Mercurio' },
   },
   libra: {
-    'pt-BR': { nome: 'Libra', palavras: 'relação · equilíbrio · beleza', texto: 'A energia de se encontrar no outro. Libra pesa os dois lados, busca acordo e não suporta ambiente feio ou áspero. Onde ele está, você pensa a dois.' },
-    'en-US': { nome: 'Libra', palavras: 'relationship · balance · beauty', texto: 'The energy of finding yourself in the other. Libra weighs both sides, seeks agreement and cannot stand a harsh or ugly setting. Where it sits, you think in pairs.' },
-    'es-ES': { nome: 'Libra', palavras: 'relacion · equilibrio · belleza', texto: 'La energia de encontrarse en el otro. Libra pesa los dos lados, busca acuerdo y no soporta un ambiente feo o aspero. Donde esta, piensas de a dos.' },
-    'it-IT': { nome: 'Bilancia', palavras: 'relazione · equilibrio · bellezza', texto: 'L energia di trovarsi nell altro. Bilancia pesa le due parti, cerca accordo e non sopporta un ambiente brutto o aspro. Dove sta, pensi in due.' },
+    'pt-BR': { nome: 'Libra', palavras: 'relação · equilíbrio · beleza', texto: 'A energia de se encontrar no outro. Libra pesa os dois lados, busca acordo e não suporta ambiente feio ou áspero. Onde ele está, você pensa a dois.', ficha: 'Ar · Cardinal · regido por Vênus' },
+    'en-US': { nome: 'Libra', palavras: 'relationship · balance · beauty', texto: 'The energy of finding yourself in the other. Libra weighs both sides, seeks agreement and cannot stand a harsh or ugly setting. Where it sits, you think in pairs.', ficha: 'Air · Cardinal · ruled by Venus' },
+    'es-ES': { nome: 'Libra', palavras: 'relacion · equilibrio · belleza', texto: 'La energia de encontrarse en el otro. Libra pesa los dos lados, busca acuerdo y no soporta un ambiente feo o aspero. Donde esta, piensas de a dos.', ficha: 'Aire · Cardinal · regido por Venus' },
+    'it-IT': { nome: 'Bilancia', palavras: 'relazione · equilibrio · bellezza', texto: 'L energia di trovarsi nell altro. Bilancia pesa le due parti, cerca accordo e non sopporta un ambiente brutto o aspro. Dove sta, pensi in due.', ficha: 'Aria · Cardinale · governato da Venere' },
   },
   scorpio: {
-    'pt-BR': { nome: 'Escorpião', palavras: 'intensidade · verdade · transformação', texto: 'A energia de ir ao fundo. Escorpião não se contenta com a superfície, enxerga o que está escondido e não teme o que dói. Onde ele está, você vive em intensidade total.' },
-    'en-US': { nome: 'Scorpio', palavras: 'intensity · truth · transformation', texto: 'The energy of going deep. Scorpio is not satisfied with the surface, sees what is hidden and does not fear what hurts. Where it sits, you live at full intensity.' },
-    'es-ES': { nome: 'Escorpio', palavras: 'intensidad · verdad · transformacion', texto: 'La energia de ir al fondo. Escorpio no se contenta con la superficie, ve lo que esta oculto y no teme lo que duele. Donde esta, vives en intensidad total.' },
-    'it-IT': { nome: 'Scorpione', palavras: 'intensita · verita · trasformazione', texto: 'L energia di andare a fondo. Scorpione non si accontenta della superficie, vede cio che e nascosto e non teme cio che fa male. Dove sta, vivi a intensita piena.' },
+    'pt-BR': { nome: 'Escorpião', palavras: 'intensidade · verdade · transformação', texto: 'A energia de ir ao fundo. Escorpião não se contenta com a superfície, enxerga o que está escondido e não teme o que dói. Onde ele está, você vive em intensidade total.', ficha: 'Água · Fixo · regido por Marte' },
+    'en-US': { nome: 'Scorpio', palavras: 'intensity · truth · transformation', texto: 'The energy of going deep. Scorpio is not satisfied with the surface, sees what is hidden and does not fear what hurts. Where it sits, you live at full intensity.', ficha: 'Water · Fixed · ruled by Mars' },
+    'es-ES': { nome: 'Escorpio', palavras: 'intensidad · verdad · transformacion', texto: 'La energia de ir al fondo. Escorpio no se contenta con la superficie, ve lo que esta oculto y no teme lo que duele. Donde esta, vives en intensidad total.', ficha: 'Agua · Fijo · regido por Marte' },
+    'it-IT': { nome: 'Scorpione', palavras: 'intensita · verita · trasformazione', texto: 'L energia di andare a fondo. Scorpione non si accontenta della superficie, vede cio che e nascosto e non teme cio che fa male. Dove sta, vivi a intensita piena.', ficha: 'Acqua · Fisso · governato da Marte' },
   },
   sagittarius: {
-    'pt-BR': { nome: 'Sagitário', palavras: 'expansão · sentido · liberdade', texto: 'A energia de ir além. Sagitário quer entender o porquê das coisas, viajar — de corpo ou de ideia — e não aceita gaiola. Onde ele está, você precisa de horizonte.' },
-    'en-US': { nome: 'Sagittarius', palavras: 'expansion · meaning · freedom', texto: 'The energy of going further. Sagittarius wants to understand why things are, to travel — in body or in thought — and takes no cage. Where it sits, you need horizon.' },
-    'es-ES': { nome: 'Sagitario', palavras: 'expansion · sentido · libertad', texto: 'La energia de ir mas alla. Sagitario quiere entender el porque de las cosas, viajar — de cuerpo o de idea — y no acepta jaula. Donde esta, necesitas horizonte.' },
-    'it-IT': { nome: 'Sagittario', palavras: 'espansione · senso · liberta', texto: 'L energia di andare oltre. Sagittario vuole capire il perche delle cose, viaggiare — col corpo o col pensiero — e non accetta gabbie. Dove sta, ti serve orizzonte.' },
+    'pt-BR': { nome: 'Sagitário', palavras: 'expansão · sentido · liberdade', texto: 'A energia de ir além. Sagitário quer entender o porquê das coisas, viajar — de corpo ou de ideia — e não aceita gaiola. Onde ele está, você precisa de horizonte.', ficha: 'Fogo · Mutável · regido por Júpiter' },
+    'en-US': { nome: 'Sagittarius', palavras: 'expansion · meaning · freedom', texto: 'The energy of going further. Sagittarius wants to understand why things are, to travel — in body or in thought — and takes no cage. Where it sits, you need horizon.', ficha: 'Fire · Mutable · ruled by Jupiter' },
+    'es-ES': { nome: 'Sagitario', palavras: 'expansion · sentido · libertad', texto: 'La energia de ir mas alla. Sagitario quiere entender el porque de las cosas, viajar — de cuerpo o de idea — y no acepta jaula. Donde esta, necesitas horizonte.', ficha: 'Fuego · Mutable · regido por Jupiter' },
+    'it-IT': { nome: 'Sagittario', palavras: 'espansione · senso · liberta', texto: 'L energia di andare oltre. Sagittario vuole capire il perche delle cose, viaggiare — col corpo o col pensiero — e non accetta gabbie. Dove sta, ti serve orizzonte.', ficha: 'Fuoco · Mobile · governato da Giove' },
   },
   capricorn: {
-    'pt-BR': { nome: 'Capricórnio', palavras: 'responsabilidade · construção · tempo', texto: 'A energia de assumir e sustentar. Capricórnio pensa a longo prazo, aguenta o que precisa ser aguentado e constrói degrau por degrau. Onde ele está, você amadurece cedo.' },
-    'en-US': { nome: 'Capricorn', palavras: 'responsibility · building · time', texto: 'The energy of taking on and holding. Capricorn thinks long term, bears what must be borne and builds step by step. Where it sits, you mature early.' },
-    'es-ES': { nome: 'Capricornio', palavras: 'responsabilidad · construccion · tiempo', texto: 'La energia de asumir y sostener. Capricornio piensa a largo plazo, aguanta lo que hay que aguantar y construye escalon por escalon. Donde esta, maduras temprano.' },
-    'it-IT': { nome: 'Capricorno', palavras: 'responsabilita · costruzione · tempo', texto: 'L energia di assumersi e sostenere. Capricorno pensa a lungo termine, regge cio che va retto e costruisce gradino per gradino. Dove sta, maturi presto.' },
+    'pt-BR': { nome: 'Capricórnio', palavras: 'responsabilidade · construção · tempo', texto: 'A energia de assumir e sustentar. Capricórnio pensa a longo prazo, aguenta o que precisa ser aguentado e constrói degrau por degrau. Onde ele está, você amadurece cedo.', ficha: 'Terra · Cardinal · regido por Saturno' },
+    'en-US': { nome: 'Capricorn', palavras: 'responsibility · building · time', texto: 'The energy of taking on and holding. Capricorn thinks long term, bears what must be borne and builds step by step. Where it sits, you mature early.', ficha: 'Earth · Cardinal · ruled by Saturn' },
+    'es-ES': { nome: 'Capricornio', palavras: 'responsabilidad · construccion · tiempo', texto: 'La energia de asumir y sostener. Capricornio piensa a largo plazo, aguanta lo que hay que aguantar y construye escalon por escalon. Donde esta, maduras temprano.', ficha: 'Tierra · Cardinal · regido por Saturno' },
+    'it-IT': { nome: 'Capricorno', palavras: 'responsabilita · costruzione · tempo', texto: 'L energia di assumersi e sostenere. Capricorno pensa a lungo termine, regge cio che va retto e costruisce gradino per gradino. Dove sta, maturi presto.', ficha: 'Terra · Cardinale · governato da Saturno' },
   },
   aquarius: {
-    'pt-BR': { nome: 'Aquário', palavras: 'originalidade · coletivo · ruptura', texto: 'A energia de pensar diferente. Aquário questiona o que todo mundo aceita, se importa com o grupo e não cabe em molde. Onde ele está, você foge do óbvio.' },
-    'en-US': { nome: 'Aquarius', palavras: 'originality · collective · rupture', texto: 'The energy of thinking differently. Aquarius questions what everyone accepts, cares about the group and fits no mould. Where it sits, you escape the obvious.' },
-    'es-ES': { nome: 'Acuario', palavras: 'originalidad · colectivo · ruptura', texto: 'La energia de pensar distinto. Acuario cuestiona lo que todos aceptan, se preocupa por el grupo y no cabe en molde. Donde esta, huyes de lo obvio.' },
-    'it-IT': { nome: 'Acquario', palavras: 'originalita · collettivo · rottura', texto: 'L energia di pensare diversamente. Acquario mette in dubbio cio che tutti accettano, tiene al gruppo e non sta in uno stampo. Dove sta, sfuggi all ovvio.' },
+    'pt-BR': { nome: 'Aquário', palavras: 'originalidade · coletivo · ruptura', texto: 'A energia de pensar diferente. Aquário questiona o que todo mundo aceita, se importa com o grupo e não cabe em molde. Onde ele está, você foge do óbvio.', ficha: 'Ar · Fixo · regido por Saturno' },
+    'en-US': { nome: 'Aquarius', palavras: 'originality · collective · rupture', texto: 'The energy of thinking differently. Aquarius questions what everyone accepts, cares about the group and fits no mould. Where it sits, you escape the obvious.', ficha: 'Air · Fixed · ruled by Saturn' },
+    'es-ES': { nome: 'Acuario', palavras: 'originalidad · colectivo · ruptura', texto: 'La energia de pensar distinto. Acuario cuestiona lo que todos aceptan, se preocupa por el grupo y no cabe en molde. Donde esta, huyes de lo obvio.', ficha: 'Aire · Fijo · regido por Saturno' },
+    'it-IT': { nome: 'Acquario', palavras: 'originalita · collettivo · rottura', texto: 'L energia di pensare diversamente. Acquario mette in dubbio cio che tutti accettano, tiene al gruppo e non sta in uno stampo. Dove sta, sfuggi all ovvio.', ficha: 'Aria · Fisso · governato da Saturno' },
   },
   pisces: {
-    'pt-BR': { nome: 'Peixes', palavras: 'sensibilidade · entrega · imaginação', texto: 'A energia de dissolver fronteiras. Peixes sente o que está no ar, se comove fácil e vive entre o real e o sonhado. Onde ele está, você não separa você do mundo.' },
-    'en-US': { nome: 'Pisces', palavras: 'sensitivity · surrender · imagination', texto: 'The energy of dissolving borders. Pisces feels what is in the air, is easily moved and lives between the real and the dreamed. Where it sits, you do not separate yourself from the world.' },
-    'es-ES': { nome: 'Piscis', palavras: 'sensibilidad · entrega · imaginacion', texto: 'La energia de disolver fronteras. Piscis siente lo que esta en el aire, se conmueve facil y vive entre lo real y lo sonnado. Donde esta, no separas tu del mundo.' },
-    'it-IT': { nome: 'Pesci', palavras: 'sensibilita · abbandono · immaginazione', texto: 'L energia di dissolvere i confini. Pesci sente cio che e nell aria, si commuove facilmente e vive tra il reale e il sognato. Dove sta, non separi te stesso dal mondo.' },
+    'pt-BR': { nome: 'Peixes', palavras: 'sensibilidade · entrega · imaginação', texto: 'A energia de dissolver fronteiras. Peixes sente o que está no ar, se comove fácil e vive entre o real e o sonhado. Onde ele está, você não separa você do mundo.', ficha: 'Água · Mutável · regido por Júpiter' },
+    'en-US': { nome: 'Pisces', palavras: 'sensitivity · surrender · imagination', texto: 'The energy of dissolving borders. Pisces feels what is in the air, is easily moved and lives between the real and the dreamed. Where it sits, you do not separate yourself from the world.', ficha: 'Water · Mutable · ruled by Jupiter' },
+    'es-ES': { nome: 'Piscis', palavras: 'sensibilidad · entrega · imaginacion', texto: 'La energia de disolver fronteras. Piscis siente lo que esta en el aire, se conmueve facil y vive entre lo real y lo sonnado. Donde esta, no separas tu del mundo.', ficha: 'Agua · Mutable · regido por Jupiter' },
+    'it-IT': { nome: 'Pesci', palavras: 'sensibilita · abbandono · immaginazione', texto: 'L energia di dissolvere i confini. Pesci sente cio che e nell aria, si commuove facilmente e vive tra il reale e il sognato. Dove sta, non separi te stesso dal mondo.', ficha: 'Acqua · Mobile · governato da Giove' },
   },
 }
 
