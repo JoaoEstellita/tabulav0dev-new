@@ -1,6 +1,7 @@
 import React from "react"
 import { ScrollView, View, Text } from "react-native"
 import Svg, { Rect, Text as SvgText } from "react-native-svg"
+import { norm, transitCellId } from '../astro/transitCellId'
 
 /**
  * Grade de aspectos (aspectarian). Dois modos:
@@ -26,7 +27,11 @@ const PLANET_SYMBOLS: Record<string, string> = {
 const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Lilith", "NorthNode", "SouthNode"]
 
 // type vem em PT ("conjunção", "trígono"…) OU EN — normaliza e cobre ambos.
-const norm = (s: string) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+//
+// Vem do mesmo módulo que gera o id da célula. Havia duas `norm` com o mesmo
+// nome e regras diferentes (a de lá remove espaços, esta não): enquanto nenhum
+// corpo tiver espaço no nome elas coincidem, mas um "North Node" cairia em
+// chaves distintas nos dois lados e o toque abriria o trânsito errado, sem erro.
 const ASPECT_SYM: Record<string, string> = {
   conjuncao: "☌", conjunction: "☌",
   sextil: "⚹", sextile: "⚹",
@@ -193,10 +198,11 @@ function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; 
 const ROW_TONE = "#67E8F9" // trânsito (ciano)
 const COL_TONE = "#FFD700" // natal (dourado)
 
-// id estável de um trânsito→natal (casa com o nativeID do card na lista abaixo).
-// transit e natal em EN (Sun…), type em PT ("trígono") — norm iguala os dois lados.
-export const transitCellId = (transit: string, type: string, natal: string) =>
-  `txr-${norm(transit)}-${norm(type)}-${norm(natal)}`
+// Reexporta do módulo puro (src/astro/transitCellId.ts). A regra mora lá porque
+// é um CONTRATO — casa a célula da grade com o card da lista e com os termos da
+// leitura do dia — e aqui dentro era intestável: o Vitest não carrega este
+// arquivo, que puxa react-native (Flow). Os call sites seguem importando daqui.
+export { transitCellId } from '../astro/transitCellId'
 
 function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; onSelectCell?: (cellId: string) => void }) {
   const list = aspects || []

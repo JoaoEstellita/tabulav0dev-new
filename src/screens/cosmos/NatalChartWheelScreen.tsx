@@ -155,17 +155,27 @@ function declutterRing<T extends { longitude: number }>(
  * inteira, então tocar em qualquer ponto dela funciona.
  */
 function setorAnelar(cx: number, cy: number, r1: number, r2: number, a1: number, a2: number): string {
-  const varrer = ((a2 - a1) % 360 + 360) % 360
-  const grande = varrer > 180 ? 1 : 0
+  // SEMPRE o menor arco entre os dois ângulos.
+  //
+  // `lonToSvgAngle` é `180 - (lon - asc)`: longitude crescente gera ângulo
+  // DECRESCENTE, porque o zodíaco corre no sentido anti-horário. Assumir o
+  // sentido horário fazia cada setor de 30° virar um arco de 330° — todos
+  // cobriam o disco inteiro e o último desenhado engolia os toques de todos os
+  // outros (na prática: qualquer casa tocada abria a Casa 12, e os signos, que
+  // ficam embaixo, nunca recebiam toque nenhum).
+  //
+  // Nem signo (30°) nem casa passam de 180°, então o menor arco é sempre o certo.
+  const horario = ((a2 - a1) % 360 + 360) % 360
+  const sentido = horario <= 180 ? 1 : 0 // 1 = horário, 0 = anti-horário
   const p1 = polarToXY(cx, cy, r2, a1)
   const p2 = polarToXY(cx, cy, r2, a2)
   const p3 = polarToXY(cx, cy, r1, a2)
   const p4 = polarToXY(cx, cy, r1, a1)
   return [
     `M ${p1.x} ${p1.y}`,
-    `A ${r2} ${r2} 0 ${grande} 1 ${p2.x} ${p2.y}`,
+    `A ${r2} ${r2} 0 0 ${sentido} ${p2.x} ${p2.y}`,
     `L ${p3.x} ${p3.y}`,
-    `A ${r1} ${r1} 0 ${grande} 0 ${p4.x} ${p4.y}`,
+    `A ${r1} ${r1} 0 0 ${sentido === 1 ? 0 : 1} ${p4.x} ${p4.y}`,
     'Z',
   ].join(' ')
 }
