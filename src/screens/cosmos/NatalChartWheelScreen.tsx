@@ -35,6 +35,7 @@ import {
 import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
+import { transitCellId } from '../../astro/transitCellId'
 
 // Nome de planeta a partir da chave normalizada do cellId (sun→Sun).
 const CAP_PLANET: Record<string, string> = {
@@ -254,7 +255,16 @@ type ChartContentProps = {
    * grade, longe do desenho que ela explica. A ordem que faz sentido é ver o
    * céu, ler o que ele quer dizer e só então entrar no detalhe.
    */
-  entreRodaEGrade?: React.ReactNode
+  /**
+   * Conteudo entre a roda e a grade (hoje: a leitura do dia).
+   *
+   * Aceita funcao porque quem renderiza esse conteudo esta FORA da roda (a
+   * Home monta a frase com os dados dela) mas precisa das acoes que vivem
+   * DENTRO: `abrirTransito` abre o modal de interpretacao, que e o que uma
+   * palavra tocada no texto deve fazer. Antes so dava para rolar a tela ate a
+   * lista, porque rolar era a unica acao que a Home conseguia disparar.
+   */
+  entreRodaEGrade?: React.ReactNode | ((acoes: AcoesDaRoda) => React.ReactNode)
   /**
    * No modo Trânsitos, torna as células da grade de aspectos tocáveis: ao tocar,
    * chama com o id do trânsito (casa com o nativeID do card na leitura embutida
@@ -265,6 +275,12 @@ type ChartContentProps = {
   /** Se fornecido, mostra um ícone de livro ao lado do título "Trânsitos sobre o natal"
    * que abre o modo standalone (Trânsitos Pessoais: importantes/longos/progressões). */
   onOpenTransits?: () => void
+}
+
+/** Acoes da roda liberadas para quem renderiza conteudo embutido nela. */
+export interface AcoesDaRoda {
+  /** Abre o modal de interpretacao de um transito (id `txr-<transito>-<tipo>-<natal>`). */
+  abrirTransito: (cellId: string) => void
 }
 
 /**
@@ -310,7 +326,16 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   }, [language])
   const { width } = useWindowDimensions()
 
-  const [selectedPlanet, setSelectedPlanet] = useState<RealPlanetPosition | null>(null)
+  // O planeta tocado vem com a ORIGEM. Natal e trânsito eram o mesmo estado, e o
+  // modal abria idêntico para os dois: a pessoa tocava no anel de fora (céu de
+  // hoje) e lia a interpretação do mapa de nascimento dela. Mesmo glifo, mesmo
+  // nome, leitura trocada — e nada na tela avisava qual dos dois estava lendo.
+  type PlanetaAberto = { p: RealPlanetPosition; origem: 'natal' | 'transito' }
+  const [selectedPlanet, setSelectedPlanet] = useState<PlanetaAberto | null>(null)
+  const abrirPlaneta = React.useCallback(
+    (p: RealPlanetPosition, origem: 'natal' | 'transito') => setSelectedPlanet({ p, origem }),
+    [],
+  )
   // Signo e casa ocupam quase toda a área da roda e não respondiam a nada.
   // Guarda O QUE foi tocado, não o texto: sem a identidade não dá para dizer
   // QUAIS planetas da pessoa caem naquele signo ou naquela casa — que é o que
@@ -584,19 +609,6 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               />
             ))}
 
-            {/* Áreas de toque dos signos. Vêm ANTES dos símbolos para ficarem por
-                baixo: no SVG o último desenhado fica na frente, e o setor cobriria
-                o glifo se viesse depois. O setor inteiro é tocável porque o símbolo
-                sozinho é pequeno demais para o dedo. */}
-            {zodiacSections.map(z => (
-              <G key={`toque-signo-${z.i}`} onPress={() => setInfoRoda({ tipo: 'signo', indice: z.i })}>
-                <Path
-                  d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
-                  fill={TOQUE_INVISIVEL}
-                />
-              </G>
-            ))}
-
             {/* Símbolos dos signos */}
             {zodiacSections.map(z => (
               <SvgText
@@ -609,6 +621,10 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 // Era 0.6 de alfa: o glifo sumia no fundo escuro e o anel inteiro
                 // virava textura. Ele nomeia o setor — precisa ser legível.
                 fill="rgba(255,215,0,0.92)"
+                // Decorativo: quem recebe o toque é o setor inteiro, lá no fim do
+                // SVG. Sem isto o glifo fica na frente dele e engole o toque no
+                // meio exato do setor — justo onde o dedo naturalmente cai.
+                pointerEvents="none"
               >
                 {z.sym}
               </SvgText>
@@ -621,7 +637,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const outer = polarToXY(cx, cy, R_OUTER, angle)
               return (
                 <Line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y}
-                  stroke="rgba(255,215,0,0.25)" strokeWidth={0.8} />
+                  stroke="rgba(255,215,0,0.25)" strokeWidth={0.8} pointerEvents="none" />
               )
             })}
 
@@ -700,7 +716,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {planetPositions.map(p => {
               const color = PLANET_COLORS[p.name] || '#fff'
               return (
-                <G key={p.name} onPress={() => setSelectedPlanet(p)}>
+                <G key={p.name} onPress={() => abrirPlaneta(p, 'natal')}>
                   {/* Halo da cor do planeta: separa o disco do fundo e dá ao anel
                       dos planetas o peso visual que ele merece — é o protagonista
                       da roda, mas antes competia de igual para igual com o
@@ -733,7 +749,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {showTransits && transitPositions.map(p => {
               const color = PLANET_COLORS[p.name] || '#6EE7E7'
               return (
-                <G key={`t-${p.name}`} onPress={() => setSelectedPlanet(p)}>
+                <G key={`t-${p.name}`} onPress={() => abrirPlaneta(p, 'transito')}>
                   <Circle cx={p.sx} cy={p.sy} r={discTransit} fill="#0e2222" stroke={color} strokeWidth={1} />
                   <SvgText x={p.sx} y={p.sy}
                     fontSize={discTransit * 1.5}
@@ -755,11 +771,30 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, 180)
               return (
                 <SvgText x={x} y={y} fontSize={svgSize * 0.03} textAnchor="middle"
-                  alignmentBaseline="middle" fill="#FFD700" fontWeight="bold">
+                  alignmentBaseline="middle" fill="#FFD700" fontWeight="bold"
+                  pointerEvents="none">
                   ASC
                 </SvgText>
               )
             })()}
+            {/* Áreas de toque dos signos — POR ÚLTIMO, de propósito.
+                Isto já falhou três vezes enquanto a camada ficava no fundo do
+                desenho. O hit-test do SVG percorre os elementos do último para o
+                primeiro, então qualquer coisa desenhada depois intercepta o toque
+                antes de ele chegar aqui — e as casas, que sempre funcionaram,
+                justamente são desenhadas quase no fim. Em vez de caçar qual
+                elemento intercepta, a camada passa a ser a última de todas.
+                É seguro: o anel do zodíaco não tem nenhum planeta (natais em
+                R_PLANET=0.21, trânsito em 0.45+), então não há toque de glifo
+                para roubar. */}
+            {zodiacSections.map(z => (
+              <G key={`toque-signo-${z.i}`} onPress={() => setInfoRoda({ tipo: 'signo', indice: z.i })}>
+                <Path
+                  d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
+                  fill={TOQUE_INVISIVEL}
+                />
+              </G>
+            ))}
           </Svg>
         </View>
 
@@ -777,7 +812,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 key={`leg-${p.name}`}
                 style={styles.legendaItem}
                 activeOpacity={0.7}
-                onPress={() => setSelectedPlanet(p)}
+                onPress={() => abrirPlaneta(p, 'natal')}
               >
                 <Text style={[styles.legendaGlifo, { color: PLANET_COLORS[p.name] || '#fff' }]}>
                   {PLANET_SYMBOLS[p.name] || '●'}
@@ -788,7 +823,9 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           </View>
         ) : null}
 
-        {entreRodaEGrade}
+        {typeof entreRodaEGrade === 'function'
+          ? entreRodaEGrade({ abrirTransito: openTransitAspectModal })
+          : entreRodaEGrade}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {showTransits ? (
@@ -853,7 +890,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             <TouchableOpacity
               key={p.name}
               style={styles.legendItem}
-              onPress={() => setSelectedPlanet(p)}
+              onPress={() => abrirPlaneta(p, 'natal')}
               activeOpacity={0.7}
             >
               <Text style={[styles.legendSymbol, { color: PLANET_COLORS[p.name] || '#fff' }]}>
@@ -996,7 +1033,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                             <TouchableOpacity
                               key={`dentro-${pl.name}`}
                               activeOpacity={0.75}
-                              onPress={() => { setInfoRoda(null); setSelectedPlanet(pl) }}
+                              onPress={() => { setInfoRoda(null); abrirPlaneta(pl, 'natal') }}
                               style={styles.planetaDoBloco}
                             >
                               <Text style={styles.planetaDoBlocoTitulo}>
@@ -1073,52 +1110,183 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           onPress={() => setSelectedPlanet(null)}
         >
           {selectedPlanet && (() => {
-            // Mostrava só o nome em inglês e a posição. Agora traz a leitura
-            // completa daquele planeta NO MAPA DA PESSOA: o que ele é, o que o
-            // signo faz com ele e o que a casa faz com ele — os três catálogos
-            // que o app já tem e que a roda não alcançava.
-            const nome = selectedPlanet.name
-            const signoEn = ZODIAC_NAMES[Math.floor(((selectedPlanet.longitude as number) % 360) / 30)]
-            const grau = ((selectedPlanet.degree ?? ((selectedPlanet.longitude as number) % 30)) as number)
-            const casa = typeof selectedPlanet.house === 'number' ? selectedPlanet.house : null
+            // Natal e trânsito são leituras DIFERENTES do mesmo glifo, e o modal
+            // precisa dizer qual das duas está na tela.
+            //
+            //  - natal (anel de dentro): quem a pessoa é. Catálogos natais —
+            //    essência, planeta no signo, planeta na casa. Não muda nunca.
+            //  - trânsito (anel de fora): o céu de hoje. NÃO usa catálogo natal:
+            //    "Marte em Áries hoje" não quer dizer o que "Marte em Áries no
+            //    nascimento" quer, e aplicar o texto natal a um trânsito é
+            //    afirmar com confiança uma coisa que não é verdade. O que vale
+            //    aqui é o catálogo de TRÂNSITO — os aspectos que ele está
+            //    fazendo no mapa dela — e a casa natal que ele percorre.
+            const { p: planeta, origem } = selectedPlanet
+            const ehTransito = origem === 'transito'
+            const nome = planeta.name
+            const lon = ((planeta.longitude as number) % 360 + 360) % 360
+            const signoEn = ZODIAC_NAMES[Math.floor(lon / 30)]
+            const grau = lon % 30
+            // Trânsito: a casa é sempre a NATAL percorrida (houseOfLon usa as
+            // cúspides de nascimento). O `house` que vem no planeta de trânsito
+            // pode ser a casa do céu de agora, que aqui não diz nada.
+            const casa = ehTransito
+              ? (houseOfLon(lon) || null)
+              : (typeof planeta.house === 'number' && planeta.house > 0 ? planeta.house : null)
             const essencia = getPlanetMeaning(nome, language)?.essence || ''
-            const noSigno = resolvePlanetInSignText(nome, signoEn, language)
-            const naCasa = casa ? resolveNatalPlanetInHouseText(nome, casa, language) : null
+            const noSigno = ehTransito ? null : resolvePlanetInSignText(nome, signoEn, language)
+            const naCasa = !ehTransito && casa ? resolveNatalPlanetInHouseText(nome, casa, language) : null
+            const casaInfo = ehTransito && casa ? getHouseMeaning(casa, language) : null
             const cor = PLANET_COLORS[nome] || '#fff'
+
+            // Os trânsitos ligados a ESTE planeta. De um lado ou do outro,
+            // conforme a origem: o planeta em trânsito é o que age (planet1), o
+            // planeta natal é o que recebe (planet2). Trocar os lados aqui
+            // atribuiria o aspecto ao par errado sem acusar nada.
+            const ligados = (showTransits ? tnAspectsWithNodes : [])
+              .filter((a: any) => (ehTransito ? a?.planet1 === nome : a?.planet2 === nome))
+              .slice()
+              .sort((a: any, b: any) => (a?.orb ?? 99) - (b?.orb ?? 99))
+              .slice(0, 5)
+            const idDoTransito = (a: any) =>
+              transitCellId(String(a?.planet1 || ''), String(a?.type || ''), String(a?.planet2 || ''))
 
             return (
               <TouchableOpacity style={styles.aspectModalCard} activeOpacity={1} onPress={() => {}}>
                 <Text style={[styles.modalSymbol, { color: cor }]}>{PLANET_SYMBOLS[nome] || '●'}</Text>
+
+                {/* O rótulo vem ANTES do nome: é a primeira coisa a saber, e sem
+                    ele as duas leituras são indistinguíveis. */}
+                <Text style={[styles.selo, ehTransito ? styles.seloTransito : styles.seloNatal]}>
+                  {ehTransito
+                    ? tl('EM TRÂNSITO HOJE', 'IN TRANSIT TODAY', 'EN TRANSITO HOY', 'IN TRANSITO OGGI')
+                    : tl('PLANETA NATAL', 'NATAL PLANET', 'PLANETA NATAL', 'PIANETA NATALE')}
+                </Text>
+
                 <Text style={styles.aspectModalTitle}>{translatePlanet(nome, language)}</Text>
                 <Text style={styles.aspectModalSubtitle}>
                   {`${grau.toFixed(1)}° ${translateSignName(signoEn, language as any)}`}
-                  {casa ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${casa}` : ''}
-                  {selectedPlanet.isRetrograde ? ` · ${tl('retrógrado', 'retrograde', 'retrogrado', 'retrogrado')} ℞` : ''}
+                  {casa ? ` · ${ehTransito
+                    ? tl('passando pela Casa', 'crossing House', 'pasando por la Casa', 'attraversa la Casa')
+                    : tl('Casa', 'House', 'Casa', 'Casa')} ${casa}` : ''}
+                  {planeta.isRetrograde ? ` · ${tl('retrógrado', 'retrograde', 'retrogrado', 'retrogrado')} ℞` : ''}
                 </Text>
 
                 <ScrollView style={{ maxHeight: 360 }}>
+                  {/* A essência do planeta vale nas duas leituras: é o que ele é,
+                      não onde está. */}
                   {essencia ? (
                     <TextoComGlossario style={styles.aspectModalBody}>{essencia}</TextoComGlossario>
                   ) : null}
 
-                  {noSigno ? (
-                    <View style={styles.blocoModal}>
-                      <Text style={styles.blocoRotulo}>
-                        {tl('Em', 'In', 'En', 'In')} {translateSignName(signoEn, language as any)}
+                  {ehTransito ? (
+                    <>
+                      <Text style={styles.avisoOrigem}>
+                        {tl(
+                          'Esta é a posição dele no céu de hoje — não a do seu nascimento.',
+                          'This is where it sits in the sky today — not where it sat at your birth.',
+                          'Esta es su posicion en el cielo de hoy — no la de tu nacimiento.',
+                          'Questa e la sua posizione nel cielo di oggi — non quella della tua nascita.',
+                        )}
                       </Text>
-                      <TextoComGlossario style={styles.aspectModalBody}>{noSigno}</TextoComGlossario>
-                    </View>
-                  ) : null}
 
-                  {naCasa ? (
+                      {casaInfo ? (
+                        <View style={styles.blocoModal}>
+                          <Text style={styles.blocoRotulo}>
+                            {tl('Área que ele está mexendo', 'Area it is stirring', 'Area que esta moviendo', 'Area che sta muovendo')}
+                          </Text>
+                          <Text style={styles.planetaDoBlocoTitulo}>
+                            {tl('Casa', 'House', 'Casa', 'Casa')} {casa} · {casaInfo.nome}
+                          </Text>
+                          {/* As três palavras antes do parágrafo: quem só passa o
+                              olho já sai sabendo de que área se trata. */}
+                          {casaInfo.palavras ? (
+                            <Text style={styles.planetaDoBlocoTexto}>{casaInfo.palavras}</Text>
+                          ) : null}
+                          <TextoComGlossario style={styles.aspectModalBody}>
+                            {casaInfo.texto || casaInfo.palavras || ''}
+                          </TextoComGlossario>
+                        </View>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      {noSigno ? (
+                        <View style={styles.blocoModal}>
+                          <Text style={styles.blocoRotulo}>
+                            {tl('Em', 'In', 'En', 'In')} {translateSignName(signoEn, language as any)}
+                          </Text>
+                          <TextoComGlossario style={styles.aspectModalBody}>{noSigno}</TextoComGlossario>
+                        </View>
+                      ) : null}
+
+                      {naCasa ? (
+                        <View style={styles.blocoModal}>
+                          <Text style={styles.blocoRotulo}>
+                            {tl('Na Casa', 'In House', 'En la Casa', 'Nella Casa')} {casa}
+                          </Text>
+                          <TextoComGlossario style={styles.aspectModalBody}>{naCasa}</TextoComGlossario>
+                        </View>
+                      ) : null}
+                    </>
+                  )}
+
+                  {ligados.length ? (
                     <View style={styles.blocoModal}>
                       <Text style={styles.blocoRotulo}>
-                        {tl('Na Casa', 'In House', 'En la Casa', 'Nella Casa')} {casa}
+                        {ehTransito
+                          ? tl('O que ele toca no seu mapa', 'What it touches in your chart', 'Lo que toca en tu mapa', 'Cosa tocca nel tuo tema')
+                          : tl('O que o céu de hoje faz com ele', 'What today sky does to it', 'Lo que el cielo de hoy le hace', 'Cosa gli fa il cielo di oggi')}
                       </Text>
-                      <TextoComGlossario style={styles.aspectModalBody}>{naCasa}</TextoComGlossario>
+                      {ligados.map((a: any) => (
+                        <TouchableOpacity
+                          key={`lig-${a.planet1}-${a.type}-${a.planet2}`}
+                          activeOpacity={0.75}
+                          // Abre a interpretação do trânsito. Fecha este modal
+                          // primeiro: dois Modal empilhados no Android deixam o
+                          // de baixo capturando o toque.
+                          onPress={() => { setSelectedPlanet(null); openTransitAspectModal(idDoTransito(a)) }}
+                          style={styles.planetaDoBloco}
+                        >
+                          <Text style={styles.planetaDoBlocoTitulo}>
+                            {translatePlanet(a.planet1, language)} {aspectLabelPt(a.type)} {translatePlanet(a.planet2, language)}
+                          </Text>
+                          <Text style={styles.planetaDoBlocoTexto}>
+                            {typeof a.orb === 'number'
+                              ? `${tl('orbe', 'orb', 'orbe', 'orbe')} ${a.orb.toFixed(1)}° · ${tl('toque para a leitura', 'tap for the reading', 'toca para la lectura', 'tocca per la lettura')}`
+                              : tl('toque para a leitura', 'tap for the reading', 'toca para la lectura', 'tocca per la lettura')}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
                   ) : null}
                 </ScrollView>
+
+                {/* Ir até a lista de trânsitos, abaixo da roda. O modal explica;
+                    a lista é onde a pessoa compara e se aprofunda. */}
+                {ligados.length && onSelectTransitAspect ? (
+                  <TouchableOpacity
+                    style={styles.irParaLista}
+                    activeOpacity={0.8}
+                    onPress={() => { const id = idDoTransito(ligados[0]); setSelectedPlanet(null); onSelectTransitAspect(id) }}
+                  >
+                    <Text style={styles.irParaListaTexto}>
+                      {tl('Ver na lista de trânsitos', 'See in the transit list', 'Ver en la lista de transitos', 'Vedi nella lista dei transiti')}
+                      {'  ↓'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : onOpenTransits ? (
+                  <TouchableOpacity
+                    style={styles.irParaLista}
+                    activeOpacity={0.8}
+                    onPress={() => { setSelectedPlanet(null); onOpenTransits() }}
+                  >
+                    <Text style={styles.irParaListaTexto}>
+                      {tl('Ver meus trânsitos', 'See my transits', 'Ver mis transitos', 'Vedi i miei transiti')}
+                      {'  →'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
 
                 <TouchableOpacity style={styles.aspectModalClose} onPress={() => setSelectedPlanet(null)}>
                   <Text style={styles.aspectModalCloseText}>{tl('Fechar', 'Close', 'Cerrar', 'Chiudi')}</Text>
@@ -1170,6 +1338,35 @@ const styles = StyleSheet.create({
     borderColor: '#222836',
     paddingVertical: 10,
   },
+  // Selo de origem. Cor diferente por leitura: dourado = o mapa dela (fixo),
+  // ciano = o ceu de hoje (passa). A mesma dupla de cores que a roda usa nos
+  // dois aneis, para o modal confirmar visualmente de onde veio o toque.
+  selo: {
+    fontSize: 11,
+    letterSpacing: 1.4,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  seloNatal: { color: '#FFD700' },
+  seloTransito: { color: '#67E8F9' },
+  avisoOrigem: {
+    color: '#8d94a8',
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 10,
+    fontStyle: 'italic',
+  },
+  irParaLista: {
+    marginTop: 14,
+    paddingVertical: 11,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#2f6f78',
+    backgroundColor: 'rgba(103,232,249,0.08)',
+    alignItems: 'center',
+  },
+  irParaListaTexto: { color: '#67E8F9', fontSize: 14.5, fontWeight: '700' },
   blocoModal: { marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#2a3142' },
   blocoRotulo: { color: '#8d94a8', fontSize: 11.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
   planetaDoBloco: { marginBottom: 12 },

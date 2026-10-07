@@ -558,13 +558,18 @@ export default function HomeScreen() {
                   onSelectNatalAspect={handleSelectNatalAspect}
                   onOpenTransits={() => navigation.navigate('PersonalTransits')}
                   // A leitura do dia entra ENTRE a roda e a grade: vê o céu, lê o
-                  // que ele quer dizer, e só então entra no detalhe. As palavras
-                  // tocáveis levam ao mesmo ponto que a grade logo abaixo.
-                  entreRodaEGrade={(
+                  // que ele quer dizer, e só então entra no detalhe.
+                  //
+                  // A palavra tocada ABRE A INTERPRETAÇÃO, não rola a tela. Rolar
+                  // até a lista deixava a pessoa num card que ela ainda não sabia
+                  // ler — e tirava do lugar o texto que ela estava lendo. Quem
+                  // quiser a lista chega nela pelo modal do planeta, que tem o
+                  // link próprio para isso.
+                  entreRodaEGrade={({ abrirTransito }) => (
                     <FraseDoDia
                       transitos={transitData?.dailyOverview?.personalTodayRich}
                       areas={orderedLifeAreas}
-                      onSelectTransit={handleSelectTransitAspect}
+                      onAbrirTransito={abrirTransito}
                     />
                   )}
                 />
