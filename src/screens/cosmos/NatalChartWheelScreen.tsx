@@ -27,6 +27,11 @@ import AspectGrid from '../../components/AspectGrid'
 import { aspectBetween } from '../../utils/nodeAspects'
 import { translatePlanet, translateSignName } from '../../utils/astro/pt'
 import { getPlanetMeaning } from '../../data/planetMeaning'
+import {
+  resolvePlanetInSignText,
+  resolveNatalPlanetInHouseText,
+  resolveSignInHouseText,
+} from '../../utils/natalInterpretation'
 import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
@@ -307,7 +312,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
 
   const [selectedPlanet, setSelectedPlanet] = useState<RealPlanetPosition | null>(null)
   // Signo e casa ocupam quase toda a área da roda e não respondiam a nada.
-  const [infoRoda, setInfoRoda] = useState<SignificadoRoda | null>(null)
+  // Guarda O QUE foi tocado, não o texto: sem a identidade não dá para dizer
+  // QUAIS planetas da pessoa caem naquele signo ou naquela casa — que é o que
+  // transforma o modal de enciclopédia em leitura do mapa dela.
+  const [infoRoda, setInfoRoda] = useState<
+    { tipo: 'signo'; indice: number } | { tipo: 'casa'; numero: number } | null
+  >(null)
   // Cabeçalho da grade tocado: mostra o MESMO planeta nos dois estados — onde
   // ele estava quando a pessoa nasceu e onde está hoje. É a comparação que a
   // grade inteira pressupõe mas nunca mostrava.
@@ -579,7 +589,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 o glifo se viesse depois. O setor inteiro é tocável porque o símbolo
                 sozinho é pequeno demais para o dedo. */}
             {zodiacSections.map(z => (
-              <G key={`toque-signo-${z.i}`} onPress={() => setInfoRoda(getSignMeaning(ZODIAC_NAMES[z.i], language))}>
+              <G key={`toque-signo-${z.i}`} onPress={() => setInfoRoda({ tipo: 'signo', indice: z.i })}>
                 <Path
                   d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
                   fill={TOQUE_INVISIVEL}
@@ -625,7 +635,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const proxima = houseLines[(i + 1) % houseLines.length]
               if (!proxima) return null
               return (
-                <G key={`toque-casa-${h.i}`} onPress={() => setInfoRoda(getHouseMeaning(h.i + 1, language))}>
+                <G key={`toque-casa-${h.i}`} onPress={() => setInfoRoda({ tipo: 'casa', numero: h.i + 1 })}>
                   <Path
                     d={setorAnelar(cx, cy, R_HOUSE_IN, R_HOUSE_OUT, h.angle, proxima.angle)}
                     fill={TOQUE_INVISIVEL}
@@ -915,23 +925,119 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       {/* Modal de signo ou casa tocada na roda.
           Fecha tocando FORA do card e pelo botão voltar do Android
           (onRequestClose) — não exige mirar num X pequeno. */}
+      {/* Signo ou casa tocada na roda.
+          Além do significado, mostra o que É SEU ali: os planetas que caem
+          naquele signo ou naquela casa, com posição e leitura do catálogo. Sem
+          isso o modal explicava o arquétipo e não dizia nada sobre o mapa de
+          quem está olhando. Cada planeta é tocável e abre a própria ficha. */}
       <Modal visible={infoRoda != null} transparent animationType="fade" onRequestClose={() => setInfoRoda(null)}>
         <TouchableOpacity style={styles.aspectModalOverlay} activeOpacity={1} onPress={() => setInfoRoda(null)}>
           <TouchableOpacity style={styles.aspectModalCard} activeOpacity={1} onPress={() => {}}>
-            <Text style={styles.aspectModalTitle}>{infoRoda?.nome}</Text>
-            <Text style={styles.aspectModalSubtitle}>{infoRoda?.palavras}</Text>
-            <ScrollView style={{ maxHeight: 280 }}>
-              <TextoComGlossario style={styles.aspectModalBody}>{infoRoda?.texto || ''}</TextoComGlossario>
-              {/* Ficha técnica depois do parágrafo e em tipo menor: quem chegou
-                  agora lê a explicação e ignora; quem estuda procura exatamente
-                  isto e não achava em lugar nenhum. */}
-              {infoRoda?.ficha ? (
-                <Text style={styles.fichaTecnica}>{infoRoda.ficha}</Text>
-              ) : null}
-            </ScrollView>
-            <TouchableOpacity style={styles.aspectModalClose} onPress={() => setInfoRoda(null)}>
-              <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>
-            </TouchableOpacity>
+            {(() => {
+              if (!infoRoda) return null
+              const ehSigno = infoRoda.tipo === 'signo'
+              const signoEn = ehSigno ? ZODIAC_NAMES[infoRoda.indice] : null
+              const casaNum = !ehSigno ? infoRoda.numero : null
+              const sig = ehSigno
+                ? getSignMeaning(signoEn!, language)
+                : getHouseMeaning(casaNum!, language)
+
+              // Os planetas natais que caem aqui — é o que torna o modal SOBRE
+              // a pessoa, e não uma enciclopédia.
+              const dentro = natalPlanets.filter((pl) => {
+                if (typeof pl.longitude !== 'number') return false
+                if (ehSigno) return Math.floor((pl.longitude % 360) / 30) === infoRoda.indice
+                return typeof pl.house === 'number' && pl.house === casaNum
+              })
+
+              // Para a casa: qual signo está na cúspide dela.
+              const signoDaCasa = !ehSigno && houseCusps.length === 12
+                ? ZODIAC_NAMES[Math.floor((houseCusps[casaNum! - 1] % 360) / 30)]
+                : null
+
+              return (
+                <>
+                  <Text style={styles.aspectModalTitle}>{sig?.nome}</Text>
+                  <Text style={styles.aspectModalSubtitle}>{sig?.palavras}</Text>
+
+                  <ScrollView style={{ maxHeight: 340 }}>
+                    <TextoComGlossario style={styles.aspectModalBody}>{sig?.texto || ''}</TextoComGlossario>
+
+                    {/* Casa: o signo da cúspide dá o TOM de como ela se expressa. */}
+                    {signoDaCasa ? (
+                      <View style={styles.blocoModal}>
+                        <Text style={styles.blocoRotulo}>
+                          {tl('No seu mapa', 'In your chart', 'En tu mapa', 'Nel tuo tema')}
+                        </Text>
+                        <TextoComGlossario style={styles.aspectModalBody}>
+                          {resolveSignInHouseText(signoDaCasa, casaNum!, language)
+                            || tl(`Esta casa começa em ${translateSignName(signoDaCasa, language as any)}.`,
+                                  `This house begins in ${translateSignName(signoDaCasa, language as any)}.`,
+                                  `Esta casa empieza en ${translateSignName(signoDaCasa, language as any)}.`,
+                                  `Questa casa inizia in ${translateSignName(signoDaCasa, language as any)}.`)}
+                        </TextoComGlossario>
+                      </View>
+                    ) : null}
+
+                    {/* Os planetas que moram aqui, com posição e leitura. */}
+                    {dentro.length ? (
+                      <View style={styles.blocoModal}>
+                        <Text style={styles.blocoRotulo}>
+                          {dentro.length === 1
+                            ? tl('Seu planeta aqui', 'Your planet here', 'Tu planeta aqui', 'Il tuo pianeta qui')
+                            : tl('Seus planetas aqui', 'Your planets here', 'Tus planetas aqui', 'I tuoi pianeti qui')}
+                        </Text>
+                        {dentro.map((pl) => {
+                          const grau = Math.floor((pl.longitude as number) % 30)
+                          const leitura = ehSigno
+                            ? resolvePlanetInSignText(pl.name, signoEn!, language)
+                            : (typeof pl.house === 'number' ? resolveNatalPlanetInHouseText(pl.name, pl.house, language) : null)
+                          return (
+                            <TouchableOpacity
+                              key={`dentro-${pl.name}`}
+                              activeOpacity={0.75}
+                              onPress={() => { setInfoRoda(null); setSelectedPlanet(pl) }}
+                              style={styles.planetaDoBloco}
+                            >
+                              <Text style={styles.planetaDoBlocoTitulo}>
+                                <Text style={{ color: PLANET_COLORS[pl.name] || '#fff' }}>
+                                  {PLANET_SYMBOLS[pl.name] || '●'}{'  '}
+                                </Text>
+                                {translatePlanet(pl.name, language)} · {grau}°
+                                {pl.isRetrograde ? ' ℞' : ''}
+                              </Text>
+                              {leitura ? (
+                                <TextoComGlossario style={styles.planetaDoBlocoTexto}>{leitura}</TextoComGlossario>
+                              ) : null}
+                            </TouchableOpacity>
+                          )
+                        })}
+                      </View>
+                    ) : (
+                      <Text style={styles.blocoVazio}>
+                        {ehSigno
+                          ? tl('Você não tem planetas neste signo — o tema age mais de fora.',
+                               'You have no planets in this sign — the theme acts more from the outside.',
+                               'No tienes planetas en este signo — el tema actua mas desde afuera.',
+                               'Non hai pianeti in questo segno — il tema agisce piu da fuori.')
+                          : tl('Nenhum planeta seu nesta casa — o que vale aqui é o signo da entrada.',
+                               'No planets of yours in this house — what counts here is the sign on the cusp.',
+                               'Ningun planeta tuyo en esta casa — lo que vale es el signo de entrada.',
+                               'Nessun tuo pianeta in questa casa — conta il segno di ingresso.')}
+                      </Text>
+                    )}
+
+                    {/* Ficha técnica depois do conteúdo e em tipo menor: quem
+                        chegou agora ignora; quem estuda procura exatamente isto. */}
+                    {sig?.ficha ? <Text style={styles.fichaTecnica}>{sig.ficha}</Text> : null}
+                  </ScrollView>
+
+                  <TouchableOpacity style={styles.aspectModalClose} onPress={() => setInfoRoda(null)}>
+                    <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>
+                  </TouchableOpacity>
+                </>
+              )
+            })()}
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -966,26 +1072,60 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           activeOpacity={1}
           onPress={() => setSelectedPlanet(null)}
         >
-          {selectedPlanet && (
-            <View style={styles.modalCard}>
-              <Text style={[styles.modalSymbol, { color: PLANET_COLORS[selectedPlanet.name] || '#fff' }]}>
-                {PLANET_SYMBOLS[selectedPlanet.name] || '●'}
-              </Text>
-              <Text style={styles.modalTitle}>{selectedPlanet.name}</Text>
-              <Text style={styles.modalSub}>
-                {(selectedPlanet.degree ?? (selectedPlanet.longitude % 30)).toFixed(1)}° {selectedPlanet.sign}
-                {selectedPlanet.isRetrograde ? '  ℞ retrógrado' : ''}
-              </Text>
-              <Text style={styles.modalHouse}>
-                {tl('Casa', 'House', 'Casa', 'Casa')} {selectedPlanet.house}
-              </Text>
-              <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedPlanet(null)}>
-                <Text style={styles.modalCloseText}>
-                  {tl('Fechar', 'Close', 'Cerrar', 'Chiudi')}
+          {selectedPlanet && (() => {
+            // Mostrava só o nome em inglês e a posição. Agora traz a leitura
+            // completa daquele planeta NO MAPA DA PESSOA: o que ele é, o que o
+            // signo faz com ele e o que a casa faz com ele — os três catálogos
+            // que o app já tem e que a roda não alcançava.
+            const nome = selectedPlanet.name
+            const signoEn = ZODIAC_NAMES[Math.floor(((selectedPlanet.longitude as number) % 360) / 30)]
+            const grau = ((selectedPlanet.degree ?? ((selectedPlanet.longitude as number) % 30)) as number)
+            const casa = typeof selectedPlanet.house === 'number' ? selectedPlanet.house : null
+            const essencia = getPlanetMeaning(nome, language)?.essence || ''
+            const noSigno = resolvePlanetInSignText(nome, signoEn, language)
+            const naCasa = casa ? resolveNatalPlanetInHouseText(nome, casa, language) : null
+            const cor = PLANET_COLORS[nome] || '#fff'
+
+            return (
+              <TouchableOpacity style={styles.aspectModalCard} activeOpacity={1} onPress={() => {}}>
+                <Text style={[styles.modalSymbol, { color: cor }]}>{PLANET_SYMBOLS[nome] || '●'}</Text>
+                <Text style={styles.aspectModalTitle}>{translatePlanet(nome, language)}</Text>
+                <Text style={styles.aspectModalSubtitle}>
+                  {`${grau.toFixed(1)}° ${translateSignName(signoEn, language as any)}`}
+                  {casa ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${casa}` : ''}
+                  {selectedPlanet.isRetrograde ? ` · ${tl('retrógrado', 'retrograde', 'retrogrado', 'retrogrado')} ℞` : ''}
                 </Text>
+
+                <ScrollView style={{ maxHeight: 360 }}>
+                  {essencia ? (
+                    <TextoComGlossario style={styles.aspectModalBody}>{essencia}</TextoComGlossario>
+                  ) : null}
+
+                  {noSigno ? (
+                    <View style={styles.blocoModal}>
+                      <Text style={styles.blocoRotulo}>
+                        {tl('Em', 'In', 'En', 'In')} {translateSignName(signoEn, language as any)}
+                      </Text>
+                      <TextoComGlossario style={styles.aspectModalBody}>{noSigno}</TextoComGlossario>
+                    </View>
+                  ) : null}
+
+                  {naCasa ? (
+                    <View style={styles.blocoModal}>
+                      <Text style={styles.blocoRotulo}>
+                        {tl('Na Casa', 'In House', 'En la Casa', 'Nella Casa')} {casa}
+                      </Text>
+                      <TextoComGlossario style={styles.aspectModalBody}>{naCasa}</TextoComGlossario>
+                    </View>
+                  ) : null}
+                </ScrollView>
+
+                <TouchableOpacity style={styles.aspectModalClose} onPress={() => setSelectedPlanet(null)}>
+                  <Text style={styles.aspectModalCloseText}>{tl('Fechar', 'Close', 'Cerrar', 'Chiudi')}</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </View>
-          )}
+            )
+          })()}
         </TouchableOpacity>
       </Modal>
     </>
@@ -1030,6 +1170,12 @@ const styles = StyleSheet.create({
     borderColor: '#222836',
     paddingVertical: 10,
   },
+  blocoModal: { marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#2a3142' },
+  blocoRotulo: { color: '#8d94a8', fontSize: 11.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
+  planetaDoBloco: { marginBottom: 12 },
+  planetaDoBlocoTitulo: { color: '#EDEBF7', fontSize: 15.5, fontWeight: '700', marginBottom: 3 },
+  planetaDoBlocoTexto: { color: '#c9cde0', fontSize: 14.5, lineHeight: 21 },
+  blocoVazio: { color: '#8d94a8', fontSize: 14, lineHeight: 20, marginTop: 14, fontStyle: 'italic' },
   fichaTecnica: {
     color: '#8d94a8',
     fontSize: 13,
