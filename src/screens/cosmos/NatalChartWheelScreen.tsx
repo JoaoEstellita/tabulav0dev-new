@@ -25,7 +25,8 @@ import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import AspectGrid from '../../components/AspectGrid'
 import { aspectBetween } from '../../utils/nodeAspects'
-import { translatePlanet } from '../../utils/astro/pt'
+import { translatePlanet, translateSignName } from '../../utils/astro/pt'
+import { getPlanetMeaning } from '../../data/planetMeaning'
 import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
@@ -298,6 +299,10 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const [selectedPlanet, setSelectedPlanet] = useState<RealPlanetPosition | null>(null)
   // Signo e casa ocupam quase toda a área da roda e não respondiam a nada.
   const [infoRoda, setInfoRoda] = useState<SignificadoRoda | null>(null)
+  // Cabeçalho da grade tocado: mostra o MESMO planeta nos dois estados — onde
+  // ele estava quando a pessoa nasceu e onde está hoje. É a comparação que a
+  // grade inteira pressupõe mas nunca mostrava.
+  const [planetaDaGrade, setPlanetaDaGrade] = useState<string | null>(null)
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [firestoreCusps, setFirestoreCusps] = useState<number[] | null>(null)
 
@@ -789,7 +794,14 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   'Le righe sono i pianeti di oggi; le colonne, quelli della tua nascita. Ogni simbolo e un incontro tra i due — tocca per leggere.',
                 )}
               </Text>
-              <AspectGrid cross rowPlanets={transitGridPoints} colPlanets={natalGridPoints} aspects={tnAspectsWithNodes} onSelectCell={openTransitAspectModal} />
+              <AspectGrid
+                cross
+                rowPlanets={transitGridPoints}
+                colPlanets={natalGridPoints}
+                aspects={tnAspectsWithNodes}
+                onSelectCell={openTransitAspectModal}
+                onSelectPlanet={setPlanetaDaGrade}
+              />
             </View>
           ) : null
         ) : natalPlanets.length >= 2 && natalAspectsWithNodes.length > 0 ? (
@@ -835,6 +847,59 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           ))}
         </View>
         ) : null}
+
+      {/* Planeta tocado no cabeçalho da grade: as DUAS posições lado a lado.
+          A grade cruza trânsito com natal o tempo todo, mas não dizia onde cada
+          um está — e sem isso "Saturno" na linha e "Saturno" na coluna parecem
+          a mesma coisa. Fecha tocando fora e pelo botão voltar. */}
+      <Modal visible={planetaDaGrade != null} transparent animationType="fade" onRequestClose={() => setPlanetaDaGrade(null)}>
+        <TouchableOpacity style={styles.aspectModalOverlay} activeOpacity={1} onPress={() => setPlanetaDaGrade(null)}>
+          <TouchableOpacity style={styles.aspectModalCard} activeOpacity={1} onPress={() => {}}>
+            {(() => {
+              const nome = planetaDaGrade || ''
+              const nat = natalPlanets.find((x) => x.name === nome)
+              const tra = transitPlanets.find((x) => x.name === nome)
+              const posicao = (x: any) => {
+                if (!x || typeof x.longitude !== 'number') return null
+                const grau = Math.floor(x.longitude % 30)
+                const signo = ZODIAC_NAMES[Math.floor((x.longitude % 360) / 30)]
+                const casa = typeof x.house === 'number' && x.house > 0 ? x.house : null
+                return { grau, signo, casa, retro: !!x.isRetrograde }
+              }
+              const pn = posicao(nat)
+              const pt = posicao(tra)
+              const linha = (rotulo: string, cor: string, d: ReturnType<typeof posicao>) => d ? (
+                <View style={styles.planetaLinha}>
+                  <Text style={[styles.planetaRotulo, { color: cor }]}>{rotulo}</Text>
+                  <Text style={styles.planetaValor}>
+                    {`${d.grau}° ${translateSignName(d.signo, language as any)}`}
+                    {d.casa ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${d.casa}` : ''}
+                    {d.retro ? ' ℞' : ''}
+                  </Text>
+                </View>
+              ) : null
+              return (
+                <>
+                  <Text style={styles.aspectModalTitle}>{translatePlanet(nome, language)}</Text>
+                  <Text style={styles.aspectModalSubtitle}>
+                    {tl('Onde está hoje · onde estava no seu nascimento', 'Where it is today · where it was at your birth', 'Donde esta hoy · donde estaba en tu nacimiento', 'Dove e oggi · dove era alla tua nascita')}
+                  </Text>
+                  {linha(tl('Hoje', 'Today', 'Hoy', 'Oggi'), '#67E8F9', pt)}
+                  {linha(tl('No nascimento', 'At birth', 'En el nacimiento', 'Alla nascita'), '#FFD700', pn)}
+                  <ScrollView style={{ maxHeight: 220, marginTop: 10 }}>
+                    <TextoComGlossario style={styles.aspectModalBody}>
+                      {getPlanetMeaning(nome, language)?.essence || ''}
+                    </TextoComGlossario>
+                  </ScrollView>
+                </>
+              )
+            })()}
+            <TouchableOpacity style={styles.aspectModalClose} onPress={() => setPlanetaDaGrade(null)}>
+              <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Modal de signo ou casa tocada na roda.
           Fecha tocando FORA do card e pelo botão voltar do Android
@@ -948,6 +1013,9 @@ const styles = StyleSheet.create({
     borderColor: '#222836',
     paddingVertical: 10,
   },
+  planetaLinha: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 },
+  planetaRotulo: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, minWidth: 104 },
+  planetaValor: { color: '#e2e6f0', fontSize: 15.5, flexShrink: 1 },
   legendaSimbolos: {
     flexDirection: 'row',
     flexWrap: 'wrap',

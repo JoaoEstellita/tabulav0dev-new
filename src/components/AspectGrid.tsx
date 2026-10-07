@@ -1,6 +1,6 @@
 import React from "react"
 import { ScrollView, View, Text } from "react-native"
-import Svg, { Rect, Text as SvgText } from "react-native-svg"
+import Svg, { Rect, Text as SvgText, G } from "react-native-svg"
 import { norm, transitCellId } from '../astro/transitCellId'
 
 /**
@@ -204,7 +204,7 @@ const COL_TONE = "#FFD700" // natal (dourado)
 // arquivo, que puxa react-native (Flow). Os call sites seguem importando daqui.
 export { transitCellId } from '../astro/transitCellId'
 
-function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; onSelectCell?: (cellId: string) => void }) {
+function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell, onSelectPlanet }: { rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; onSelectCell?: (cellId: string) => void; onSelectPlanet?: (nome: string) => void }) {
   const list = aspects || []
   const byCell = new Map<string, AspectLike>() // chave `${transito}>${natal}`
   const rowInv = new Set<string>()
@@ -244,10 +244,10 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
           {cols.map((c, j) => {
             const left = pad + hdr + j * CELL
             return (
-              <React.Fragment key={`col-${c}`}>
+              <G key={`col-${c}`} onPress={onSelectPlanet ? () => onSelectPlanet(c) : undefined}>
                 <Rect x={left} y={pad} width={CELL} height={hdr} fill="rgba(255,215,0,0.08)" stroke="rgba(255,215,0,0.25)" strokeWidth={0.5} />
                 <SvgText x={left + CELL / 2} y={pad + 20} fontSize={15} fill={COL_TONE} textAnchor="middle">{glyphOf(c)}</SvgText>
-              </React.Fragment>
+              </G>
             )
           })}
           {/* cabeçalho de linhas (trânsito, ciano) + corpo */}
@@ -255,8 +255,10 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
             const top = pad + hdr + i * CELL
             return (
               <React.Fragment key={`row-${r}`}>
-                <Rect x={pad} y={top} width={hdr} height={CELL} fill="rgba(103,232,249,0.08)" stroke="rgba(103,232,249,0.25)" strokeWidth={0.5} />
-                <SvgText x={pad + hdr / 2} y={top + 20} fontSize={15} fill={ROW_TONE} textAnchor="middle">{glyphOf(r)}</SvgText>
+                <G onPress={onSelectPlanet ? () => onSelectPlanet(r) : undefined}>
+                  <Rect x={pad} y={top} width={hdr} height={CELL} fill="rgba(103,232,249,0.08)" stroke="rgba(103,232,249,0.25)" strokeWidth={0.5} />
+                  <SvgText x={pad + hdr / 2} y={top + 20} fontSize={15} fill={ROW_TONE} textAnchor="middle">{glyphOf(r)}</SvgText>
+                </G>
                 {cols.map((c, j) => {
                   const left = pad + hdr + j * CELL
                   const asp = byCell.get(`${r}>${c}`)
@@ -301,11 +303,11 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
 // -------------------------------------------------------------------------
 type AspectGridProps =
   | { cross?: false; planets: PlanetLike[]; aspects: AspectLike[]; rowPlanets?: undefined; colPlanets?: undefined; onSelectCell?: undefined; onSelectAspect?: (a: AspectLike) => void }
-  | { cross: true; rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; planets?: undefined; onSelectCell?: (cellId: string) => void; onSelectAspect?: undefined }
+  | { cross: true; rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; planets?: undefined; onSelectCell?: (cellId: string) => void; onSelectAspect?: undefined; onSelectPlanet?: (nome: string) => void }
 
 export default function AspectGrid(props: AspectGridProps) {
   if (props.cross) {
-    return <CrossGrid rowPlanets={props.rowPlanets} colPlanets={props.colPlanets} aspects={props.aspects} onSelectCell={props.onSelectCell} />
+    return <CrossGrid rowPlanets={props.rowPlanets} colPlanets={props.colPlanets} aspects={props.aspects} onSelectCell={props.onSelectCell} onSelectPlanet={props.onSelectPlanet} />
   }
   return <TriGrid planets={props.planets} aspects={props.aspects} onSelectAspect={props.onSelectAspect} />
 }
