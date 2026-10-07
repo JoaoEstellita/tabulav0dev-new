@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import Svg, { Circle, Line, Path, Text as SvgText, G } from 'react-native-svg'
+import Svg, { Circle, Line, Path, Text as SvgText, G, Defs, RadialGradient, Stop } from 'react-native-svg'
 import { getSignMeaning, getHouseMeaning, type SignificadoRoda } from '../../data/signHouseMeaning'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -62,6 +62,18 @@ const ZODIAC_SYMBOLS = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','�
 const SIGNS_PT = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
 const signOfLon = (lon: number) => SIGNS_PT[Math.floor((((lon % 360) + 360) % 360) / 30) % 12]
 const ZODIAC_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+
+// Fundo do anel do zodíaco por ELEMENTO (fogo, terra, ar, água, repetindo).
+// Não é enfeite: o equilíbrio entre elementos é o primeiro diagnóstico que se
+// faz num mapa, e a mesma leitura já aparece em texto na Visão Geral. Aqui ela
+// fica visível de relance — dá para ver um mapa carregado em água antes de ler
+// uma palavra. Alfa muito baixo de propósito: tinge, não pinta.
+const ELEMENTO_FILL = [
+  'rgba(255,110,70,0.085)',  // fogo
+  'rgba(150,200,120,0.075)', // terra
+  'rgba(255,215,120,0.075)', // ar
+  'rgba(90,170,255,0.085)',  // água
+]
 
 const ASPECT_COLORS: Record<string, string> = {
   conjunction: 'rgba(255,215,0,0.7)',
@@ -156,6 +168,36 @@ function setorAnelar(cx: number, cy: number, r1: number, r2: number, a1: number,
     `A ${r1} ${r1} 0 ${grande} 0 ${p4.x} ${p4.y}`,
     'Z',
   ].join(' ')
+}
+
+/**
+ * Estrelas do fundo da roda.
+ *
+ * Determinístico de propósito (gerador com semente fixa): com Math.random as
+ * estrelas trocariam de lugar a cada render, e o mapa piscaria a cada toque.
+ * Fica dentro do raio do disco, com alfa baixo — é profundidade, não enfeite:
+ * dá ao mapa a sensação de estar aberto contra o céu em vez de desenhado sobre
+ * um fundo chapado.
+ */
+function estrelasDoFundo(cx: number, cy: number, raio: number, quantas: number) {
+  const out: { x: number; y: number; r: number; o: number }[] = []
+  let semente = 20260101
+  const proximo = () => {
+    semente = (semente * 1664525 + 1013904223) % 4294967296
+    return semente / 4294967296
+  }
+  for (let i = 0; i < quantas; i++) {
+    // sqrt espalha por ÁREA; sem ele tudo se amontoa no centro.
+    const d = Math.sqrt(proximo()) * raio
+    const a = proximo() * Math.PI * 2
+    out.push({
+      x: cx + Math.cos(a) * d,
+      y: cy + Math.sin(a) * d,
+      r: 0.4 + proximo() * 0.9,
+      o: 0.12 + proximo() * 0.3,
+    })
+  }
+  return out
 }
 
 // Preenchimento invisível mas TOCÁVEL. `fill="none"` não recebe toque; um alfa
@@ -422,6 +464,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     })
   }, [houseLines, cx, cy, R_HOUSE_IN, R_HOUSE_OUT])
 
+  // Recalcular a cada render faria o céu piscar; depende só do tamanho.
+  const campoDeEstrelas = useMemo(
+    () => estrelasDoFundo(cx, cy, R_OUTER * 0.97, 54),
+    [cx, cy, R_OUTER],
+  )
+
   const zodiacSections = useMemo(() => {
     return ZODIAC_SYMBOLS.map((sym, i) => {
       const startAngle = lonToSvgAngle(i * 30, ascDeg)
@@ -442,7 +490,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       const pt1 = polarToXY(cx, cy, R_INNER, a1)
       const pt2 = polarToXY(cx, cy, R_INNER, a2)
       const color = ASPECT_COLORS[asp.type] || 'rgba(200,200,200,0.3)'
-      return { key: `${asp.planet1}-${asp.planet2}`, pt1, pt2, color }
+      // Espessura pela exatidão. Um aspecto com orbe de 0,5° pesa muito mais na
+      // vida que um de 7°, e com todas as linhas iguais o centro virava um
+      // emaranhado onde tudo parecia igualmente importante.
+      const orbe = Number((asp as any).orb)
+      const largura = Number.isFinite(orbe) ? Math.max(0.45, 1.6 - orbe * 0.2) : 0.8
+      return { key: `${asp.planet1}-${asp.planet2}`, pt1, pt2, color, largura }
     }).filter(Boolean)
   }, [aspects, natalPlanets, ascDeg, cx, cy, R_INNER])
 
@@ -462,11 +515,35 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       {/* Roda SVG */}
         <View style={styles.wheelWrap}>
           <Svg width={svgSize} height={svgSize}>
+            <Defs>
+              {/* Céu profundo: clareia um pouco no centro e escurece na borda.
+                  Dá volume ao disco sem nenhuma sombra falsa — a roda deixa de
+                  ser um recorte chapado e passa a parecer uma abertura. */}
+              <RadialGradient id="ceuProfundo" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#171c2b" />
+                <Stop offset="62%" stopColor="#11141f" />
+                <Stop offset="100%" stopColor="#0b0d15" />
+              </RadialGradient>
+            </Defs>
+
             {/* Fundo */}
-            <Circle cx={cx} cy={cy} r={R_OUTER} fill="#10131c" stroke="#252b38" strokeWidth={1} />
+            <Circle cx={cx} cy={cy} r={R_OUTER} fill="url(#ceuProfundo)" stroke="#2a3246" strokeWidth={1} />
+            {campoDeEstrelas.map((e, i) => (
+              <Circle key={`st-${i}`} cx={e.x} cy={e.y} r={e.r} fill="#FFFFFF" fillOpacity={e.o} />
+            ))}
 
             {/* Anel do zodíaco */}
             <Circle cx={cx} cy={cy} r={R_ZODIAC_IN} fill="none" stroke="#252b38" strokeWidth={1} />
+
+            {/* Fundo do anel por elemento. Primeiro de tudo: é a camada mais ao
+                fundo e nada deve ficar atrás dela. */}
+            {zodiacSections.map(z => (
+              <Path
+                key={`elem-${z.i}`}
+                d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
+                fill={ELEMENTO_FILL[z.i % 4]}
+              />
+            ))}
 
             {/* Áreas de toque dos signos. Vêm ANTES dos símbolos para ficarem por
                 baixo: no SVG o último desenhado fica na frente, e o setor cobriria
@@ -487,10 +564,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 key={z.i}
                 x={z.sx}
                 y={z.sy}
-                fontSize={svgSize * 0.048}
+                fontSize={svgSize * 0.055}
                 textAnchor="middle"
                 alignmentBaseline="middle"
-                fill="rgba(255,215,0,0.6)"
+                // Era 0.6 de alfa: o glifo sumia no fundo escuro e o anel inteiro
+                // virava textura. Ele nomeia o setor — precisa ser legível.
+                fill="rgba(255,215,0,0.92)"
               >
                 {z.sym}
               </SvgText>
@@ -541,10 +620,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {houseLabels.map(h => (
               <SvgText key={h.label}
                 x={h.x} y={h.y}
-                fontSize={svgSize * 0.034}
+                fontSize={svgSize * 0.036}
                 textAnchor="middle"
                 alignmentBaseline="middle"
-                fill="rgba(255,255,255,0.35)"
+                // 0.35 de alfa era quase invisível — e a casa é metade da leitura
+                // (o QUE acontece é o planeta; ONDE acontece é a casa).
+                fill="rgba(255,255,255,0.55)"
               >
                 {h.label}
               </SvgText>
@@ -555,7 +636,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               <Line key={l.key}
                 x1={l.pt1.x} y1={l.pt1.y}
                 x2={l.pt2.x} y2={l.pt2.y}
-                stroke={l.color} strokeWidth={0.8}
+                stroke={l.color} strokeWidth={l.largura}
               />
             ))}
 
@@ -581,7 +662,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const color = PLANET_COLORS[p.name] || '#fff'
               return (
                 <G key={p.name} onPress={() => setSelectedPlanet(p)}>
-                  <Circle cx={p.sx} cy={p.sy} r={discNatal} fill="#161a22" stroke={color} strokeWidth={1.1} />
+                  {/* Halo da cor do planeta: separa o disco do fundo e dá ao anel
+                      dos planetas o peso visual que ele merece — é o protagonista
+                      da roda, mas antes competia de igual para igual com o
+                      zodíaco e as casas. Alfa baixo: destaca sem virar enfeite. */}
+                  <Circle cx={p.sx} cy={p.sy} r={discNatal * 1.55} fill={color} fillOpacity={0.1} />
+                  <Circle cx={p.sx} cy={p.sy} r={discNatal} fill="#161a22" stroke={color} strokeWidth={1.4} />
                   <SvgText x={p.sx} y={p.sy}
                     fontSize={discNatal * 1.5}
                     textAnchor="middle"

@@ -543,49 +543,6 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* A ponte entre o número e a vida: um leigo olha "Carreira 34%" e não
-            tira nada dali. Usa as MESMAS áreas dos cards abaixo, só traduz em
-            conselho — e some quando não há dado para dizer algo específico. */}
-        <FraseDoDia areas={orderedLifeAreas} />
-
-        {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
-        <View {...aNotif}><NotificationOptInBanner /></View>
-
-        {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
-        <MatchInviteCard />
-
-        {/* Status das Areas de Vida */}
-        {lifeAreasForDisplay && (
-          <View {...aAreas}>
-          <AnimatedMount>
-            <View style={styles.section}>
-              <View style={styles.lifeAreasGrid}>
-                {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
-                  <AreaCardItem
-                    key={name}
-                    name={name}
-                    area={normalizedArea}
-                    factors={allLifeAreaFactors[name]}
-                    transitCount={transitCount}
-                    onPress={handleAreaPress}
-                  />
-                ))}
-              </View>
-            </View>
-          </AnimatedMount>
-          </View>
-        )}
-
-
-        {loading && !transitData && (
-          <View style={styles.chartLoadingContainer}>
-            <ActivityIndicator size="large" color="#FFD700" />
-            <Text style={styles.chartLoadingText}>
-              {tl('Calculando seu mapa…', 'Calculating your chart…', 'Calculando tu mapa…', 'Calcolando la tua mappa…')}
-            </Text>
-          </View>
-        )}
-
         {/* Céu de hoje: roda natal + trânsitos */}
         {transitData && (
           <View {...aWheel}>
@@ -602,6 +559,22 @@ export default function HomeScreen() {
           </AnimatedMount>
           </View>
         )}
+
+
+        {/* A leitura do dia. Fica DEPOIS da roda de propósito: a pessoa vê o céu,
+            depois lê o que ele quer dizer. Os trânsitos citados são tocáveis e
+            levam ao mesmo ponto que a grade logo abaixo. */}
+        <FraseDoDia
+          transitos={transitData?.dailyOverview?.personalTodayRich}
+          areas={orderedLifeAreas}
+          onSelectTransit={handleSelectTransitAspect}
+        />
+
+        {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
+        <View {...aNotif}><NotificationOptInBanner /></View>
+
+        {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
+        <MatchInviteCard />
 
         {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
           transitData!.currentTransits!.planetComparisons.length > 0 &&
@@ -638,6 +611,39 @@ export default function HomeScreen() {
             </AnimatedMount>
             </View>
           )}
+
+        {/* Status das Areas de Vida */}
+        {lifeAreasForDisplay && (
+          <View {...aAreas}>
+          <AnimatedMount>
+            <View style={styles.section}>
+              <View style={styles.lifeAreasGrid}>
+                {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
+                  <AreaCardItem
+                    key={name}
+                    name={name}
+                    area={normalizedArea}
+                    factors={allLifeAreaFactors[name]}
+                    transitCount={transitCount}
+                    onPress={handleAreaPress}
+                  />
+                ))}
+              </View>
+            </View>
+          </AnimatedMount>
+          </View>
+        )}
+
+
+        {loading && !transitData && (
+          <View style={styles.chartLoadingContainer}>
+            <ActivityIndicator size="large" color="#FFD700" />
+            <Text style={styles.chartLoadingText}>
+              {tl('Calculando seu mapa…', 'Calculating your chart…', 'Calculando tu mapa…', 'Calcolando la tua mappa…')}
+            </Text>
+          </View>
+        )}
+
 
         {/* Tr\u00E2nsitos coletivos (o c\u00E9u de agora) \u2014 grade + livro pra lista completa */}
         <HomeCollectiveGrid />
