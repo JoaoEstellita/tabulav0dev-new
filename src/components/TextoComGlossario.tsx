@@ -159,8 +159,8 @@ const s = StyleSheet.create({
     borderColor: '#2a3142',
     padding: 18,
   },
-  cardTermo: { color: '#FFD700', fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  cardTexto: { color: '#d6dae6', fontSize: 14.5, lineHeight: 21 },
+  cardTermo: { color: '#FFD700', fontSize: 17.5, fontWeight: '700', marginBottom: 8 },
+  cardTexto: { color: '#e2e6f0', fontSize: 16, lineHeight: 24 },
   cardTecnico: { color: '#8d94a8', fontSize: 12.5, marginTop: 10, fontStyle: 'italic' },
   fechar: { color: '#FFD700', fontSize: 14, fontWeight: '700', textAlign: 'right', marginTop: 16 },
 })

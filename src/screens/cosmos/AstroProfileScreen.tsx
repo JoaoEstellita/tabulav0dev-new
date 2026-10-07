@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: '#8892a4', fontSize: 14 },
-  emptyStateText: { color: '#8892a4', fontSize: 14, lineHeight: 20, marginTop: 6 },
+  emptyStateText: { color: '#9aa3b5', fontSize: 15, lineHeight: 22, marginTop: 6 },
 
   card: {
     backgroundColor: '#161a22',

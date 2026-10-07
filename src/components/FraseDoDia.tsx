@@ -3,23 +3,29 @@ import { StyleSheet, Text, View } from 'react-native'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { areaLabelsForTransit } from '../utils/transitLifeAreas'
-import { aspectNature, translatePlanetPT } from '../utils/astro/pt'
+import { aspectNature } from '../utils/astro/pt'
+import { transitCellId } from '../astro/transitCellId'
+import { palavraDeSentido } from '../utils/palavraDeSentido'
 
 /**
- * A leitura do dia — a primeira coisa que a pessoa lê depois de ver a roda.
+ * A leitura do dia: o que fazer, não o que está no céu.
  *
- * A versão anterior olhava só duas barras de área ("hoje o dinheiro pede
- * cuidado") e dizia o óbvio sem explicar de onde vinha. Esta parte do céu real:
- * ordena TODOS os trânsitos do dia por força, escolhe o que manda, busca um
- * contraponto de natureza oposta e fecha com o que fazer a respeito.
+ * Duas versões ficaram pelo caminho e vale saber por quê. A primeira olhava duas
+ * barras de área ("hoje o dinheiro pede cuidado") — dizia o óbvio sem explicar
+ * de onde vinha. A segunda nomeava o aspecto ("Saturno com Sol") e tornava ESSE
+ * nome tocável — mas quem não estuda astrologia não procura "Saturno com Sol";
+ * procura o que fazer com o dia.
  *
- * Os nomes dos trânsitos são tocáveis e levam ao mesmo lugar que a grade logo
- * abaixo — a frase deixa de ser um resumo paralelo e vira a porta de entrada
- * para o detalhe, que é o que justifica ela estar no topo.
+ * Agora as âncoras tocáveis são palavras de SENTIDO — firmeza, abertura, revisão
+ * — tiradas do arquétipo de cada trânsito. A pessoa lê um conselho em português
+ * comum; quem quiser saber de onde ele saiu toca na palavra e cai no trânsito
+ * que a gerou. O nome técnico fica disponível, nunca imposto.
  *
- * Fica em silêncio sem dado suficiente. Frase vaga ("hoje é um dia de
- * possibilidades") é pior que frase nenhuma: ocupa o lugar mais nobre da tela
- * sem dizer nada que a pessoa não soubesse antes de abrir o app.
+ * A síntese cruza duas fontes: os trânsitos (o que o céu move) e o status das
+ * áreas (onde isso pega na vida). Nenhuma das duas sozinha dá um conselho.
+ *
+ * Fica em silêncio sem dado. Frase vaga ocupa o lugar mais nobre da tela sem
+ * dizer nada que a pessoa não soubesse antes de abrir o app.
  */
 
 type TransitoRico = {
@@ -32,30 +38,23 @@ type TransitoRico = {
 }
 
 interface Props {
-  /** `transitData.dailyOverview.personalTodayRich` — os trânsitos de hoje. */
   transitos?: TransitoRico[] | null
-  /** Pares [chave, área] da Home, para nomear o que está a favor. */
+  /** Pares [chave, área] — o status de hoje, que diz ONDE o trânsito pega. */
   areas?: ReadonlyArray<readonly [string, any]>
-  /** Recebe o id do trânsito tocado (mesmo formato da grade: `txr-...`). */
   onSelectTransit?: (cellId: string) => void
 }
 
-/** Mesma chave da grade de aspectos, para o toque cair no mesmo lugar. */
-const norm = (s: string) =>
-  String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '')
-const cellId = (t: TransitoRico) =>
-  `txr-${norm(t.transitPlanet || '')}-${norm(t.type || '')}-${norm(t.natalPlanet || '')}`
-
 const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength : 0)
 
-/** Trânsito cujo pico cai HOJE — vale dizer, porque é quando mais se sente. */
+const idDe = (t: TransitoRico) =>
+  transitCellId(String(t.transitPlanet || ''), String(t.type || ''), String(t.natalPlanet || ''))
+
 function ePicoHoje(t: TransitoRico): boolean {
   const exato = t.window?.exact
   if (!exato) return false
   const d = new Date(exato)
   if (!Number.isFinite(d.getTime())) return false
-  const hoje = new Date()
-  return d.toISOString().slice(0, 10) === hoje.toISOString().slice(0, 10)
+  return d.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10)
 }
 
 type Pedaco = { texto: string; transito?: TransitoRico }
@@ -72,63 +71,69 @@ export default function FraseDoDia({ transitos, areas, onSelectTransit }: Props)
     const ordenados = [...lista].sort((a, b) => forca(b) - forca(a))
     const principal = ordenados[0]
 
-    // O contraponto é de natureza OPOSTA à do principal. Um dia de pressão com um
-    // apoio em algum lugar é mais verdadeiro — e mais útil — que uma lista dos
-    // dois trânsitos mais fortes, que muitas vezes dizem a mesma coisa.
-    const natPrincipal = aspectNature(String(principal.type))
-    const oposta = natPrincipal === 'desafiador' ? 'harmonico' : 'desafiador'
+    // Contraponto de natureza OPOSTA: um dia de pressão com um apoio em algum
+    // lugar é mais verdadeiro — e mais útil — que os dois trânsitos mais fortes,
+    // que em geral dizem a mesma coisa.
+    const natureza = aspectNature(String(principal.type))
+    const oposta = natureza === 'desafiador' ? 'harmonico' : 'desafiador'
     const contraponto = ordenados.slice(1).find((t) => aspectNature(String(t.type)) === oposta) || null
 
-    const nomeTransito = (t: TransitoRico) => {
-      const p = translatePlanetPT(String(t.transitPlanet))
-      const n = translatePlanetPT(String(t.natalPlanet))
-      const asp = buildUnifiedTransitNarrative(t as any, null, language)
-      // `metaText` traz o aspecto já traduzido; o nome fica curto de propósito,
-      // porque ele é o trecho tocável e precisa ser reconhecível de relance.
-      return { titulo: `${p} com ${n}`, narrativa: asp }
+    const ler = (t: TransitoRico) => {
+      const n = buildUnifiedTransitNarrative(t as any, null, language)
+      return {
+        sentido: palavraDeSentido(n?.keywords || [], String(t.transitPlanet), String(t.natalPlanet), String(t.type)),
+        acao: String(n?.actionText || '').trim(),
+        curto: String(n?.shortText || '').trim(),
+      }
     }
 
-    const alvo = nomeTransito(principal)
-    const areasTocadas = areaLabelsForTransit(principal.transitPlanet, principal.natalPlanet, principal.house)
-      .slice(0, 2)
+    const a = ler(principal)
+    const b = contraponto ? ler(contraponto) : null
+
+    // Onde isso pega: as áreas do trânsito; se ele não disser nada, a área que o
+    // status marca como mais mexida hoje. Cruzar as duas fontes é o que torna o
+    // conselho específico em vez de genérico.
+    const doTransito = areaLabelsForTransit(principal.transitPlanet, principal.natalPlanet, principal.house)
+    const porStatus = (areas || [])
+      .map(([chave, v]) => ({
+        nome: String(chave),
+        pct: typeof v?.percentage === 'number' ? v.percentage : (typeof v?.status === 'number' ? v.status : NaN),
+      }))
+      .filter((x) => Number.isFinite(x.pct))
+      .sort((x, y) => x.pct - y.pct)
+    const foco = doTransito.length ? doTransito.slice(0, 2) : (porStatus[0] ? [porStatus[0].nome] : [])
 
     const out: Pedaco[] = []
+    const push = (texto: string, t?: TransitoRico) => { if (texto) out.push({ texto, transito: t }) }
 
-    // 1) O que manda hoje — e, se for o pico, isso vem junto porque muda o peso.
-    out.push({ texto: ePicoHoje(principal)
-      ? tl('Hoje o céu fecha em ', 'Today the sky closes on ', 'Hoy el cielo cierra en ', 'Oggi il cielo si chiude su ')
-      : tl('Quem conduz o dia é ', 'Leading the day is ', 'Quien conduce el dia es ', 'A guidare la giornata e ') })
-    out.push({ texto: alvo.titulo, transito: principal })
+    // 1) Abertura prática. O pico muda o tom porque muda o quanto se sente.
+    push(ePicoHoje(principal)
+      ? tl('Hoje chega no ponto: o dia pede ', 'It peaks today: the day asks for ', 'Hoy llega al punto: el dia pide ', 'Oggi arriva al punto: la giornata chiede ')
+      : tl('O dia pede ', 'The day asks for ', 'El dia pide ', 'La giornata chiede '))
+    push(a.sentido || tl('atenção', 'attention', 'atencion', 'attenzione'), principal)
 
-    // 2) A leitura curada — é o que explica, e vem do catálogo, não de template.
-    const leitura = (alvo.narrativa?.shortText || '').trim()
-    if (leitura) out.push({ texto: `: ${leitura.replace(/\s+/g, ' ')}` })
-    else out.push({ texto: '.' })
+    // 2) Onde pega.
+    if (foco.length) {
+      push(tl(
+        ` — principalmente em ${foco.join(' e ')}.`,
+        ` — mostly in ${foco.join(' and ')}.`,
+        ` — sobre todo en ${foco.join(' y ')}.`,
+        ` — soprattutto in ${foco.join(' e ')}.`,
+      ))
+    } else push('.')
 
-    // 3) Onde isso pega. Duas áreas no máximo: a terceira já vira lista.
-    if (areasTocadas.length) {
-      out.push({ texto: tl(
-        ` Pega mais em ${areasTocadas.join(' e ')}.`,
-        ` It lands hardest on ${areasTocadas.join(' and ')}.`,
-        ` Pega mas en ${areasTocadas.join(' y ')}.`,
-        ` Tocca soprattutto ${areasTocadas.join(' e ')}.`,
-      ) })
+    // 3) O contraponto, com a própria âncora.
+    if (b && contraponto) {
+      push(natureza === 'desafiador'
+        ? tl(' Em compensação, há ', ' In return, there is ', ' En compensacion, hay ', ' In compenso, c e ')
+        : tl(' Fique de olho em ', ' Keep an eye on ', ' Mantente atento a ', ' Tieni d occhio '))
+      push(b.sentido || tl('abertura', 'an opening', 'apertura', 'apertura'), contraponto)
+      push(tl(' para apoiar o que pesa.', ' to lean on.', ' para apoyar lo que pesa.', ' su cui appoggiarsi.'))
     }
 
-    // 4) O contraponto — o que equilibra, também tocável.
-    if (contraponto) {
-      const c = nomeTransito(contraponto)
-      out.push({ texto: natPrincipal === 'desafiador'
-        ? tl(' Do outro lado, ', ' On the other side, ', ' Del otro lado, ', ' Dall altro lato, ')
-        : tl(' Mas atenção a ', ' But watch ', ' Pero atencion a ', ' Ma attenzione a ') })
-      out.push({ texto: c.titulo, transito: contraponto })
-      const leituraC = (c.narrativa?.shortText || '').trim()
-      out.push({ texto: leituraC ? `: ${leituraC.replace(/\s+/g, ' ')}` : '.' })
-    }
-
-    // 5) O que fazer. Sem isto a frase descreve e não serve para nada.
-    const acao = (alvo.narrativa?.actionText || '').trim()
-    if (acao) out.push({ texto: ` ${acao}` })
+    // 4) O que fazer — sem isto a frase descreve e não serve para nada.
+    if (a.acao) push(` ${a.acao}`)
+    else if (a.curto) push(` ${a.curto.replace(/\s+/g, ' ')}`)
 
     return out
   }, [transitos, areas, language])
@@ -137,18 +142,11 @@ export default function FraseDoDia({ transitos, areas, onSelectTransit }: Props)
 
   return (
     <View style={s.caixa}>
-      <Text style={s.rotulo}>
-        {tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}
-      </Text>
+      <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
       <Text style={s.texto}>
         {pedacos.map((p, i) =>
           p.transito && onSelectTransit ? (
-            <Text
-              key={i}
-              style={s.link}
-              onPress={() => onSelectTransit(cellId(p.transito!))}
-              suppressHighlighting
-            >
+            <Text key={i} style={s.link} onPress={() => onSelectTransit(idDe(p.transito!))} suppressHighlighting>
               {p.texto}
             </Text>
           ) : (
@@ -172,7 +170,6 @@ const s = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#FFD700',
   },
-  // Rótulo discreto: a frase é o conteúdo, não um card que precisa se anunciar.
   rotulo: {
     color: '#8d94a8',
     fontSize: 11,
@@ -180,7 +177,7 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 6,
   },
-  texto: { color: '#e6e9f0', fontSize: 15, lineHeight: 23 },
+  texto: { color: '#edf0f6', fontSize: 16, lineHeight: 25 },
   // Mesmo dourado pontilhado do glossário: a pessoa já aprendeu que isso abre algo.
   link: {
     color: '#FFD700',

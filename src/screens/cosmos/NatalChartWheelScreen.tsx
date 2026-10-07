@@ -210,9 +210,14 @@ function estrelasDoFundo(cx: number, cy: number, raio: number, quantas: number) 
   return out
 }
 
-// Preenchimento invisível mas TOCÁVEL. `fill="none"` não recebe toque; um alfa
-// mínimo recebe sem pintar nada na tela.
-const TOQUE_INVISIVEL = 'rgba(0,0,0,0.001)'
+// Preenchimento invisível mas TOCÁVEL.
+//
+// `fill="none"` não recebe toque. E alfa praticamente zero (0.001) também não
+// bastou: o hit-test do react-native-svg descarta o que é quase nada. O padrão
+// que comprovadamente funciona nesta tela é o dos planetas — `<G onPress>` em
+// volta de uma forma com preenchimento REAL — e é o que signo e casa usam agora.
+// 0.02 segue invisível a olho nu sobre o fundo escuro.
+const TOQUE_INVISIVEL = 'rgba(255,255,255,0.02)'
 
 // ─── Componente principal ─────────────────────────────────────────────────
 type ChartContentProps = {
@@ -560,12 +565,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 o glifo se viesse depois. O setor inteiro é tocável porque o símbolo
                 sozinho é pequeno demais para o dedo. */}
             {zodiacSections.map(z => (
-              <Path
-                key={`toque-signo-${z.i}`}
-                d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
-                fill={TOQUE_INVISIVEL}
-                onPress={() => setInfoRoda(getSignMeaning(ZODIAC_NAMES[z.i], language))}
-              />
+              <G key={`toque-signo-${z.i}`} onPress={() => setInfoRoda(getSignMeaning(ZODIAC_NAMES[z.i], language))}>
+                <Path
+                  d={setorAnelar(cx, cy, R_ZODIAC_IN, R_OUTER, z.startAngle, z.endAngle)}
+                  fill={TOQUE_INVISIVEL}
+                />
+              </G>
             ))}
 
             {/* Símbolos dos signos */}
@@ -606,12 +611,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const proxima = houseLines[(i + 1) % houseLines.length]
               if (!proxima) return null
               return (
-                <Path
-                  key={`toque-casa-${h.i}`}
-                  d={setorAnelar(cx, cy, R_HOUSE_IN, R_HOUSE_OUT, h.angle, proxima.angle)}
-                  fill={TOQUE_INVISIVEL}
-                  onPress={() => setInfoRoda(getHouseMeaning(h.i + 1, language))}
-                />
+                <G key={`toque-casa-${h.i}`} onPress={() => setInfoRoda(getHouseMeaning(h.i + 1, language))}>
+                  <Path
+                    d={setorAnelar(cx, cy, R_HOUSE_IN, R_HOUSE_OUT, h.angle, proxima.angle)}
+                    fill={TOQUE_INVISIVEL}
+                  />
+                </G>
               )
             })}
 
@@ -733,6 +738,31 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             })()}
           </Svg>
         </View>
+
+        {/* Decodificador dos símbolos, logo abaixo do desenho.
+
+            A legenda que já existia (showLegend) lista cada planeta com grau e
+            signo — informação de quem já sabe ler, e comprida demais para ficar
+            logo abaixo da roda. Esta responde a outra pergunta, que é a primeira
+            de quem chega: "que bolinha é essa?". Só glifo e nome, numa linha que
+            quebra sozinha, e apenas dos corpos que estão no desenho. */}
+        {planetPositions.length > 0 ? (
+          <View style={styles.legendaSimbolos}>
+            {planetPositions.map((p) => (
+              <TouchableOpacity
+                key={`leg-${p.name}`}
+                style={styles.legendaItem}
+                activeOpacity={0.7}
+                onPress={() => setSelectedPlanet(p)}
+              >
+                <Text style={[styles.legendaGlifo, { color: PLANET_COLORS[p.name] || '#fff' }]}>
+                  {PLANET_SYMBOLS[p.name] || '●'}
+                </Text>
+                <Text style={styles.legendaNome}>{translatePlanet(p.name, language)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {showTransits ? (
@@ -895,9 +925,9 @@ export default function NatalChartWheelScreen() {
 const styles = StyleSheet.create({
   aspectModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', paddingHorizontal: 22 },
   aspectModalCard: { backgroundColor: '#161728', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
-  aspectModalTitle: { color: '#EDEBF7', fontSize: 19, fontWeight: '800' },
-  aspectModalSubtitle: { color: '#9A9CB8', fontSize: 12.5, marginTop: 3, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 },
-  aspectModalBody: { color: '#cfc3ee', fontSize: 14.5, lineHeight: 22 },
+  aspectModalTitle: { color: '#EDEBF7', fontSize: 20, fontWeight: '800' },
+  aspectModalSubtitle: { color: '#a8aac4', fontSize: 13, marginTop: 3, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 },
+  aspectModalBody: { color: '#ddd6f3', fontSize: 16, lineHeight: 25 },
   aspectModalClose: { backgroundColor: '#FFD700', borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 16 },
   aspectModalCloseText: { color: '#1a1405', fontWeight: '800', fontSize: 15 },
   container: { flex: 1 },
@@ -918,6 +948,19 @@ const styles = StyleSheet.create({
     borderColor: '#222836',
     paddingVertical: 10,
   },
+  legendaSimbolos: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 2,
+    paddingBottom: 12,
+    columnGap: 14,
+    rowGap: 7,
+  },
+  legendaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  legendaGlifo: { fontSize: 15 },
+  legendaNome: { color: '#aeb6c8', fontSize: 12.5 },
   aspectGridHint: {
     color: '#8d94a8',
     fontSize: 11.5,
