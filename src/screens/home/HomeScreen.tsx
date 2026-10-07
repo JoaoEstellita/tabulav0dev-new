@@ -549,7 +549,25 @@ export default function HomeScreen() {
           <AnimatedMount>
             <View style={styles.section}>
               {wheelReady ? (
-                <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} onOpenTransits={() => navigation.navigate('PersonalTransits')} />
+                <NatalChartWheelContent
+                  transitData={transitData}
+                  loading={loading}
+                  showLegend={false}
+                  showTransits
+                  onSelectTransitAspect={handleSelectTransitAspect}
+                  onSelectNatalAspect={handleSelectNatalAspect}
+                  onOpenTransits={() => navigation.navigate('PersonalTransits')}
+                  // A leitura do dia entra ENTRE a roda e a grade: vê o céu, lê o
+                  // que ele quer dizer, e só então entra no detalhe. As palavras
+                  // tocáveis levam ao mesmo ponto que a grade logo abaixo.
+                  entreRodaEGrade={(
+                    <FraseDoDia
+                      transitos={transitData?.dailyOverview?.personalTodayRich}
+                      areas={orderedLifeAreas}
+                      onSelectTransit={handleSelectTransitAspect}
+                    />
+                  )}
+                />
               ) : (
                 // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
                 // interações, pra não travar a abertura da Home. Não pula o layout.
@@ -560,15 +578,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-
-        {/* A leitura do dia. Fica DEPOIS da roda de propósito: a pessoa vê o céu,
-            depois lê o que ele quer dizer. Os trânsitos citados são tocáveis e
-            levam ao mesmo ponto que a grade logo abaixo. */}
-        <FraseDoDia
-          transitos={transitData?.dailyOverview?.personalTodayRich}
-          areas={orderedLifeAreas}
-          onSelectTransit={handleSelectTransitAspect}
-        />
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <View {...aNotif}><NotificationOptInBanner /></View>

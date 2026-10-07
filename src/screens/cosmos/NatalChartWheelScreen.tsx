@@ -242,6 +242,15 @@ type ChartContentProps = {
    */
   showTransits?: boolean
   /**
+   * Conteúdo renderizado ENTRE a roda e a grade de aspectos.
+   *
+   * A grade mora dentro deste componente, então quem usa a roda não conseguia
+   * colocar nada entre as duas — a leitura do dia acabava caindo depois da
+   * grade, longe do desenho que ela explica. A ordem que faz sentido é ver o
+   * céu, ler o que ele quer dizer e só então entrar no detalhe.
+   */
+  entreRodaEGrade?: React.ReactNode
+  /**
    * No modo Trânsitos, torna as células da grade de aspectos tocáveis: ao tocar,
    * chama com o id do trânsito (casa com o nativeID do card na leitura embutida
    * abaixo) para rolar até a interpretação. Web-only (scroll por DOM).
@@ -260,7 +269,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, entreRodaEGrade }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   // Modal de interpretação do aspecto clicado na grade — abre no lugar, sem rolar.
@@ -768,6 +777,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             ))}
           </View>
         ) : null}
+
+        {entreRodaEGrade}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {showTransits ? (
