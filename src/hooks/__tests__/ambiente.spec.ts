@@ -84,37 +84,38 @@ describe('Home no ambiente leve', () => {
 describe('ordem de leitura da Home', () => {
   const pos = (t: string) => HOME.indexOf(t)
 
-  it('e roda, "Seu dia", status, grade', () => {
-    // O desenho mostra o ceu; a frase diz o que aquilo significa; o status diz
-    // onde pega na vida; so entao vem a tabela. Essa ordem foi pedida tres
-    // vezes seguidas porque cada bloco que entrava no meio quebrava a leitura.
+  it('e "Seu dia", roda, grade, status', () => {
+    // A frase vem primeiro porque e a unica parte que responde sozinha a
+    // pergunta de quem abre o app de manha. O desenho mostra de onde ela saiu,
+    // a grade abre o detalhe e o status fecha dizendo onde isso pega na vida.
     //
-    // Frase e status moram no slot `entreRodaEGrade` da roda justamente por
-    // isso: e o unico ponto que fica DEPOIS do desenho e ANTES da grade. Soltos
-    // na Home, qualquer bloco novo pode cair entre eles.
-    const slot = pos('entreRodaEGrade={(')
+    // Esta ordem foi ajustada varias vezes no aparelho; cada bloco que entrava
+    // no meio quebrava a leitura. O teste existe para ela parar de escorregar.
     const frase = pos('<FraseDoDia')
+    const roda = pos('<NatalChartWheelContent')
     const status = pos('<AreaCardItem')
     const banners = pos('<NotificationOptInBanner')
+    const coletiva = pos('<HomeCollectiveGrid />')
 
-    expect(slot, 'o slot entre roda e grade sumiu').toBeGreaterThan(-1)
-    expect(frase, 'a frase precisa estar dentro do slot').toBeGreaterThan(slot)
-    expect(status, 'o status vem DEPOIS da frase').toBeGreaterThan(frase)
-    expect(status, 'e ANTES de tudo que vem depois da grade').toBeLessThan(banners)
+    for (const [nome, v] of Object.entries({ frase, roda, status, banners, coletiva })) {
+      expect(v, `bloco ${nome} nao encontrado na Home`).toBeGreaterThan(-1)
+    }
+
+    expect(frase, '"Seu dia" vem ANTES da roda').toBeLessThan(roda)
+    expect(status, 'o status vem DEPOIS da roda (a grade sai dentro dela)').toBeGreaterThan(roda)
+    expect(status, 'e antes dos banners e do resto').toBeLessThan(banners)
+    expect(banners, 'o resto fecha a pagina').toBeLessThan(coletiva)
   })
 
-  it('o status nao ficou solto fora do slot', () => {
-    // Se voltar a ser renderizado no corpo da Home, volta a cair depois da
-    // grade e da lista — foi exatamente o que precisou ser corrigido.
-    // O fim do slot e o fechamento do fragmento, nao o primeiro `/>` (esse e
-    // da propria frase).
-    const slotFim = HOME.indexOf('</>', HOME.indexOf('entreRodaEGrade={('))
-    expect(slotFim, 'fragmento do slot nao encontrado').toBeGreaterThan(-1)
-    expect(pos('<AreaCardItem')).toBeLessThan(slotFim)
+  it('a grade sai dentro da roda, entao basta a roda vir antes do status', () => {
+    // `mostrarGrade` controla a grade DENTRO do componente da roda. Se ela
+    // fosse movida para fora, a ordem pedida deixaria de ser garantida por
+    // esta checagem — por isso o vinculo esta travado aqui.
+    expect(HOME).toContain('mostrarGrade={!leve}')
+    expect(RODA, 'a grade precisa continuar morando na roda').toContain('{!mostrarGrade ? null :')
   })
 
   it('a legenda de planetas abaixo da roda foi removida', () => {
-    const RODA = readFileSync(join(raiz, 'screens', 'cosmos', 'NatalChartWheelScreen.tsx'), 'utf-8')
     expect(RODA, 'a fita de glifo+nome ocupava duas linhas inteiras sob a roda')
       .not.toContain('legendaSimbolos')
   })

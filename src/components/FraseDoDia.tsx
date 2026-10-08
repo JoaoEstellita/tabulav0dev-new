@@ -1,39 +1,53 @@
-import React, { useMemo } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { areaLabelsForTransit } from '../utils/transitLifeAreas'
 import { getLifeAreaLabel } from '../constants/lifeAreas'
-import { aspectNature } from '../utils/astro/pt'
-import { palavraDeSentido } from '../utils/palavraDeSentido'
+import { aspectNature, getTransitState, formatPeakETA } from '../utils/astro/pt'
+import TextoComGlossario from './TextoComGlossario'
+import {
+  temaDoTransito,
+  primeiraFrase,
+  semAPrimeiraFrase,
+  costurar,
+  enumerar,
+} from '../utils/leituraDoDia'
 
 /**
- * A leitura do dia: o que fazer, não o que está no céu.
+ * A leitura do dia.
  *
- * Três versões ficaram pelo caminho e vale saber por quê. A primeira olhava duas
- * barras de área ("hoje o dinheiro pede cuidado") — dizia o óbvio sem explicar
- * de onde vinha. A segunda nomeava o aspecto ("Saturno com Sol") e tornava ESSE
- * nome tocável — mas quem não estuda astrologia não procura "Saturno com Sol";
- * procura o que fazer com o dia. A terceira acertou a palavra, mas tocar nela
- * ROLAVA a tela até a lista: tirava do lugar o texto que a pessoa estava lendo e
- * a largava num card que ela ainda não sabia ler.
+ * Cinco versões ficaram pelo caminho e cada uma ensinou uma coisa. As duas
+ * primeiras diziam o óbvio ou nomeavam o aspecto; a terceira e a quarta
+ * tentaram tornar palavras tocáveis — a terceira rolava a tela, a quarta abria
+ * modais, e no aparelho os sublinhados pontilhados leram como corretor
+ * ortográfico. A frase voltou a ser texto.
  *
- * A quarta tentou o contrário: fazer de toda palavra-chave uma porta para o
- * trânsito dela. No aparelho ficou ruim — quatro sublinhados pontilhados num
- * parágrafo de cinco linhas leem como corretor ortográfico, não como link, e o
- * texto que devia ser a parte mais calma da tela virou a mais agitada.
+ * O problema que sobrou era o pior: ela era GENÉRICA. Montava a abertura com
+ * uma palavra-chave solta ("o dia pede foco") e fechava com `buildActionHint`,
+ * um template de quatro variações — e, como recebia `areaLabel` nulo, caía no
+ * ramo mais vago de todos: "observe sinais, registre decisões e execute um
+ * próximo passo simples em área de vida". Uma frase que serve para qualquer
+ * pessoa em qualquer dia, que é outra forma de dizer que não serve.
  *
- * Então a frase voltou a ser só uma frase. Ela não precisa levar a lugar nenhum:
- * o caminho para a interpretação já existe e é melhor — a grade logo abaixo, e o
- * modal de cada planeta, que tem o link próprio para a lista.
+ * O material específico já existia e não estava sendo usado:
+ *  - os títulos temáticos curados ("Prova de maturidade");
+ *  - o texto curado do catálogo de interpretações, por par de planetas;
+ *  - a janela real do trânsito (pico em 3 dias, se afastando);
+ *  - a área de vida concreta, que agora é passada ao catálogo em vez de null.
  *
- * A síntese cruza duas fontes: os trânsitos (o que o céu move) e o status das
- * áreas (onde isso pega na vida). Nenhuma das duas sozinha dá um conselho — e o
- * resumo do status agora entra no texto, não só na escolha do foco.
+ * E a leitura passou a ter dois níveis: o resumo dá a passada geral e o "Ler
+ * mais" abre o detalhe de cada trânsito. O expandido NÃO repete a abertura já
+ * lida — mostra o resto do texto do principal e os trânsitos seguintes
+ * inteiros.
  *
  * Fica em silêncio sem dado. Frase vaga ocupa o lugar mais nobre da tela sem
  * dizer nada que a pessoa não soubesse antes de abrir o app.
  */
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true)
+}
 
 type TransitoRico = {
   transitPlanet?: string
@@ -50,76 +64,79 @@ interface Props {
   areas?: ReadonlyArray<readonly [string, any]>
 }
 
-const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength : 0)
+/** Quantos trânsitos o "Ler mais" detalha. Além disso vira lista, não leitura. */
+const MAX_DETALHES = 4
 
-function ePicoHoje(t: TransitoRico): boolean {
-  const exato = t.window?.exact
-  if (!exato) return false
-  const d = new Date(exato)
-  if (!Number.isFinite(d.getTime())) return false
-  return d.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10)
-}
+const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength : 0)
 
 export default function FraseDoDia({ transitos, areas }: Props) {
   const { language } = useAppLanguage()
+  const [aberto, setAberto] = useState(false)
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
-  const texto = useMemo<string | null>(() => {
+  const leitura = useMemo(() => {
     const lista = (transitos || []).filter((t) => t?.transitPlanet && t?.natalPlanet && t?.type)
     if (!lista.length) return null
 
     const ordenados = [...lista].sort((a, b) => forca(b) - forca(a))
     const principal = ordenados[0]
 
-    // Contraponto de natureza OPOSTA: um dia de pressão com um apoio em algum
-    // lugar é mais verdadeiro — e mais útil — que os dois trânsitos mais fortes,
-    // que em geral dizem a mesma coisa.
-    const natureza = aspectNature(String(principal.type))
-    const oposta = natureza === 'desafiador' ? 'harmonico' : 'desafiador'
-    const contraponto = ordenados.slice(1).find((t) => aspectNature(String(t.type)) === oposta) || null
+    /** Áreas de vida que o trânsito toca, em rótulo legível. */
+    const areasDe = (t: TransitoRico) => areaLabelsForTransit(t.transitPlanet, t.natalPlanet, t.house)
 
-    const narrativa = (t: TransitoRico) => buildUnifiedTransitNarrative(t as any, null, language)
+    /**
+     * A narrativa do catálogo, com a ÁREA REAL.
+     *
+     * Passar null aqui era o que fazia o texto de ação cair no ramo genérico e
+     * escrever literalmente "em área de vida".
+     */
+    const narrar = (t: TransitoRico) =>
+      buildUnifiedTransitNarrative(t as any, areasDe(t)[0] || null, language)
 
-    const ler = (t: TransitoRico) => {
-      const n = narrativa(t)
-      return {
-        sentido: palavraDeSentido(n?.keywords || [], String(t.transitPlanet), String(t.natalPlanet), String(t.type)),
-        acao: String(n?.actionText || '').trim(),
-        curto: String(n?.shortText || '').trim(),
-      }
+    /** "pico em 3 dias", "agora", "se afastando" — o quando, que é específico. */
+    const quando = (t: TransitoRico): string => {
+      const estado = getTransitState(t.window || undefined)
+      const eta = formatPeakETA(t.window || undefined)
+      if (estado === 'agora') return tl('no pico agora', 'peaking now', 'en el pico ahora', 'al picco ora')
+      return eta || ''
     }
 
-    const a = ler(principal)
-    const b = contraponto ? ler(contraponto) : null
+    const nPrincipal = narrar(principal)
+    const temaPrincipal = temaDoTransito(
+      String(principal.transitPlanet), String(principal.type), String(principal.natalPlanet), language,
+    )
+    const curadoPrincipal = String(nPrincipal?.modalBody || nPrincipal?.shortText || '').trim()
 
-    // Monta a frase. `escrever` concatena; o que era âncora vira texto comum.
-    let out = ''
-    const escrever = (t: string) => { if (t) out += t }
+    // ── RESUMO: a passada geral ────────────────────────────────────────────
+    const partes: string[] = []
 
-    // 1) Abertura prática. O pico muda o tom porque muda o quanto se sente.
-    escrever(ePicoHoje(principal)
-      ? tl('Hoje chega no ponto: o dia pede ', 'It peaks today: the day asks for ', 'Hoy llega al punto: el dia pide ', 'Oggi arriva al punto: la giornata chiede ')
-      : tl('O dia pede ', 'The day asks for ', 'El dia pide ', 'La giornata chiede '))
-    escrever(a.sentido || tl('atenção', 'attention', 'atencion', 'attenzione'))
-
-    // 2) Onde pega — pelas áreas do próprio trânsito.
-    const doTransito = areaLabelsForTransit(principal.transitPlanet, principal.natalPlanet, principal.house)
-    if (doTransito.length) {
-      const foco = doTransito.slice(0, 2)
-      escrever(tl(
-        ` — principalmente em ${foco.join(' e ')}.`,
-        ` — mostly in ${foco.join(' and ')}.`,
-        ` — sobre todo en ${foco.join(' y ')}.`,
-        ` — soprattutto in ${foco.join(' e ')}.`,
+    // 1) O que pesa hoje, com nome próprio e tempo. O tema curado é o que troca
+    //    "o dia pede foco" por "Prova de maturidade".
+    const q = quando(principal)
+    if (temaPrincipal) {
+      partes.push(costurar(
+        tl('Hoje o que mais pesa é', 'What weighs most today is', 'Lo que mas pesa hoy es', 'Cio che pesa di piu oggi e'),
+        `${temaPrincipal}${q ? ` — ${q}` : ''}.`,
       ))
-    } else escrever('.')
+    }
 
-    // 3) O resumo do status, com as duas pontas tocáveis.
-    //
-    // O status é a outra metade da leitura: diz onde a pessoa está hoje, não só
-    // o que o céu faz. Antes ele só escolhia o foco quando o trânsito não dizia
-    // nada — ficava invisível para quem lê. Agora é dito.
+    // 2) O que isso significa — primeira frase do texto curado daquele par.
+    //    Fora do pt-BR não há tema, então esta vira a abertura.
+    const abertura = primeiraFrase(curadoPrincipal)
+    if (abertura) partes.push(abertura)
+
+    // 3) Onde pega.
+    const focos = areasDe(principal).slice(0, 2)
+    if (focos.length) {
+      partes.push(costurar(
+        tl('Pega mais em', 'It lands mostly on', 'Toca sobre todo', 'Tocca soprattutto'),
+        `${enumerar(focos, tl('e', 'and', 'y', 'e'))}.`,
+      ))
+    }
+
+    // 4) O status: a outra metade da leitura. Diz onde a pessoa está hoje, não
+    //    só o que o céu faz.
     const porStatus = (areas || [])
       .map(([chave, v]) => ({
         chave: String(chave),
@@ -129,42 +146,105 @@ export default function FraseDoDia({ transitos, areas }: Props) {
       .sort((x, y) => x.pct - y.pct)
 
     if (porStatus.length >= 2) {
-      const pior = porStatus[0]
-      const melhor = porStatus[porStatus.length - 1]
-      escrever(tl(
-        ' Nos seus números de hoje, quem mais pede cuidado é ',
-        ' In your numbers today, the one asking for most care is ',
-        ' En tus numeros de hoy, quien mas pide cuidado es ',
-        ' Nei tuoi numeri di oggi, chi chiede piu cura e ',
+      const pior = getLifeAreaLabel(porStatus[0].chave)
+      const melhor = getLifeAreaLabel(porStatus[porStatus.length - 1].chave)
+      // Só vale dizer se forem áreas diferentes do foco — senão repete.
+      partes.push(costurar(
+        tl('Nos seus números,', 'In your numbers,', 'En tus numeros,', 'Nei tuoi numeri,'),
+        tl(`${pior} é a que mais pede cuidado e ${melhor} é onde há folga.`,
+           `${pior} asks for most care and ${melhor} is where there is room.`,
+           `${pior} es la que mas pide cuidado y ${melhor} es donde hay holgura.`,
+           `${pior} e quella che chiede piu cura e ${melhor} e dove c e respiro.`),
       ))
-      escrever(getLifeAreaLabel(pior.chave))
-      escrever(tl(', e onde há folga é ', ', and where there is room is ', ', y donde hay holgura es ', ', e dove c e respiro e '))
-      escrever(getLifeAreaLabel(melhor.chave))
-      escrever('.')
     }
 
-    // 4) O contraponto, com a própria âncora.
-    if (b && contraponto) {
-      escrever(natureza === 'desafiador'
-        ? tl(' Em compensação, há ', ' In return, there is ', ' En compensacion, hay ', ' In compenso, c e ')
-        : tl(' Fique de olho em ', ' Keep an eye on ', ' Mantente atento a ', ' Tieni d occhio '))
-      escrever(b.sentido || tl('abertura', 'an opening', 'apertura', 'apertura'))
-      escrever(tl(' para apoiar o que pesa.', ' to lean on.', ' para apoyar lo que pesa.', ' su cui appoggiarsi.'))
-    }
+    const resumo = costurar(...partes)
+    if (!resumo) return null
 
-    // 5) O que fazer — sem isto a frase descreve e não serve para nada.
-    if (a.acao) escrever(` ${a.acao}`)
-    else if (a.curto) escrever(` ${a.curto.replace(/\s+/g, ' ')}`)
+    // ── DETALHE: o "Ler mais" ──────────────────────────────────────────────
+    //
+    // O principal entra SEM a frase já lida no resumo; os seguintes, inteiros.
+    // Repetir a abertura logo abaixo faz o bloco expandido parecer que não
+    // acrescenta nada.
+    const detalhes = ordenados.slice(0, MAX_DETALHES).map((t, i) => {
+      const n = narrar(t)
+      const completo = String(n?.modalBody || n?.shortText || '').trim()
+      const corpo = i === 0 ? semAPrimeiraFrase(completo) : completo
+      const tema = temaDoTransito(String(t.transitPlanet), String(t.type), String(t.natalPlanet), language)
+      const area = areasDe(t).slice(0, 3)
+      return {
+        chave: `${t.transitPlanet}|${t.type}|${t.natalPlanet}`,
+        tema,
+        quando: quando(t),
+        forca: typeof t.strength === 'number' ? Math.round(t.strength) : null,
+        casa: typeof t.house === 'number' && t.house > 0 ? t.house : null,
+        areas: area,
+        corpo,
+        acao: i === 0 ? String(n?.actionText || '').trim() : '',
+        natureza: aspectNature(String(t.type)),
+      }
+    }).filter((d) => d.corpo || d.tema)
 
-    return out.trim() || null
+    return { resumo, detalhes }
   }, [transitos, areas, language])
 
-  if (!texto) return null
+  if (!leitura) return null
+
+  const alternar = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setAberto((v) => !v)
+  }
+
+  const temDetalhe = leitura.detalhes.length > 0
 
   return (
     <View style={s.caixa}>
       <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
-      <Text style={s.texto}>{texto}</Text>
+      <TextoComGlossario style={s.texto}>{leitura.resumo}</TextoComGlossario>
+
+      {aberto ? (
+        <View style={s.detalhe}>
+          {leitura.detalhes.map((d) => (
+            <View key={d.chave} style={s.item}>
+              <View style={s.itemTopo}>
+                <View style={[s.pino, d.natureza === 'desafiador' ? s.pinoTenso : d.natureza === 'harmonico' ? s.pinoBom : s.pinoNeutro]} />
+                <Text style={s.itemTitulo}>{d.tema || ''}</Text>
+              </View>
+
+              {/* A linha técnica fica pequena e abaixo do tema: quem só quer a
+                  leitura ignora, quem estuda procura exatamente isto. */}
+              <Text style={s.itemMeta}>
+                {[
+                  d.quando,
+                  d.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${d.casa}` : '',
+                  d.forca != null ? `${tl('impacto', 'impact', 'impacto', 'impatto')} ${d.forca}%` : '',
+                ].filter(Boolean).join('  ·  ')}
+              </Text>
+
+              {d.corpo ? <TextoComGlossario style={s.itemTexto}>{d.corpo}</TextoComGlossario> : null}
+
+              {d.areas.length ? (
+                <Text style={s.itemAreas}>
+                  {tl('Afeta', 'Affects', 'Afecta', 'Tocca')}: {d.areas.join(' · ')}
+                </Text>
+              ) : null}
+
+              {d.acao ? <Text style={s.itemAcao}>{d.acao}</Text> : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {temDetalhe ? (
+        <Pressable onPress={alternar} style={s.botao} accessibilityRole="button">
+          <Text style={s.botaoTexto}>
+            {aberto
+              ? tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')
+              : tl('Ler mais', 'Read more', 'Leer mas', 'Leggi di piu')}
+            {aberto ? '  ▲' : '  ▼'}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   )
 }
@@ -189,4 +269,30 @@ const s = StyleSheet.create({
     marginBottom: 6,
   },
   texto: { color: '#edf0f6', fontSize: 16, lineHeight: 25 },
+
+  detalhe: { marginTop: 16 },
+  item: {
+    marginBottom: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  itemTopo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
+  // Um ponto colorido diz a natureza sem gastar uma palavra com isso.
+  pino: { width: 8, height: 8, borderRadius: 4 },
+  pinoTenso: { backgroundColor: '#f87171' },
+  pinoBom: { backgroundColor: '#4ade80' },
+  pinoNeutro: { backgroundColor: '#fbbf24' },
+  itemTitulo: { color: '#FFD700', fontSize: 15.5, fontWeight: '700', flex: 1 },
+  itemMeta: { color: '#8d94a8', fontSize: 14, marginBottom: 7 },
+  itemTexto: { color: '#dde2ee', fontSize: 15, lineHeight: 23 },
+  itemAreas: { color: '#9aa2bb', fontSize: 14, marginTop: 7 },
+  itemAcao: { color: '#c9cfe2', fontSize: 15, lineHeight: 22, marginTop: 8, fontStyle: 'italic' },
+
+  botao: {
+    marginTop: 4,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  botaoTexto: { color: '#FFD700', fontSize: 14.5, fontWeight: '700' },
 })

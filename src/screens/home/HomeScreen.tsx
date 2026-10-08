@@ -558,7 +558,17 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Céu de hoje: roda natal + trânsitos */}
+        {/* A ORDEM DE LEITURA da Home: "Seu dia", roda, grade, status.
+            A frase vem primeiro porque e a unica parte que responde sozinha a
+            pergunta de quem abre o app de manha. O desenho mostra de onde ela
+            saiu, a grade abre o detalhe e o status fecha dizendo onde isso pega
+            na vida. */}
+        <FraseDoDia
+          transitos={transitData?.dailyOverview?.personalTodayRich}
+          areas={orderedLifeAreas}
+        />
+
+        {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
         {transitData && (
           <View {...aWheel}>
           <AnimatedMount>
@@ -573,47 +583,6 @@ export default function HomeScreen() {
                   onSelectTransitAspect={handleSelectTransitAspect}
                   onSelectNatalAspect={handleSelectNatalAspect}
                   onOpenTransits={() => navigation.navigate('PersonalTransits')}
-                  // A ORDEM DE LEITURA da tela mora aqui: roda, "Seu dia",
-                  // status, grade.
-                  //
-                  // O desenho mostra o céu; a frase diz o que aquilo significa; o
-                  // status diz onde pega na vida; e só então vem a tabela, que é
-                  // o detalhe para quem quiser conferir. Status e grade separados
-                  // por outros blocos viravam duas leituras soltas em vez de
-                  // partes da mesma resposta.
-                  entreRodaEGrade={(
-                    <>
-                      <FraseDoDia
-                        transitos={transitData?.dailyOverview?.personalTodayRich}
-                        areas={orderedLifeAreas}
-                      />
-
-                      {lifeAreasForDisplay ? (
-                        <View {...aAreas}>
-                          <AnimatedMount>
-                            <View style={styles.section}>
-                              <View style={styles.lifeAreasGrid}>
-                                {/* No leve, as tres de pior pontuacao: mostrar as
-                                    oito em ordem fixa gasta a tela com o que esta
-                                    tudo bem. */}
-                                {(leve ? areasQuePedemAtencao(memoizedAreas, AREAS_NO_MODO_LEVE) : memoizedAreas)
-                                  .map(({ name, normalizedArea, transitCount }) => (
-                                    <AreaCardItem
-                                      key={name}
-                                      name={name}
-                                      area={normalizedArea}
-                                      factors={allLifeAreaFactors[name]}
-                                      transitCount={transitCount}
-                                      onPress={handleAreaPress}
-                                    />
-                                  ))}
-                              </View>
-                            </View>
-                          </AnimatedMount>
-                        </View>
-                      ) : null}
-                    </>
-                  )}
                 />
               ) : (
                 // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
@@ -625,6 +594,33 @@ export default function HomeScreen() {
           </View>
         )}
 
+
+        {/* Status das areas de vida — depois da grade.
+            A grade mostra o que o ceu faz; o status diz onde isso pega na vida.
+            Fecha a leitura em vez de interromper. */}
+        {lifeAreasForDisplay && (
+          <View {...aAreas}>
+          <AnimatedMount>
+            <View style={styles.section}>
+              <View style={styles.lifeAreasGrid}>
+                {/* No leve, as tres de pior pontuacao: mostrar as oito em ordem
+                    fixa gasta a tela com o que esta tudo bem. */}
+                {(leve ? areasQuePedemAtencao(memoizedAreas, AREAS_NO_MODO_LEVE) : memoizedAreas)
+                  .map(({ name, normalizedArea, transitCount }) => (
+                    <AreaCardItem
+                      key={name}
+                      name={name}
+                      area={normalizedArea}
+                      factors={allLifeAreaFactors[name]}
+                      transitCount={transitCount}
+                      onPress={handleAreaPress}
+                    />
+                  ))}
+              </View>
+            </View>
+          </AnimatedMount>
+          </View>
+        )}
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <View {...aNotif}><NotificationOptInBanner /></View>
