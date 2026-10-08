@@ -37,6 +37,7 @@ import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import { transitCellId } from '../../astro/transitCellId'
+import { calcularRaios } from '../../astro/raiosDaRoda'
 import {
   declutterRing,
   lonToSvgAngle,
@@ -444,32 +445,41 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   // resolucao, sempre foi alinhamento.
   //
   // Par de propósito: com svgSize par, cx e cy sao inteiros exatos.
-  const svgSize = Math.floor(Math.min(width - 32, 380) / 2) * 2
+  // Maior do que era (380) e usando mais da largura: a roda é o centro da tela
+  // e sobrava margem dos dois lados. Área maior é o que dá aos glifos espaço
+  // para se afastarem sem encostar.
+  const svgSize = Math.floor(Math.min(width - 24, 440) / 2) * 2
   const cx = svgSize / 2
   const cy = svgSize / 2
-  const scale = showTransits ? 0.80 : 1
   /** Arredonda medida de desenho para o pixel. */
   const px = (v: number) => Math.round(v)
 
-  const R_TRANSIT = px(svgSize * 0.45)   // anel externo dos planetas em trânsito (só bi-roda)
-  const R_OUTER = px(svgSize * 0.46 * scale)   // borda externa (zodíaco)
-  const R_ZODIAC_IN = px(svgSize * 0.38 * scale) // borda interna do zodíaco
-  const R_HOUSE_OUT = px(svgSize * 0.36 * scale) // borda externa das casas
-  const R_HOUSE_IN = px(svgSize * 0.28 * scale)  // borda interna das casas
-  const R_PLANET = px(svgSize * 0.21 * scale)    // posição dos planetas natais
-  const R_INNER = px(svgSize * 0.14 * scale)     // círculo central (aspectos)
-
-  // Glifos MENORES (pedido do João) + empilhamento radial dentro da banda.
-  const discNatal = px(svgSize * (showTransits ? 0.030 : 0.034))
-  const discTransit = px(svgSize * 0.028)
-  const stepNatal = discNatal * 2.1
-  const stepTransit = discTransit * 2.1
+  // Os raios vivem em astro/raiosDaRoda, com teste que confere o que o olho não
+  // confere: que a faixa dos planetas comporta um aglomerado real em TODO
+  // tamanho de tela, e que nada vaza do quadro.
+  //
+  // Eram números soltos aqui, e foi assim que a faixa dos planetas natais
+  // chegou a 17px com passo de empilhamento de 23 na bi-roda: não cabia nem um
+  // nível, o clamp juntava o aglomerado inteiro no mesmo raio, e os glifos se
+  // sobrepunham. A anti-colisão estava certa — faltava espaço para ela operar.
+  const RAIOS = useMemo(() => calcularRaios(svgSize, showTransits), [svgSize, showTransits])
+  const R_TRANSIT = RAIOS.transit
+  const R_OUTER = RAIOS.outer
+  const R_ZODIAC_IN = RAIOS.zodiacIn
+  const R_HOUSE_OUT = RAIOS.houseOut
+  const R_HOUSE_IN = RAIOS.houseIn
+  const R_PLANET = RAIOS.planet
+  const R_INNER = RAIOS.inner
+  const discNatal = RAIOS.discNatal
+  const discTransit = RAIOS.discTransit
+  const stepNatal = RAIOS.stepNatal
+  const stepTransit = discTransit * 1.85
   const glyphDegNatal = Math.min(20, (2 * discNatal / R_PLANET) * (180 / Math.PI))
   const glyphDegTransit = Math.min(18, (2 * discTransit / R_TRANSIT) * (180 / Math.PI))
 
   const planetPositions = useMemo(
-    () => declutterRing(natalWheelPoints, ascDeg, cx, cy, R_PLANET, R_INNER + discNatal + 2, R_HOUSE_IN - discNatal - 1, stepNatal, glyphDegNatal),
-    [natalWheelPoints, ascDeg, cx, cy, R_PLANET, R_INNER, R_HOUSE_IN, discNatal, stepNatal, glyphDegNatal],
+    () => declutterRing(natalWheelPoints, ascDeg, cx, cy, R_PLANET, RAIOS.faixaNatal.min, RAIOS.faixaNatal.max, stepNatal, glyphDegNatal),
+    [natalWheelPoints, ascDeg, cx, cy, R_PLANET, RAIOS, stepNatal, glyphDegNatal],
   )
 
   /** Nomes que aparecem no desenho — um gradiente para cada. */

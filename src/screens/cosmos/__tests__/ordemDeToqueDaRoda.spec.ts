@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { calcularRaios } from '../../../astro/raiosDaRoda'
 import { join } from 'node:path'
 
 /**
@@ -56,36 +57,25 @@ describe('ordem de desenho da roda — o toque depende dela', () => {
   })
 
   it('o anel do zodíaco não tem planeta nenhum — a camada por cima não rouba toque', () => {
-    // A justificativa de pôr os signos por último: se houvesse glifo de planeta
-    // dentro de R_ZODIAC_IN..R_OUTER, a camada o cobriria e o planeta pararia de
-    // abrir. Os raios provam que não há.
-    // Regex literal, nao `new RegExp` com template string: num template
-    // literal `\*` colapsa para `*` e o padrao passa a casar qualquer coisa.
-    const raio = (re: RegExp) => Number(re.exec(FONTE)?.[1] ?? NaN)
-    const zodiacoIn = raio(/const R_ZODIAC_IN = px\(svgSize \* ([0-9.]+)/)
-    const zodiacoOut = raio(/const R_OUTER = px\(svgSize \* ([0-9.]+)/)
-    const planeta = raio(/const R_PLANET = px\(svgSize \* ([0-9.]+)/)
-    const transito = raio(/const R_TRANSIT = px\(svgSize \* ([0-9.]+)/)
+    // A justificativa de pôr a camada de toque dos signos por último: se
+    // houvesse glifo de planeta dentro de zodiacIn..outer, ela o cobriria e o
+    // planeta pararia de abrir.
+    //
+    // Lê os RAIOS REAIS (astro/raiosDaRoda), não o texto do componente: raio é
+    // número, e comparar número é mais forte do que casar uma linha de código
+    // que muda de forma a cada refatoração.
+    for (const tamanho of [320, 380, 440]) {
+      const bi = calcularRaios(tamanho, true)
+      const natal = calcularRaios(tamanho, false)
 
-    for (const [nome, v] of Object.entries({ zodiacoIn, zodiacoOut, planeta, transito })) {
-      expect(Number.isNaN(v), `raio ${nome} nao foi encontrado no fonte`).toBe(false)
+      // Natais bem dentro do anel das casas, longe do zodíaco.
+      expect(bi.planet, `natal invadiu o zodíaco em ${tamanho}px`).toBeLessThan(bi.zodiacIn)
+      expect(natal.planet).toBeLessThan(natal.zodiacIn)
+
+      // Trânsito na borda externa, fora do zodíaco — com o glifo inteiro.
+      expect(bi.transit - bi.discTransit, `trânsito invadiu o zodíaco em ${tamanho}px`)
+        .toBeGreaterThan(bi.outer)
     }
-    // Natais bem dentro. Os dois raios levam o mesmo `scale`, então a razão
-    // basta — vale na roda simples e na bi-roda.
-    expect(planeta, 'planetas natais invadiram o anel do zodíaco').toBeLessThan(zodiacoIn)
-
-    // Trânsito é o caso delicado: R_TRANSIT NÃO leva `scale`, R_OUTER leva.
-    // Glifo de trânsito só existe quando a bi-roda está ligada, e aí o zodíaco
-    // encolhe por `scale` justamente para abrir espaço. Comparar os dois crus
-    // daria 0.45 < 0.46 e pareceria invasão que não acontece.
-    const escalaBiRoda = Number(
-      /const scale = showTransits \? ([0-9.]+) : 1/.exec(FONTE)?.[1] ?? NaN,
-    )
-    expect(Number.isNaN(escalaBiRoda), 'a escala da bi-roda mudou de forma').toBe(false)
-    expect(
-      transito,
-      'glifos de trânsito invadiram o anel do zodíaco na bi-roda',
-    ).toBeGreaterThanOrEqual(zodiacoOut * escalaBiRoda)
   })
 
   it('glifos e divisões do zodíaco são declarados non-interactive', () => {
@@ -117,11 +107,16 @@ describe('ordem de desenho da roda — o toque depende dela', () => {
     expect(
       FONTE,
       'svgSize precisa ser inteiro PAR, para cx e cy sairem inteiros',
-    ).toMatch(/const svgSize = Math\.floor\(Math\.min\(width - 32, 380\) \/ 2\) \* 2/)
+    ).toMatch(/const svgSize = Math\.floor\(Math\.min\(width - \d+, \d+\) \/ 2\) \* 2/)
 
     // Os raios sao circulos concentricos — e onde o meio-pixel mais aparece.
-    for (const nome of ['R_OUTER', 'R_ZODIAC_IN', 'R_HOUSE_OUT', 'R_HOUSE_IN', 'R_PLANET', 'R_INNER']) {
-      expect(FONTE, `${nome} precisa passar por px()`).toContain(`const ${nome} = px(`)
+    // Agora vêm prontos do módulo, que arredonda; o teste confere o resultado.
+    for (const tamanho of [321, 383, 441]) {
+      const r = calcularRaios(tamanho, true)
+      for (const [nome, v] of Object.entries(r)) {
+        if (typeof v !== 'number' || nome === 'stepNatal') continue
+        expect(Number.isInteger(v), `${nome} saiu fracionário em ${tamanho}px: ${v}`).toBe(true)
+      }
     }
 
     // Traco de 0.8px nao existe em tela nenhuma: vira cinza indefinido.
