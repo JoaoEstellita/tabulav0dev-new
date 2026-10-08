@@ -33,9 +33,25 @@ describe('o aviso: uma frase', () => {
       .not.toContain('getLifeAreaLabel')
   })
 
-  it('abre com o tema curado, não com palavra solta nem template', () => {
-    expect(FRASE).toContain('temaDoTransito')
+  it('o aviso vem da SÍNTESE, não de um trânsito só', () => {
+    // A versão anterior usava o de maior força e ignorava os outros seis,
+    // misturando escalas de tempo: tema de meses entrava como novidade de hoje.
+    expect(FRASE).toContain('sintetizarODia')
     expect(FRASE, 'a palavra-chave solta era a abertura genérica').not.toContain('palavraDeSentido')
+  })
+
+  it('o expandido traz as camadas antes da lista de aspectos', () => {
+    // Primeiro o sentido (fundo, vem aí, saldo, o que fazer), depois o detalhe
+    // técnico de cada trânsito.
+    const blocos = FRASE.indexOf('leitura.blocos.map')
+    const aspectos = FRASE.indexOf('leitura.detalhes.map')
+    expect(blocos).toBeGreaterThan(-1)
+    expect(blocos, 'as camadas vêm antes dos aspectos').toBeLessThan(aspectos)
+  })
+
+  it('o bloco de hoje não se repete dentro do Ler mais', () => {
+    // Ele já está no topo, uma linha acima.
+    expect(FRASE).toMatch(/filter\(\(b\) => b\.chave !== 'hoje'\)/)
   })
 })
 

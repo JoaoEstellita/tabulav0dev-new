@@ -6,14 +6,8 @@ import { areaLabelsForTransit } from '../utils/transitLifeAreas'
 import { aspectNature } from '../utils/astro/pt'
 import { buildTransitTitle } from '../utils/transitPresentation'
 import TextoComGlossario from './TextoComGlossario'
-import {
-  temaDoTransito,
-  primeiraFrase,
-  costurar,
-  enumerar,
-  janelaEmPalavras,
-  type IdiomaLeitura,
-} from '../utils/leituraDoDia'
+import { sintetizarODia } from '../utils/sinteseDoDia'
+import { janelaEmPalavras, type IdiomaLeitura } from '../utils/leituraDoDia'
 
 /**
  * A leitura do dia: um aviso curto, e o resto a um toque.
@@ -87,27 +81,17 @@ export default function FraseDoDia({ transitos }: Props) {
     const narrar = (t: TransitoRico) =>
       buildUnifiedTransitNarrative(t as any, areasDe(t)[0] || null, language)
 
-    // ── O AVISO: uma frase ─────────────────────────────────────────────────
-    const tema = temaDoTransito(
-      String(principal.transitPlanet), String(principal.type), String(principal.natalPlanet), language,
-    )
-    const focos = areasDe(principal).slice(0, 2)
-    const ondePega = focos.length
-      ? costurar(tl('mexe em', 'it stirs', 'mueve', 'muove'), enumerar(focos, tl('e', 'and', 'y', 'e')))
-      : ''
-
-    // Com tema (pt-BR) a frase é curta e concreta. Sem tema, a primeira frase
-    // do texto curado faz o papel — nunca um molde.
-    const nPrincipal = narrar(principal)
-    const curado = String(nPrincipal?.modalBody || nPrincipal?.shortText || '').trim()
-
-    const aviso = tema
-      ? costurar(
-          tl('Hoje o que mais pesa é', 'What weighs most today is', 'Lo que mas pesa hoy es', 'Cio che pesa di piu oggi e'),
-          ondePega ? `${tema} — ${ondePega}.` : `${tema}.`,
-        )
-      : costurar(primeiraFrase(curado), ondePega ? `${ondePega.charAt(0).toUpperCase()}${ondePega.slice(1)}.` : '')
-
+    // ── A SÍNTESE: todos os trânsitos ativos, em camadas ───────────────────
+    //
+    // Antes isto usava UM trânsito — o de maior força — e ignorava os outros
+    // seis, misturando escalas de tempo: "Urano sobre Júpiter" é tema de meses
+    // e "Lua em trígono a Netuno" dura horas, mas os dois entravam como "hoje".
+    // Era o que fazia o texto soar solto por mais correto que estivesse.
+    //
+    // `sintetizarODia` separa período de dia, acha convergência (mesma casa,
+    // mesmo ponto focal), lê a fase pela janela e fecha com o balanço ponderado.
+    const sintese = sintetizarODia(ordenados, language as any)
+    const aviso = sintese?.resumo || ''
     if (!aviso) return null
 
     // ── O DETALHE: aspecto e texto, nada mais ──────────────────────────────
@@ -128,7 +112,10 @@ export default function FraseDoDia({ transitos }: Props) {
       }
     }).filter((d) => d.corpo)
 
-    return { aviso, detalhes }
+    // O bloco "hoje" ja esta no topo: repeti-lo logo abaixo faria o expandido
+    // parecer que nao acrescenta nada.
+    const blocos = (sintese?.blocos || []).filter((b) => b.chave !== 'hoje')
+    return { aviso, blocos, detalhes }
   }, [transitos, language])
 
   if (!leitura) return null
@@ -145,6 +132,15 @@ export default function FraseDoDia({ transitos }: Props) {
 
       {aberto ? (
         <View style={s.detalhe}>
+          {/* A leitura do momento, em camadas: o fundo (planetas lentos), o que
+              vem aí, o saldo e o que fazer. Vem ANTES da lista de aspectos —
+              primeiro o sentido, depois o detalhe técnico. */}
+          {leitura.blocos.map((b) => (
+            <View key={b.chave} style={s.bloco}>
+              <Text style={s.blocoRotulo}>{b.rotulo}</Text>
+              <TextoComGlossario style={s.blocoTexto}>{b.texto}</TextoComGlossario>
+            </View>
+          ))}
           {leitura.detalhes.map((d) => (
             <View key={d.chave} style={s.item}>
               <View style={s.itemTopo}>
@@ -204,6 +200,16 @@ const s = StyleSheet.create({
   texto: { color: '#edf0f6', fontSize: 16, lineHeight: 25 },
 
   detalhe: { marginTop: 14 },
+  bloco: { marginBottom: 14 },
+  blocoRotulo: {
+    color: '#8d94a8',
+    fontSize: 11,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  blocoTexto: { color: '#e4e8f2', fontSize: 15.5, lineHeight: 23 },
   item: {
     marginBottom: 16,
     paddingTop: 14,

@@ -10,8 +10,7 @@ import { buildTransitTitle } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
-import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../../data/transitTitlesPtBR'
-import { buildTransitTitleKey } from '../../utils/astroInterpretation'
+import { temaDoTransito } from '../../utils/leituraDoDia'
 import { areaLabelsForTransit } from '../../utils/transitLifeAreas'
 import { PROGRESSION_ASPECTS_PTBR, buildProgressionText } from '../../data/progressionAspectsPtBR'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
@@ -188,20 +187,13 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
       language as any,
     )
 
-    // Título temático ("Momento de ousadia") quando existe no catálogo; senão o
-    // card segue mostrando o nome técnico, como antes. Cobertura parcial por design.
-    // Chave canonica (mesma do catalogo de textos). O `norm` local desta tela
-    // so faz trim+lowercase: nao tira acento nem troca espaco por `_`, entao
-    // "Meio do Ceu" nunca casava com a chave `meio_do_ceu` e o titulo curado
-    // sumia sem erro nenhum.
-    const chave = buildTransitTitleKey(item.transitPlanet, item.type, item.natalPlanet)
-    // Curado primeiro; sem curadoria, o gerado — assim TODO card tem a mesma
-    // anatomia (tema em cima, nome técnico no "Tipo:") e a lista para de alternar
-    // entre título temático e nome cru.
-    const tema =
-      language === 'pt-BR'
-        ? TRANSIT_TITLES_PTBR[chave] || buildFallbackTransitTitle(item.transitPlanet, item.natalPlanet, item.type) || undefined
-        : undefined
+    // Título temático ("Momento de ousadia"): curado primeiro, gerado depois —
+    // assim TODO card tem a mesma anatomia (tema em cima, nome técnico no
+    // "Tipo:") e a lista para de alternar entre título temático e nome cru.
+    // Mesma funcao que a leitura do dia usa: curado primeiro, gerado depois,
+    // com a chave canonica. Montar isso em dois lugares foi o que deixou os
+    // titulos de Ascendente e Meio do Ceu invisiveis por tempo indeterminado.
+    const tema = temaDoTransito(item.transitPlanet, item.type, item.natalPlanet, language) || undefined
 
     // Mesmo mapa que o motor usa para pontuar as áreas: o que o card anuncia é
     // o que de fato mexe no número da Home.

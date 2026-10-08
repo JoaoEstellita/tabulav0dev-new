@@ -11,6 +11,39 @@ export const LIFE_AREA_ORDER = [
 
 export type LifeAreaKey = (typeof LIFE_AREA_ORDER)[number]
 
+/**
+ * As 8 areas nos 4 idiomas.
+ *
+ * `LIFE_AREA_LABELS` so tem pt-BR, e isso vazava: a sintese do dia montava uma
+ * frase inteira em espanhol e enfiava "Comunicação" no meio dela. Rotulo de
+ * area aparece em texto corrido, nao so em card — precisa falar a lingua da
+ * frase que o cerca.
+ *
+ * es-ES sem tildes e it-IT sem acentos, como o resto do projeto.
+ */
+export const LIFE_AREA_LABELS_I18N: Record<string, Record<string, string>> = {
+  amor: { 'pt-BR': 'Amor', 'en-US': 'Love', 'es-ES': 'Amor', 'it-IT': 'Amore' },
+  saude: { 'pt-BR': 'Saude', 'en-US': 'Health', 'es-ES': 'Salud', 'it-IT': 'Salute' },
+  familia: { 'pt-BR': 'Familia', 'en-US': 'Family', 'es-ES': 'Familia', 'it-IT': 'Famiglia' },
+  comunicacao: { 'pt-BR': 'Comunicacao', 'en-US': 'Communication', 'es-ES': 'Comunicacion', 'it-IT': 'Comunicazione' },
+  carreira: { 'pt-BR': 'Carreira', 'en-US': 'Career', 'es-ES': 'Carrera', 'it-IT': 'Carriera' },
+  financas: { 'pt-BR': 'Financas', 'en-US': 'Finances', 'es-ES': 'Finanzas', 'it-IT': 'Finanze' },
+  espiritualidade: { 'pt-BR': 'Espiritualidade', 'en-US': 'Spirituality', 'es-ES': 'Espiritualidad', 'it-IT': 'Spiritualita' },
+  transformacao: { 'pt-BR': 'Transformacao', 'en-US': 'Transformation', 'es-ES': 'Transformacion', 'it-IT': 'Trasformazione' },
+}
+
+/** Rotulo da area no idioma pedido; cai no pt-BR acentuado quando nao houver. */
+export function getLifeAreaLabelI18n(raw: string | null | undefined, idioma: string): string {
+  const chave = normalizeLifeArea(raw) || String(raw || '').trim().toLowerCase()
+  const porIdioma = LIFE_AREA_LABELS_I18N[chave]
+  if (porIdioma) {
+    // pt-BR usa o rotulo acentuado de LIFE_AREA_LABELS, que ja existe.
+    if (idioma === 'pt-BR') return LIFE_AREA_LABELS[chave] || porIdioma['pt-BR']
+    return porIdioma[idioma] || porIdioma['en-US']
+  }
+  return LIFE_AREA_LABELS[chave] || String(raw || '')
+}
+
 // Ordem de exibição dos cards na tela inicial (Home). Herda a ordem global —
 // para a Home divergir de Groups/Forecast/notificações, troque por um array
 // literal de LifeAreaKey.
