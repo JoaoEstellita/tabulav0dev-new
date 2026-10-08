@@ -29,11 +29,21 @@ describe('modo explicado — qualidade das trocas', () => {
     }
   })
 
-  it('o aspecto continua explicável ao toque, mesmo sem troca', () => {
-    // Não trocar nunca pode virar não ensinar.
+  it('nome de aspecto também não vira link no texto', () => {
+    // Visto no aparelho: sobre o card BRANCO da lista, "Quadratura" e "Sextil"
+    // em dourado sublinhado ficavam ilegíveis. E o nome do aspecto ja vem
+    // acompanhado do simbolo, entao nao depende do link para ser entendido.
+    for (const t of ['quadratura', 'sextil', 'trigono', 'conjuncao', 'oposicao', 'quincuncio']) {
+      expect(GLOSSARIO[t]?.semRealce, `"${t}" nao pode virar link`).toBe(true)
+      expect(TERMOS_ORDENADOS).not.toContain(t)
+    }
+  })
+
+  it('mas o aspecto continua explicável — sair do realce nao e sair do glossário', () => {
+    // Nao realcar nunca pode virar nao ensinar: a explicação segue disponível
+    // para qualquer tela que pergunte por ela.
     for (const t of ['quadratura', 'sextil', 'trigono', 'conjuncao', 'oposicao', 'quincuncio']) {
       expect(GLOSSARIO[t]?.explicacao['pt-BR'], `"${t}" precisa de explicação`).toBeTruthy()
-      expect(TERMOS_ORDENADOS, `"${t}" precisa continuar tocável`).toContain(t)
     }
   })
 

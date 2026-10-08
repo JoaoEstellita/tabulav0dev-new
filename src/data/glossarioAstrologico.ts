@@ -37,6 +37,10 @@ export interface TermoGlossario {
 export const GLOSSARIO: Record<string, TermoGlossario> = {
   // ─── Aspectos (como dois planetas se falam) ────────────────────────────────
   conjuncao: {
+    // Sobre o card branco da lista o realce dourado fica ilegivel, e o nome
+    // do aspecto ja vem acompanhado do simbolo: nao precisa de link para
+    // ser entendido. Continua no glossario para quem perguntar por ele.
+    semRealce: true,
     explicacao: {
       'pt-BR': 'Dois planetas no mesmo ponto do céu: as forças deles se misturam e agem como uma só, para o bem e para o difícil.',
       'en-US': 'Two planets at the same spot in the sky: their forces blend and act as one, for better and for harder.',
@@ -45,6 +49,10 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
     },
   },
   oposicao: {
+    // Sobre o card branco da lista o realce dourado fica ilegivel, e o nome
+    // do aspecto ja vem acompanhado do simbolo: nao precisa de link para
+    // ser entendido. Continua no glossario para quem perguntar por ele.
+    semRealce: true,
     explicacao: {
       'pt-BR': 'Dois planetas em lados opostos do céu: puxam você para direções contrárias e pedem equilíbrio entre as duas.',
       'en-US': 'Two planets on opposite sides of the sky: they pull you in contrary directions and ask for balance between them.',
@@ -53,6 +61,10 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
     },
   },
   quadratura: {
+    // Sobre o card branco da lista o realce dourado fica ilegivel, e o nome
+    // do aspecto ja vem acompanhado do simbolo: nao precisa de link para
+    // ser entendido. Continua no glossario para quem perguntar por ele.
+    semRealce: true,
     explicacao: {
       'pt-BR': 'Um atrito entre dois planetas. Incomoda, mas é o tipo de pressão que faz você mudar algo que estava parado.',
       'en-US': 'Friction between two planets. It bothers, but it is the kind of pressure that makes you change something that was stuck.',
@@ -61,6 +73,10 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
     },
   },
   trigono: {
+    // Sobre o card branco da lista o realce dourado fica ilegivel, e o nome
+    // do aspecto ja vem acompanhado do simbolo: nao precisa de link para
+    // ser entendido. Continua no glossario para quem perguntar por ele.
+    semRealce: true,
     explicacao: {
       'pt-BR': 'Dois planetas que se dão bem: as coisas fluem com pouco esforço nessa área. O risco é só acomodar.',
       'en-US': 'Two planets that get along: things flow with little effort here. The only risk is coasting.',
@@ -69,6 +85,10 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
     },
   },
   sextil: {
+    // Sobre o card branco da lista o realce dourado fica ilegivel, e o nome
+    // do aspecto ja vem acompanhado do simbolo: nao precisa de link para
+    // ser entendido. Continua no glossario para quem perguntar por ele.
+    semRealce: true,
     explicacao: {
       'pt-BR': 'Uma porta aberta entre dois planetas. A chance existe, mas só acontece se você der o primeiro passo.',
       'en-US': 'An open door between two planets. The chance is there, but it only happens if you take the first step.',
@@ -77,6 +97,10 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
     },
   },
   quincuncio: {
+    // Sobre o card branco da lista o realce dourado fica ilegivel, e o nome
+    // do aspecto ja vem acompanhado do simbolo: nao precisa de link para
+    // ser entendido. Continua no glossario para quem perguntar por ele.
+    semRealce: true,
     explicacao: {
       'pt-BR': 'Dois planetas que não se entendem bem: pedem coisas diferentes e exigem ajuste constante de você.',
       'en-US': 'Two planets that do not quite understand each other: they ask for different things and require constant adjustment from you.',

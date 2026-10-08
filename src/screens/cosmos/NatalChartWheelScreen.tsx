@@ -256,15 +256,14 @@ type ChartContentProps = {
    * céu, ler o que ele quer dizer e só então entrar no detalhe.
    */
   /**
-   * Conteudo entre a roda e a grade (hoje: a leitura do dia).
+   * Conteudo entre a roda e a grade: a leitura do dia e o status das areas.
    *
-   * Aceita funcao porque quem renderiza esse conteudo esta FORA da roda (a
-   * Home monta a frase com os dados dela) mas precisa das acoes que vivem
-   * DENTRO: `abrirTransito` abre o modal de interpretacao, que e o que uma
-   * palavra tocada no texto deve fazer. Antes so dava para rolar a tela ate a
-   * lista, porque rolar era a unica acao que a Home conseguia disparar.
+   * Este slot define a ordem de leitura da tela — roda, "Seu dia", status,
+   * grade. O desenho mostra, a frase diz o que significa, o status diz onde
+   * pega na vida, e so entao vem a tabela. Quem monta esse conteudo e a Home,
+   * que tem os dados; quem define ONDE ele entra e a roda.
    */
-  entreRodaEGrade?: React.ReactNode | ((acoes: AcoesDaRoda) => React.ReactNode)
+  entreRodaEGrade?: React.ReactNode
   /**
    * No modo Trânsitos, torna as células da grade de aspectos tocáveis: ao tocar,
    * chama com o id do trânsito (casa com o nativeID do card na leitura embutida
@@ -281,12 +280,6 @@ type ChartContentProps = {
    * quem abriu o app querendo saber como esta o dia.
    */
   mostrarGrade?: boolean
-}
-
-/** Acoes da roda liberadas para quem renderiza conteudo embutido nela. */
-export interface AcoesDaRoda {
-  /** Abre o modal de interpretacao de um transito (id `txr-<transito>-<tipo>-<natal>`). */
-  abrirTransito: (cellId: string) => void
 }
 
 /**
@@ -455,22 +448,34 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   }, [showTransits, tnAspects, transitPlanets, natalPlanets, natalNorthNode, currentNorthNode])
 
   // Dimensões do SVG. Na bi-roda o natal encolhe (scale) p/ abrir o anel externo.
-  const svgSize = Math.min(width - 32, 380)
+  // NITIDEZ: tudo que define o desenho cai em pixel inteiro.
+  //
+  // `width` do useWindowDimensions costuma vir fracionario no Android
+  // (392.7272...). Sem arredondar, svgSize herda a fracao, o centro vira
+  // 180.36 e TODA coordenada derivada dele cai em meio-pixel — cada circulo,
+  // cada linha e cada glifo entram em anti-aliasing e o desenho inteiro fica
+  // com aquele aspecto lavado. O SVG e vetorial: borrado aqui nunca foi
+  // resolucao, sempre foi alinhamento.
+  //
+  // Par de propósito: com svgSize par, cx e cy sao inteiros exatos.
+  const svgSize = Math.floor(Math.min(width - 32, 380) / 2) * 2
   const cx = svgSize / 2
   const cy = svgSize / 2
   const scale = showTransits ? 0.80 : 1
+  /** Arredonda medida de desenho para o pixel. */
+  const px = (v: number) => Math.round(v)
 
-  const R_TRANSIT = svgSize * 0.45   // anel externo dos planetas em trânsito (só bi-roda)
-  const R_OUTER = svgSize * 0.46 * scale   // borda externa (zodíaco)
-  const R_ZODIAC_IN = svgSize * 0.38 * scale // borda interna do zodíaco
-  const R_HOUSE_OUT = svgSize * 0.36 * scale // borda externa das casas
-  const R_HOUSE_IN = svgSize * 0.28 * scale  // borda interna das casas
-  const R_PLANET = svgSize * 0.21 * scale    // posição dos planetas natais
-  const R_INNER = svgSize * 0.14 * scale     // círculo central (aspectos)
+  const R_TRANSIT = px(svgSize * 0.45)   // anel externo dos planetas em trânsito (só bi-roda)
+  const R_OUTER = px(svgSize * 0.46 * scale)   // borda externa (zodíaco)
+  const R_ZODIAC_IN = px(svgSize * 0.38 * scale) // borda interna do zodíaco
+  const R_HOUSE_OUT = px(svgSize * 0.36 * scale) // borda externa das casas
+  const R_HOUSE_IN = px(svgSize * 0.28 * scale)  // borda interna das casas
+  const R_PLANET = px(svgSize * 0.21 * scale)    // posição dos planetas natais
+  const R_INNER = px(svgSize * 0.14 * scale)     // círculo central (aspectos)
 
   // Glifos MENORES (pedido do João) + empilhamento radial dentro da banda.
-  const discNatal = svgSize * (showTransits ? 0.030 : 0.034)
-  const discTransit = svgSize * 0.028
+  const discNatal = px(svgSize * (showTransits ? 0.030 : 0.034))
+  const discTransit = px(svgSize * 0.028)
   const stepNatal = discNatal * 2.1
   const stepTransit = discTransit * 2.1
   const glyphDegNatal = Math.min(20, (2 * discNatal / R_PLANET) * (180 / Math.PI))
@@ -621,7 +626,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 key={z.i}
                 x={z.sx}
                 y={z.sy}
-                fontSize={svgSize * 0.055}
+                fontSize={px(svgSize * 0.055)}
                 textAnchor="middle"
                 alignmentBaseline="middle"
                 // Era 0.6 de alfa: o glifo sumia no fundo escuro e o anel inteiro
@@ -643,7 +648,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const outer = polarToXY(cx, cy, R_OUTER, angle)
               return (
                 <Line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y}
-                  stroke="rgba(255,215,0,0.25)" strokeWidth={0.8} pointerEvents="none" />
+                  stroke="rgba(255,215,0,0.22)" strokeWidth={1} pointerEvents="none" />
               )
             })}
 
@@ -681,7 +686,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {houseLabels.map(h => (
               <SvgText key={h.label}
                 x={h.x} y={h.y}
-                fontSize={svgSize * 0.036}
+                fontSize={px(svgSize * 0.036)}
                 textAnchor="middle"
                 alignmentBaseline="middle"
                 // 0.35 de alfa era quase invisível — e a casa é metade da leitura
@@ -730,7 +735,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   <Circle cx={p.sx} cy={p.sy} r={discNatal * 1.55} fill={color} fillOpacity={0.1} />
                   <Circle cx={p.sx} cy={p.sy} r={discNatal} fill="#161a22" stroke={color} strokeWidth={1.4} />
                   <SvgText x={p.sx} y={p.sy}
-                    fontSize={discNatal * 1.5}
+                    fontSize={px(discNatal * 1.5)}
                     textAnchor="middle"
                     alignmentBaseline="middle"
                     fill={color}
@@ -741,7 +746,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                     <SvgText
                       x={p.sx + discNatal * 0.85}
                       y={p.sy - discNatal * 0.85}
-                      fontSize={discNatal * 0.9}
+                      fontSize={px(discNatal * 0.9)}
                       fill="#f87171"
                     >
                       ℞
@@ -758,7 +763,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 <G key={`t-${p.name}`} onPress={() => abrirPlaneta(p, 'transito')}>
                   <Circle cx={p.sx} cy={p.sy} r={discTransit} fill="#0e2222" stroke={color} strokeWidth={1} />
                   <SvgText x={p.sx} y={p.sy}
-                    fontSize={discTransit * 1.5}
+                    fontSize={px(discTransit * 1.5)}
                     textAnchor="middle"
                     alignmentBaseline="middle"
                     fill={color}
@@ -766,7 +771,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                     {PLANET_SYMBOLS[p.name] || '●'}
                   </SvgText>
                   {p.isRetrograde ? (
-                    <SvgText x={p.sx + discTransit * 0.85} y={p.sy - discTransit * 0.85} fontSize={discTransit * 0.9} fill="#f87171">℞</SvgText>
+                    <SvgText x={p.sx + discTransit * 0.85} y={p.sy - discTransit * 0.85} fontSize={px(discTransit * 0.9)} fill="#f87171">℞</SvgText>
                   ) : null}
                 </G>
               )
@@ -776,7 +781,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {(() => {
               const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, 180)
               return (
-                <SvgText x={x} y={y} fontSize={svgSize * 0.03} textAnchor="middle"
+                <SvgText x={x} y={y} fontSize={px(svgSize * 0.03)} textAnchor="middle"
                   alignmentBaseline="middle" fill="#FFD700" fontWeight="bold"
                   pointerEvents="none">
                   ASC
@@ -804,34 +809,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           </Svg>
         </View>
 
-        {/* Decodificador dos símbolos, logo abaixo do desenho.
-
-            A legenda que já existia (showLegend) lista cada planeta com grau e
-            signo — informação de quem já sabe ler, e comprida demais para ficar
-            logo abaixo da roda. Esta responde a outra pergunta, que é a primeira
-            de quem chega: "que bolinha é essa?". Só glifo e nome, numa linha que
-            quebra sozinha, e apenas dos corpos que estão no desenho. */}
-        {planetPositions.length > 0 ? (
-          <View style={styles.legendaSimbolos}>
-            {planetPositions.map((p) => (
-              <TouchableOpacity
-                key={`leg-${p.name}`}
-                style={styles.legendaItem}
-                activeOpacity={0.7}
-                onPress={() => abrirPlaneta(p, 'natal')}
-              >
-                <Text style={[styles.legendaGlifo, { color: PLANET_COLORS[p.name] || '#fff' }]}>
-                  {PLANET_SYMBOLS[p.name] || '●'}
-                </Text>
-                <Text style={styles.legendaNome}>{translatePlanet(p.name, language)}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
-
-        {typeof entreRodaEGrade === 'function'
-          ? entreRodaEGrade({ abrirTransito: openTransitAspectModal })
-          : entreRodaEGrade}
+        {entreRodaEGrade}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {!mostrarGrade ? null : showTransits ? (
@@ -1390,19 +1368,6 @@ const styles = StyleSheet.create({
   planetaLinha: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 },
   planetaRotulo: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, minWidth: 104 },
   planetaValor: { color: '#e2e6f0', fontSize: 15.5, flexShrink: 1 },
-  legendaSimbolos: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 2,
-    paddingBottom: 12,
-    columnGap: 14,
-    rowGap: 7,
-  },
-  legendaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendaGlifo: { fontSize: 15 },
-  legendaNome: { color: '#aeb6c8', fontSize: 14 },
   aspectGridHint: {
     color: '#8d94a8',
     fontSize: 14,

@@ -62,10 +62,10 @@ describe('ordem de desenho da roda — o toque depende dela', () => {
     // Regex literal, nao `new RegExp` com template string: num template
     // literal `\*` colapsa para `*` e o padrao passa a casar qualquer coisa.
     const raio = (re: RegExp) => Number(re.exec(FONTE)?.[1] ?? NaN)
-    const zodiacoIn = raio(/const R_ZODIAC_IN = svgSize \* ([0-9.]+)/)
-    const zodiacoOut = raio(/const R_OUTER = svgSize \* ([0-9.]+)/)
-    const planeta = raio(/const R_PLANET = svgSize \* ([0-9.]+)/)
-    const transito = raio(/const R_TRANSIT = svgSize \* ([0-9.]+)/)
+    const zodiacoIn = raio(/const R_ZODIAC_IN = px\(svgSize \* ([0-9.]+)/)
+    const zodiacoOut = raio(/const R_OUTER = px\(svgSize \* ([0-9.]+)/)
+    const planeta = raio(/const R_PLANET = px\(svgSize \* ([0-9.]+)/)
+    const transito = raio(/const R_TRANSIT = px\(svgSize \* ([0-9.]+)/)
 
     for (const [nome, v] of Object.entries({ zodiacoIn, zodiacoOut, planeta, transito })) {
       expect(Number.isNaN(v), `raio ${nome} nao foi encontrado no fonte`).toBe(false)
@@ -103,6 +103,30 @@ describe('ordem de desenho da roda — o toque depende dela', () => {
       FONTE.indexOf('{/* Anel das casas'),
     )
     expect(blocoDivisoes, 'divisões do zodíaco precisam ser non-interactive').toContain('pointerEvents="none"')
+  })
+
+  it('a geometria do desenho cai em pixel inteiro', () => {
+    // O SVG e vetorial: borrado nunca foi resolucao, sempre foi alinhamento.
+    // `width` do useWindowDimensions vem fracionario no Android (392.7272...);
+    // sem arredondar, svgSize herda a fracao, o centro vira 180.36 e TODA
+    // coordenada derivada cai em meio-pixel — cada circulo, cada linha e cada
+    // glifo entram em anti-aliasing e o desenho fica lavado.
+    //
+    // Um `Math.min` cru aqui nao quebra nada nem acusa em teste de render: so
+    // volta o borrao.
+    expect(
+      FONTE,
+      'svgSize precisa ser inteiro PAR, para cx e cy sairem inteiros',
+    ).toMatch(/const svgSize = Math\.floor\(Math\.min\(width - 32, 380\) \/ 2\) \* 2/)
+
+    // Os raios sao circulos concentricos — e onde o meio-pixel mais aparece.
+    for (const nome of ['R_OUTER', 'R_ZODIAC_IN', 'R_HOUSE_OUT', 'R_HOUSE_IN', 'R_PLANET', 'R_INNER']) {
+      expect(FONTE, `${nome} precisa passar por px()`).toContain(`const ${nome} = px(`)
+    }
+
+    // Traco de 0.8px nao existe em tela nenhuma: vira cinza indefinido.
+    const finos = FONTE.match(/strokeWidth=\{(0?\.[0-9]+)\}/g) || []
+    expect(finos, 'traco abaixo de 1px vira borrao em vez de linha').toEqual([])
   })
 
   it('o preenchimento de toque tem alfa suficiente para o hit-test enxergar', () => {

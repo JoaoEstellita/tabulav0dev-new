@@ -81,27 +81,45 @@ describe('Home no ambiente leve', () => {
   })
 })
 
-describe('ordem da Home', () => {
-  const pos = (s: string) => HOME.indexOf(s)
+describe('ordem de leitura da Home', () => {
+  const pos = (t: string) => HOME.indexOf(t)
 
-  it('o status das áreas vem logo DEPOIS da grade e ANTES do resto', () => {
-    // A grade mostra o que o céu faz; o status mostra onde isso pega na vida.
-    // Separados pela fita de planetas e pelo card de trânsitos, viravam duas
-    // leituras soltas no fim da página em vez de uma resposta só.
-    const roda = pos('<NatalChartWheelContent')
-    const status = pos('Status das areas de vida')
-    const fita = pos('<PlanetQuickNav')
-    const coletiva = pos('<HomeCollectiveGrid />')
+  it('e roda, "Seu dia", status, grade', () => {
+    // O desenho mostra o ceu; a frase diz o que aquilo significa; o status diz
+    // onde pega na vida; so entao vem a tabela. Essa ordem foi pedida tres
+    // vezes seguidas porque cada bloco que entrava no meio quebrava a leitura.
+    //
+    // Frase e status moram no slot `entreRodaEGrade` da roda justamente por
+    // isso: e o unico ponto que fica DEPOIS do desenho e ANTES da grade. Soltos
+    // na Home, qualquer bloco novo pode cair entre eles.
+    const slot = pos('entreRodaEGrade={(')
+    const frase = pos('<FraseDoDia')
+    const status = pos('<AreaCardItem')
+    const banners = pos('<NotificationOptInBanner')
 
-    expect(roda).toBeGreaterThan(-1)
-    expect(status, 'bloco de status não encontrado').toBeGreaterThan(-1)
-
-    expect(status, 'status tem de vir depois da roda/grade').toBeGreaterThan(roda)
-    expect(status, 'status NÃO pode cair depois da fita de planetas').toBeLessThan(fita)
-    expect(status, 'status NÃO pode cair depois do céu coletivo').toBeLessThan(coletiva)
+    expect(slot, 'o slot entre roda e grade sumiu').toBeGreaterThan(-1)
+    expect(frase, 'a frase precisa estar dentro do slot').toBeGreaterThan(slot)
+    expect(status, 'o status vem DEPOIS da frase').toBeGreaterThan(frase)
+    expect(status, 'e ANTES de tudo que vem depois da grade').toBeLessThan(banners)
   })
 
-  it('o botão de alternar fecha a página, depois de todo o conteúdo', () => {
+  it('o status nao ficou solto fora do slot', () => {
+    // Se voltar a ser renderizado no corpo da Home, volta a cair depois da
+    // grade e da lista — foi exatamente o que precisou ser corrigido.
+    // O fim do slot e o fechamento do fragmento, nao o primeiro `/>` (esse e
+    // da propria frase).
+    const slotFim = HOME.indexOf('</>', HOME.indexOf('entreRodaEGrade={('))
+    expect(slotFim, 'fragmento do slot nao encontrado').toBeGreaterThan(-1)
+    expect(pos('<AreaCardItem')).toBeLessThan(slotFim)
+  })
+
+  it('a legenda de planetas abaixo da roda foi removida', () => {
+    const RODA = readFileSync(join(raiz, 'screens', 'cosmos', 'NatalChartWheelScreen.tsx'), 'utf-8')
+    expect(RODA, 'a fita de glifo+nome ocupava duas linhas inteiras sob a roda')
+      .not.toContain('legendaSimbolos')
+  })
+
+  it('o botao de alternar fecha a pagina, depois de todo o conteudo', () => {
     expect(pos('onPress={alternarAmbiente}')).toBeGreaterThan(pos('<HomeCollectiveGrid />'))
   })
 })

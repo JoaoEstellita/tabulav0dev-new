@@ -573,20 +573,46 @@ export default function HomeScreen() {
                   onSelectTransitAspect={handleSelectTransitAspect}
                   onSelectNatalAspect={handleSelectNatalAspect}
                   onOpenTransits={() => navigation.navigate('PersonalTransits')}
-                  // A leitura do dia entra ENTRE a roda e a grade: vê o céu, lê o
-                  // que ele quer dizer, e só então entra no detalhe.
+                  // A ORDEM DE LEITURA da tela mora aqui: roda, "Seu dia",
+                  // status, grade.
                   //
-                  // A palavra tocada ABRE A INTERPRETAÇÃO, não rola a tela. Rolar
-                  // até a lista deixava a pessoa num card que ela ainda não sabia
-                  // ler — e tirava do lugar o texto que ela estava lendo. Quem
-                  // quiser a lista chega nela pelo modal do planeta, que tem o
-                  // link próprio para isso.
-                  entreRodaEGrade={({ abrirTransito }) => (
-                    <FraseDoDia
-                      transitos={transitData?.dailyOverview?.personalTodayRich}
-                      areas={orderedLifeAreas}
-                      onAbrirTransito={abrirTransito}
-                    />
+                  // O desenho mostra o céu; a frase diz o que aquilo significa; o
+                  // status diz onde pega na vida; e só então vem a tabela, que é
+                  // o detalhe para quem quiser conferir. Status e grade separados
+                  // por outros blocos viravam duas leituras soltas em vez de
+                  // partes da mesma resposta.
+                  entreRodaEGrade={(
+                    <>
+                      <FraseDoDia
+                        transitos={transitData?.dailyOverview?.personalTodayRich}
+                        areas={orderedLifeAreas}
+                      />
+
+                      {lifeAreasForDisplay ? (
+                        <View {...aAreas}>
+                          <AnimatedMount>
+                            <View style={styles.section}>
+                              <View style={styles.lifeAreasGrid}>
+                                {/* No leve, as tres de pior pontuacao: mostrar as
+                                    oito em ordem fixa gasta a tela com o que esta
+                                    tudo bem. */}
+                                {(leve ? areasQuePedemAtencao(memoizedAreas, AREAS_NO_MODO_LEVE) : memoizedAreas)
+                                  .map(({ name, normalizedArea, transitCount }) => (
+                                    <AreaCardItem
+                                      key={name}
+                                      name={name}
+                                      area={normalizedArea}
+                                      factors={allLifeAreaFactors[name]}
+                                      transitCount={transitCount}
+                                      onPress={handleAreaPress}
+                                    />
+                                  ))}
+                              </View>
+                            </View>
+                          </AnimatedMount>
+                        </View>
+                      ) : null}
+                    </>
                   )}
                 />
               ) : (
@@ -599,35 +625,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-
-        {/* Status das areas de vida — LOGO ABAIXO DA GRADE.
-            A grade mostra o que o ceu faz; o status mostra onde isso pega na
-            vida. Separados pela fita de planetas e pelo card de transitos,
-            viravam duas leituras soltas no fim da pagina em vez de uma
-            resposta so. */}
-        {lifeAreasForDisplay && (
-          <View {...aAreas}>
-          <AnimatedMount>
-            <View style={styles.section}>
-              <View style={styles.lifeAreasGrid}>
-                {/* No leve, as tres de pior pontuacao: mostrar as oito em ordem
-                    fixa gasta a tela com o que esta tudo bem. */}
-                {(leve ? areasQuePedemAtencao(memoizedAreas, AREAS_NO_MODO_LEVE) : memoizedAreas)
-                  .map(({ name, normalizedArea, transitCount }) => (
-                  <AreaCardItem
-                    key={name}
-                    name={name}
-                    area={normalizedArea}
-                    factors={allLifeAreaFactors[name]}
-                    transitCount={transitCount}
-                    onPress={handleAreaPress}
-                  />
-                ))}
-              </View>
-            </View>
-          </AnimatedMount>
-          </View>
-        )}
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <View {...aNotif}><NotificationOptInBanner /></View>
