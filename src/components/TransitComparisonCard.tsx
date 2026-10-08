@@ -1244,7 +1244,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {tl('Status pessoal', 'Personal status', 'Estado personal', 'Stato personale')}: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
               </Text>
               {statusMetaLine ? (
-                <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>{statusMetaLine}</Text>
+                <Text style={{ color: '#fff', opacity: 0.72, fontSize: 14, lineHeight: 20 }}>{statusMetaLine}</Text>
               ) : null}
             </View>
           ) : null}
@@ -1763,8 +1763,8 @@ const styles = StyleSheet.create({
   },
   weightMethodText: {
     color: '#E2E8F0',
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     marginBottom: 2,
   },
   balanceGrid: {
@@ -1799,7 +1799,7 @@ const styles = StyleSheet.create({
   },
   balanceRowText: {
     color: '#E2E8F0',
-    fontSize: 11,
+    fontSize: 14, lineHeight: 20,
     marginLeft: 4,
   },
   balanceRowTextPredominant: {
@@ -1808,7 +1808,7 @@ const styles = StyleSheet.create({
   },
   balancePredominantText: {
     color: '#34D399',
-    fontSize: 11,
+    fontSize: 14, lineHeight: 20,
     fontWeight: '700',
     marginTop: 4,
   },
@@ -1822,7 +1822,7 @@ const styles = StyleSheet.create({
   },
   comparisonLabel: {
     color: '#A0A0A0',
-    fontSize: 12,
+    fontSize: 14,
     marginBottom: 4,
   },
   elementalRow: {
@@ -1837,7 +1837,7 @@ const styles = StyleSheet.create({
   },
   elementalItemText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14, lineHeight: 20,
     marginLeft: 4,
   },
   elementalItemMeta: {
@@ -1947,25 +1947,25 @@ const styles = StyleSheet.create({
   },
   columnTitle: {
     color: '#A0A0A0',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 6,
   },
   metricLine: {
     color: '#E2E8F0',
-    fontSize: 12,
+    fontSize: 14,
     marginBottom: 6,
-    lineHeight: 16,
+    lineHeight: 20,
   },
   metricLineStrong: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    lineHeight: 18,
+    lineHeight: 20,
   },
   metricHint: {
     color: '#94A3B8',
-    fontSize: 11,
+    fontSize: 14, lineHeight: 20,
     marginTop: 4,
   },
   positionText: {
@@ -1982,7 +1982,7 @@ const styles = StyleSheet.create({
   },
   speedText: {
     color: '#10B981',
-    fontSize: 12,
+    fontSize: 14,
     marginBottom: 8,
   },
   attributesRow: {
@@ -2018,13 +2018,13 @@ const styles = StyleSheet.create({
   },
   influenceArea: {
     color: '#FDE68A',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
   },
   influenceText: {
     color: '#E2E8F0',
-    fontSize: 11,
+    fontSize: 14, lineHeight: 21,
     marginLeft: 2,
     marginBottom: 2,
   },
@@ -2085,12 +2085,12 @@ const styles = StyleSheet.create({
   },
   aspectText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14, lineHeight: 21,
     flex: 1,
   },
   aspectMetaInline: {
     color: '#94A3B8',
-    fontSize: 11,
+    fontSize: 14,
     marginRight: 8,
   },
   aspectActionsRow: {
@@ -2102,7 +2102,7 @@ const styles = StyleSheet.create({
   },
   readButtonText: {
     color: '#E2E8F0',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
   },
   detailModalBackdrop: {
@@ -2150,7 +2150,7 @@ const styles = StyleSheet.create({
   },
   detailModalSubtitle: {
     color: '#A85A12',
-    fontSize: 13,
+    fontSize: 14, lineHeight: 20,
     fontWeight: '700',
     marginTop: 4,
   },
@@ -2238,7 +2238,7 @@ const styles = StyleSheet.create({
   },
   planetMeaningSubtitle: {
     color: '#C9D6FF',
-    fontSize: 13,
+    fontSize: 14, lineHeight: 20,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -2263,7 +2263,7 @@ const styles = StyleSheet.create({
   },
   planetMeaningTagText: {
     color: '#FFE58D',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
   },
   planetMeaningSectionLabel: {
@@ -2321,7 +2321,7 @@ const styles = StyleSheet.create({
   },
   angleLabel: {
     color: '#CCCCCC',
-    fontSize: 12,
+    fontSize: 14,
     marginBottom: 4,
   },
   angleDegree: {

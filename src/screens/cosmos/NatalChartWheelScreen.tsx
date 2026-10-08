@@ -275,6 +275,12 @@ type ChartContentProps = {
   /** Se fornecido, mostra um ícone de livro ao lado do título "Trânsitos sobre o natal"
    * que abre o modo standalone (Trânsitos Pessoais: importantes/longos/progressões). */
   onOpenTransits?: () => void
+  /**
+   * Mostra a grade de aspectos abaixo da roda. Desligada no ambiente leve: a
+   * grade e a informacao mais densa da tela e a ultima que faz sentido para
+   * quem abriu o app querendo saber como esta o dia.
+   */
+  mostrarGrade?: boolean
 }
 
 /** Acoes da roda liberadas para quem renderiza conteudo embutido nela. */
@@ -290,7 +296,7 @@ export interface AcoesDaRoda {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, entreRodaEGrade }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, entreRodaEGrade, mostrarGrade = true }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   // Modal de interpretação do aspecto clicado na grade — abre no lugar, sem rolar.
@@ -828,7 +834,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           : entreRodaEGrade}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
-        {showTransits ? (
+        {!mostrarGrade ? null : showTransits ? (
           transitPlanets.length >= 1 && natalPlanets.length >= 1 && tnAspectsWithNodes.length > 0 ? (
             <View style={styles.aspectGridWrap}>
               <View style={{ alignSelf: 'stretch', height: 30, justifyContent: 'center', marginBottom: 6 }}>
@@ -1342,7 +1348,7 @@ const styles = StyleSheet.create({
   // ciano = o ceu de hoje (passa). A mesma dupla de cores que a roda usa nos
   // dois aneis, para o modal confirmar visualmente de onde veio o toque.
   selo: {
-    fontSize: 11,
+    fontSize: 11, textTransform: 'uppercase',
     letterSpacing: 1.4,
     fontWeight: '700',
     textAlign: 'center',
@@ -1352,8 +1358,8 @@ const styles = StyleSheet.create({
   seloTransito: { color: '#67E8F9' },
   avisoOrigem: {
     color: '#8d94a8',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 21,
     marginTop: 10,
     fontStyle: 'italic',
   },
@@ -1375,7 +1381,7 @@ const styles = StyleSheet.create({
   blocoVazio: { color: '#8d94a8', fontSize: 14, lineHeight: 20, marginTop: 14, fontStyle: 'italic' },
   fichaTecnica: {
     color: '#8d94a8',
-    fontSize: 13,
+    fontSize: 14, lineHeight: 20,
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
@@ -1396,11 +1402,11 @@ const styles = StyleSheet.create({
   },
   legendaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendaGlifo: { fontSize: 15 },
-  legendaNome: { color: '#aeb6c8', fontSize: 12.5 },
+  legendaNome: { color: '#aeb6c8', fontSize: 14 },
   aspectGridHint: {
     color: '#8d94a8',
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
     paddingHorizontal: 18,
     marginBottom: 8,
@@ -1454,13 +1460,13 @@ const styles = StyleSheet.create({
   },
   legendName: {
     width: 70,
-    fontSize: 13,
+    fontSize: 14,
     color: '#e2e8f0',
     fontWeight: '500',
   },
   legendInfo: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 14, lineHeight: 20,
     color: '#8892a4',
     textAlign: 'right',
   },
@@ -1483,7 +1489,7 @@ const styles = StyleSheet.create({
   modalSymbol: { fontSize: 42, marginBottom: 8 },
   modalTitle: { fontSize: 20, fontWeight: '700', color: '#e2e8f0', marginBottom: 6 },
   modalSub: { fontSize: 14, color: '#FFD700', marginBottom: 4 },
-  modalHouse: { fontSize: 13, color: '#8892a4', marginBottom: 20 },
+  modalHouse: { fontSize: 14, color: '#8892a4', marginBottom: 20 },
   modalClose: {
     backgroundColor: 'rgba(255,215,0,0.12)',
     borderRadius: 8,

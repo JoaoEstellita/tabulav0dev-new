@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useAmbiente, areasQuePedemAtencao, AREAS_NO_MODO_LEVE } from '../../hooks/useAmbiente'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
@@ -161,6 +162,9 @@ export default function HomeScreen() {
     const natal = (cellId || '').split('-').pop() || ''
     if (natal) scrollToWheelAnchor(`planet:${natal}`)
   }, [scrollToWheelAnchor])
+  // Densidade da tela. No leve a Home responde UMA pergunta — "como esta meu
+  // dia?" — em vez das cinco que ela empilhava.
+  const { leve, alternar: alternarAmbiente } = useAmbiente()
   const [showTop, setShowTop] = useState(false)
   // Âncoras do tour guiado (holofote) — destacam os recursos reais.
   const aHeader = useTourAnchor('home.header')
@@ -185,12 +189,23 @@ export default function HomeScreen() {
     { id: 'home.moon', title: tl('A Lua de hoje', "Today's Moon", 'La Luna de hoy', 'La Luna di oggi'),
       body: tl('A Lua muda de signo a cada dois dias e e a parte do ceu que mexe mais rapido com o seu humor. Toque para ver a fase de hoje.', 'The Moon changes sign every couple of days and is the part of the sky that shifts your mood fastest. Tap to see today\'s phase.', 'La Luna cambia de signo cada dos dias y es la parte del cielo que mueve mas rapido tu animo. Toca para ver la fase de hoy.', 'La Luna cambia segno ogni due giorni ed e la parte del cielo che muove piu in fretta il tuo umore. Tocca per vedere la fase di oggi.') },
     { id: 'home.areas', title: tl('O que o dia mexe na sua vida', 'What today stirs in your life', 'Lo que el dia mueve en tu vida', 'Cosa il giorno muove nella tua vita'),
-      body: tl('Oito partes da vida — amor, trabalho, dinheiro, saúde e outras. A barra mostra o quanto cada uma está em movimento hoje. Toque numa para entender o porquê.', 'Eight parts of life — love, work, money, health and others. The bar shows how much each one is in motion today. Tap one to understand why.', 'Ocho partes de la vida — amor, trabajo, dinero, salud y otras. La barra muestra cuanto se mueve cada una hoy. Toca una para entender el porque.', 'Otto parti della vita — amore, lavoro, denaro, salute e altre. La barra mostra quanto ognuna e in movimento oggi. Tocca una per capire il perche.') },
+      // O texto acompanha o que esta NA TELA: no ambiente leve aparecem tres
+      // areas, nao oito. Prometer oito e mandar a pessoa contar o que nao esta
+      // la é o tipo de detalhe que faz o guia perder credibilidade logo no
+      // primeiro uso.
+      body: leve
+        ? tl('As partes da vida que mais pedem atenção hoje. A barra mostra o quanto cada uma está em movimento. Toque numa para entender o porquê — as outras aparecem em "Ver tudo".', 'The parts of life asking for most attention today. The bar shows how much each one is in motion. Tap one to understand why — the rest appear under "See everything".', 'Las partes de la vida que mas piden atencion hoy. La barra muestra cuanto se mueve cada una. Toca una para entender el porque — las demas aparecen en "Ver todo".', 'Le parti della vita che chiedono piu attenzione oggi. La barra mostra quanto ognuna e in movimento. Tocca una per capire il perche — le altre appaiono in "Vedi tutto".')
+        : tl('Oito partes da vida — amor, trabalho, dinheiro, saúde e outras. A barra mostra o quanto cada uma está em movimento hoje. Toque numa para entender o porquê.', 'Eight parts of life — love, work, money, health and others. The bar shows how much each one is in motion today. Tap one to understand why.', 'Ocho partes de la vida — amor, trabajo, dinero, salud y otras. La barra muestra cuanto se mueve cada una hoy. Toca una para entender el porque.', 'Otto parti della vita — amore, lavoro, denaro, salute e altre. La barra mostra quanto ognuna e in movimento oggi. Tocca una per capire il perche.') },
     { id: 'home.wheel', title: tl('Seu mapa e o céu de agora', 'Your chart and the sky right now', 'Tu mapa y el cielo de ahora', 'Il tuo tema e il cielo di adesso'),
       body: tl('O círculo de dentro é o céu de quando você nasceu; o de fora, onde os planetas estão agora. Onde eles se encontram, algo é ativado. Toque num encontro para ler.', 'The inner circle is the sky when you were born; the outer one, where the planets are now. Where they meet, something gets activated. Tap a meeting to read it.', 'El circulo interno es el cielo de cuando naciste; el externo, donde estan los planetas ahora. Donde se encuentran, algo se activa. Toca un encuentro para leerlo.', 'Il cerchio interno e il cielo di quando sei nato; quello esterno, dove sono i pianeti adesso. Dove si incontrano, qualcosa si attiva. Tocca un incontro per leggerlo.') },
+    // Sem a grade na tela, este passo apontaria um holofote para lugar nenhum
+    // (a ancora nem chega a se registrar) e descreveria algo que a pessoa nao
+    // tem como ver. No leve ele sai.
+    ...(leve ? [] : [
     { id: 'home.transits', title: tl('A tabela de encontros', 'The meetings table', 'La tabla de encuentros', 'La tabella degli incontri'),
       body: tl('A mesma coisa da roda, em forma de tabela: cada símbolo é uma conversa entre dois planetas do seu mapa. Toque em qualquer um para a leitura em português.', 'The same as the wheel, as a table: each symbol is a conversation between two planets of your chart. Tap any of them for the plain reading.', 'Lo mismo de la rueda, en forma de tabla: cada simbolo es una conversacion entre dos planetas de tu mapa. Toca cualquiera para la lectura clara.', 'La stessa cosa della ruota, in tabella: ogni simbolo e una conversazione tra due pianeti del tuo tema. Tocca uno qualsiasi per la lettura chiara.') },
-  ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
+    ]),
+  ]), [language, leve]) // eslint-disable-line react-hooks/exhaustive-deps
   const { openTour: openHomeTour } = useTabTour('tour_seen_home_v2', 'Home', buildHomeTour)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
@@ -554,6 +569,7 @@ export default function HomeScreen() {
                   loading={loading}
                   showLegend={false}
                   showTransits
+                  mostrarGrade={!leve}
                   onSelectTransitAspect={handleSelectTransitAspect}
                   onSelectNatalAspect={handleSelectNatalAspect}
                   onOpenTransits={() => navigation.navigate('PersonalTransits')}
@@ -584,13 +600,43 @@ export default function HomeScreen() {
         )}
 
 
+        {/* Status das areas de vida — LOGO ABAIXO DA GRADE.
+            A grade mostra o que o ceu faz; o status mostra onde isso pega na
+            vida. Separados pela fita de planetas e pelo card de transitos,
+            viravam duas leituras soltas no fim da pagina em vez de uma
+            resposta so. */}
+        {lifeAreasForDisplay && (
+          <View {...aAreas}>
+          <AnimatedMount>
+            <View style={styles.section}>
+              <View style={styles.lifeAreasGrid}>
+                {/* No leve, as tres de pior pontuacao: mostrar as oito em ordem
+                    fixa gasta a tela com o que esta tudo bem. */}
+                {(leve ? areasQuePedemAtencao(memoizedAreas, AREAS_NO_MODO_LEVE) : memoizedAreas)
+                  .map(({ name, normalizedArea, transitCount }) => (
+                  <AreaCardItem
+                    key={name}
+                    name={name}
+                    area={normalizedArea}
+                    factors={allLifeAreaFactors[name]}
+                    transitCount={transitCount}
+                    onPress={handleAreaPress}
+                  />
+                ))}
+              </View>
+            </View>
+          </AnimatedMount>
+          </View>
+        )}
+
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <View {...aNotif}><NotificationOptInBanner /></View>
 
         {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
         <MatchInviteCard />
 
-        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+        {!leve &&
+          Array.isArray(transitData?.currentTransits?.planetComparisons) &&
           transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
@@ -599,7 +645,8 @@ export default function HomeScreen() {
           )}
 
 
-        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+        {!leve &&
+          Array.isArray(transitData?.currentTransits?.planetComparisons) &&
           transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
             <View {...aTransits}>
@@ -626,29 +673,6 @@ export default function HomeScreen() {
             </View>
           )}
 
-        {/* Status das Areas de Vida */}
-        {lifeAreasForDisplay && (
-          <View {...aAreas}>
-          <AnimatedMount>
-            <View style={styles.section}>
-              <View style={styles.lifeAreasGrid}>
-                {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
-                  <AreaCardItem
-                    key={name}
-                    name={name}
-                    area={normalizedArea}
-                    factors={allLifeAreaFactors[name]}
-                    transitCount={transitCount}
-                    onPress={handleAreaPress}
-                  />
-                ))}
-              </View>
-            </View>
-          </AnimatedMount>
-          </View>
-        )}
-
-
         {loading && !transitData && (
           <View style={styles.chartLoadingContainer}>
             <ActivityIndicator size="large" color="#FFD700" />
@@ -660,7 +684,26 @@ export default function HomeScreen() {
 
 
         {/* Tr\u00E2nsitos coletivos (o c\u00E9u de agora) \u2014 grade + livro pra lista completa */}
-        <HomeCollectiveGrid />
+        {!leve ? <HomeCollectiveGrid /> : null}
+
+        {/* Alternar densidade.
+            Fica AQUI, no fim do conteudo e dentro da Home: um modo que esconde
+            coisas tem de deixar obvio como mostrar de novo. Enterrado em
+            Configuracoes, viraria conteudo perdido — a pessoa nao procura o que
+            nao sabe que existe. */}
+        <TouchableOpacity
+          style={styles.alternarAmbiente}
+          onPress={alternarAmbiente}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+        >
+          <Ionicons name={leve ? 'chevron-down' : 'chevron-up'} size={16} color="#FFD700" />
+          <Text style={styles.alternarAmbienteTexto}>
+            {leve
+              ? tl('Ver tudo do meu céu', 'See everything in my sky', 'Ver todo de mi cielo', 'Vedi tutto del mio cielo')
+              : tl('Mostrar só o essencial', 'Show only the essentials', 'Mostrar solo lo esencial', 'Mostra solo l essenziale')}
+          </Text>
+        </TouchableOpacity>
 
         {/* Espa\u00E7amento final */}
         <View style={styles.bottomSpacing} />
@@ -797,6 +840,20 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  alternarAmbiente: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.3)',
+    backgroundColor: 'rgba(255,215,0,0.06)',
+  },
+  alternarAmbienteTexto: { color: '#FFD700', fontSize: 15, fontWeight: '700' },
   wheelSkeleton: {
     height: 300,
     alignItems: 'center',
@@ -815,10 +872,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   skyLegendScore: { fontSize: 22, fontWeight: '800' },
-  skyLegendMax: { fontSize: 12, color: '#6E6F8C', fontWeight: '600' },
-  skyLegendLevel: { fontSize: 13, fontWeight: '700' },
-  skyLegendTransit: { fontSize: 12, color: '#9A9CB8', marginTop: 2 },
-  skyLegendMore: { fontSize: 12, color: '#FFD700', fontWeight: '700' },
+  skyLegendMax: { fontSize: 14, color: '#6E6F8C', fontWeight: '600' },
+  skyLegendLevel: { fontSize: 14, fontWeight: '700' },
+  skyLegendTransit: { fontSize: 14, lineHeight: 20, color: '#9A9CB8', marginTop: 2 },
+  skyLegendMore: { fontSize: 14, color: '#FFD700', fontWeight: '700' },
   dailyScoreCard: {
     flexDirection: 'column',
     alignItems: 'stretch',
@@ -838,7 +895,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   dailyScoreLabel: {
-    fontSize: 10,
+    fontSize: 11, textTransform: 'uppercase',
     fontWeight: '700',
     letterSpacing: 0.5,
     color: '#8888AA',
@@ -848,7 +905,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dailyScoreCount: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#8888AA',
     marginRight: 6,
   },
@@ -866,7 +923,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   dailyScoreMax: {
-    fontSize: 10,
+    fontSize: 14,
     color: '#888',
     marginLeft: 2,
   },
@@ -874,14 +931,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dailyScoreLevel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 1,
   },
   dailyScoreTransit: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#B0B0C0',
-    lineHeight: 15,
+    lineHeight: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -925,7 +982,7 @@ const styles = StyleSheet.create({
     color: '#FFD700',
   },
   scoreLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#A0A0A0',
     marginTop: 4,
   },
@@ -946,7 +1003,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryText: {
-    fontSize: 12,
+    fontSize: 14, lineHeight: 20,
     color: '#A0A0A0',
     marginLeft: 6,
   },
@@ -1036,7 +1093,7 @@ const styles = StyleSheet.create({
   },
   statusToastText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14, lineHeight: 20,
     fontWeight: '600',
   },
   cardText: {
@@ -1092,7 +1149,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   buildTagText: {
-    fontSize: 10,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.55)',
     letterSpacing: 0.2,
   },

@@ -24,6 +24,14 @@ export interface TermoGlossario {
   explicacao: Record<IdiomaGlossario, string>
   /** Substituto em linguagem comum para o modo Explicado. Ausente = sem troca. */
   simples?: Record<IdiomaGlossario, string>
+  /**
+   * Nunca vira palavra tocavel no texto, so responde se perguntarem por ele.
+   *
+   * Para termo que aparece em quase toda linha: realcar um deles por bloco
+   * ainda significa um sublinhado em cada card da lista, e o texto fica
+   * ilegivel de tanto destaque.
+   */
+  semRealce?: boolean
 }
 
 export const GLOSSARIO: Record<string, TermoGlossario> = {
@@ -35,7 +43,6 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Dos planetas en el mismo punto del cielo: sus fuerzas se mezclan y actuan como una sola, para bien y para lo dificil.',
       'it-IT': 'Due pianeti nello stesso punto del cielo: le loro forze si mescolano e agiscono come una sola, nel bene e nel difficile.',
     },
-    simples: { 'pt-BR': 'junção', 'en-US': 'joining', 'es-ES': 'union', 'it-IT': 'unione' },
   },
   oposicao: {
     explicacao: {
@@ -44,7 +51,6 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Dos planetas en lados opuestos del cielo: tiran de ti hacia direcciones contrarias y piden equilibrio entre ambas.',
       'it-IT': 'Due pianeti su lati opposti del cielo: ti tirano in direzioni contrarie e chiedono equilibrio tra le due.',
     },
-    simples: { 'pt-BR': 'tensão de polos', 'en-US': 'opposing pull', 'es-ES': 'tension de polos', 'it-IT': 'tensione di poli' },
   },
   quadratura: {
     explicacao: {
@@ -53,7 +59,6 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Una friccion entre dos planetas. Incomoda, pero es el tipo de presion que te hace cambiar algo que estaba detenido.',
       'it-IT': 'Un attrito tra due pianeti. Da fastidio, ma e il tipo di pressione che ti fa cambiare qualcosa che era fermo.',
     },
-    simples: { 'pt-BR': 'atrito', 'en-US': 'friction', 'es-ES': 'friccion', 'it-IT': 'attrito' },
   },
   trigono: {
     explicacao: {
@@ -62,7 +67,6 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Dos planetas que se llevan bien: las cosas fluyen con poco esfuerzo en esa area. El riesgo es solo acomodarse.',
       'it-IT': 'Due pianeti che vanno d accordo: le cose scorrono con poco sforzo in quell area. Il rischio e solo adagiarsi.',
     },
-    simples: { 'pt-BR': 'facilidade', 'en-US': 'ease', 'es-ES': 'facilidad', 'it-IT': 'facilita' },
   },
   sextil: {
     explicacao: {
@@ -71,7 +75,6 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Una puerta abierta entre dos planetas. La oportunidad existe, pero solo ocurre si das el primer paso.',
       'it-IT': 'Una porta aperta tra due pianeti. L occasione c e, ma accade solo se fai il primo passo.',
     },
-    simples: { 'pt-BR': 'oportunidade', 'en-US': 'opportunity', 'es-ES': 'oportunidad', 'it-IT': 'opportunita' },
   },
   quincuncio: {
     explicacao: {
@@ -80,7 +83,6 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Dos planetas que no se entienden bien: piden cosas distintas y exigen ajuste constante de tu parte.',
       'it-IT': 'Due pianeti che non si capiscono bene: chiedono cose diverse e richiedono aggiustamento costante da te.',
     },
-    simples: { 'pt-BR': 'desencontro', 'en-US': 'mismatch', 'es-ES': 'desencuentro', 'it-IT': 'disallineamento' },
   },
 
   // ─── Medidas e tempo ───────────────────────────────────────────────────────
@@ -109,7 +111,11 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'El cielo exacto del momento en que naciste. Es tu base y no cambia nunca.',
       'it-IT': 'Il cielo esatto del momento in cui sei nato. E la tua base e non cambia mai.',
     },
-    simples: { 'pt-BR': 'de nascimento', 'en-US': 'birth', 'es-ES': 'de nacimiento', 'it-IT': 'di nascita' },
+    // Aparece em quase toda linha de transito ("Netuno (natal)"). Realcar e
+    // trocar por "(de nascimento)" enchia a lista de sublinhados dourados e
+    // alongava cada linha — virou ruido em vez de ajuda. "Natal" ja e curto e
+    // o contexto ensina; quem quiser a definicao acha no termo "transito".
+    semRealce: true,
   },
   retrogrado: {
     explicacao: {
@@ -203,7 +209,15 @@ export function chaveTermo(texto: string): string {
 }
 
 /** Termos conhecidos, do mais longo para o mais curto — casa "meio do ceu" antes de "casa". */
-export const TERMOS_ORDENADOS: string[] = Object.keys(GLOSSARIO).sort((a, b) => b.length - a.length)
+/**
+ * Termos que o texto pode realcar, do mais longo para o mais curto (para
+ * "meio do ceu" ganhar de "ceu"). Quem tem `semRealce` fica de fora: continua
+ * no glossario e responde a `explicarTermo`, mas nao vira link no meio da
+ * frase.
+ */
+export const TERMOS_ORDENADOS: string[] = Object.keys(GLOSSARIO)
+  .filter((k) => !GLOSSARIO[k].semRealce)
+  .sort((a, b) => b.length - a.length)
 
 /** Explicação de um termo no idioma pedido, ou null se não for do glossário. */
 export function explicarTermo(termo: string, idioma: IdiomaGlossario): string | null {

@@ -437,14 +437,14 @@ const styles = StyleSheet.create({
   },
   progText2: {
     color: '#C8CDE8',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 21,
     marginLeft: 16,
     marginTop: 2,
   },
   progWindow: {
     color: '#8890B5',
-    fontSize: 11,
+    fontSize: 14, lineHeight: 20,
     marginLeft: 16,
     marginTop: 3,
   },
@@ -462,12 +462,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,215,0,0.35)',
     backgroundColor: 'rgba(255,215,0,0.08)',
   },
-  navChipText: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
+  navChipText: { color: '#FFD700', fontSize: 14, fontWeight: '600' },
   navChipActive: { backgroundColor: '#FFD700', borderColor: '#FFD700' },
   navChipTextActive: { color: '#0F0F23', fontWeight: '800' },
   progDot: { width: 8, height: 8, borderRadius: 4 },
-  progText: { color: '#E2E8F0', fontSize: 13, flex: 1 },
-  progOrb: { color: '#8890B5', fontSize: 11 },
+  progText: { color: '#E2E8F0', fontSize: 14, lineHeight: 21, flex: 1 },
+  progOrb: { color: '#8890B5', fontSize: 14 },
   sectionTitle: {
     color: '#FFD700',
     fontSize: 15,
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     color: '#8890B5',
-    fontSize: 12,
+    fontSize: 14, lineHeight: 20,
     marginBottom: 10,
   },
   emptyCard: {
@@ -487,8 +487,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: '#94A3B8',
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: 'center',
   },
 })
