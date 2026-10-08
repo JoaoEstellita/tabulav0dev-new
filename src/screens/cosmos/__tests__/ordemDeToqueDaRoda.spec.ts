@@ -138,3 +138,39 @@ describe('ordem de desenho da roda — o toque depende dela', () => {
     expect(Number(m![1]), 'alfa baixo demais é tratado como fill none').toBeGreaterThanOrEqual(0.02)
   })
 })
+
+describe('ordem de desenho: o que fica VISÍVEL', () => {
+  it('o fundo do miolo vem ANTES das linhas de aspecto', () => {
+    // As linhas ligam dois pontos da circunferência R_INNER e atravessam o
+    // miolo. Com o disco opaco desenhado depois, elas eram calculadas,
+    // desenhadas e pintadas por cima — a roda nunca mostrou um aspecto, e nada
+    // acusava, porque o desenho continuava "correto": só invisível.
+    const fundo = FONTE.indexOf('r={R_INNER} fill="#0d1018"')
+    const linhas = FONTE.indexOf('{aspectLines.map(')
+    expect(fundo, 'disco do miolo não encontrado').toBeGreaterThan(-1)
+    expect(linhas, 'linhas de aspecto não encontradas').toBeGreaterThan(-1)
+    expect(fundo, 'o disco opaco não pode cobrir as linhas').toBeLessThan(linhas)
+  })
+
+  it('cada planeta natal marca a própria longitude', () => {
+    // O glifo pode se afastar no raio; o tick fica na longitude real e é o que
+    // permite conferir a casa.
+    expect(FONTE).toContain('tick-')
+    expect(FONTE, 'o tick tem de usar o ângulo VERDADEIRO').toMatch(/R_HOUSE_IN,\s*p\.trueAngle/)
+  })
+})
+
+describe('anti-colisão: a roda usa o módulo testado', () => {
+  it('não há cópia local de declutterRing no componente', () => {
+    // A cópia local foi onde o deslocamento angular entrou sem teste: a lógica
+    // ficava dentro do .tsx, que o Vitest não parseia.
+    expect(FONTE).toContain("from '../../astro/declutterRing'")
+    expect(FONTE, 'lógica duplicada volta a escapar do teste')
+      .not.toMatch(/function declutterRing</)
+  })
+
+  it('o componente não desloca glifo em ângulo por conta própria', () => {
+    // A fórmula que movia o glifo de casa.
+    expect(FONTE).not.toMatch(/glyphDeg \* 0\.85/)
+  })
+})

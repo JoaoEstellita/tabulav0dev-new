@@ -36,6 +36,13 @@ import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import { transitCellId } from '../../astro/transitCellId'
+import {
+  declutterRing,
+  lonToSvgAngle,
+  polarToXY,
+  angShort,
+  type PlacedPlanet,
+} from '../../astro/declutterRing'
 
 // Nome de planeta a partir da chave normalizada do cellId (sun→Sun).
 const CAP_PLANET: Record<string, string> = {
@@ -95,65 +102,6 @@ const ASPECT_COLORS: Record<string, string> = {
 const DEG2RAD = Math.PI / 180
 
 /** Converte longitude eclíptica → ângulo SVG (0° = direita, sentido horário) */
-function lonToSvgAngle(lon: number, ascDeg: number): number {
-  // ASC fica a 180° (esquerda); planetas giram no sentido anti-horário
-  return (180 - (lon - ascDeg) + 360) % 360
-}
-
-function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = angleDeg * DEG2RAD
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
-}
-
-/** Distância angular mais curta (0-180) entre dois ângulos. */
-function angShort(a: number, b: number) {
-  return Math.abs(((a - b) % 360 + 540) % 360 - 180)
-}
-
-type PlacedPlanet<T> = T & { trueAngle: number; sx: number; sy: number; radius: number }
-
-/**
- * Anti-colisão RADIAL: quando planetas ficam próximos em longitude (< glyphDeg),
- * eles NÃO saem do lugar — o ângulo (longitude real) é mantido e só o RAIO varia,
- * empilhando o cluster (uns mais perto do centro, outros mais longe). Clampado à
- * banda [minR, maxR] para nunca invadir o zodíaco/centro. Puro (sem estado).
- */
-function declutterRing<T extends { longitude: number }>(
-  items: T[], ascDeg: number, cx: number, cy: number, R: number, minR: number, maxR: number, step: number, glyphDeg: number,
-): PlacedPlanet<T>[] {
-  const withAngle = items
-    .map((p) => ({ item: p, trueAngle: lonToSvgAngle(p.longitude, ascDeg) }))
-    .sort((a, b) => a.trueAngle - b.trueAngle)
-  const radius = new Array<number>(withAngle.length).fill(R)
-  // Ângulo de DESENHO. Começa no verdadeiro e só muda se o afastamento radial
-  // não der conta — a posição real do planeta continua sendo `trueAngle`.
-  const angulo = withAngle.map((w) => w.trueAngle)
-  let i = 0
-  while (i < withAngle.length) {
-    let j = i
-    while (j + 1 < withAngle.length && angShort(withAngle[j + 1].trueAngle, withAngle[j].trueAngle) < glyphDeg) j++
-    const n = j - i + 1
-    for (let k = 0; k < n; k++) {
-      const r = R + (k - (n - 1) / 2) * step
-      const rClamp = Math.max(minR, Math.min(maxR, r))
-      radius[i + k] = rClamp
-      // Só o afastamento radial não bastava: quando o grupo é grande, os
-      // extremos batem no limite de raio, o clamp empilha vários no MESMO
-      // raio e eles voltam a se sobrepor — foi o que o João viu, com planetas
-      // encavalados e impossíveis de tocar. Quando o clamp mordeu, abre também
-      // em ângulo, que é espaço que o anel sempre tem.
-      if (n > 1 && Math.abs(rClamp - r) > 0.5) {
-        angulo[i + k] = withAngle[i + k].trueAngle + (k - (n - 1) / 2) * (glyphDeg * 0.85)
-      }
-    }
-    i = j + 1
-  }
-  return withAngle.map((w, idx) => {
-    const pos = polarToXY(cx, cy, radius[idx], angulo[idx])
-    return { ...(w.item as T), trueAngle: w.trueAngle, sx: pos.x, sy: pos.y, radius: radius[idx] }
-  })
-}
-
 /**
  * Caminho de um setor do anel (uma fatia de rosca), de `r1` a `r2`.
  *
@@ -688,17 +636,23 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               </SvgText>
             ))}
 
-            {/* Linhas de aspectos */}
+            {/* Fundo do miolo — ANTES das linhas, de propósito.
+                As linhas de aspecto ligam dois pontos da circunferência R_INNER
+                e por isso atravessam o miolo. Com o disco opaco desenhado
+                depois, elas eram calculadas, desenhadas e PINTADAS POR CIMA: a
+                roda nunca mostrou um aspecto sequer, e nada acusava porque o
+                desenho continua correto — só invisível. */}
+            <Circle cx={cx} cy={cy} r={R_INNER} fill="#0d1018" stroke="#252b38" strokeWidth={1} />
+
+            {/* Linhas de aspectos natais */}
             {aspectLines.map(l => l && (
               <Line key={l.key}
                 x1={l.pt1.x} y1={l.pt1.y}
                 x2={l.pt2.x} y2={l.pt2.y}
                 stroke={l.color} strokeWidth={l.largura}
+                strokeOpacity={0.9}
               />
             ))}
-
-            {/* Círculo interno (fundo aspectos) */}
-            <Circle cx={cx} cy={cy} r={R_INNER} fill="#0d1018" stroke="#252b38" strokeWidth={1} />
 
             {/* Bi-roda: só o anel de trânsito. As linhas de aspecto trânsito→natal
                 foram removidas (poluíam) — a leitura vive na grade/lista abaixo. */}
@@ -713,6 +667,27 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const p2 = polarToXY(cx, cy, R_PLANET + discNatal, a + 180)
               return <Line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#67E8F9" strokeWidth={1} strokeDasharray="4,4" strokeOpacity={0.45} />
             })()}
+
+            {/* Marca da longitude exata.
+                O glifo pode se afastar no RAIO quando há aglomerado, mas nunca
+                no ângulo. Este tracinho fica na borda interna das casas, na
+                longitude real — assim dá para conferir em que casa o planeta
+                está mesmo quando o glifo foi empurrado para dentro ou para
+                fora. Foi o que faltou quando a versão antiga abria em ângulo e
+                Júpiter parecia estar numa casa que não era a dele. */}
+            {planetPositions.map(p => {
+              const cor = PLANET_COLORS[p.name] || '#fff'
+              const de = polarToXY(cx, cy, R_HOUSE_IN, p.trueAngle)
+              const ate = polarToXY(cx, cy, R_HOUSE_IN - svgSize * 0.018, p.trueAngle)
+              return (
+                <Line
+                  key={`tick-${p.name}`}
+                  x1={de.x} y1={de.y} x2={ate.x} y2={ate.y}
+                  stroke={cor} strokeWidth={1.5} strokeOpacity={0.75}
+                  pointerEvents="none"
+                />
+              )
+            })}
 
             {/* Planetas natais (radial: mesmo ângulo, raios variados quando juntos) */}
             {planetPositions.map(p => {
