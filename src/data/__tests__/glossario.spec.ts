@@ -58,10 +58,30 @@ describe('glossário astrológico', () => {
     expect(ofensores, 'explicação de leigo não pode depender de outro jargão').toEqual([])
   })
 
-  it('termos longos vêm antes dos curtos (senão "casa" engole "meio do céu")', () => {
-    const idxCasa = TERMOS_ORDENADOS.indexOf('casa')
-    const idxMeio = TERMOS_ORDENADOS.indexOf('meio do ceu')
-    expect(idxMeio).toBeLessThan(idxCasa)
+  it('termos longos vêm antes dos curtos (senão o curto engole o composto)', () => {
+    // A alternância do regex casa o primeiro que bater: com "ceu" antes de
+    // "meio do ceu", o composto nunca seria realçado inteiro.
+    //
+    // Testa a PROPRIEDADE, não um par específico — o par que motivou o teste
+    // ("casa" × "meio do ceu") deixou de valer quando "casa" saiu do realce,
+    // e a invariante continua igualmente necessária para os que ficaram.
+    const fora: string[] = []
+    for (let i = 1; i < TERMOS_ORDENADOS.length; i++) {
+      if (TERMOS_ORDENADOS[i].length > TERMOS_ORDENADOS[i - 1].length) {
+        fora.push(`${TERMOS_ORDENADOS[i - 1]} antes de ${TERMOS_ORDENADOS[i]}`)
+      }
+    }
+    expect(fora, 'a lista precisa estar do mais longo para o mais curto').toEqual([])
+  })
+
+  it('termo marcado semRealce fica fora da lista, mas segue explicável', () => {
+    // "casa" e os nomes de aspecto saíram do realce por decisão de leitura
+    // (ver modoLeitura.spec). O glossário continua respondendo por eles.
+    for (const chave of Object.keys(GLOSSARIO)) {
+      if (!GLOSSARIO[chave].semRealce) continue
+      expect(TERMOS_ORDENADOS).not.toContain(chave)
+      expect(GLOSSARIO[chave].explicacao['pt-BR'], `${chave} perdeu a explicação`).toBeTruthy()
+    }
   })
 
   it('chaveTermo normaliza acento e caixa', () => {

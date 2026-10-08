@@ -102,3 +102,56 @@ export function enumerar(itens: ReadonlyArray<string>, e: string): string {
   if (lista.length === 1) return lista[0]
   return `${lista.slice(0, -1).join(', ')} ${e} ${lista[lista.length - 1]}`
 }
+
+/** Idiomas aceitos nas frases de janela. */
+export type IdiomaLeitura = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
+
+/**
+ * Quando o trânsito chega (ou chegou) ao ponto exato, em palavras.
+ *
+ * `formatPeakETA` existe e devolve "pico ha 6d" — forma compacta, pensada para
+ * caber num chip ao lado do título. No meio de um parágrafo ela não se lê: foi
+ * exatamente o que apareceu na tela ("— pico ha 6d.") e ninguém entendeu. Sem
+ * acento, abreviada e sem sujeito.
+ *
+ * Aqui a mesma informação vira frase. A função compacta continua valendo onde
+ * o espaço é apertado; esta serve ao texto corrido.
+ */
+export function janelaEmPalavras(
+  window: { start?: string | Date; exact?: string | Date } | null | undefined,
+  idioma: IdiomaLeitura = 'pt-BR',
+  agora: Date = new Date(),
+): string {
+  const alvo = window?.exact || window?.start
+  if (!alvo) return ''
+  const quando = new Date(alvo as any).getTime()
+  if (!Number.isFinite(quando)) return ''
+
+  const difMs = quando - agora.getTime()
+  const horas = Math.round(Math.abs(difMs) / (60 * 60 * 1000))
+  const dias = Math.round(Math.abs(difMs) / (24 * 60 * 60 * 1000))
+  const futuro = difMs >= 0
+
+  const tl = (pt: string, en: string, es: string, it: string) =>
+    idioma === 'en-US' ? en : idioma === 'es-ES' ? es : idioma === 'it-IT' ? it : pt
+
+  // Menos de seis horas de distância é "agora": a diferença não se sente, e
+  // "pico em 3 horas" dá uma precisão que o trânsito não tem.
+  if (horas < 6) return tl('no ponto exato agora', 'at its exact point now', 'en el punto exacto ahora', 'al punto esatto ora')
+
+  if (horas < 24) {
+    return futuro
+      ? tl('chega ao ponto exato ainda hoje', 'reaches its exact point later today', 'llega al punto exacto hoy mismo', 'arriva al punto esatto oggi stesso')
+      : tl('passou pelo ponto exato hoje', 'passed its exact point today', 'paso por el punto exacto hoy', 'e passato dal punto esatto oggi')
+  }
+
+  if (dias === 1) {
+    return futuro
+      ? tl('chega ao ponto exato amanhã', 'reaches its exact point tomorrow', 'llega al punto exacto manana', 'arriva al punto esatto domani')
+      : tl('passou pelo ponto exato ontem', 'passed its exact point yesterday', 'paso por el punto exacto ayer', 'e passato dal punto esatto ieri')
+  }
+
+  return futuro
+    ? tl(`chega ao ponto exato em ${dias} dias`, `reaches its exact point in ${dias} days`, `llega al punto exacto en ${dias} dias`, `arriva al punto esatto tra ${dias} giorni`)
+    : tl(`passou pelo ponto exato há ${dias} dias`, `passed its exact point ${dias} days ago`, `paso por el punto exacto hace ${dias} dias`, `e passato dal punto esatto ${dias} giorni fa`)
+}

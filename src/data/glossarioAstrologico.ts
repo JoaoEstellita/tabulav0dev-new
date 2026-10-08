@@ -166,7 +166,16 @@ export const GLOSSARIO: Record<string, TermoGlossario> = {
       'es-ES': 'Una de las 12 areas de la vida en el mapa: dinero, amor, trabajo, familia. Dice DONDE ocurre el asunto.',
       'it-IT': 'Una delle 12 aree della vita nel tema: denaro, amore, lavoro, famiglia. Dice DOVE accade la cosa.',
     },
-    simples: { 'pt-BR': 'área da vida', 'en-US': 'area of life', 'es-ES': 'area de vida', 'it-IT': 'area della vita' },
+    // NAO troca por "area da vida" e NAO vira link.
+    //
+    // Visto no aparelho: o texto do catalogo escreve "na area da sua Casa 2 —
+    // seus recursos", e a troca transformava isso em "na area da sua Area da
+    // vida 2", com sublinhado dourado em cima. Redundante, errado e ilegivel.
+    //
+    // "Casa 2" ja e claro no contexto, e quem nao souber acha a explicacao
+    // pelo termo em outros lugares. Substituir palavra dentro de frase pronta
+    // so funciona quando a frase nao depende dela — aqui dependia.
+    semRealce: true,
   },
   'meio do ceu': {
     explicacao: {

@@ -5,6 +5,7 @@ import {
   semAPrimeiraFrase,
   costurar,
   enumerar,
+  janelaEmPalavras,
 } from '../leituraDoDia'
 
 /**
@@ -98,5 +99,45 @@ describe('enumerar áreas', () => {
   it('um item sai sozinho; nenhum sai vazio', () => {
     expect(enumerar(['Amor'], 'e')).toBe('Amor')
     expect(enumerar([], 'e')).toBe('')
+  })
+})
+
+describe('janela em palavras', () => {
+  const base = new Date('2026-10-08T12:00:00Z')
+  const daqui = (ms: number) => ({ exact: new Date(base.getTime() + ms).toISOString() })
+  const H = 60 * 60 * 1000
+  const D = 24 * H
+
+  it('substitui a forma compacta ilegível', () => {
+    // "pico ha 6d" apareceu no meio de um parágrafo e ninguém entendeu: sem
+    // acento, abreviado e sem sujeito.
+    expect(janelaEmPalavras(daqui(-6 * D), 'pt-BR', base)).toBe('passou pelo ponto exato há 6 dias')
+    expect(janelaEmPalavras(daqui(3 * D), 'pt-BR', base)).toBe('chega ao ponto exato em 3 dias')
+  })
+
+  it('perto demais é "agora" — não finge precisão que o trânsito não tem', () => {
+    expect(janelaEmPalavras(daqui(2 * H), 'pt-BR', base)).toBe('no ponto exato agora')
+    expect(janelaEmPalavras(daqui(-2 * H), 'pt-BR', base)).toBe('no ponto exato agora')
+  })
+
+  it('hoje e amanhã têm palavra própria', () => {
+    expect(janelaEmPalavras(daqui(10 * H), 'pt-BR', base)).toBe('chega ao ponto exato ainda hoje')
+    expect(janelaEmPalavras(daqui(-10 * H), 'pt-BR', base)).toBe('passou pelo ponto exato hoje')
+    expect(janelaEmPalavras(daqui(1 * D), 'pt-BR', base)).toBe('chega ao ponto exato amanhã')
+    expect(janelaEmPalavras(daqui(-1 * D), 'pt-BR', base)).toBe('passou pelo ponto exato ontem')
+  })
+
+  it('fala os 4 idiomas, com es/it sem acento', () => {
+    const ACENTO = /[áàâãäéèêëíìîïóòôõöúùûüçñ]/i
+    for (const idioma of ['es-ES', 'it-IT'] as const) {
+      expect(ACENTO.test(janelaEmPalavras(daqui(3 * D), idioma, base))).toBe(false)
+    }
+    expect(janelaEmPalavras(daqui(3 * D), 'en-US', base)).toBe('reaches its exact point in 3 days')
+  })
+
+  it('sem janela não inventa texto', () => {
+    expect(janelaEmPalavras(null, 'pt-BR', base)).toBe('')
+    expect(janelaEmPalavras({}, 'pt-BR', base)).toBe('')
+    expect(janelaEmPalavras({ exact: 'não é data' }, 'pt-BR', base)).toBe('')
   })
 })

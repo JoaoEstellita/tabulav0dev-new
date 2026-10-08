@@ -68,7 +68,10 @@ describe('modo explicado — qualidade das trocas', () => {
   it('a troca existe para os termos que a merecem', () => {
     // Estes não têm símbolo ao lado nem nome usado em tabela: a palavra comum
     // ajuda sem desalinhar nada.
-    for (const t of ['orbe', 'casa', 'stellium']) {
+    // "casa" saiu daqui: o texto do catalogo escreve "na area da sua Casa 2",
+    // e a troca produzia "na area da sua Area da vida 2". Substituir palavra
+    // dentro de frase pronta so funciona quando a frase nao depende dela.
+    for (const t of ['orbe', 'stellium']) {
       expect(simplificarTermo(t, 'pt-BR'), `"${t}" precisa de versão em linguagem comum`).toBeTruthy()
     }
   })

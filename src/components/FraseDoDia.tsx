@@ -3,43 +3,36 @@ import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { areaLabelsForTransit } from '../utils/transitLifeAreas'
-import { getLifeAreaLabel } from '../constants/lifeAreas'
-import { aspectNature, getTransitState, formatPeakETA } from '../utils/astro/pt'
+import { aspectNature } from '../utils/astro/pt'
+import { buildTransitTitle } from '../utils/transitPresentation'
 import TextoComGlossario from './TextoComGlossario'
 import {
   temaDoTransito,
   primeiraFrase,
-  semAPrimeiraFrase,
   costurar,
   enumerar,
+  janelaEmPalavras,
+  type IdiomaLeitura,
 } from '../utils/leituraDoDia'
 
 /**
- * A leitura do dia.
+ * A leitura do dia: um aviso curto, e o resto a um toque.
  *
- * Cinco versões ficaram pelo caminho e cada uma ensinou uma coisa. As duas
- * primeiras diziam o óbvio ou nomeavam o aspecto; a terceira e a quarta
- * tentaram tornar palavras tocáveis — a terceira rolava a tela, a quarta abria
- * modais, e no aparelho os sublinhados pontilhados leram como corretor
- * ortográfico. A frase voltou a ser texto.
+ * Histórico curto das versões que não deram certo, porque cada uma marca um
+ * limite: dizer o óbvio ("hoje o dinheiro pede cuidado"), nomear o aspecto
+ * como se fosse conselho, tornar palavras tocáveis (duas tentativas — rolar a
+ * tela e abrir modal; no aparelho os sublinhados leram como corretor
+ * ortográfico), e por fim um resumo correto mas comprido demais, com template
+ * genérico no fim.
  *
- * O problema que sobrou era o pior: ela era GENÉRICA. Montava a abertura com
- * uma palavra-chave solta ("o dia pede foco") e fechava com `buildActionHint`,
- * um template de quatro variações — e, como recebia `areaLabel` nulo, caía no
- * ramo mais vago de todos: "observe sinais, registre decisões e execute um
- * próximo passo simples em área de vida". Uma frase que serve para qualquer
- * pessoa em qualquer dia, que é outra forma de dizer que não serve.
+ * O formato agora é: UMA frase no topo e o detalhe dentro do "Ler mais". O
+ * bloco mais nobre da Home não comporta cinco linhas — quem quer a passada
+ * geral lê uma linha e segue; quem quer entender abre.
  *
- * O material específico já existia e não estava sendo usado:
- *  - os títulos temáticos curados ("Prova de maturidade");
- *  - o texto curado do catálogo de interpretações, por par de planetas;
- *  - a janela real do trânsito (pico em 3 dias, se afastando);
- *  - a área de vida concreta, que agora é passada ao catálogo em vez de null.
- *
- * E a leitura passou a ter dois níveis: o resumo dá a passada geral e o "Ler
- * mais" abre o detalhe de cada trânsito. O expandido NÃO repete a abertura já
- * lida — mostra o resto do texto do principal e os trânsitos seguintes
- * inteiros.
+ * No detalhe, cada trânsito traz o ASPECTO e o texto curado dele. Sem ação
+ * prática: `buildActionHint` é um template de quatro variações e, repetido em
+ * quatro cards, deixa claro que é molde — "observe sinais, registre decisões e
+ * execute um próximo passo simples" não é conselho, é preenchimento.
  *
  * Fica em silêncio sem dado. Frase vaga ocupa o lugar mais nobre da tela sem
  * dizer nada que a pessoa não soubesse antes de abrir o app.
@@ -60,7 +53,7 @@ type TransitoRico = {
 
 interface Props {
   transitos?: TransitoRico[] | null
-  /** Pares [chave, área] — o status de hoje, que diz ONDE o trânsito pega. */
+  /** Pares [chave, área] — mantido para compatibilidade; o status tem cards próprios. */
   areas?: ReadonlyArray<readonly [string, any]>
 }
 
@@ -69,7 +62,7 @@ const MAX_DETALHES = 4
 
 const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength : 0)
 
-export default function FraseDoDia({ transitos, areas }: Props) {
+export default function FraseDoDia({ transitos }: Props) {
   const { language } = useAppLanguage()
   const [aberto, setAberto] = useState(false)
   const tl = (pt: string, en: string, es: string, it: string) =>
@@ -81,112 +74,62 @@ export default function FraseDoDia({ transitos, areas }: Props) {
 
     const ordenados = [...lista].sort((a, b) => forca(b) - forca(a))
     const principal = ordenados[0]
+    const idioma = (language as IdiomaLeitura) || 'pt-BR'
 
-    /** Áreas de vida que o trânsito toca, em rótulo legível. */
     const areasDe = (t: TransitoRico) => areaLabelsForTransit(t.transitPlanet, t.natalPlanet, t.house)
 
     /**
      * A narrativa do catálogo, com a ÁREA REAL.
      *
-     * Passar null aqui era o que fazia o texto de ação cair no ramo genérico e
-     * escrever literalmente "em área de vida".
+     * Passar null aqui fazia o catálogo cair no ramo genérico e escrever
+     * literalmente "em área de vida".
      */
     const narrar = (t: TransitoRico) =>
       buildUnifiedTransitNarrative(t as any, areasDe(t)[0] || null, language)
 
-    /** "pico em 3 dias", "agora", "se afastando" — o quando, que é específico. */
-    const quando = (t: TransitoRico): string => {
-      const estado = getTransitState(t.window || undefined)
-      const eta = formatPeakETA(t.window || undefined)
-      if (estado === 'agora') return tl('no pico agora', 'peaking now', 'en el pico ahora', 'al picco ora')
-      return eta || ''
-    }
-
-    const nPrincipal = narrar(principal)
-    const temaPrincipal = temaDoTransito(
+    // ── O AVISO: uma frase ─────────────────────────────────────────────────
+    const tema = temaDoTransito(
       String(principal.transitPlanet), String(principal.type), String(principal.natalPlanet), language,
     )
-    const curadoPrincipal = String(nPrincipal?.modalBody || nPrincipal?.shortText || '').trim()
-
-    // ── RESUMO: a passada geral ────────────────────────────────────────────
-    const partes: string[] = []
-
-    // 1) O que pesa hoje, com nome próprio e tempo. O tema curado é o que troca
-    //    "o dia pede foco" por "Prova de maturidade".
-    const q = quando(principal)
-    if (temaPrincipal) {
-      partes.push(costurar(
-        tl('Hoje o que mais pesa é', 'What weighs most today is', 'Lo que mas pesa hoy es', 'Cio che pesa di piu oggi e'),
-        `${temaPrincipal}${q ? ` — ${q}` : ''}.`,
-      ))
-    }
-
-    // 2) O que isso significa — primeira frase do texto curado daquele par.
-    //    Fora do pt-BR não há tema, então esta vira a abertura.
-    const abertura = primeiraFrase(curadoPrincipal)
-    if (abertura) partes.push(abertura)
-
-    // 3) Onde pega.
     const focos = areasDe(principal).slice(0, 2)
-    if (focos.length) {
-      partes.push(costurar(
-        tl('Pega mais em', 'It lands mostly on', 'Toca sobre todo', 'Tocca soprattutto'),
-        `${enumerar(focos, tl('e', 'and', 'y', 'e'))}.`,
-      ))
-    }
+    const ondePega = focos.length
+      ? costurar(tl('mexe em', 'it stirs', 'mueve', 'muove'), enumerar(focos, tl('e', 'and', 'y', 'e')))
+      : ''
 
-    // 4) O status: a outra metade da leitura. Diz onde a pessoa está hoje, não
-    //    só o que o céu faz.
-    const porStatus = (areas || [])
-      .map(([chave, v]) => ({
-        chave: String(chave),
-        pct: typeof v?.percentage === 'number' ? v.percentage : (typeof v?.status === 'number' ? v.status : NaN),
-      }))
-      .filter((x) => Number.isFinite(x.pct))
-      .sort((x, y) => x.pct - y.pct)
+    // Com tema (pt-BR) a frase é curta e concreta. Sem tema, a primeira frase
+    // do texto curado faz o papel — nunca um molde.
+    const nPrincipal = narrar(principal)
+    const curado = String(nPrincipal?.modalBody || nPrincipal?.shortText || '').trim()
 
-    if (porStatus.length >= 2) {
-      const pior = getLifeAreaLabel(porStatus[0].chave)
-      const melhor = getLifeAreaLabel(porStatus[porStatus.length - 1].chave)
-      // Só vale dizer se forem áreas diferentes do foco — senão repete.
-      partes.push(costurar(
-        tl('Nos seus números,', 'In your numbers,', 'En tus numeros,', 'Nei tuoi numeri,'),
-        tl(`${pior} é a que mais pede cuidado e ${melhor} é onde há folga.`,
-           `${pior} asks for most care and ${melhor} is where there is room.`,
-           `${pior} es la que mas pide cuidado y ${melhor} es donde hay holgura.`,
-           `${pior} e quella che chiede piu cura e ${melhor} e dove c e respiro.`),
-      ))
-    }
+    const aviso = tema
+      ? costurar(
+          tl('Hoje o que mais pesa é', 'What weighs most today is', 'Lo que mas pesa hoy es', 'Cio che pesa di piu oggi e'),
+          ondePega ? `${tema} — ${ondePega}.` : `${tema}.`,
+        )
+      : costurar(primeiraFrase(curado), ondePega ? `${ondePega.charAt(0).toUpperCase()}${ondePega.slice(1)}.` : '')
 
-    const resumo = costurar(...partes)
-    if (!resumo) return null
+    if (!aviso) return null
 
-    // ── DETALHE: o "Ler mais" ──────────────────────────────────────────────
-    //
-    // O principal entra SEM a frase já lida no resumo; os seguintes, inteiros.
-    // Repetir a abertura logo abaixo faz o bloco expandido parecer que não
-    // acrescenta nada.
-    const detalhes = ordenados.slice(0, MAX_DETALHES).map((t, i) => {
+    // ── O DETALHE: aspecto e texto, nada mais ──────────────────────────────
+    const detalhes = ordenados.slice(0, MAX_DETALHES).map((t) => {
       const n = narrar(t)
-      const completo = String(n?.modalBody || n?.shortText || '').trim()
-      const corpo = i === 0 ? semAPrimeiraFrase(completo) : completo
-      const tema = temaDoTransito(String(t.transitPlanet), String(t.type), String(t.natalPlanet), language)
-      const area = areasDe(t).slice(0, 3)
+      const corpo = String(n?.modalBody || n?.shortText || '').trim()
       return {
         chave: `${t.transitPlanet}|${t.type}|${t.natalPlanet}`,
-        tema,
-        quando: quando(t),
-        forca: typeof t.strength === 'number' ? Math.round(t.strength) : null,
+        // O ASPECTO em si — é o que identifica o trânsito sem rodeio.
+        aspecto: buildTransitTitle(
+          { transitPlanet: t.transitPlanet, aspectLabel: t.type, targetLabel: t.natalPlanet },
+          language as any,
+        ),
+        quando: janelaEmPalavras(t.window, idioma),
         casa: typeof t.house === 'number' && t.house > 0 ? t.house : null,
-        areas: area,
         corpo,
-        acao: i === 0 ? String(n?.actionText || '').trim() : '',
         natureza: aspectNature(String(t.type)),
       }
-    }).filter((d) => d.corpo || d.tema)
+    }).filter((d) => d.corpo)
 
-    return { resumo, detalhes }
-  }, [transitos, areas, language])
+    return { aviso, detalhes }
+  }, [transitos, language])
 
   if (!leitura) return null
 
@@ -195,12 +138,10 @@ export default function FraseDoDia({ transitos, areas }: Props) {
     setAberto((v) => !v)
   }
 
-  const temDetalhe = leitura.detalhes.length > 0
-
   return (
     <View style={s.caixa}>
       <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
-      <TextoComGlossario style={s.texto}>{leitura.resumo}</TextoComGlossario>
+      <TextoComGlossario style={s.texto}>{leitura.aviso}</TextoComGlossario>
 
       {aberto ? (
         <View style={s.detalhe}>
@@ -208,34 +149,26 @@ export default function FraseDoDia({ transitos, areas }: Props) {
             <View key={d.chave} style={s.item}>
               <View style={s.itemTopo}>
                 <View style={[s.pino, d.natureza === 'desafiador' ? s.pinoTenso : d.natureza === 'harmonico' ? s.pinoBom : s.pinoNeutro]} />
-                <Text style={s.itemTitulo}>{d.tema || ''}</Text>
+                <Text style={s.itemTitulo}>{d.aspecto}</Text>
               </View>
 
-              {/* A linha técnica fica pequena e abaixo do tema: quem só quer a
-                  leitura ignora, quem estuda procura exatamente isto. */}
-              <Text style={s.itemMeta}>
-                {[
-                  d.quando,
-                  d.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${d.casa}` : '',
-                  d.forca != null ? `${tl('impacto', 'impact', 'impacto', 'impatto')} ${d.forca}%` : '',
-                ].filter(Boolean).join('  ·  ')}
-              </Text>
-
-              {d.corpo ? <TextoComGlossario style={s.itemTexto}>{d.corpo}</TextoComGlossario> : null}
-
-              {d.areas.length ? (
-                <Text style={s.itemAreas}>
-                  {tl('Afeta', 'Affects', 'Afecta', 'Tocca')}: {d.areas.join(' · ')}
+              {/* Quando chega ao ponto exato, em palavras. A forma compacta
+                  ("pico ha 6d") cabe num chip, mas no meio do texto não se lê. */}
+              {d.quando || d.casa ? (
+                <Text style={s.itemMeta}>
+                  {[d.quando, d.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${d.casa}` : '']
+                    .filter(Boolean)
+                    .join('  ·  ')}
                 </Text>
               ) : null}
 
-              {d.acao ? <Text style={s.itemAcao}>{d.acao}</Text> : null}
+              <TextoComGlossario style={s.itemTexto}>{d.corpo}</TextoComGlossario>
             </View>
           ))}
         </View>
       ) : null}
 
-      {temDetalhe ? (
+      {leitura.detalhes.length ? (
         <Pressable onPress={alternar} style={s.botao} accessibilityRole="button">
           <Text style={s.botaoTexto}>
             {aberto
@@ -270,9 +203,9 @@ const s = StyleSheet.create({
   },
   texto: { color: '#edf0f6', fontSize: 16, lineHeight: 25 },
 
-  detalhe: { marginTop: 16 },
+  detalhe: { marginTop: 14 },
   item: {
-    marginBottom: 18,
+    marginBottom: 16,
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
@@ -286,13 +219,7 @@ const s = StyleSheet.create({
   itemTitulo: { color: '#FFD700', fontSize: 15.5, fontWeight: '700', flex: 1 },
   itemMeta: { color: '#8d94a8', fontSize: 14, marginBottom: 7 },
   itemTexto: { color: '#dde2ee', fontSize: 15, lineHeight: 23 },
-  itemAreas: { color: '#9aa2bb', fontSize: 14, marginTop: 7 },
-  itemAcao: { color: '#c9cfe2', fontSize: 15, lineHeight: 22, marginTop: 8, fontStyle: 'italic' },
 
-  botao: {
-    marginTop: 4,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
+  botao: { marginTop: 4, paddingVertical: 10, alignItems: 'center' },
   botaoTexto: { color: '#FFD700', fontSize: 14.5, fontWeight: '700' },
 })
