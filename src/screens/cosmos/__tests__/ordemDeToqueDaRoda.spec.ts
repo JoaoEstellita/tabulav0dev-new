@@ -174,3 +174,39 @@ describe('anti-colisão: a roda usa o módulo testado', () => {
     expect(FONTE).not.toMatch(/glyphDeg \* 0\.85/)
   })
 })
+
+describe('girar a roda', () => {
+  it('é gesto de DOIS dedos', () => {
+    // A roda vive num ScrollView vertical e tem área tocável em quase toda a
+    // superfície. Um gesto de um dedo (Pan) brigaria com a rolagem e com os
+    // toques de signo, casa e planeta.
+    expect(FONTE).toContain('Gesture.Rotation()')
+    expect(FONTE, 'Pan é de um dedo e roubaria a rolagem').not.toContain('Gesture.Pan()')
+  })
+
+  it('gira a REFERÊNCIA, não a imagem', () => {
+    // Girar o desenho inteiro deixaria os glifos de cabeça para baixo, que é
+    // justamente o que torna um mapa ilegível. O giro entra no Ascendente de
+    // referência, e os símbolos continuam de pé.
+    expect(FONTE).toContain('const ascDeg = ascDegBase + giro')
+    expect(FONTE, 'rotação por transform viraria os glifos')
+      .not.toMatch(/<G[^>]*transform=\{`rotate/)
+  })
+
+  it('o rótulo ASC acompanha o giro', () => {
+    // Era `polarToXY(cx, cy, R_HOUSE_OUT + 10, 180)` — fixo. Com a roda girada,
+    // a etiqueta apontaria um ponto que não é o Ascendente: a roda mentiria
+    // sobre o ângulo mais importante dela. Derivar da longitude real mantém a
+    // marca presa ao ponto certo por construção.
+    expect(FONTE).toContain('lonToSvgAngle(ascDegBase, ascDeg)')
+    expect(FONTE, 'nenhum ângulo pode ficar fixo em 180 agora que a roda gira')
+      .not.toMatch(/polarToXY\(cx, cy, [^,]+, 180\)/)
+  })
+
+  it('há como desfazer o giro', () => {
+    // Dois dedos acontecem sem querer. Uma roda torta sem botão de voltar vira
+    // "o app quebrou".
+    expect(FONTE).toContain('setGiro(0)')
+    expect(FONTE).toMatch(/Endireitar a roda/)
+  })
+})

@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { Ionicons } from '@expo/vector-icons'
 import Svg, { Circle, Line, Path, Text as SvgText, G, Defs, RadialGradient, Stop } from 'react-native-svg'
 import { getSignMeaning, getHouseMeaning, type SignificadoRoda } from '../../data/signHouseMeaning'
@@ -71,6 +72,22 @@ const PLANET_COLORS: Record<string, string> = {
   NorthNode: '#67E8F9', SouthNode: '#94A3B8',
 }
 const ZODIAC_SYMBOLS = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']
+
+/**
+ * Identidade visual dos planetas na roda.
+ *
+ * Sol e Lua mandam no mapa e precisam ser achados de relance; os lentos são os
+ * que marcam época e merecem peso. Com todos os discos iguais, a roda vira um
+ * punhado de bolinhas coloridas e a hierarquia — que é informação — se perde.
+ *
+ * A diferença é de PESO, não de forma: um halo maior nos luminares e um anel a
+ * mais nos lentos. Trocar o glifo por ilustração seria pior — em 22px nenhuma
+ * figura se reconhece, metade dos pontos (nódulos, ASC, MC) não tem figura
+ * nenhuma, e o símbolo é o alfabeto do campo: quem aprende ♄ aqui lê qualquer
+ * mapa em qualquer lugar.
+ */
+const LUMINARES = new Set(['Sun', 'Moon'])
+const PLANETAS_LENTOS = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'])
 
 // Aspecto (em PT) entre duas longitudes, dentro do orbe — usado p/ os nódulos.
 const SIGNS_PT = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
@@ -262,6 +279,13 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       body,
     })
   }, [language])
+  // Prefixo dos ids de <Defs>.
+  //
+  // Id de SVG é global no documento: duas rodas na mesma tela (Home e um perfil
+  // embutido, por exemplo) compartilhariam o gradiente, e a segunda sobrescreve
+  // a primeira em silêncio. `useId` dá um prefixo estável por instância; os
+  // dois-pontos que ele usa não são válidos em id de SVG.
+  const idSvg = React.useId().replace(/[^a-zA-Z0-9]/g, '')
   const { width } = useWindowDimensions()
 
   // O planeta tocado vem com a ORIGEM. Natal e trânsito eram o mesmo estado, e o
@@ -307,7 +331,30 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
 
   const ct = transitData?.currentTransits
   const natalPlanets: RealPlanetPosition[] = ct?.natalPlanets ?? []
-  const ascDeg = firestoreAscDeg ?? ct?.natalAscendant ?? 0
+  // ── Girar a roda ────────────────────────────────────────────────────────
+  //
+  // DOIS DEDOS de propósito. A roda vive dentro de um ScrollView vertical e tem
+  // área tocável em quase toda a superfície (signo, casa, planeta); um gesto de
+  // um dedo brigaria com a rolagem e com esses toques. Com dois dedos, o toque
+  // simples continua intacto.
+  //
+  // A rotação NÃO gira a imagem: desloca o Ascendente usado como referência.
+  // Assim os glifos continuam de pé e legíveis em qualquer ângulo — girar o
+  // desenho inteiro deixaria os símbolos de cabeça para baixo, que é justamente
+  // o que torna um mapa ilegível.
+  const [giro, setGiro] = useState(0)
+  const giroBase = React.useRef(0)
+  const ascDegBase = firestoreAscDeg ?? ct?.natalAscendant ?? 0
+  const ascDeg = ascDegBase + giro
+
+  const gestoGirar = useMemo(
+    () =>
+      Gesture.Rotation()
+        .onBegin(() => { giroBase.current = giro })
+        .onUpdate((e) => setGiro(giroBase.current + (e.rotation * 180) / Math.PI))
+        .runOnJS(true),
+    [giro],
+  )
   const mcDeg = ct?.natalMidheaven ?? 0
   const houseCusps: number[] = firestoreCusps ?? ct?.natalHouses ?? []
   const aspects = ct?.aspectsNatalToNatal ?? []
@@ -425,6 +472,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     [natalWheelPoints, ascDeg, cx, cy, R_PLANET, R_INNER, R_HOUSE_IN, discNatal, stepNatal, glyphDegNatal],
   )
 
+  /** Nomes que aparecem no desenho — um gradiente para cada. */
+  const planetasNaRoda = useMemo(
+    () => [...new Set([...natalWheelPoints, ...transitWheelPoints].map((p) => p.name))],
+    [natalWheelPoints, transitWheelPoints],
+  )
+
   const transitPositions = useMemo(
     () => (showTransits ? declutterRing(transitWheelPoints, ascDeg, cx, cy, R_TRANSIT, R_OUTER + discTransit + 2, svgSize * 0.485 - discTransit, stepTransit, glyphDegTransit) : []),
     [showTransits, transitWheelPoints, ascDeg, cx, cy, R_TRANSIT, R_OUTER, discTransit, stepTransit, glyphDegTransit, svgSize],
@@ -528,20 +581,32 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     <>
       {/* Roda SVG */}
         <View style={styles.wheelWrap}>
+          <GestureDetector gesture={gestoGirar}>
           <Svg width={svgSize} height={svgSize}>
             <Defs>
               {/* Céu profundo: clareia um pouco no centro e escurece na borda.
                   Dá volume ao disco sem nenhuma sombra falsa — a roda deixa de
                   ser um recorte chapado e passa a parecer uma abertura. */}
-              <RadialGradient id="ceuProfundo" cx="50%" cy="50%" r="50%">
+              <RadialGradient id={`ceu-${idSvg}`} cx="50%" cy="50%" r="50%">
                 <Stop offset="0%" stopColor="#171c2b" />
                 <Stop offset="62%" stopColor="#11141f" />
                 <Stop offset="100%" stopColor="#0b0d15" />
               </RadialGradient>
+
+              {/* Um gradiente por planeta: o disco deixa de ser chapado e ganha
+                  volume, com a luz vindo sempre do mesmo canto. É o que faz a
+                  roda parecer desenhada em vez de montada. */}
+              {planetasNaRoda.map((nome) => (
+                <RadialGradient key={`g-${nome}`} id={`p-${idSvg}-${nome}`} cx="35%" cy="30%" r="75%">
+                  <Stop offset="0%" stopColor={PLANET_COLORS[nome] || '#fff'} stopOpacity={0.45} />
+                  <Stop offset="55%" stopColor="#1a1f2e" stopOpacity={1} />
+                  <Stop offset="100%" stopColor="#101420" stopOpacity={1} />
+                </RadialGradient>
+              ))}
             </Defs>
 
             {/* Fundo */}
-            <Circle cx={cx} cy={cy} r={R_OUTER} fill="url(#ceuProfundo)" stroke="#2a3246" strokeWidth={1} />
+            <Circle cx={cx} cy={cy} r={R_OUTER} fill={`url(#ceu-${idSvg})`} stroke="#2a3246" strokeWidth={1} />
             {campoDeEstrelas.map((e, i) => (
               <Circle key={`st-${i}`} cx={e.x} cy={e.y} r={e.r} fill="#FFFFFF" fillOpacity={e.o} />
             ))}
@@ -697,9 +762,32 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   {/* Halo da cor do planeta: separa o disco do fundo e dá ao anel
                       dos planetas o peso visual que ele merece — é o protagonista
                       da roda, mas antes competia de igual para igual com o
-                      zodíaco e as casas. Alfa baixo: destaca sem virar enfeite. */}
-                  <Circle cx={p.sx} cy={p.sy} r={discNatal * 1.55} fill={color} fillOpacity={0.1} />
-                  <Circle cx={p.sx} cy={p.sy} r={discNatal} fill="#161a22" stroke={color} strokeWidth={1.4} />
+                      zodíaco e as casas. Alfa baixo: destaca sem virar enfeite.
+
+                      Sol e Lua ganham um halo maior: eles mandam no mapa e
+                      precisam ser achados de relance, sem que a pessoa tenha de
+                      caçar o glifo entre dez bolinhas do mesmo tamanho. */}
+                  <Circle
+                    cx={p.sx} cy={p.sy}
+                    r={discNatal * (LUMINARES.has(p.name) ? 1.95 : 1.55)}
+                    fill={color}
+                    fillOpacity={LUMINARES.has(p.name) ? 0.17 : 0.1}
+                  />
+
+                  {/* Anel a mais nos lentos: são os que marcam época, e o peso
+                      visual acompanha o peso da leitura. */}
+                  {PLANETAS_LENTOS.has(p.name) ? (
+                    <Circle
+                      cx={p.sx} cy={p.sy} r={discNatal * 1.3}
+                      fill="none" stroke={color} strokeOpacity={0.4} strokeWidth={1}
+                    />
+                  ) : null}
+
+                  <Circle
+                    cx={p.sx} cy={p.sy} r={discNatal}
+                    fill={`url(#p-${idSvg}-${p.name})`}
+                    stroke={color} strokeWidth={1.4}
+                  />
                   <SvgText x={p.sx} y={p.sy}
                     fontSize={px(discNatal * 1.5)}
                     textAnchor="middle"
@@ -708,15 +796,26 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   >
                     {PLANET_SYMBOLS[p.name] || '●'}
                   </SvgText>
+                  {/* Retrógrado: o ℞ solto sobre o anel sumia no fundo. Um
+                      disquinho atrás dele garante contraste em qualquer lugar
+                      da roda — e retrógrado muda a leitura, não é detalhe. */}
                   {p.isRetrograde && (
-                    <SvgText
-                      x={p.sx + discNatal * 0.85}
-                      y={p.sy - discNatal * 0.85}
-                      fontSize={px(discNatal * 0.9)}
-                      fill="#f87171"
-                    >
-                      ℞
-                    </SvgText>
+                    <>
+                      <Circle
+                        cx={p.sx + discNatal * 0.95} cy={p.sy - discNatal * 0.95}
+                        r={discNatal * 0.6} fill="#1a1016" stroke="#f87171" strokeWidth={1}
+                      />
+                      <SvgText
+                        x={p.sx + discNatal * 0.95}
+                        y={p.sy - discNatal * 0.95}
+                        fontSize={px(discNatal * 0.85)}
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                        fill="#f87171"
+                      >
+                        ℞
+                      </SvgText>
+                    </>
                   )}
                 </G>
               )
@@ -727,7 +826,16 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const color = PLANET_COLORS[p.name] || '#6EE7E7'
               return (
                 <G key={`t-${p.name}`} onPress={() => abrirPlaneta(p, 'transito')}>
-                  <Circle cx={p.sx} cy={p.sy} r={discTransit} fill="#0e2222" stroke={color} strokeWidth={1} />
+                  {/* Halo discreto: o anel de trânsito fica na borda, sobre o
+                      fundo mais escuro, e sem nenhuma separação o glifo some.
+                      Menos marcado que o natal de propósito — o mapa de
+                      nascimento é o protagonista; o céu de hoje passa. */}
+                  <Circle cx={p.sx} cy={p.sy} r={discTransit * 1.45} fill={color} fillOpacity={0.09} />
+                  <Circle
+                    cx={p.sx} cy={p.sy} r={discTransit}
+                    fill={`url(#p-${idSvg}-${p.name})`}
+                    stroke={color} strokeWidth={1}
+                  />
                   <SvgText x={p.sx} y={p.sy}
                     fontSize={px(discTransit * 1.5)}
                     textAnchor="middle"
@@ -737,7 +845,20 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                     {PLANET_SYMBOLS[p.name] || '●'}
                   </SvgText>
                   {p.isRetrograde ? (
-                    <SvgText x={p.sx + discTransit * 0.85} y={p.sy - discTransit * 0.85} fontSize={px(discTransit * 0.9)} fill="#f87171">℞</SvgText>
+                    <>
+                      <Circle
+                        cx={p.sx + discTransit * 0.95} cy={p.sy - discTransit * 0.95}
+                        r={discTransit * 0.6} fill="#1a1016" stroke="#f87171" strokeWidth={1}
+                      />
+                      <SvgText
+                        x={p.sx + discTransit * 0.95} y={p.sy - discTransit * 0.95}
+                        fontSize={px(discTransit * 0.85)}
+                        textAnchor="middle" alignmentBaseline="middle"
+                        fill="#f87171"
+                      >
+                        ℞
+                      </SvgText>
+                    </>
                   ) : null}
                 </G>
               )
@@ -745,7 +866,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
 
             {/* ASC label */}
             {(() => {
-              const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, 180)
+              // O ASC fica a 180° quando a roda está na posição original. Com a
+              // roda girada, deixá-lo fixo ali faria a etiqueta apontar para um
+              // ponto que não é o Ascendente — a roda mentiria de novo, agora
+              // sobre o ângulo mais importante dela. Derivar da longitude real
+              // mantém a marca presa ao ponto certo por construção.
+              const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, lonToSvgAngle(ascDegBase, ascDeg))
               return (
                 <SvgText x={x} y={y} fontSize={px(svgSize * 0.03)} textAnchor="middle"
                   alignmentBaseline="middle" fill="#FFD700" fontWeight="bold"
@@ -773,7 +899,26 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               </G>
             ))}
           </Svg>
+          </GestureDetector>
         </View>
+
+        {/* Voltar ao normal.
+            Só aparece com a roda girada: um estado que a pessoa criou sem
+            querer (dois dedos acontecem) e que ela precisa saber desfazer. Sem
+            isto, uma roda torta vira "o app quebrou". */}
+        {Math.abs(giro) > 0.5 ? (
+          <TouchableOpacity
+            style={styles.voltarAoNormal}
+            onPress={() => setGiro(0)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+          >
+            <Ionicons name="refresh" size={14} color="#FFD700" />
+            <Text style={styles.voltarAoNormalTexto}>
+              {tl('Endireitar a roda', 'Straighten the wheel', 'Enderezar la rueda', 'Raddrizza la ruota')}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {!mostrarGrade ? null : showTransits ? (
@@ -1289,6 +1434,21 @@ const styles = StyleSheet.create({
   // Selo de origem. Cor diferente por leitura: dourado = o mapa dela (fixo),
   // ciano = o ceu de hoje (passa). A mesma dupla de cores que a roda usa nos
   // dois aneis, para o modal confirmar visualmente de onde veio o toque.
+  voltarAoNormal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 6,
+    marginTop: 2,
+    marginBottom: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.35)',
+    backgroundColor: 'rgba(255,215,0,0.07)',
+  },
+  voltarAoNormalTexto: { color: '#FFD700', fontSize: 14, fontWeight: '700' },
   selo: {
     fontSize: 11, textTransform: 'uppercase',
     letterSpacing: 1.4,
