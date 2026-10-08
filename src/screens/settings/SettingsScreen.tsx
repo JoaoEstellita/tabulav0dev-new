@@ -2,7 +2,6 @@
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 import { useModoLeitura } from '../../hooks/useModoLeitura';
-import { useAmbiente } from '../../hooks/useAmbiente';
 import {
   View,
   Text,
@@ -104,7 +103,6 @@ const bundleInfo = (() => {
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
   const { explicado: leituraExplicada, trocar: trocarModoLeitura } = useModoLeitura();
-  const { leve: ambienteLeve, trocar: trocarAmbiente } = useAmbiente();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const { language, languages, setLanguage, t } = useAppLanguage();
   const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
@@ -288,21 +286,6 @@ export default function SettingsScreen() {
           type: 'toggle',
           value: leituraExplicada,
           onToggle: (v: boolean) => trocarModoLeitura(v ? 'explicado' : 'tecnico'),
-        },
-        {
-          // Eixo SEPARADO da linguagem: um decide as palavras, o outro decide
-          // quanto aparece. O controle principal fica na propria Home (um modo
-          // que esconde coisa precisa deixar obvio como mostrar de novo); aqui
-          // fica a copia para quem procura ajuste em Configuracoes.
-          id: 'ambiente',
-          title: tr('settings.item.ambiente.title', 'Tela essencial'),
-          subtitle: ambienteLeve
-            ? tr('settings.item.ambiente.on', 'A Home mostra a roda, a leitura do dia e as 3 áreas que mais pedem atenção. O resto fica a um toque.')
-            : tr('settings.item.ambiente.off', 'A Home mostra tudo: grade de aspectos, fita de planetas, as 8 áreas e o céu coletivo.'),
-          icon: 'layers-outline',
-          type: 'toggle',
-          value: ambienteLeve,
-          onToggle: (v: boolean) => trocarAmbiente(v ? 'leve' : 'completo'),
         },
         {
           id: 'app_version',

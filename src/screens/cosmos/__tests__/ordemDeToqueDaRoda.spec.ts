@@ -170,38 +170,34 @@ describe('anti-colisão: a roda usa o módulo testado', () => {
   })
 })
 
-describe('girar a roda', () => {
-  it('é gesto de DOIS dedos', () => {
-    // A roda vive num ScrollView vertical e tem área tocável em quase toda a
-    // superfície. Um gesto de um dedo (Pan) brigaria com a rolagem e com os
-    // toques de signo, casa e planeta.
-    expect(FONTE).toContain('Gesture.Rotation()')
-    expect(FONTE, 'Pan é de um dedo e roubaria a rolagem').not.toContain('Gesture.Pan()')
+describe('a roda não pode roubar a rolagem da tela', () => {
+  /**
+   * A roda teve rotação de dois dedos, e ela custou a rolagem: o
+   * `GestureDetector` envolve o SVG inteiro e passou a segurar o arrasto
+   * vertical. Com a roda em 440px, quase todo deslize da Home começa sobre ela
+   * — então arrastar para baixo simplesmente não funcionava.
+   *
+   * Rolar a página é essencial; girar o mapa é enfeite. O gesto saiu.
+   *
+   * Isto aqui existe porque a ideia de "deixar a roda interativa" volta sempre,
+   * e o custo não é óbvio: o gesto funciona na demonstração e quebra a tela
+   * inteira no uso real.
+   */
+  it('não há GestureDetector em volta do desenho', () => {
+    expect(FONTE, 'o detector segura o arrasto vertical').not.toContain('<GestureDetector')
+    expect(FONTE).not.toContain("from 'react-native-gesture-handler'")
   })
 
-  it('gira a REFERÊNCIA, não a imagem', () => {
-    // Girar o desenho inteiro deixaria os glifos de cabeça para baixo, que é
-    // justamente o que torna um mapa ilegível. O giro entra no Ascendente de
-    // referência, e os símbolos continuam de pé.
-    expect(FONTE).toContain('const ascDeg = ascDegBase + giro')
-    expect(FONTE, 'rotação por transform viraria os glifos')
-      .not.toMatch(/<G[^>]*transform=\{`rotate/)
+  it('nenhum gesto contínuo compete com a rolagem', () => {
+    // Pan e Rotation são os que disputam o arrasto. Um toque simples (onPress)
+    // não disputa — por isso signo, casa e planeta continuam tocáveis.
+    expect(FONTE).not.toMatch(/Gesture\.(Pan|Rotation|Pinch|Fling)\(/)
   })
 
-  it('o rótulo ASC acompanha o giro', () => {
-    // Era `polarToXY(cx, cy, R_HOUSE_OUT + 10, 180)` — fixo. Com a roda girada,
-    // a etiqueta apontaria um ponto que não é o Ascendente: a roda mentiria
-    // sobre o ângulo mais importante dela. Derivar da longitude real mantém a
-    // marca presa ao ponto certo por construção.
-    expect(FONTE).toContain('lonToSvgAngle(ascDegBase, ascDeg)')
-    expect(FONTE, 'nenhum ângulo pode ficar fixo em 180 agora que a roda gira')
-      .not.toMatch(/polarToXY\(cx, cy, [^,]+, 180\)/)
-  })
-
-  it('há como desfazer o giro', () => {
-    // Dois dedos acontecem sem querer. Uma roda torta sem botão de voltar vira
-    // "o app quebrou".
-    expect(FONTE).toContain('setGiro(0)')
-    expect(FONTE).toMatch(/Endireitar a roda/)
+  it('o rótulo ASC continua derivado da longitude, não fixo', () => {
+    // Mesmo sem giro: ângulo fixo é a porta de entrada para a roda mentir, e
+    // custa nada manter a marca presa ao ponto real.
+    expect(FONTE).toContain('lonToSvgAngle(ascDeg, ascDeg)')
+    expect(FONTE).not.toMatch(/polarToXY\(cx, cy, [^,]+, 180\)/)
   })
 })

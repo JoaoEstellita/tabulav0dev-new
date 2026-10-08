@@ -10,7 +10,6 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { Ionicons } from '@expo/vector-icons'
 import Svg, { Circle, Line, Path, Text as SvgText, G, Defs, RadialGradient, Stop } from 'react-native-svg'
 import { getSignMeaning, getHouseMeaning, type SignificadoRoda } from '../../data/signHouseMeaning'
@@ -332,30 +331,17 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
 
   const ct = transitData?.currentTransits
   const natalPlanets: RealPlanetPosition[] = ct?.natalPlanets ?? []
-  // ── Girar a roda ────────────────────────────────────────────────────────
+  // A roda NÃO gira por gesto.
   //
-  // DOIS DEDOS de propósito. A roda vive dentro de um ScrollView vertical e tem
-  // área tocável em quase toda a superfície (signo, casa, planeta); um gesto de
-  // um dedo brigaria com a rolagem e com esses toques. Com dois dedos, o toque
-  // simples continua intacto.
+  // Tinha rotação de dois dedos, e ela custou a rolagem da tela: o
+  // `GestureDetector` envolve o SVG inteiro e passou a segurar o arrasto
+  // vertical — com a roda em 440px, quase todo deslize da Home começa sobre
+  // ela. Rolar a página é essencial; girar o mapa é enfeite.
   //
-  // A rotação NÃO gira a imagem: desloca o Ascendente usado como referência.
-  // Assim os glifos continuam de pé e legíveis em qualquer ângulo — girar o
-  // desenho inteiro deixaria os símbolos de cabeça para baixo, que é justamente
-  // o que torna um mapa ilegível.
-  const [giro, setGiro] = useState(0)
-  const giroBase = React.useRef(0)
-  const ascDegBase = firestoreAscDeg ?? ct?.natalAscendant ?? 0
-  const ascDeg = ascDegBase + giro
+  // Se o giro voltar, tem de ser por controle explícito (um botão), que não
+  // disputa o toque com a rolagem.
+  const ascDeg = firestoreAscDeg ?? ct?.natalAscendant ?? 0
 
-  const gestoGirar = useMemo(
-    () =>
-      Gesture.Rotation()
-        .onBegin(() => { giroBase.current = giro })
-        .onUpdate((e) => setGiro(giroBase.current + (e.rotation * 180) / Math.PI))
-        .runOnJS(true),
-    [giro],
-  )
   const mcDeg = ct?.natalMidheaven ?? 0
   const houseCusps: number[] = firestoreCusps ?? ct?.natalHouses ?? []
   const aspects = ct?.aspectsNatalToNatal ?? []
@@ -591,7 +577,6 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     <>
       {/* Roda SVG */}
         <View style={styles.wheelWrap}>
-          <GestureDetector gesture={gestoGirar}>
           <Svg width={svgSize} height={svgSize}>
             <Defs>
               {/* Céu profundo: clareia um pouco no centro e escurece na borda.
@@ -876,12 +861,9 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
 
             {/* ASC label */}
             {(() => {
-              // O ASC fica a 180° quando a roda está na posição original. Com a
-              // roda girada, deixá-lo fixo ali faria a etiqueta apontar para um
-              // ponto que não é o Ascendente — a roda mentiria de novo, agora
-              // sobre o ângulo mais importante dela. Derivar da longitude real
-              // mantém a marca presa ao ponto certo por construção.
-              const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, lonToSvgAngle(ascDegBase, ascDeg))
+              // Derivado da longitude real, não fixo em 180°: continua correto por
+              // construção se a roda voltar a girar algum dia.
+              const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, lonToSvgAngle(ascDeg, ascDeg))
               return (
                 <SvgText x={x} y={y} fontSize={px(svgSize * 0.03)} textAnchor="middle"
                   alignmentBaseline="middle" fill="#FFD700" fontWeight="bold"
@@ -909,26 +891,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               </G>
             ))}
           </Svg>
-          </GestureDetector>
         </View>
-
-        {/* Voltar ao normal.
-            Só aparece com a roda girada: um estado que a pessoa criou sem
-            querer (dois dedos acontecem) e que ela precisa saber desfazer. Sem
-            isto, uma roda torta vira "o app quebrou". */}
-        {Math.abs(giro) > 0.5 ? (
-          <TouchableOpacity
-            style={styles.voltarAoNormal}
-            onPress={() => setGiro(0)}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-          >
-            <Ionicons name="refresh" size={14} color="#FFD700" />
-            <Text style={styles.voltarAoNormalTexto}>
-              {tl('Endireitar a roda', 'Straighten the wheel', 'Enderezar la rueda', 'Raddrizza la ruota')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {!mostrarGrade ? null : showTransits ? (
@@ -1444,21 +1407,6 @@ const styles = StyleSheet.create({
   // Selo de origem. Cor diferente por leitura: dourado = o mapa dela (fixo),
   // ciano = o ceu de hoje (passa). A mesma dupla de cores que a roda usa nos
   // dois aneis, para o modal confirmar visualmente de onde veio o toque.
-  voltarAoNormal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: 6,
-    marginTop: 2,
-    marginBottom: 8,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,215,0,0.35)',
-    backgroundColor: 'rgba(255,215,0,0.07)',
-  },
-  voltarAoNormalTexto: { color: '#FFD700', fontSize: 14, fontWeight: '700' },
   selo: {
     fontSize: 11, textTransform: 'uppercase',
     letterSpacing: 1.4,
