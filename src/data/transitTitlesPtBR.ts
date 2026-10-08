@@ -117,6 +117,117 @@ export const TRANSIT_TITLES_PTBR: Record<string, string> = {
   'transit:venus|quadratura|sun': 'Agradar demais',
   'transit:venus|trigono|moon': 'Casa em paz',
   'transit:venus|quadratura|saturn': 'Afeto medido',
+
+  // ─── Lote 2: planetas lentos sobre pontos pessoais ──────────────────────
+  // São os que o aviso do dia usa: ele mostra o trânsito de maior força, e
+  // força alta quase sempre é planeta lento. Sem título aqui, a frase mais
+  // lida da Home cai no gerado.
+
+  'transit:jupiter|conjuncao|ascendente': 'Presença que ocupa mais espaço',
+  'transit:jupiter|oposicao|ascendente': 'Excesso que vem do outro',
+  'transit:jupiter|quadratura|ascendente': 'Promessa maior que o corpo',
+  'transit:jupiter|sextil|ascendente': 'Porta que se abre ao chegar',
+  'transit:jupiter|trigono|ascendente': 'Facilidade de ser bem recebido',
+  'transit:jupiter|oposicao|mars': 'Impulso sem medida',
+  'transit:jupiter|quadratura|mars': 'Ambição maior que a força',
+  'transit:jupiter|sextil|mars': 'Coragem com boa hora',
+  'transit:jupiter|trigono|mars': 'Ação que rende',
+  'transit:jupiter|oposicao|meio_do_ceu': 'Casa pesa mais que carreira',
+  'transit:jupiter|quadratura|meio_do_ceu': 'Ambição em descompasso',
+  'transit:jupiter|sextil|meio_do_ceu': 'Chance no trabalho',
+  'transit:jupiter|oposicao|mercury': 'Ideia grande demais para o prazo',
+  'transit:jupiter|sextil|mercury': 'Conversa que abre caminho',
+  'transit:jupiter|trigono|mercury': 'Pensamento amplo e claro',
+  'transit:jupiter|oposicao|moon': 'Emoção que transborda',
+  'transit:jupiter|sextil|moon': 'Acolhimento fácil',
+  'transit:jupiter|oposicao|venus': 'Afeto que pede demais',
+  'transit:jupiter|sextil|venus': 'Convite agradável',
+  'transit:saturn|oposicao|ascendente': 'Cobrança que vem de fora',
+  'transit:saturn|quadratura|ascendente': 'Imagem em revisão dura',
+  'transit:saturn|sextil|ascendente': 'Postura que se firma',
+  'transit:saturn|trigono|ascendente': 'Seriedade que cai bem',
+  'transit:saturn|oposicao|mars': 'Força que esbarra em muro',
+  'transit:saturn|sextil|mars': 'Esforço bem dirigido',
+  'transit:saturn|oposicao|meio_do_ceu': 'Peso entre casa e trabalho',
+  'transit:saturn|sextil|meio_do_ceu': 'Degrau construído com calma',
+  'transit:saturn|trigono|meio_do_ceu': 'Reconhecimento que se sustenta',
+  'transit:saturn|oposicao|mercury': 'Diálogo que trava',
+  'transit:saturn|sextil|mercury': 'Palavra medida',
+  'transit:saturn|sextil|moon': 'Segurança emocional discreta',
+  'transit:saturn|sextil|venus': 'Afeto sóbrio e firme',
+  'transit:uranus|conjuncao|ascendente': 'Virada na própria pele',
+  'transit:uranus|oposicao|ascendente': 'Imprevisto que vem do outro',
+  'transit:uranus|quadratura|ascendente': 'Inquietação na própria imagem',
+  'transit:uranus|sextil|ascendente': 'Abertura para mudar de forma',
+  'transit:uranus|trigono|ascendente': 'Originalidade sem atrito',
+  'transit:uranus|oposicao|mars': 'Reação fora de hora',
+  'transit:uranus|quadratura|mars': 'Reação em curto-circuito',
+  'transit:uranus|sextil|mars': 'Coragem de tentar diferente',
+  'transit:uranus|trigono|mars': 'Ousadia que funciona',
+  'transit:uranus|conjuncao|meio_do_ceu': 'Guinada na carreira',
+  'transit:uranus|oposicao|meio_do_ceu': 'Raízes contra o rumo',
+  'transit:uranus|quadratura|meio_do_ceu': 'Rota profissional sacudida',
+  'transit:uranus|sextil|meio_do_ceu': 'Caminho novo no trabalho',
+  'transit:uranus|trigono|meio_do_ceu': 'Liberdade que cabe no ofício',
+  'transit:uranus|oposicao|mercury': 'Ideia que choca',
+  'transit:uranus|quadratura|mercury': 'Pensamento acelerado demais',
+  'transit:uranus|sextil|mercury': 'Insight que chega inteiro',
+  'transit:uranus|trigono|mercury': 'Clareza repentina',
+  'transit:uranus|oposicao|moon': 'Humor sem aviso',
+  'transit:uranus|sextil|moon': 'Espaço para sentir diferente',
+  'transit:uranus|trigono|moon': 'Emoção que se solta',
+  'transit:uranus|sextil|sun': 'Vontade de experimentar',
+  'transit:uranus|oposicao|venus': 'Atração inesperada',
+  'transit:uranus|sextil|venus': 'Encontro fora do roteiro',
+  'transit:uranus|trigono|venus': 'Liberdade que combina',
+  'transit:neptune|conjuncao|ascendente': 'Contorno que se dissolve',
+  'transit:neptune|oposicao|ascendente': 'Névoa no espelho do outro',
+  'transit:neptune|quadratura|ascendente': 'Imagem fora de foco',
+  'transit:neptune|sextil|ascendente': 'Presença mais suave',
+  'transit:neptune|trigono|ascendente': 'Encanto natural',
+  'transit:neptune|conjuncao|mars': 'Força que escorre',
+  'transit:neptune|oposicao|mars': 'Vontade sem direção',
+  'transit:neptune|quadratura|mars': 'Energia que não encontra alvo',
+  'transit:neptune|sextil|mars': 'Ação inspirada',
+  'transit:neptune|trigono|mars': 'Esforço que flui sem peso',
+  'transit:neptune|conjuncao|meio_do_ceu': 'Vocação em busca de sentido',
+  'transit:neptune|oposicao|meio_do_ceu': 'Rumo profissional difuso',
+  'transit:neptune|quadratura|meio_do_ceu': 'Carreira sem contorno',
+  'transit:neptune|sextil|meio_do_ceu': 'Trabalho com alma',
+  'transit:neptune|trigono|meio_do_ceu': 'Ofício que inspira',
+  'transit:neptune|conjuncao|mercury': 'Pensamento em bruma',
+  'transit:neptune|oposicao|mercury': 'Mal-entendido no ar',
+  'transit:neptune|sextil|mercury': 'Intuição que encontra palavra',
+  'transit:neptune|trigono|mercury': 'Imaginação articulada',
+  'transit:neptune|oposicao|moon': 'Sensibilidade sem borda',
+  'transit:neptune|sextil|moon': 'Ternura silenciosa',
+  'transit:neptune|trigono|moon': 'Emoção que embala',
+  'transit:neptune|sextil|sun': 'Clareza vinda da calma',
+  'transit:neptune|oposicao|venus': 'Idealização do afeto',
+  'transit:neptune|sextil|venus': 'Beleza que comove',
+  'transit:neptune|trigono|venus': 'Amor sem exigência',
+  'transit:pluto|conjuncao|ascendente': 'Outra pessoa no espelho',
+  'transit:pluto|oposicao|ascendente': 'Intensidade que vem do outro',
+  'transit:pluto|quadratura|ascendente': 'Imagem sob pressão',
+  'transit:pluto|sextil|ascendente': 'Presença que ganha peso',
+  'transit:pluto|trigono|ascendente': 'Força tranquila',
+  'transit:pluto|oposicao|mars': 'Disputa de força',
+  'transit:pluto|quadratura|mars': 'Vontade contra vontade',
+  'transit:pluto|sextil|mars': 'Determinação bem usada',
+  'transit:pluto|trigono|mars': 'Potência sem desperdício',
+  'transit:pluto|conjuncao|meio_do_ceu': 'Virada de rumo na vida pública',
+  'transit:pluto|oposicao|meio_do_ceu': 'Raiz revirada pela carreira',
+  'transit:pluto|sextil|meio_do_ceu': 'Autoridade que se constrói',
+  'transit:pluto|trigono|meio_do_ceu': 'Poder que se assenta',
+  'transit:pluto|oposicao|mercury': 'Palavra que fere',
+  'transit:pluto|sextil|mercury': 'Pensamento que vai ao fundo',
+  'transit:pluto|trigono|mercury': 'Clareza sobre o que estava oculto',
+  'transit:pluto|oposicao|moon': 'Emoção que vem do porão',
+  'transit:pluto|sextil|moon': 'Verdade afetiva que emerge',
+  'transit:pluto|trigono|moon': 'Profundidade sem susto',
+  'transit:pluto|sextil|sun': 'Vontade que se afirma',
+  'transit:pluto|oposicao|venus': 'Desejo que domina',
+  'transit:pluto|sextil|venus': 'Vínculo que se aprofunda',
 }
 
 /**
@@ -226,11 +337,45 @@ const NOME_DO_PLANETA: Record<string, string> = {
  *
  * Só pt-BR — os outros idiomas seguem mostrando o nome técnico como título.
  */
+/**
+ * O tema de cada casa, em duas ou três palavras.
+ *
+ * Serve ao ingresso ("Júpiter entra na Casa 2"), que não tem planeta natal do
+ * outro lado — o alvo é a casa. Sem isto, os 119 ingressos do catálogo ficavam
+ * sem título nenhum: o gerador procurava um alvo em ALVO_NATAL, não achava
+ * `house_2` e devolvia null.
+ *
+ * Texto curto de propósito: entra dentro de uma frase nominal já começada.
+ */
+const AREA_DA_CASA: Record<string, string> = {
+  '1': 'imagem e presença',
+  '2': 'recursos e segurança',
+  '3': 'conversas e rotina',
+  '4': 'casa e raízes',
+  '5': 'prazer e criação',
+  '6': 'trabalho e saúde',
+  '7': 'parcerias',
+  '8': 'o que se partilha',
+  '9': 'horizonte e estudo',
+  '10': 'carreira e imagem pública',
+  '11': 'amizades e projetos',
+  '12': 'retiro e bastidores',
+}
+
 export function buildFallbackTransitTitle(
   transitPlanet: string,
   natalTarget: string,
   aspect: string,
 ): string | null {
+  // Ingresso: o alvo é uma casa, não um planeta.
+  const casa = /^house_?(\d{1,2})$/.exec(String(natalTarget || '').trim().toLowerCase())
+  if (casa) {
+    const area = AREA_DA_CASA[casa[1]]
+    const agenteCasa = AGENTE_EM_TRANSITO[normalizeChave(transitPlanet)]
+    if (area && agenteCasa) return `${capitalizar(agenteCasa)} em ${area}`
+    if (area) return `Novo ciclo em ${area}`
+  }
+
   const alvo = ALVO_NATAL[normalizeChave(natalTarget)]
   if (!alvo) return null
 

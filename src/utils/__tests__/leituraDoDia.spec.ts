@@ -141,3 +141,26 @@ describe('janela em palavras', () => {
     expect(janelaEmPalavras({ exact: 'não é data' }, 'pt-BR', base)).toBe('')
   })
 })
+
+describe('chave do título: ângulos (Ascendente, Meio do Céu)', () => {
+  /**
+   * Bug encontrado ao auditar a cobertura: a chave canônica guarda o sublinhado
+   * ("meio_do_ceu"), e quem montava a chave do título normalizava por conta
+   * própria — ora removendo o "_", ora sem tirar o acento. Resultado: NENHUM
+   * título curado de ângulo aparecia, e ninguém notava porque o gerador cobria
+   * o buraco com um título plausível.
+   */
+  it('Meio do Céu casa, venha como vier', () => {
+    const esperado = 'Cume da responsabilidade'
+    for (const alvo of ['Midheaven', 'Meio do Céu', 'meio do ceu', 'MC']) {
+      expect(temaDoTransito('Saturn', 'conjuncao', alvo, 'pt-BR'), `alvo "${alvo}"`).toBe(esperado)
+    }
+  })
+
+  it('Ascendente casa, venha como vier', () => {
+    const esperado = 'Nova imagem de si'
+    for (const alvo of ['Ascendant', 'Ascendente', 'ascendente', 'ASC']) {
+      expect(temaDoTransito('Saturn', 'conjuncao', alvo, 'pt-BR'), `alvo "${alvo}"`).toBe(esperado)
+    }
+  })
+})

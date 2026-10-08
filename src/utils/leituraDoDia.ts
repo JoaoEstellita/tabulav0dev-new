@@ -1,4 +1,5 @@
 import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../data/transitTitlesPtBR'
+import { buildTransitTitleKey } from './astroInterpretation'
 
 /**
  * Peças de texto da leitura do dia.
@@ -19,13 +20,6 @@ import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../data/transitT
  * react-native — lógica dentro do `.tsx` fica sem teste.
  */
 
-const norm = (v: string): string =>
-  String(v || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
-
 /**
  * Título temático do trânsito ("Prova de maturidade").
  *
@@ -39,7 +33,10 @@ export function temaDoTransito(
   language?: string | null,
 ): string | null {
   if ((language || 'pt-BR') !== 'pt-BR') return null
-  const chave = `transit:${norm(transitPlanet)}|${norm(tipo)}|${norm(natalPlanet)}`
+  // A MESMA chave do catalogo de textos. Normalizar por conta propria aqui foi
+  // o que fez os titulos de Ascendente e Meio do Ceu nunca aparecerem: a chave
+  // canonica guarda o `_` ("meio_do_ceu") e o norm local o removia.
+  const chave = buildTransitTitleKey(transitPlanet, tipo, natalPlanet)
   return (
     TRANSIT_TITLES_PTBR[chave] ||
     buildFallbackTransitTitle(transitPlanet, natalPlanet, tipo) ||

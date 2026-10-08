@@ -11,6 +11,7 @@ import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
 import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../../data/transitTitlesPtBR'
+import { buildTransitTitleKey } from '../../utils/astroInterpretation'
 import { areaLabelsForTransit } from '../../utils/transitLifeAreas'
 import { PROGRESSION_ASPECTS_PTBR, buildProgressionText } from '../../data/progressionAspectsPtBR'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
@@ -189,7 +190,11 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
 
     // Título temático ("Momento de ousadia") quando existe no catálogo; senão o
     // card segue mostrando o nome técnico, como antes. Cobertura parcial por design.
-    const chave = `transit:${norm(item.transitPlanet)}|${norm(item.type)}|${norm(item.natalPlanet)}`
+    // Chave canonica (mesma do catalogo de textos). O `norm` local desta tela
+    // so faz trim+lowercase: nao tira acento nem troca espaco por `_`, entao
+    // "Meio do Ceu" nunca casava com a chave `meio_do_ceu` e o titulo curado
+    // sumia sem erro nenhum.
+    const chave = buildTransitTitleKey(item.transitPlanet, item.type, item.natalPlanet)
     // Curado primeiro; sem curadoria, o gerado — assim TODO card tem a mesma
     // anatomia (tema em cima, nome técnico no "Tipo:") e a lista para de alternar
     // entre título temático e nome cru.

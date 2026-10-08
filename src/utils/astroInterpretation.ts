@@ -765,6 +765,32 @@ function resolveCanonicalTransitTarget(transit: AnyTransit): { type: 'planet' | 
   return { type: 'planet', value: canonical }
 }
 
+/**
+ * A chave do título temático de um trânsito.
+ *
+ * Usa EXATAMENTE os mesmos normalizadores e aliases que o catálogo de textos,
+ * e é por isso que existe. O título e o texto curado são indexados pelo mesmo
+ * par de planetas; quando cada consumidor normaliza do seu jeito, um acha e o
+ * outro não — e o que falha é o título, que some em silêncio.
+ *
+ * Foi o que aconteceu: as chaves de Ascendente e Meio do Céu usam
+ * `meio_do_ceu`/`ascendente` (espaço vira `_`, acento sai), mas quem montava a
+ * chave do título ora removia o `_`, ora nem tirava o acento. Resultado: NENHUM
+ * título curado de ângulo aparecia em lugar nenhum, e ninguém notava porque o
+ * gerador cobria o buraco com um título plausível.
+ */
+export function buildTransitTitleKey(
+  transitPlanet: unknown,
+  aspect: unknown,
+  natalTarget: unknown,
+): string {
+  const planeta = normalizeTransitToken(transitPlanet)
+  const aspecto = normalizeAspect(aspect)
+  const bruto = normalizeTransitToken(natalTarget)
+  const alvo = TARGET_ALIASES_TO_CANONICAL[bruto] || bruto
+  return `transit:${planeta}|${aspecto}|${alvo}`
+}
+
 function buildCanonicalTransitKey(transit: AnyTransit): string {
   const planet = normalizeTransitToken(transit?.transitPlanet) || 'unknown_planet'
   const aspect = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType) || 'neutral'
