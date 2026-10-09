@@ -37,6 +37,9 @@ import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretati
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import { transitCellId } from '../../astro/transitCellId'
 import { calcularRaios } from '../../astro/raiosDaRoda'
+import { dignidadePorLongitude, rotuloDaDignidade, explicarDignidade } from '../../astro/dignidades'
+import { movimentoPorNome } from '../../astro/aspectoAplicativo'
+import { signosInterceptados } from '../../astro/casasInterceptadas'
 import {
   declutterRing,
   lonToSvgAngle,
@@ -338,6 +341,11 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   // nome, leitura trocada — e nada na tela avisava qual dos dois estava lendo.
   type PlanetaAberto = { p: RealPlanetPosition; origem: 'natal' | 'transito' }
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetaAberto | null>(null)
+  /** Acende os aspectos de um planeta; tocar de novo no mesmo apaga. */
+  const acenderAspectos = React.useCallback(
+    (nome: string) => setPlanetaEmFoco((atual) => (atual === nome ? null : nome)),
+    [],
+  )
   const abrirPlaneta = React.useCallback(
     (p: RealPlanetPosition, origem: 'natal' | 'transito') => setSelectedPlanet({ p, origem }),
     [],
@@ -353,6 +361,16 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   // ele estava quando a pessoa nasceu e onde está hoje. É a comparação que a
   // grade inteira pressupõe mas nunca mostrava.
   const [planetaDaGrade, setPlanetaDaGrade] = useState<string | null>(null)
+  /**
+   * Planeta com os aspectos acesos.
+   *
+   * Com trinta linhas no miolo, a teia não responde à pergunta que se faz ao
+   * ler um mapa: "com quem ESTE planeta conversa?". Tocando no glifo, só as
+   * linhas dele ficam fortes e o resto esmaece. Toque de novo apaga.
+   */
+  const [planetaEmFoco, setPlanetaEmFoco] = useState<string | null>(null)
+  /** Mostra só os aspectos quase exatos (orbe <= 2°), para ver a estrutura. */
+  const [soExatos, setSoExatos] = useState(false)
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [firestoreCusps, setFirestoreCusps] = useState<number[] | null>(null)
 
@@ -389,6 +407,10 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const mcDeg = ct?.natalMidheaven ?? 0
   const houseCusps: number[] = firestoreCusps ?? ct?.natalHouses ?? []
   const aspects = ct?.aspectsNatalToNatal ?? []
+  // Signo inteiro preso dentro de uma casa, sem cúspide tocando nele. Só
+  // acontece em casas desiguais — em Casas Inteiras é impossível, e era por
+  // isso que nunca aparecia: todas as contas estavam em whole-sign.
+  const interceptados = useMemo(() => signosInterceptados(houseCusps), [houseCusps])
   // Bi-roda: planetas em trânsito (céu agora) + aspectos trânsito→natal.
   const transitPlanets: RealPlanetPosition[] = showTransits ? ((ct as any)?.planets ?? []) : []
   const tnAspects: any[] = showTransits ? ((ct as any)?.aspectsTransitsToNatalTN ?? []) : []
@@ -602,9 +624,25 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       // emaranhado onde tudo parecia igualmente importante.
       const orbe = Number((asp as any).orb)
       const largura = Number.isFinite(orbe) ? Math.max(0.45, 1.6 - orbe * 0.2) : 0.8
-      return { key: `${asp.planet1}-${asp.planet2}`, pt1, pt2, color, largura }
+
+      // Aplicativo (ainda vai exatar) sólido; separativo tracejado. É a
+      // diferença entre "vem chegando" e "já passou", que o dado sempre teve
+      // (velocidade dos dois corpos) e a roda jogava fora.
+      const mov = movimentoPorNome(String(asp.type), p1, p2)
+
+      // Foco: tocar num planeta acende as linhas dele e apaga o resto.
+      const noFoco = !planetaEmFoco || asp.planet1 === planetaEmFoco || asp.planet2 === planetaEmFoco
+      const exato = !soExatos || (Number.isFinite(orbe) && orbe <= 2)
+
+      return {
+        key: `${asp.planet1}-${asp.planet2}`,
+        pt1, pt2, color,
+        largura: noFoco ? largura * (planetaEmFoco ? 1.6 : 1) : largura,
+        opacidade: !exato ? 0 : noFoco ? 1 : 0.12,
+        tracejado: mov === 'separativo' ? '3,3' : undefined,
+      }
     }).filter(Boolean)
-  }, [aspects, natalPlanets, ascDeg, cx, cy, R_INNER])
+  }, [aspects, natalPlanets, ascDeg, cx, cy, R_INNER, planetaEmFoco, soExatos])
 
   if (loading && natalPlanets.length === 0) {
     return (
@@ -695,6 +733,55 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               )
             })}
 
+            {/* Signo INTERCEPTADO: um traço na borda externa.
+                O signo está inteiro dentro de uma casa, sem cúspide tocando
+                nele — seus temas existem no mapa mas não têm porta própria.
+                Só acontece em casas desiguais, e é informação que não se deduz
+                olhando. */}
+            {zodiacSections.filter(z => interceptados.has(z.i)).map(z => (
+              <Path
+                key={`int-${z.i}`}
+                d={setorAnelar(cx, cy, R_OUTER - svgSize * 0.012, R_OUTER, z.startAngle, z.endAngle)}
+                fill="rgba(176,123,232,0.55)"
+                pointerEvents="none"
+              />
+            ))}
+
+            {/* Marcas de grau a cada 10°, na borda interna do zodíaco.
+                Permitem estimar a posição de um planeta sem abrir o modal —
+                as de 30° já são as divisões dos signos, então só as
+                intermediárias entram aqui. */}
+            {Array.from({ length: 36 }, (_, i) => {
+              const grau = i * 10
+              if (grau % 30 === 0) return null
+              const a = lonToSvgAngle(grau, ascDeg)
+              const tamanho = grau % 30 === 15 ? svgSize * 0.014 : svgSize * 0.008
+              const de = polarToXY(cx, cy, R_ZODIAC_IN, a)
+              const ate = polarToXY(cx, cy, R_ZODIAC_IN + tamanho, a)
+              return (
+                <Line key={`g-${grau}`} x1={de.x} y1={de.y} x2={ate.x} y2={ate.y}
+                  stroke="rgba(255,215,0,0.18)" strokeWidth={1} pointerEvents="none" />
+              )
+            })}
+
+            {/* Os QUATRO ÂNGULOS: ASC/DSC e MC/IC.
+                O Meio do Céu era calculado e nunca desenhado — e é o segundo
+                ponto mais importante do mapa, o eixo da vocação. Sem os eixos,
+                a roda perde a estrutura que organiza toda a leitura. */}
+            {[
+              { lon: ascDeg, rotulo: 'ASC' },
+              { lon: ascDeg + 180, rotulo: 'DSC' },
+              ...(mcDeg ? [{ lon: mcDeg, rotulo: 'MC' }, { lon: mcDeg + 180, rotulo: 'IC' }] : []),
+            ].map(({ lon, rotulo }) => {
+              const a = lonToSvgAngle(lon, ascDeg)
+              const de = polarToXY(cx, cy, R_INNER, a)
+              const ate = polarToXY(cx, cy, R_HOUSE_OUT, a)
+              return (
+                <Line key={`eixo-${rotulo}`} x1={de.x} y1={de.y} x2={ate.x} y2={ate.y}
+                  stroke="rgba(255,215,0,0.45)" strokeWidth={2} pointerEvents="none" />
+              )
+            })}
+
             {/* Anel das casas */}
             <Circle cx={cx} cy={cy} r={R_HOUSE_OUT} fill="none" stroke="#252b38" strokeWidth={1} />
             <Circle cx={cx} cy={cy} r={R_HOUSE_IN} fill="#10131c" stroke="#252b38" strokeWidth={1} />
@@ -749,12 +836,13 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             <Circle cx={cx} cy={cy} r={R_INNER} fill="#0d1018" stroke="#252b38" strokeWidth={1} />
 
             {/* Linhas de aspectos natais */}
-            {aspectLines.map(l => l && (
+            {aspectLines.map(l => l && l.opacidade > 0 && (
               <Line key={l.key}
                 x1={l.pt1.x} y1={l.pt1.y}
                 x2={l.pt2.x} y2={l.pt2.y}
                 stroke={l.color} strokeWidth={l.largura}
-                strokeOpacity={0.9}
+                strokeOpacity={0.9 * l.opacidade}
+                strokeDasharray={l.tracejado}
               />
             ))}
 
@@ -797,7 +885,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {planetPositions.map(p => {
               const color = PLANET_COLORS[p.name] || '#fff'
               return (
-                <G key={p.name} onPress={() => abrirPlaneta(p, 'natal')}>
+                <G key={p.name} onPress={() => { acenderAspectos(p.name); abrirPlaneta(p, 'natal') }}>
                   {/* Halo da cor do planeta: separa o disco do fundo e dá ao anel
                       dos planetas o peso visual que ele merece — é o protagonista
                       da roda, mas antes competia de igual para igual com o
@@ -835,6 +923,40 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   >
                     {PLANET_SYMBOLS[p.name] || '●'}
                   </SvgText>
+
+                  {/* O grau, logo abaixo do glifo.
+                      Estava só no modal: comparar dois planetas exigia abrir
+                      dois modais e lembrar o primeiro. */}
+                  <SvgText
+                    x={p.sx} y={p.sy + discNatal * 1.75}
+                    fontSize={px(discNatal * 0.82)}
+                    textAnchor="middle" alignmentBaseline="middle"
+                    fill="rgba(226,230,240,0.75)"
+                    pointerEvents="none"
+                  >
+                    {`${Math.floor((((p.longitude as number) % 360) + 360) % 360 % 30)}°`}
+                  </SvgText>
+
+                  {/* Dignidade essencial: um ponto abaixo do glifo.
+                      Verde = em casa (domicílio/exaltação), vermelho = em
+                      território hostil (exílio/queda). É a primeira coisa que
+                      se olha depois da posição, e não aparecia em lugar nenhum
+                      da roda. A maioria dos planetas não tem nenhuma — por isso
+                      marcar significa algo. */}
+                  {(() => {
+                    const dig = dignidadePorLongitude(p.name, p.longitude as number)
+                    if (!dig) return null
+                    const bom = dig === 'domicilio' || dig === 'exaltacao'
+                    return (
+                      <Circle
+                        cx={p.sx - discNatal * 1.05} cy={p.sy + discNatal * 1.05}
+                        r={discNatal * 0.3}
+                        fill={bom ? '#4ade80' : '#f87171'}
+                        pointerEvents="none"
+                      />
+                    )
+                  })()}
+
                   {/* Retrógrado: o ℞ solto sobre o anel sumia no fundo. Um
                       disquinho atrás dele garante contraste em qualquer lugar
                       da roda — e retrógrado muda a leitura, não é detalhe. */}
@@ -903,19 +1025,24 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               )
             })}
 
-            {/* ASC label */}
-            {(() => {
-              // Derivado da longitude real, não fixo em 180°: continua correto por
-              // construção se a roda voltar a girar algum dia.
-              const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + 10, lonToSvgAngle(ascDeg, ascDeg))
+            {/* Rótulos dos quatro ângulos.
+                Só o ASC tinha nome; MC, DSC e IC não apareciam, apesar de o
+                Meio do Céu já estar calculado. São os pontos que mais recebem
+                interpretação no mapa — vocação, parcerias, raízes. */}
+            {[
+              { lon: ascDeg, rotulo: 'ASC' },
+              { lon: ascDeg + 180, rotulo: 'DSC' },
+              ...(mcDeg ? [{ lon: mcDeg, rotulo: 'MC' }, { lon: mcDeg + 180, rotulo: 'IC' }] : []),
+            ].map(({ lon, rotulo }) => {
+              const { x, y } = polarToXY(cx, cy, R_HOUSE_OUT + svgSize * 0.025, lonToSvgAngle(lon, ascDeg))
               return (
-                <SvgText x={x} y={y} fontSize={px(svgSize * 0.03)} textAnchor="middle"
-                  alignmentBaseline="middle" fill="#FFD700" fontWeight="bold"
+                <SvgText key={`rot-${rotulo}`} x={x} y={y} fontSize={px(svgSize * 0.028)}
+                  textAnchor="middle" alignmentBaseline="middle" fill="#FFD700" fontWeight="bold"
                   pointerEvents="none">
-                  ASC
+                  {rotulo}
                 </SvgText>
               )
-            })()}
+            })}
             {/* Áreas de toque dos signos — POR ÚLTIMO, de propósito.
                 Isto já falhou três vezes enquanto a camada ficava no fundo do
                 desenho. O hit-test do SVG percorre os elementos do último para o
@@ -936,6 +1063,36 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             ))}
           </Svg>
         </View>
+
+        {/* Controles da leitura da roda.
+            "Só exatos" limpa o miolo deixando os aspectos de orbe até 2° — a
+            estrutura principal do mapa, sem a teia. O foco some junto quando a
+            pessoa quer a roda inteira de volta. */}
+        {aspectLines.length > 4 ? (
+          <View style={styles.controlesDaRoda}>
+            <TouchableOpacity
+              style={[styles.controleChip, soExatos ? styles.controleChipAtivo : null]}
+              onPress={() => setSoExatos(v => !v)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.controleTexto, soExatos ? styles.controleTextoAtivo : null]}>
+                {tl('Só os exatos', 'Exact only', 'Solo los exactos', 'Solo gli esatti')}
+              </Text>
+            </TouchableOpacity>
+
+            {planetaEmFoco ? (
+              <TouchableOpacity
+                style={styles.controleChip}
+                onPress={() => setPlanetaEmFoco(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.controleTexto}>
+                  {tl('Ver todos os aspectos', 'Show all aspects', 'Ver todos los aspectos', 'Mostra tutti gli aspetti')}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {!mostrarGrade ? null : showTransits ? (
@@ -1289,6 +1446,28 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                     <TextoComGlossario style={styles.aspectModalBody}>{essencia}</TextoComGlossario>
                   ) : null}
 
+                  {/* Dignidade: o mesmo ponto colorido da roda, aqui explicado.
+                      Marcar sem dizer o que significa só gera dúvida. */}
+                  {(() => {
+                    const dig = dignidadePorLongitude(nome, lon)
+                    if (!dig) return null
+                    const bom = dig === 'domicilio' || dig === 'exaltacao'
+                    return (
+                      <View style={styles.blocoModal}>
+                        <Text style={styles.blocoRotulo}>
+                          {tl('Dignidade', 'Dignity', 'Dignidad', 'Dignita')}
+                        </Text>
+                        <Text style={styles.planetaDoBlocoTitulo}>
+                          <Text style={{ color: bom ? '#4ade80' : '#f87171' }}>{'\u25cf  '}</Text>
+                          {rotuloDaDignidade(dig, language as any)}
+                        </Text>
+                        <Text style={styles.planetaDoBlocoTexto}>
+                          {translatePlanet(nome, language)} {explicarDignidade(dig, language as any)}
+                        </Text>
+                      </View>
+                    )
+                  })()}
+
                   {ehTransito ? (
                     <>
                       <Text style={styles.avisoOrigem}>
@@ -1451,6 +1630,28 @@ const styles = StyleSheet.create({
   // Selo de origem. Cor diferente por leitura: dourado = o mapa dela (fixo),
   // ciano = o ceu de hoje (passa). A mesma dupla de cores que a roda usa nos
   // dois aneis, para o modal confirmar visualmente de onde veio o toque.
+  controlesDaRoda: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  controleChip: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  controleChipAtivo: {
+    borderColor: 'rgba(255,215,0,0.5)',
+    backgroundColor: 'rgba(255,215,0,0.1)',
+  },
+  controleTexto: { color: '#aeb6c8', fontSize: 14, fontWeight: '600' },
+  controleTextoAtivo: { color: '#FFD700' },
   selo: {
     fontSize: 11, textTransform: 'uppercase',
     letterSpacing: 1.4,

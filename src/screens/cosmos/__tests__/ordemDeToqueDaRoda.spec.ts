@@ -194,10 +194,67 @@ describe('a roda não pode roubar a rolagem da tela', () => {
     expect(FONTE).not.toMatch(/Gesture\.(Pan|Rotation|Pinch|Fling)\(/)
   })
 
-  it('o rótulo ASC continua derivado da longitude, não fixo', () => {
-    // Mesmo sem giro: ângulo fixo é a porta de entrada para a roda mentir, e
-    // custa nada manter a marca presa ao ponto real.
-    expect(FONTE).toContain('lonToSvgAngle(ascDeg, ascDeg)')
+  it('os rótulos dos ângulos são derivados da longitude, não fixos', () => {
+    // Ângulo fixo é a porta de entrada para a roda mentir, e custa nada manter
+    // a marca presa ao ponto real.
+    expect(FONTE).toContain('lonToSvgAngle(lon, ascDeg)')
     expect(FONTE).not.toMatch(/polarToXY\(cx, cy, [^,]+, 180\)/)
+  })
+})
+
+describe('a roda como instrumento de leitura', () => {
+  it('desenha os QUATRO ângulos, não só o ASC', () => {
+    // `mcDeg` era calculado e nunca desenhado — o Meio do Céu é o segundo
+    // ponto mais importante do mapa, o eixo da vocação, e não aparecia.
+    for (const rotulo of ['ASC', 'DSC', 'MC', 'IC']) {
+      expect(FONTE, `o ângulo ${rotulo} sumiu`).toContain(`rotulo: '${rotulo}'`)
+    }
+    expect(FONTE, 'o MC precisa ser usado, não só calculado').toMatch(/mcDeg \?/)
+  })
+
+  it('a linha do aspecto diz se ele vem chegando ou já passou', () => {
+    // Aplicativo sólido, separativo tracejado. O dado (velocidade dos corpos)
+    // sempre existiu e a roda jogava fora.
+    expect(FONTE).toContain('movimentoPorNome')
+    expect(FONTE).toMatch(/mov === 'separativo'/)
+    expect(FONTE).toContain('strokeDasharray={l.tracejado}')
+  })
+
+  it('tocar num planeta acende os aspectos dele', () => {
+    // Com trinta linhas, a teia não responde "com quem ESTE planeta conversa?".
+    expect(FONTE).toContain('planetaEmFoco')
+    expect(FONTE).toContain('acenderAspectos')
+    // E há como voltar a ver tudo — esconder sem caminho de volta é pior.
+    expect(FONTE).toMatch(/Ver todos os aspectos/)
+  })
+
+  it('dá para filtrar só os aspectos exatos', () => {
+    expect(FONTE).toContain('soExatos')
+    expect(FONTE, 'o corte é por orbe, não por quantidade').toMatch(/orbe <= 2/)
+  })
+
+  it('mostra a dignidade essencial do planeta', () => {
+    // Primeira coisa que se olha depois da posição, e não aparecia na roda.
+    expect(FONTE).toContain('dignidadePorLongitude')
+    // Marcar sem explicar só gera dúvida: o modal diz o que significa.
+    expect(FONTE).toContain('explicarDignidade')
+  })
+
+  it('mostra o grau de cada planeta no desenho', () => {
+    // Estava só no modal: comparar dois planetas exigia abrir dois modais.
+    expect(FONTE).toMatch(/% 30\)\}°/)
+  })
+
+  it('marca signo interceptado', () => {
+    // Só existe em casas desiguais — e por isso nunca apareceu enquanto todas
+    // as contas estavam gravadas em whole-sign.
+    expect(FONTE).toContain('signosInterceptados')
+    expect(FONTE).toContain('interceptados.has(z.i)')
+  })
+
+  it('as marcas de grau não roubam toque', () => {
+    // São decorativas; o toque pertence aos setores de signo e casa.
+    const bloco = FONTE.slice(FONTE.indexOf('Marcas de grau'), FONTE.indexOf('Os QUATRO'))
+    expect(bloco).toContain('pointerEvents="none"')
   })
 })
