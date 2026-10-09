@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import NatalAscService from '../../services/astrology/NatalAscService'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import ErrorBoundary from '../../components/ErrorBoundary'
+import { DEFAULT_HOUSE_SYSTEM } from '../../astro/houseSystem'
 
 export default function BirthDataFormContainer() {
   const [loading, setLoading] = useState(false)
@@ -22,7 +23,12 @@ export default function BirthDataFormContainer() {
 
     try {
       await UserService.saveBirthData(user.uid, birthData)
-      // Calcula e persiste automaticamente ASC/MC/cuspides (Casas Inteiras por padrao)
+      // Calcula e persiste ASC/MC/cuspides no sistema PADRAO do app (Placidus).
+      //
+      // Passava 'whole-sign' na mao, contrariando DEFAULT_HOUSE_SYSTEM: todo
+      // usuario saia do onboarding com as cuspides em Casas Inteiras, e a
+      // preferencia dele nunca era aplicada. Placidus e o que os outros
+      // softwares usam — e e com eles que a pessoa compara.
       try {
         await NatalAscService.computeAndPersist(
           user.uid,
@@ -30,7 +36,7 @@ export default function BirthDataFormContainer() {
           birthData.birthTime,
           birthData.birthLocation.latitude,
           birthData.birthLocation.longitude,
-          'whole-sign'
+          DEFAULT_HOUSE_SYSTEM
         )
       } catch (e) {
         console.warn('Nao foi possivel calcular ASC natal automaticamente no onboarding:', (e as any)?.message || e)

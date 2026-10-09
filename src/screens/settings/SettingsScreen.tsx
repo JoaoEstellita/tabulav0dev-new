@@ -1065,7 +1065,10 @@ export default function SettingsScreen() {
         userProfile.birthTime || '12:00',
         userProfile.birthLocation.latitude,
         userProfile.birthLocation.longitude,
-        normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+        // A preferencia REAL do usuario (userSettings.houseSystem), nao um
+        // globalThis que ninguem garante estar setado — quando nao estava,
+        // caia em Casas Inteiras e recalculava tudo no sistema errado.
+        houseSystem
       )
       // Limpar cache astrológico para forçar reprocessamento
       const cacheService = (await import('../../services/astrology/AstrologyCacheService')).default

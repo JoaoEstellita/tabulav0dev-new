@@ -1,7 +1,7 @@
 import { TimezoneService } from '../timezone/TimezoneService'
 import UserService from '../firebase/UserService'
 import type { HouseSystem } from '../../astro/houseSystem'
-import { normalizeHouseSystem } from '../../astro/houseSystem'
+import { normalizeHouseSystem, DEFAULT_HOUSE_SYSTEM } from '../../astro/houseSystem'
 
 export interface NatalAscResult {
 	ascendant: number
@@ -14,7 +14,21 @@ export interface NatalAscResult {
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
 
 export class NatalAscService {
-	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'whole-sign'): Promise<NatalAscResult> {
+	/**
+	 * ⚠️ O sistema de casas NUNCA pode vir hardcoded aqui.
+	 *
+	 * Os dois métodos tinham `= 'whole-sign'` como padrão enquanto
+	 * `DEFAULT_HOUSE_SYSTEM` é 'placidus' — e o onboarding ainda passava
+	 * 'whole-sign' explicitamente. Resultado: TODO usuário tinha as cúspides
+	 * gravadas em Casas Inteiras, qualquer que fosse a preferência dele, e a
+	 * roda desenhava casas de 30° iguais.
+	 *
+	 * Não é detalhe de exibição: a casa muda a leitura de cada planeta. Um Sol
+	 * na Casa 2 em Placidus pode cair na 3 em Casas Inteiras, e a interpretação
+	 * inteira vai junto — sem nada acusar, porque os dois resultados são
+	 * plausíveis.
+	 */
+	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = DEFAULT_HOUSE_SYSTEM): Promise<NatalAscResult> {
 		// Resolve timezone histórico no dia do nascimento (00:00 UTC)
 		const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
 		// Meio-dia UTC para evitar bordas de DST
@@ -74,7 +88,7 @@ export class NatalAscService {
 		}
 	}
 
-	static async computeAndPersist(userId: string, birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'whole-sign') {
+	static async computeAndPersist(userId: string, birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = DEFAULT_HOUSE_SYSTEM) {
 		try {
 			const result = await this.computeNatalAsc(birthDate, birthTime, latitude, longitude, system)
 			await UserService.saveNatalAsc(userId, {

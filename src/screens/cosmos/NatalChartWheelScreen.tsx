@@ -106,13 +106,57 @@ const ELEMENTO_FILL = [
   'rgba(90,170,255,0.085)',  // água
 ]
 
+/**
+ * Cor de cada aspecto no miolo da roda.
+ *
+ * ⚠️ As chaves eram EM INGLÊS (`conjunction`, `square`, `trine`...) e o motor
+ * emite o tipo em PORTUGUÊS (`conjuncao`, `quadratura`, `trigono`). Nenhuma
+ * casava: toda linha caía no cinza de fallback, e a roda desenhava a trama
+ * inteira de aspectos numa cor só. Ninguém via, porque as linhas estavam
+ * cobertas pelo disco do miolo até agora — dois bugs empilhados escondendo um
+ * ao outro.
+ *
+ * A convenção de cor não é decorativa: QUENTE = tensão (atrito, polaridade),
+ * FRIO = fluidez (facilidade, oportunidade), DOURADO = fusão. Dá para ler o
+ * clima do mapa de relance, antes de identificar qualquer planeta.
+ *
+ * A busca normaliza acento e caixa, e aceita as grafias em inglês — nome de
+ * aspecto chega de três fontes diferentes no projeto.
+ */
 const ASPECT_COLORS: Record<string, string> = {
-  conjunction: 'rgba(255,215,0,0.7)',
-  sextile: 'rgba(80,200,120,0.6)',
-  square: 'rgba(240,80,80,0.6)',
-  trine: 'rgba(80,120,240,0.6)',
-  opposition: 'rgba(240,140,80,0.6)',
-  quincunx: 'rgba(180,120,240,0.5)',
+  // Fusão — as duas forças agem como uma.
+  conjuncao: 'rgba(255,215,0,0.80)',
+  // Tensos, em quente.
+  quadratura: 'rgba(242,84,75,0.72)',
+  oposicao: 'rgba(255,140,66,0.72)',
+  semiquadratura: 'rgba(242,120,90,0.52)',
+  sesquiquadratura: 'rgba(242,120,90,0.52)',
+  // Harmônicos, em frio.
+  trigono: 'rgba(79,163,247,0.70)',
+  sextil: 'rgba(74,222,128,0.65)',
+  // Ajuste — fora dos dois grupos, cor própria.
+  quincuncio: 'rgba(176,123,232,0.60)',
+}
+
+/** Aceita inglês e grafia com acento: o tipo chega de três fontes no projeto. */
+const ASPECT_COLOR_ALIAS: Record<string, string> = {
+  conjunction: 'conjuncao',
+  square: 'quadratura',
+  opposition: 'oposicao',
+  trine: 'trigono',
+  sextile: 'sextil',
+  quincunx: 'quincuncio',
+  semisquare: 'semiquadratura',
+  sesquisquare: 'sesquiquadratura',
+}
+
+function corDoAspecto(tipo: string): string {
+  const k = String(tipo || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
+  return ASPECT_COLORS[ASPECT_COLOR_ALIAS[k] || k] || 'rgba(200,200,200,0.35)'
 }
 
 // ─── Geometria ──────────────────────────────────────────────────────────────
@@ -552,7 +596,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       const a2 = lonToSvgAngle(p2.longitude, ascDeg)
       const pt1 = polarToXY(cx, cy, R_INNER, a1)
       const pt2 = polarToXY(cx, cy, R_INNER, a2)
-      const color = ASPECT_COLORS[asp.type] || 'rgba(200,200,200,0.3)'
+      const color = corDoAspecto(asp.type)
       // Espessura pela exatidão. Um aspecto com orbe de 0,5° pesa muito mais na
       // vida que um de 7°, e com todas as linhas iguais o centro virava um
       // emaranhado onde tudo parecia igualmente importante.
