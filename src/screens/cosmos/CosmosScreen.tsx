@@ -18,6 +18,7 @@ import ShareCardModal, { type ShareCardData } from '../../components/ShareCardMo
 import { useSubscription } from '../../hooks/useSubscription'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import AvisoConteudoIncompleto from '../../components/AvisoConteudoIncompleto'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
@@ -249,7 +250,7 @@ export default function CosmosScreen() {
   const { user } = useAuth()
   const { subscription } = useSubscription()
   const { isAdmin } = useSubscriptionCheck()
-  const { transitData, loading, backendStatusPersonal } = useLifeAreas()
+  const { transitData, loading, backendStatusPersonal, engineFailed, refreshData } = useLifeAreas()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareName, setShareName] = useState('')
 
@@ -637,6 +638,15 @@ export default function CosmosScreen() {
             aqui e os dados descem por prop (useLifeAreas não é contexto). */}
         {/* Legenda desligada: o Perfil logo abaixo já mostra cada planeta com signo,
             grau, casa, aspectos e regências. Na tela /mapa standalone ela continua. */}
+
+        {/* Motor local falhou mas o backend respondeu: a aba Mapa perde a grade
+            de aspectos e as interpretações, e sem aviso isso parece um mapa
+            vazio em vez de uma falha de carregamento. */}
+        <AvisoConteudoIncompleto
+          visivel={engineFailed}
+          carregando={loading}
+          onTentarNovamente={() => refreshData(true)}
+        />
 
         {/* Toggle Ocidental ↔ Védico — troca a visão do Mapa (só desta aba). */}
         <View style={styles.modeToggle} {...aSystem}>

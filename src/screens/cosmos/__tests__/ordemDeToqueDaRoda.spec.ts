@@ -104,10 +104,14 @@ describe('ordem de desenho da roda — o toque depende dela', () => {
     //
     // Um `Math.min` cru aqui nao quebra nada nem acusa em teste de render: so
     // volta o borrao.
+    // Par para cx/cy saírem inteiros — é o que mantém o desenho nítido.
     expect(
       FONTE,
-      'svgSize precisa ser inteiro PAR, para cx e cy sairem inteiros',
-    ).toMatch(/const svgSize = Math\.floor\(Math\.min\(width - \d+, \d+\) \/ 2\) \* 2/)
+      'svgSize precisa continuar inteiro PAR',
+    ).toMatch(/const svgSize = Math\.floor\(Math\.min\([^)]*\) \/ 2\) \* 2/)
+    // E limitado pelos DOIS eixos: só a largura deixaria a roda empurrar o
+    // resto da tela para fora em aparelho baixo e largo.
+    expect(FONTE, 'o tamanho tem de respeitar a altura também').toMatch(/height \* 0\.\d+/)
 
     // Os raios sao circulos concentricos — e onde o meio-pixel mais aparece.
     // Agora vêm prontos do módulo, que arredonda; o teste confere o resultado.
@@ -228,9 +232,34 @@ describe('a roda como instrumento de leitura', () => {
     expect(FONTE).toMatch(/Ver todos os aspectos/)
   })
 
-  it('dá para filtrar só os aspectos exatos', () => {
-    expect(FONTE).toContain('soExatos')
-    expect(FONTE, 'o corte é por orbe, não por quantidade').toMatch(/orbe <= 2/)
+  it('NÃO há filtro de orbe — o foco por planeta já resolve', () => {
+    // Havia um "Só os exatos" junto com o foco: dois controles para o mesmo
+    // problema (excesso de linhas no miolo). Tocar no planeta resolve melhor,
+    // porque responde a uma pergunta em vez de só esconder.
+    expect(FONTE, 'o filtro redundante voltou').not.toContain('soExatos')
+    expect(FONTE, 'o foco por planeta continua sendo a saída').toContain('planetaEmFoco')
+  })
+
+  it('a dignidade aparece nos DOIS anéis', () => {
+    // Marte em exílio hoje age diferente de Marte em domicílio hoje — vale
+    // para o céu de agora como vale para o mapa de nascimento. Estava só no
+    // natal.
+    const natal = FONTE.indexOf('Planetas natais (radial')
+    const transito = FONTE.indexOf('Planetas em TRÂNSITO')
+    const depoisDoTransito = FONTE.slice(transito)
+    expect(FONTE.slice(natal, transito)).toContain('dignidadePorLongitude')
+    expect(depoisDoTransito, 'o anel de trânsito também marca dignidade').toContain('dignidadePorLongitude')
+  })
+
+  it('o halo do planeta é discreto — não pode parecer orbe', () => {
+    // Era largo e forte, e lia como área de influência. Informação que o
+    // desenho não quis dar não pode parecer que deu.
+    const halos = [...FONTE.matchAll(/fillOpacity=\{(?:LUMINARES\.has\(p\.name\) \? )?([\d.]+)/g)]
+      .map((m) => Number(m[1]))
+    expect(halos.length, 'halos não encontrados').toBeGreaterThan(0)
+    for (const o of halos) {
+      expect(o, `halo com alfa ${o} volta a parecer orbe`).toBeLessThanOrEqual(0.1)
+    }
   })
 
   it('mostra a dignidade essencial do planeta', () => {

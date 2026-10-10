@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import AvisoConteudoIncompleto from '../../components/AvisoConteudoIncompleto'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
@@ -102,7 +103,11 @@ export default function HomeScreen() {
     backendStatusPersonal,
     backendFresh,
     localOverrideActive,
-    isUsingLocalEngine
+    isUsingLocalEngine,
+    // Motor local falhou mas o backend respondeu: a tela não quebra, só fica
+    // incompleta. Sem dizer isso, a pessoa vê seções vazias e conclui que o
+    // mapa dela não tem nada.
+    engineFailed,
   } = useLifeAreas()
   const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem))
@@ -542,6 +547,14 @@ export default function HomeScreen() {
             onPressHelp={openHomeTour}
           />
         </View>
+
+        {/* Aviso ANTES de tudo: se parte do conteúdo não vem, a pessoa
+            precisa saber disso antes de interpretar as ausências. */}
+        <AvisoConteudoIncompleto
+          visivel={engineFailed}
+          carregando={loading}
+          onTentarNovamente={() => refreshData(true)}
+        />
 
         {/* A ORDEM DE LEITURA da Home: "Seu dia", roda, grade, status.
             A frase vem primeiro porque e a unica parte que responde sozinha a

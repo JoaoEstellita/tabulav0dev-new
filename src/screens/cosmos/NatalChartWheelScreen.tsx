@@ -333,7 +333,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   // a primeira em silêncio. `useId` dá um prefixo estável por instância; os
   // dois-pontos que ele usa não são válidos em id de SVG.
   const idSvg = React.useId().replace(/[^a-zA-Z0-9]/g, '')
-  const { width } = useWindowDimensions()
+  const { width, height } = useWindowDimensions()
 
   // O planeta tocado vem com a ORIGEM. Natal e trânsito eram o mesmo estado, e o
   // modal abria idêntico para os dois: a pessoa tocava no anel de fora (céu de
@@ -369,8 +369,6 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
    * linhas dele ficam fortes e o resto esmaece. Toque de novo apaga.
    */
   const [planetaEmFoco, setPlanetaEmFoco] = useState<string | null>(null)
-  /** Mostra só os aspectos quase exatos (orbe <= 2°), para ver a estrutura. */
-  const [soExatos, setSoExatos] = useState(false)
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [firestoreCusps, setFirestoreCusps] = useState<number[] | null>(null)
 
@@ -497,10 +495,15 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   // resolucao, sempre foi alinhamento.
   //
   // Par de propósito: com svgSize par, cx e cy sao inteiros exatos.
-  // Maior do que era (380) e usando mais da largura: a roda é o centro da tela
-  // e sobrava margem dos dois lados. Área maior é o que dá aos glifos espaço
-  // para se afastarem sem encostar.
-  const svgSize = Math.floor(Math.min(width - 24, 440) / 2) * 2
+  // O MAIOR tamanho que cabe nesta tela.
+  //
+  // Limitado pelos dois eixos: a largura disponível e pouco mais da metade da
+  // altura — a roda é o centro da tela, mas não pode empurrar o resto para
+  // fora. O teto alto serve a tablet; em celular quem manda é a largura.
+  //
+  // Par de propósito: com svgSize par, cx e cy são inteiros exatos, e é isso
+  // que mantém o desenho nítido (ver NITIDEZ abaixo).
+  const svgSize = Math.floor(Math.min(width - 16, height * 0.54, 560) / 2) * 2
   const cx = svgSize / 2
   const cy = svgSize / 2
   /** Arredonda medida de desenho para o pixel. */
@@ -632,17 +635,16 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
 
       // Foco: tocar num planeta acende as linhas dele e apaga o resto.
       const noFoco = !planetaEmFoco || asp.planet1 === planetaEmFoco || asp.planet2 === planetaEmFoco
-      const exato = !soExatos || (Number.isFinite(orbe) && orbe <= 2)
 
       return {
         key: `${asp.planet1}-${asp.planet2}`,
         pt1, pt2, color,
         largura: noFoco ? largura * (planetaEmFoco ? 1.6 : 1) : largura,
-        opacidade: !exato ? 0 : noFoco ? 1 : 0.12,
+        opacidade: noFoco ? 1 : 0.12,
         tracejado: mov === 'separativo' ? '3,3' : undefined,
       }
     }).filter(Boolean)
-  }, [aspects, natalPlanets, ascDeg, cx, cy, R_INNER, planetaEmFoco, soExatos])
+  }, [aspects, natalPlanets, ascDeg, cx, cy, R_INNER, planetaEmFoco])
 
   if (loading && natalPlanets.length === 0) {
     return (
@@ -886,19 +888,19 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const color = PLANET_COLORS[p.name] || '#fff'
               return (
                 <G key={p.name} onPress={() => { acenderAspectos(p.name); abrirPlaneta(p, 'natal') }}>
-                  {/* Halo da cor do planeta: separa o disco do fundo e dá ao anel
-                      dos planetas o peso visual que ele merece — é o protagonista
-                      da roda, mas antes competia de igual para igual com o
-                      zodíaco e as casas. Alfa baixo: destaca sem virar enfeite.
+                  {/* Halo DISCRETO, só para separar o disco do fundo.
+                      Era bem mais forte e largo, e passava a impressão de ser
+                      o orbe do planeta — uma mancha em volta do glifo parece
+                      área de influência, não decoração. Informação que o
+                      desenho não quis dar não pode parecer que deu.
 
-                      Sol e Lua ganham um halo maior: eles mandam no mapa e
-                      precisam ser achados de relance, sem que a pessoa tenha de
-                      caçar o glifo entre dez bolinhas do mesmo tamanho. */}
+                      Sol e Lua seguem um pouco maiores: mandam no mapa e
+                      precisam ser achados de relance. */}
                   <Circle
                     cx={p.sx} cy={p.sy}
-                    r={discNatal * (LUMINARES.has(p.name) ? 1.95 : 1.55)}
+                    r={discNatal * (LUMINARES.has(p.name) ? 1.35 : 1.18)}
                     fill={color}
-                    fillOpacity={LUMINARES.has(p.name) ? 0.17 : 0.1}
+                    fillOpacity={LUMINARES.has(p.name) ? 0.1 : 0.06}
                   />
 
                   {/* Anel a mais nos lentos: são os que marcam época, e o peso
@@ -991,7 +993,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                       fundo mais escuro, e sem nenhuma separação o glifo some.
                       Menos marcado que o natal de propósito — o mapa de
                       nascimento é o protagonista; o céu de hoje passa. */}
-                  <Circle cx={p.sx} cy={p.sy} r={discTransit * 1.45} fill={color} fillOpacity={0.09} />
+                  <Circle cx={p.sx} cy={p.sy} r={discTransit * 1.2} fill={color} fillOpacity={0.06} />
                   <Circle
                     cx={p.sx} cy={p.sy} r={discTransit}
                     fill={`url(#p-${idSvg}-${p.name})`}
@@ -1005,6 +1007,24 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   >
                     {PLANET_SYMBOLS[p.name] || '●'}
                   </SvgText>
+
+                  {/* Dignidade tambem no anel de transito.
+                      Marte em exilio HOJE age diferente de Marte em domicilio
+                      hoje — vale para o ceu de agora exatamente como vale para
+                      o mapa de nascimento. Estava so no natal. */}
+                  {(() => {
+                    const dig = dignidadePorLongitude(p.name, p.longitude as number)
+                    if (!dig) return null
+                    const bom = dig === 'domicilio' || dig === 'exaltacao'
+                    return (
+                      <Circle
+                        cx={p.sx - discTransit * 1.05} cy={p.sy + discTransit * 1.05}
+                        r={discTransit * 0.3}
+                        fill={bom ? '#4ade80' : '#f87171'}
+                        pointerEvents="none"
+                      />
+                    )
+                  })()}
                   {p.isRetrograde ? (
                     <>
                       <Circle
@@ -1064,33 +1084,20 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           </Svg>
         </View>
 
-        {/* Controles da leitura da roda.
-            "Só exatos" limpa o miolo deixando os aspectos de orbe até 2° — a
-            estrutura principal do mapa, sem a teia. O foco some junto quando a
-            pessoa quer a roda inteira de volta. */}
-        {aspectLines.length > 4 ? (
+        {/* Voltar a ver todos os aspectos, quando um planeta está em foco.
+            O filtro "só os exatos" saiu: tocar no planeta já resolve o excesso
+            de linhas, e dois controles para o mesmo problema é um a mais. */}
+        {planetaEmFoco ? (
           <View style={styles.controlesDaRoda}>
             <TouchableOpacity
-              style={[styles.controleChip, soExatos ? styles.controleChipAtivo : null]}
-              onPress={() => setSoExatos(v => !v)}
+              style={styles.controleChip}
+              onPress={() => setPlanetaEmFoco(null)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.controleTexto, soExatos ? styles.controleTextoAtivo : null]}>
-                {tl('Só os exatos', 'Exact only', 'Solo los exactos', 'Solo gli esatti')}
+              <Text style={styles.controleTexto}>
+                {tl('Ver todos os aspectos', 'Show all aspects', 'Ver todos los aspectos', 'Mostra tutti gli aspetti')}
               </Text>
             </TouchableOpacity>
-
-            {planetaEmFoco ? (
-              <TouchableOpacity
-                style={styles.controleChip}
-                onPress={() => setPlanetaEmFoco(null)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.controleTexto}>
-                  {tl('Ver todos os aspectos', 'Show all aspects', 'Ver todos los aspectos', 'Mostra tutti gli aspetti')}
-                </Text>
-              </TouchableOpacity>
-            ) : null}
           </View>
         ) : null}
 
@@ -1527,26 +1534,57 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                           ? tl('O que ele toca no seu mapa', 'What it touches in your chart', 'Lo que toca en tu mapa', 'Cosa tocca nel tuo tema')
                           : tl('O que o céu de hoje faz com ele', 'What today sky does to it', 'Lo que el cielo de hoy le hace', 'Cosa gli fa il cielo di oggi')}
                       </Text>
-                      {ligados.map((a: any) => (
-                        <TouchableOpacity
-                          key={`lig-${a.planet1}-${a.type}-${a.planet2}`}
-                          activeOpacity={0.75}
-                          // Abre a interpretação do trânsito. Fecha este modal
-                          // primeiro: dois Modal empilhados no Android deixam o
-                          // de baixo capturando o toque.
-                          onPress={() => { setSelectedPlanet(null); openTransitAspectModal(idDoTransito(a)) }}
-                          style={styles.planetaDoBloco}
-                        >
-                          <Text style={styles.planetaDoBlocoTitulo}>
-                            {translatePlanet(a.planet1, language)} {aspectLabelPt(a.type)} {translatePlanet(a.planet2, language)}
-                          </Text>
-                          <Text style={styles.planetaDoBlocoTexto}>
-                            {typeof a.orb === 'number'
-                              ? `${tl('orbe', 'orb', 'orbe', 'orbe')} ${a.orb.toFixed(1)}° · ${tl('toque para a leitura', 'tap for the reading', 'toca para la lectura', 'tocca per la lettura')}`
-                              : tl('toque para a leitura', 'tap for the reading', 'toca para la lectura', 'tocca per la lettura')}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
+                      {ligados.map((a: any) => {
+                        // A MESMA cor da linha no miolo da roda: a pessoa vê o
+                        // aspecto desenhado e o encontra aqui pela cor, sem ter
+                        // de decorar nome.
+                        const corAspecto = corDoAspecto(a.type)
+                        const orbe = Number(a.orb)
+                        // Orbe apertado = o aspecto pesa mais hoje.
+                        const forte = Number.isFinite(orbe) && orbe <= 1
+                        return (
+                          <TouchableOpacity
+                            key={`lig-${a.planet1}-${a.type}-${a.planet2}`}
+                            activeOpacity={0.7}
+                            // Abre a interpretação do trânsito. Fecha este modal
+                            // primeiro: dois Modal empilhados no Android deixam o
+                            // de baixo capturando o toque.
+                            onPress={() => { setSelectedPlanet(null); openTransitAspectModal(idDoTransito(a)) }}
+                            style={[styles.cartaoAspecto, { borderLeftColor: corAspecto }]}
+                          >
+                            <View style={styles.cartaoAspectoTopo}>
+                              <Text style={[styles.cartaoAspectoTitulo, { color: corAspecto }]}>
+                                {aspectLabelPt(a.type)}
+                              </Text>
+                              {/* O livrinho deixa explícito que abre leitura —
+                                  o mesmo ícone que a grade já usa para isso. */}
+                              <Ionicons name="book-outline" size={15} color={corAspecto} />
+                            </View>
+
+                            <Text style={styles.cartaoAspectoPar}>
+                              {translatePlanet(a.planet1, language)} → {translatePlanet(a.planet2, language)}
+                            </Text>
+
+                            <Text style={styles.cartaoAspectoMeta}>
+                              {[
+                                Number.isFinite(orbe)
+                                  ? `${tl('orbe', 'orb', 'orbe', 'orbe')} ${orbe.toFixed(1)}°`
+                                  : '',
+                                forte ? tl('quase exato', 'nearly exact', 'casi exacto', 'quasi esatto') : '',
+                                a.applying === true
+                                  ? tl('ainda chegando', 'still building', 'aun llegando', 'ancora in arrivo')
+                                  : a.applying === false
+                                    ? tl('já passou do pico', 'past its peak', 'ya paso el pico', 'gia oltre il picco')
+                                    : '',
+                              ].filter(Boolean).join('  ·  ')}
+                            </Text>
+
+                            <Text style={[styles.cartaoAspectoAcao, { color: corAspecto }]}>
+                              {tl('Ler a interpretação', 'Read the interpretation', 'Leer la interpretacion', 'Leggi l interpretazione')}
+                            </Text>
+                          </TouchableOpacity>
+                        )
+                      })}
                     </View>
                   ) : null}
                 </ScrollView>
@@ -1630,6 +1668,19 @@ const styles = StyleSheet.create({
   // Selo de origem. Cor diferente por leitura: dourado = o mapa dela (fixo),
   // ciano = o ceu de hoje (passa). A mesma dupla de cores que a roda usa nos
   // dois aneis, para o modal confirmar visualmente de onde veio o toque.
+  cartaoAspecto: {
+    marginBottom: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderLeftWidth: 3,
+    backgroundColor: 'rgba(255,255,255,0.045)',
+  },
+  cartaoAspectoTopo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cartaoAspectoTitulo: { fontSize: 15.5, fontWeight: '700' },
+  cartaoAspectoPar: { color: '#dde2ee', fontSize: 15, marginTop: 2 },
+  cartaoAspectoMeta: { color: '#8d94a8', fontSize: 14, marginTop: 4 },
+  cartaoAspectoAcao: { fontSize: 14, fontWeight: '700', marginTop: 7 },
   controlesDaRoda: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -16,7 +16,7 @@ import { calcularRaios, glifosQueCabem, FRACAO, MARGEM_DO_QUADRO } from '../raio
 
 // Tamanhos reais de tela, incluindo os quebrados: o arredondamento do disco
 // para pixel inteiro faz a conta fechar num e falhar no vizinho.
-const TAMANHOS = [320, 340, 360, 380, 400, 420, 440]
+const TAMANHOS = [320, 340, 360, 380, 400, 420, 440, 480, 520, 560]
 
 describe('faixa dos planetas natais', () => {
   it('comporta um aglomerado de 3 na bi-roda', () => {

@@ -51,13 +51,18 @@ export const FRACAO = {
   // Anel das casas com 0,07: o numero da casa usa 0,036 do lado e precisa de
   // folga em volta para nao encostar nas duas bordas.
   houseIn: 0.32,
-  planet: 0.205,
-  inner: 0.09,
+  planet: 0.215,
+  // Miolo MAIOR: e onde as linhas de aspecto vivem, e com 0,09 elas ficavam
+  // espremidas num disco pequeno demais para mostrar a trama do mapa.
+  inner: 0.115,
   /** O anel de trânsito NÃO leva escala: vive na borda do quadro. */
   transit: 0.45,
-  discNatalBiRoda: 0.029,
-  discNatalSozinho: 0.034,
-  discTransit: 0.028,
+  // Discos um pouco MENORES em proporcao. Com a roda crescendo, o disco
+  // crescia junto e a faixa de empilhamento nao melhorava — o ganho de area
+  // ia todo para o glifo, nao para o espaco entre glifos.
+  discNatalBiRoda: 0.026,
+  discNatalSozinho: 0.030,
+  discTransit: 0.025,
   /**
    * Espaçamento radial entre glifos empilhados, em múltiplos do raio do disco.
    *
