@@ -375,6 +375,19 @@ export function useLifeAreas(): UseLifeAreasReturn {
           // Mantem o snapshot ja salvo e evita tela de erro fatal.
           setError(null)
         }
+        // ⚠️ Este return saia MUDO: sem `transitData`, sem `error`, e o
+        // `finally` ainda punha `loading` em false. A Home caia em
+        // `!loading && !transitData && !error` e mostrava "Mapa em
+        // processamento" PARA SEMPRE — dizendo que estava calculando quando
+        // nada mais ia acontecer.
+        //
+        // Acontece no NAVEGADOR: `canUseLocalEngineFallback` e sempre false na
+        // web (BACKEND_ONLY_STATUS tem default true), entao basta o snapshot do
+        // backend nao estar fresco para a tela travar.
+        //
+        // O motor nao rodou — e isso e exatamente o que `engineFailed` quer
+        // dizer. Com o sinal, a tela pode falar a verdade.
+        setEngineFailed(true)
         return
       }
 

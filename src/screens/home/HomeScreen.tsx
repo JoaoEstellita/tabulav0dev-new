@@ -479,20 +479,39 @@ export default function HomeScreen() {
   }
 
   if (!loading && !transitData && !error) {
+    // "Em processamento" é VERDADE quando ainda vai acontecer algo, e MENTIRA
+    // quando o cálculo já terminou sem resultado. `engineFailed` separa os dois
+    // casos: sem ele, a tela prometia um cálculo que nunca viria e a pessoa
+    // ficava puxando para atualizar à toa.
+    const calculoFalhou = engineFailed
     return (
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.emptyStateContainer}>
-          <Ionicons name="planet-outline" size={56} color="#FFD700" style={{ opacity: 0.4 }} />
+          <Ionicons
+            name={calculoFalhou ? 'cloud-offline-outline' : 'planet-outline'}
+            size={56}
+            color={calculoFalhou ? '#fbbf24' : '#FFD700'}
+            style={{ opacity: calculoFalhou ? 0.8 : 0.4 }}
+          />
           <Text style={styles.emptyStateTitle}>
-            {tl('Mapa em processamento', 'Chart processing', 'Mapa en proceso', 'Mappa in elaborazione')}
+            {calculoFalhou
+              ? tl('Não foi possível montar seu mapa', 'Could not build your chart', 'No fue posible armar tu mapa', 'Non e stato possibile creare la tua mappa')
+              : tl('Mapa em processamento', 'Chart processing', 'Mapa en proceso', 'Mappa in elaborazione')}
           </Text>
           <Text style={styles.emptyStateText}>
-            {tl(
-              'Seus dados astrológicos estão sendo calculados. Puxe para baixo para atualizar.',
-              'Your astrological data is being calculated. Pull down to refresh.',
-              'Tus datos astrológicos están siendo calculados. Desliza hacia abajo para actualizar.',
-              'I tuoi dati astrologici sono in elaborazione. Trascina verso il basso per aggiornare.'
-            )}
+            {calculoFalhou
+              ? tl(
+                  'O cálculo não concluiu desta vez. Tente novamente — se insistir, abra pelo aplicativo, que calcula no próprio aparelho.',
+                  'The calculation did not finish this time. Try again — if it persists, open the app, which calculates on your device.',
+                  'El calculo no termino esta vez. Intenta de nuevo — si persiste, abre la aplicacion, que calcula en tu dispositivo.',
+                  'Il calcolo non e terminato stavolta. Riprova — se persiste, apri l app, che calcola sul tuo dispositivo.',
+                )
+              : tl(
+                  'Seus dados astrológicos estão sendo calculados. Puxe para baixo para atualizar.',
+                  'Your astrological data is being calculated. Pull down to refresh.',
+                  'Tus datos astrológicos están siendo calculados. Desliza hacia abajo para actualizar.',
+                  'I tuoi dati astrologici sono in elaborazione. Trascina verso il basso per aggiornare.'
+                )}
           </Text>
           <TouchableOpacity style={styles.emptyStateButton} onPress={() => refreshData()}>
             <Text style={styles.emptyStateButtonText}>

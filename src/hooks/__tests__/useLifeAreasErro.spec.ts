@@ -94,3 +94,42 @@ describe('o erro silencioso agora APARECE para quem está olhando', () => {
     expect(AVISO).toMatch(/if \(!visivel\) return null/)
   })
 })
+
+describe('a tela presa em "Mapa em processamento"', () => {
+  /**
+   * Relatado no NAVEGADOR: a tela ficava eternamente em "Mapa em
+   * processamento", com botão de tentar de novo que não resolvia nada.
+   *
+   * O caminho: na web `canUseLocalEngineFallback` é sempre false
+   * (BACKEND_ONLY_STATUS tem default true), então quando o snapshot do backend
+   * não está fresco o hook caía num `return` MUDO — sem `transitData`, sem
+   * `error` — e o `finally` ainda punha `loading` em false. A Home caía em
+   * `!loading && !transitData && !error` e prometia um cálculo que nunca viria.
+   *
+   * Mentira de interface é pior que erro: a pessoa fica puxando para atualizar
+   * uma coisa que já terminou.
+   */
+  const raiz = join(__dirname, '..', '..')
+  const HOOK = readFileSync(join(raiz, 'hooks', 'useLifeAreas.ts'), 'utf-8')
+  const HOME = readFileSync(join(raiz, 'screens', 'home', 'HomeScreen.tsx'), 'utf-8')
+
+  it('nenhum caminho sai sem dado, sem erro E sem sinal', () => {
+    // O branch do backend-only agora marca engineFailed antes de retornar.
+    const branch = HOOK.slice(
+      HOOK.indexOf('if (shouldRunLocal && !canUseLocalEngineFallback'),
+      HOOK.indexOf('setLoadStage(`preEngine:'),
+    )
+    expect(branch, 'o return mudo voltou').toContain('setEngineFailed(true)')
+  })
+
+  it('a tela distingue "ainda vai calcular" de "não deu"', () => {
+    expect(HOME).toContain('const calculoFalhou = engineFailed')
+    expect(HOME, 'precisa de um título próprio para a falha')
+      .toMatch(/Não foi possível montar seu mapa/)
+  })
+
+  it('a mensagem de falha dá um caminho, não só a má notícia', () => {
+    // Na web o cálculo local é bloqueado; o app nativo calcula no aparelho.
+    expect(HOME).toMatch(/abra pelo aplicativo/)
+  })
+})
