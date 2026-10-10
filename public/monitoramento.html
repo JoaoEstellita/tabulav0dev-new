@@ -1003,11 +1003,62 @@
 
   // Auto-refresh a cada 60s — SEM a lista de usuários (só contagens baratas),
   // pra não sangrar leituras com o painel aberto.
-  setInterval(() => {
-    if (document.getElementById('dashboard').style.display !== 'none') {
+  //
+  // ⚠️ "Contagens baratas" eram 40 leituras do Firestore por ciclo. A cada 60s,
+  // sem parar, enquanto a aba existisse — inclusive minimizada, em outra janela
+  // ou esquecida por dias. Medido: 40 x 1440 min = ~57 mil leituras/dia, que é
+  // praticamente TODO o consumo do projeto. Os usuários reais mal apareciam no
+  // gráfico. Em 09/10/2026 isso estourou o teto de 50 mil/dia do free tier e
+  // derrubou o Firestore inteiro — app, WhatsApp e crons — porque a conta de
+  // faturamento estava encerrada e o projeto caiu para a cota gratuita.
+  //
+  // Duas travas, porque uma só não basta:
+  //
+  // 1. SÓ COM A ABA À VISTA. `document.hidden` cobre minimizada, em segundo
+  //    plano e em outra aba — que é onde um painel passa quase todo o tempo.
+  //    O teste antigo (`display !== 'none'`) olhava só o DOM: dizia "visível"
+  //    para uma aba que ninguém via há três dias.
+  //
+  // 2. PARA SOZINHO. Sem ninguém olhando, repetir para sempre não informa
+  //    nada. Depois de 30 ciclos ociosos o timer para, e volta a rodar quando
+  //    a aba é reaberta. Um painel esquecido deixa de custar.
+  //
+  // Voltar à aba atualiza na hora, então nada disto se paga com dado velho:
+  // o que você lê ao olhar é sempre de agora.
+  const CICLOS_OCIOSOS_ATE_PARAR = 30
+  let ciclosOciosos = 0
+  let timerAtualizacao = null
+
+  const painelAberto = () => document.getElementById('dashboard').style.display !== 'none'
+  const alguemOlhando = () => !document.hidden && painelAberto()
+
+  function pararAtualizacao() {
+    if (timerAtualizacao) { clearInterval(timerAtualizacao); timerAtualizacao = null }
+  }
+
+  function iniciarAtualizacao() {
+    if (timerAtualizacao) return
+    ciclosOciosos = 0
+    timerAtualizacao = setInterval(() => {
+      if (!alguemOlhando()) {
+        // Conta os ciclos ociosos em vez de buscar: aba escondida não lê nada.
+        if (++ciclosOciosos >= CICLOS_OCIOSOS_ATE_PARAR) pararAtualizacao()
+        return
+      }
+      ciclosOciosos = 0
       loadData(false)
-    }
-  }, 60000)
+    }, 60000)
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return
+    if (!painelAberto()) return
+    // Voltou para a aba: mostra o estado de agora e religa o ciclo.
+    loadData(false)
+    iniciarAtualizacao()
+  })
+
+  iniciarAtualizacao()
 </script>
 </body>
 </html>
