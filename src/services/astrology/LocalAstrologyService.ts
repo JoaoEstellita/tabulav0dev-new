@@ -113,7 +113,7 @@ export class LocalAstrologyService {
    * seguro para ver a carta de outra pessoa sem tocar no doc dela.
    */
   static async computeChartNoCache(birthData: BirthData): Promise<LocalTransitData> {
-    const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+    const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem)
     const lat = birthData.birthLocation.latitude
     const lon = birthData.birthLocation.longitude
     const realData = await RealAstrologyEngine.calculateRealAstrology(
@@ -228,7 +228,7 @@ export class LocalAstrologyService {
       // 2. Calcular dados REAIS usando engine local
       console.log('🔬 Calculando dados astrológicos REAIS localmente...')
       // Ler sistema de casas persistido (fallback placidus)
-      const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+      const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem)
 
       // Determinar localização atual para casas do momento
       let currentLat = birthData.birthLocation.latitude
@@ -582,7 +582,7 @@ export class LocalAstrologyService {
           console.log('Cache invalidado: versão desatualizada', cache.dataVersion, '→', ASTROLOGY_CACHE_DATA_VERSION)
           return null
         }
-        const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+        const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem)
         if (cache.houseSystem && cache.houseSystem !== currentSystem) {
           return null
         }

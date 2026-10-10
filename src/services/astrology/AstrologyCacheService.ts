@@ -64,7 +64,7 @@ class AstrologyCacheService {
   }
   
   private getCurrentHouseSystem(): string {
-    return normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+    return normalizeHouseSystem((globalThis as any).__userHouseSystem)
   }
   
   /**
