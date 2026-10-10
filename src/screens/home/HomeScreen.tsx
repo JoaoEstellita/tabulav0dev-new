@@ -478,7 +478,20 @@ export default function HomeScreen() {
     )
   }
 
-  if (!loading && !transitData && !error) {
+  // `transitData` vem EXCLUSIVAMENTE do motor local — que na web não roda
+  // (`BACKEND_ONLY_STATUS`). Testar só ele fazia a tela desistir com o
+  // snapshot do backend pronto logo atrás: `lifeAreasForDisplay` já cai em
+  // `backendLifeAreas`, o card de trânsitos já recebe
+  // `astrologyDataFallback={backendCurrentTransits}` e todo bloco que depende
+  // do motor já está atrás de `transitData?.`. A Home sempre soube renderizar
+  // sem o motor; era esta guarda que não deixava chegar lá.
+  //
+  // Trocar a mensagem de "em processamento" para "não foi possível" deixou a
+  // tela honesta e igualmente inútil: o certo é não mostrar tela nenhuma
+  // quando existe conteúdo. Vazio só se justifica quando não há NADA.
+  const temSnapshotBackend = !!backendLifeAreas && Object.keys(backendLifeAreas).length > 0
+
+  if (!loading && !transitData && !temSnapshotBackend && !error) {
     // "Em processamento" é VERDADE quando ainda vai acontecer algo, e MENTIRA
     // quando o cálculo já terminou sem resultado. `engineFailed` separa os dois
     // casos: sem ele, a tela prometia um cálculo que nunca viria e a pessoa
