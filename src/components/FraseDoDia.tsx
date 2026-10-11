@@ -221,10 +221,23 @@ const s = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#FFD700',
   },
-  // A origem é referência, não leitura: menor e em tom mais baixo que o
-  // efeito, mas ainda acima do piso de 14px do app — discreto não é ilegível.
+  // A origem é referência, não leitura — mas precisa se distinguir de DUAS
+  // coisas ao mesmo tempo: do texto do efeito (quase branco) e dos rótulos de
+  // seção.
+  //
+  // ⚠️ Ela nasceu #8b93a7 enquanto os rótulos são #8d94a8 — a mesma cor, na
+  // prática. Na tela, "O FUNDO" e "Lua em oposição ao Ascendente" ficavam
+  // indistinguíveis, e a fronteira entre SEÇÃO e CONTEÚDO sumia.
+  //
+  // A saída é mudar a origem, não os rótulos: eles são uma FAMÍLIA ("O SEU
+  // DIA", "O FUNDO", "VEM AÍ", "NO SALDO") e só funcionam sendo iguais entre
+  // si. Destacar alguns quebraria a hierarquia para resolver um detalhe.
+  //
+  // O azul frio separa por MATIZ, não por brilho: continua discreto ao lado do
+  // efeito e deixa de competir com o cinza neutro do rótulo. Segue em 14px,
+  // que é o piso de legibilidade do app — o recuo vem da cor, não do tamanho.
   fonte: {
-    color: '#8b93a7',
+    color: '#7f9ac4',
     fontSize: 14,
     lineHeight: 19,
     marginTop: 3,
