@@ -170,8 +170,49 @@ describe('a síntese montada', () => {
     expect(calmo.blocos.find((b) => b.chave === 'conselho')!.texto).not.toMatch(/pode esperar/)
   })
 
-  it('o resumo do topo é o bloco de HOJE', () => {
-    expect(s.resumo).toBe(s.blocos.find((b) => b.chave === 'hoje')!.texto)
+  it('o resumo do topo é o EFEITO, não a origem astrológica', () => {
+    // ⚠️ A ORDEM INVERTEU.
+    //
+    // Antes o topo era o bloco "Hoje", que começava pela fonte: "Hoje o Sol
+    // pressiona a sua imaginação e a Lua favorece. A clareza custa mais..." —
+    // punha na frente o que menos importa para quem lê. O aspecto é a FONTE da
+    // informação, não a informação.
+    //
+    // Agora o topo é o efeito da primeira frase, e a origem vai numa linha
+    // própria, menor e em tom mais baixo.
+    expect(s.resumo).toBe(s.frases[0].efeito)
+    expect(s.resumo, 'o resumo não começa pela origem').not.toMatch(/^Hoje (o|a) /)
+  })
+
+  it('cada frase traz o efeito e a origem separados', () => {
+    // Separados, e não costurados numa string: é o que deixa a tela dar
+    // tamanho e cor diferentes a cada parte.
+    expect(s.frases.length).toBeGreaterThan(1)
+    for (const f of s.frases) {
+      expect(f.efeito, 'o efeito é uma frase fechada').toMatch(/\.$/)
+      expect(f.fonte, 'a origem nomeia planeta e aspecto').toMatch(/ em | sobre /)
+      expect(f.chaves.length, 'a frase sabe quais trânsitos citou').toBeGreaterThan(0)
+    }
+  })
+
+  it('uma frase por PONTO tocado, não uma por trânsito', () => {
+    // Sol em quadratura a Netuno e Lua em trígono a Netuno contam a mesma
+    // história — cabem na mesma frase, com a ressalva ("mas").
+    const netuno = s.frases.find((f) => f.fonte.includes('Netuno'))!
+    expect(netuno.chaves.length, 'os dois trânsitos a Netuno na mesma frase').toBe(2)
+    expect(netuno.efeito, 'um pressiona e o outro alivia').toContain('mas')
+  })
+
+  it('os ângulos levam artigo em português', () => {
+    // "em oposição a Meio do Céu" está errado; o certo é "ao Meio do Céu".
+    const mc = s.frases.find((f) => f.fonte.includes('Meio do Céu'))
+    if (mc) expect(mc.fonte).not.toMatch(/ a Meio do Céu/)
+  })
+
+  it('respeita o teto de frases', () => {
+    // Num dia com dezenas de trânsitos ativos, sem teto isto deixa de ser
+    // leitura e vira planilha.
+    expect(s.frases.length).toBeLessThanOrEqual(4)
   })
 
   it('o Meio do Céu é citado como lugar, não como planeta', () => {

@@ -72,7 +72,15 @@ describe('o detalhe: aspecto e texto, nada mais', () => {
 
   it('tem teto — além disso vira lista, não leitura', () => {
     expect(FRASE).toMatch(/MAX_DETALHES = \d/)
-    expect(FRASE).toContain('ordenados.slice(0, MAX_DETALHES)')
+    expect(FRASE).toContain('.slice(0, MAX_DETALHES)')
+  })
+
+  it('não repete na lista o trânsito que já foi citado como origem', () => {
+    // Sem isto o mesmo trânsito aparecia DUAS VEZES na mesma tela: na linha de
+    // origem de uma frase ("Sol em quadratura com Netuno") e de novo na lista
+    // detalhada logo abaixo. A frase já disse o que ele faz.
+    expect(FRASE).toContain('jaCitados')
+    expect(FRASE).toMatch(/filter\(\(t\) => !jaCitados\.has/)
   })
 
   it('tem o controle de expandir, nos dois sentidos', () => {

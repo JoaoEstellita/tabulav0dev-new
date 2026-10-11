@@ -44,12 +44,42 @@ export interface BlocoDaSintese {
   texto: string
 }
 
+/**
+ * Uma leitura do dia: o EFEITO em destaque, a origem astrológica discreta.
+ *
+ * A ordem antiga era a inversa — "Hoje a Lua e Vênus pressionam a sua
+ * presença. O jeito como você aparece encontra mais resistência que o normal."
+ * — e punha na frente o que menos importa para quem lê. O aspecto é a FONTE da
+ * informação, não a informação; quem abre o app quer saber o que muda no dia,
+ * e só depois (se quiser) de onde isso sai.
+ *
+ * Por isso vêm separados, e não costurados numa frase só: a tela dá tamanho e
+ * cor diferentes a cada parte.
+ */
+export interface FraseDoDia {
+  /** O que muda hoje — o texto que ganha destaque. */
+  efeito: string
+  /** De onde vem: "Sol em quadratura com Netuno · Lua em trígono a Netuno". */
+  fonte: string
+  /** Identifica os trânsitos citados, para a lista detalhada não repetir. */
+  chaves: string[]
+}
+
 export interface SinteseDoDia {
   /** Uma ou duas frases para o topo da Home — o que ativa HOJE. */
   resumo: string
+  /**
+   * As leituras de hoje, uma por ponto do mapa tocado, da mais forte para a
+   * mais fraca. Antes só o ponto MAIS tocado virava frase e todo o resto do
+   * céu ficava mudo — num dia com 44 trânsitos ativos, uma frase só.
+   */
+  frases: FraseDoDia[]
   /** O detalhe, para o "Ler mais". */
   blocos: BlocoDaSintese[]
 }
+
+/** Teto de frases: acima disto a leitura deixa de ser leitura e vira planilha. */
+const MAX_FRASES = 4
 
 /** Meses a anos no mesmo ponto: são o período, não o dia. */
 const LENTOS = new Set(['Saturn', 'Uranus', 'Neptune', 'Pluto', 'Jupiter'])
@@ -193,6 +223,57 @@ function citar(t: TransitoAtivo, idioma: AppLanguage): string {
   }
   return T(`${agente} sobre ${alvoTraduzido}`, `${agente} over ${alvoTraduzido}`, `${agente} sobre ${alvoTraduzido}`, `${agente} su ${alvoTraduzido}`)
 }
+
+/** O aspecto por extenso, para a linha discreta da fonte. */
+const ASPECTO_POR_EXTENSO: Record<string, [string, string, string, string]> = {
+  conjuncao: ['em conjunção com', 'conjunct', 'en conjuncion con', 'in congiunzione con'],
+  oposicao: ['em oposição a', 'opposite', 'en oposicion a', 'in opposizione a'],
+  quadratura: ['em quadratura com', 'square', 'en cuadratura con', 'in quadratura con'],
+  trigono: ['em trígono a', 'trine', 'en trigono a', 'in trigono a'],
+  sextil: ['em sextil com', 'sextile', 'en sextil con', 'in sestile con'],
+  quincuncio: ['em quincúncio com', 'quincunx', 'en quincuncio con', 'in quinconce con'],
+  semiquadratura: ['em semiquadratura com', 'semisquare', 'en semicuadratura con', 'in semiquadrato con'],
+  sesquiquadratura: ['em sesquiquadratura com', 'sesquisquare', 'en sesquicuadratura con', 'in sesquiquadrato con'],
+}
+
+/**
+ * "Sol em quadratura com Netuno" — a origem, dita por extenso.
+ *
+ * Por extenso e não por sigla: o modo Linguagem simples vem LIGADO por padrão
+ * no app, e "ASC" contraria isso. "Ascendente" continua sendo o termo técnico,
+ * só que legível para quem não decorou abreviação.
+ */
+function fonteDoTransito(t: TransitoAtivo, idioma: AppLanguage): string {
+  const T = tl(idioma)
+  const agente = translatePlanet(String(t.transitPlanet || ''), idioma)
+  const alvo = String(t.natalPlanet || '')
+  const chave = alvo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '')
+  const alvoLegivel =
+    chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc'
+      ? T('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
+      : chave === 'ascendente' || chave === 'ascendant' || chave === 'asc'
+        ? T('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')
+        : translatePlanet(alvo, idioma)
+  const tipo = String(t.type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const par = ASPECTO_POR_EXTENSO[tipo]
+  let asp = par ? T(par[0], par[1], par[2], par[3]) : T('sobre', 'over', 'sobre', 'su')
+
+  // Os angulos pedem artigo em portugues: "em oposicao a Meio do Ceu" esta
+  // errado — o certo e "ao Meio do Ceu". Planeta nao leva artigo ("a Netuno"),
+  // entao a contracao vale so para Ascendente e Meio do Ceu.
+  const ehAngulo =
+    chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc' ||
+    chave === 'ascendente' || chave === 'ascendant' || chave === 'asc'
+  if (ehAngulo && idioma === 'pt-BR') {
+    if (asp.endsWith(' a')) asp = `${asp.slice(0, -2)} ao`
+    else if (asp.endsWith(' com')) asp = `${asp} o`
+  }
+  return `${agente} ${asp} ${alvoLegivel}`
+}
+
+/** Identidade de um trânsito, para a lista detalhada não repetir o que já foi dito. */
+const chaveDoTransito = (t: TransitoAtivo) =>
+  `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
 
 /**
  * O VERBO do trânsito — o que ele faz com o ponto.
@@ -424,8 +505,64 @@ export function sintetizarODia(
 
   blocos.push({ chave: 'conselho', rotulo: T('O que fazer', 'What to do', 'Que hacer', 'Cosa fare'), texto: conselho })
 
-  // O topo da Home leva o bloco "Hoje"; sem ele, o fundo.
-  const resumo = textoHoje || blocos[0]?.texto || ''
+  // ── AS FRASES DO DIA: efeito em destaque, origem discreta ───────────────
+  //
+  // Uma por PONTO DO MAPA tocado, não uma por trânsito: dois planetas no mesmo
+  // ponto contam a mesma história e devem caber na mesma frase. Antes só o
+  // ponto mais tocado virava texto — num dia com dezenas de trânsitos ativos,
+  // todo o resto ficava mudo.
+  //
+  // Ordenadas por força somada: a primeira é a que a Home mostra sem abrir.
+  const porPonto = new Map<string, TransitoAtivo[]>()
+  for (const t of conjuntoHoje) {
+    const alvo = String(t.natalPlanet || '')
+    if (!alvo) continue
+    const lista = porPonto.get(alvo) || []
+    lista.push(t)
+    porPonto.set(alvo, lista)
+  }
 
-  return { resumo, blocos }
+  const frases: FraseDoDia[] = []
+  const gruposOrdenados = [...porPonto.entries()]
+    .map(([alvo, ts]) => ({ alvo, ts, peso: ts.reduce((a, t) => a + forca(t), 0) }))
+    .sort((a, b) => b.peso - a.peso)
+
+  for (const g of gruposOrdenados) {
+    if (frases.length >= MAX_FRASES) break
+    const tensos = g.ts.filter((t) => naturezaReal(t) === 'desafiador')
+    const faceis = g.ts.filter((t) => naturezaReal(t) === 'harmonico')
+    // Sem lado definido não há efeito a descrever — citar só o aspecto seria
+    // devolver a geometria, que é justamente o que este módulo existe p/ evitar.
+    if (!tensos.length && !faceis.length) continue
+
+    const efeitoTenso = (tensos.length ? efeitoNoPonto(g.alvo, 'tenso', idioma) : '') || ''
+    const efeitoFacil = (faceis.length ? efeitoNoPonto(g.alvo, 'facil', idioma) : '') || ''
+    let efeito = ''
+    if (efeitoTenso && efeitoFacil) {
+      // Um puxa e o outro solta: a ressalva importa mais que a soma.
+      efeito = T(`${maiuscula(efeitoTenso)} — mas ${efeitoFacil}.`,
+                 `${maiuscula(efeitoTenso)} — but ${efeitoFacil}.`,
+                 `${maiuscula(efeitoTenso)} — pero ${efeitoFacil}.`,
+                 `${maiuscula(efeitoTenso)} — ma ${efeitoFacil}.`)
+    } else if (efeitoTenso || efeitoFacil) {
+      efeito = `${maiuscula(efeitoTenso || efeitoFacil)}.`
+    }
+    if (!efeito) continue
+
+    // Os mais fortes primeiro, no máximo dois por linha: três origens numa
+    // linha discreta deixam de ser referência e viram outra frase para ler.
+    const citados = [...g.ts].sort((a, b) => forca(b) - forca(a)).slice(0, 2)
+    frases.push({
+      efeito,
+      fonte: citados.map((t) => fonteDoTransito(t, idioma)).join(' · '),
+      chaves: citados.map(chaveDoTransito),
+    })
+  }
+
+  // O topo da Home leva a primeira frase; sem ela, o bloco "Hoje" ou o fundo.
+  const resumo = frases[0]
+    ? costurar(frases[0].efeito, '')
+    : textoHoje || blocos[0]?.texto || ''
+
+  return { resumo, frases, blocos }
 }

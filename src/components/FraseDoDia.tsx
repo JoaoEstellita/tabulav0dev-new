@@ -94,8 +94,22 @@ export default function FraseDoDia({ transitos }: Props) {
     const aviso = sintese?.resumo || ''
     if (!aviso) return null
 
+    // As leituras do dia: EFEITO em destaque, origem astrologica discreta.
+    // A primeira fica visivel; as outras entram no "Ver mais".
+    const frases = sintese?.frases || []
+
     // ── O DETALHE: aspecto e texto, nada mais ──────────────────────────────
-    const detalhes = ordenados.slice(0, MAX_DETALHES).map((t) => {
+    //
+    // ⚠️ Sem o descarte abaixo, o mesmo transito aparecia DUAS VEZES na mesma
+    // tela: citado na linha de origem de uma frase ("Sol em quadratura com
+    // Netuno") e de novo na lista detalhada logo abaixo. A frase ja disse o que
+    // ele faz; repetir o nome nao acrescenta, so faz a tela parecer maior do
+    // que o conteudo que tem.
+    const jaCitados = new Set(frases.flatMap((f) => f.chaves))
+    const detalhes = ordenados
+      .filter((t) => !jaCitados.has(`${t.transitPlanet}|${t.type}|${t.natalPlanet}`))
+      .slice(0, MAX_DETALHES)
+      .map((t) => {
       const n = narrar(t)
       const corpo = String(n?.modalBody || n?.shortText || '').trim()
       return {
@@ -115,7 +129,7 @@ export default function FraseDoDia({ transitos }: Props) {
     // O bloco "hoje" ja esta no topo: repeti-lo logo abaixo faria o expandido
     // parecer que nao acrescenta nada.
     const blocos = (sintese?.blocos || []).filter((b) => b.chave !== 'hoje')
-    return { aviso, blocos, detalhes }
+    return { aviso, blocos, detalhes, frases }
   }, [transitos, language])
 
   if (!leitura) return null
@@ -128,10 +142,27 @@ export default function FraseDoDia({ transitos }: Props) {
   return (
     <View style={s.caixa}>
       <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
-      <TextoComGlossario style={s.texto}>{leitura.aviso}</TextoComGlossario>
+
+      {/* O EFEITO primeiro, a origem depois e em segundo plano.
+          A ordem inversa — "Hoje a Lua e Vênus pressionam a sua presença" antes
+          do que isso significa — punha na frente o que menos importa para quem
+          lê. O aspecto é a FONTE da informação, não a informação. */}
+      <TextoComGlossario style={s.texto}>{leitura.frases[0]?.efeito || leitura.aviso}</TextoComGlossario>
+      {leitura.frases[0]?.fonte ? (
+        <Text style={s.fonte}>{leitura.frases[0].fonte}</Text>
+      ) : null}
 
       {aberto ? (
         <View style={s.detalhe}>
+          {/* As outras leituras do dia, mesmo formato. Antes só o ponto mais
+              tocado virava texto: num dia com dezenas de trânsitos ativos,
+              uma frase só e todo o resto do céu em silêncio. */}
+          {leitura.frases.slice(1).map((f, i) => (
+            <View key={`frase-${i}`} style={s.fraseExtra}>
+              <TextoComGlossario style={s.texto}>{f.efeito}</TextoComGlossario>
+              {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
+            </View>
+          ))}
           {/* A leitura do momento, em camadas: o fundo (planetas lentos), o que
               vem aí, o saldo e o que fazer. Vem ANTES da lista de aspectos —
               primeiro o sentido, depois o detalhe técnico. */}
@@ -189,6 +220,17 @@ const s = StyleSheet.create({
     borderRadius: 14,
     borderLeftWidth: 3,
     borderLeftColor: '#FFD700',
+  },
+  // A origem é referência, não leitura: menor e em tom mais baixo que o
+  // efeito, mas ainda acima do piso de 14px do app — discreto não é ilegível.
+  fonte: {
+    color: '#8b93a7',
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  fraseExtra: {
+    marginTop: 14,
   },
   rotulo: {
     color: '#8d94a8',
