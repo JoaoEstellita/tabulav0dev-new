@@ -15,6 +15,20 @@ import type { AppLanguage } from './astro/pt'
  *
  * Regra de escrita: oração curta, sujeito concreto, verbo no presente. Nada de
  * "pode ser que", "tende a" ou "é hora de".
+ *
+ * ⚠️ E nada de VEREDICTO. A primeira versão decretava resultados sobre a
+ * pessoa — "a imagem que você passa incomoda", "o controle vira disputa", "a
+ * ação esbarra e irrita". Relatado na tela: ficou forte demais. Lidas todo dia,
+ * uma depois da outra, essas frases fazem o app soar como quem repreende.
+ *
+ * O ajuste não é suavizar com "pode ser que" — isso tira a assertividade sem
+ * devolver informação. É dizer O QUE MUDA E EM RELAÇÃO A QUÊ: "encontra mais
+ * resistência que o normal" afirma com a mesma firmeza, descreve o mecanismo em
+ * vez de julgar quem lê, e situa o dia contra a linha de base da pessoa — que é
+ * justamente o que um trânsito significa.
+ *
+ * Vale para os dois lados: o `facil` prometia demais ("as portas abrem com
+ * facilidade"). Promessa que não se cumpre custa confiança igual.
  */
 
 type Par = Record<AppLanguage, string>
@@ -33,68 +47,68 @@ const E = (pt: string, en: string, es: string, it: string): Par =>
 const PONTOS: Record<string, EfeitoDoPonto> = {
   sun: {
     nome: E('a sua vitalidade', 'your vitality', 'tu vitalidad', 'la tua vitalita'),
-    tenso: E('a vontade encontra resistência', 'your drive meets resistance', 'la voluntad encuentra resistencia', 'la volonta incontra resistenza'),
-    facil: E('a vontade encontra caminho', 'your drive finds a way', 'la voluntad encuentra camino', 'la volonta trova strada'),
+    tenso: E('o que você quer fazer encontra mais resistência que o normal', 'what you want to do meets more resistance than usual', 'lo que quieres hacer encuentra mas resistencia que lo normal', 'cio che vuoi fare incontra piu resistenza del solito'),
+    facil: E('o que você quer fazer encontra menos atrito que o normal', 'what you want to do meets less friction than usual', 'lo que quieres hacer encuentra menos roce que lo normal', 'cio che vuoi fare incontra meno attrito del solito'),
   },
   moon: {
     nome: E('o seu humor', 'your mood', 'tu animo', 'il tuo umore'),
-    tenso: E('o humor oscila e cansa', 'your mood swings and tires', 'el animo oscila y cansa', 'l umore oscilla e stanca'),
-    facil: E('o humor acompanha o que você faz', 'your mood follows what you do', 'el animo acompana lo que haces', 'l umore accompagna cio che fai'),
+    tenso: E('o humor muda mais rápido do que você consegue acompanhar', 'your mood shifts faster than you can keep up with', 'el animo cambia mas rapido de lo que puedes seguir', 'l umore cambia piu in fretta di quanto riesci a seguire'),
+    facil: E('o humor acompanha o que você faz, sem puxar para outro lado', 'your mood follows what you do, without pulling elsewhere', 'el animo acompana lo que haces, sin tirar para otro lado', 'l umore accompagna cio che fai, senza tirare altrove'),
   },
   mercury: {
     nome: E('a sua comunicação', 'your communication', 'tu comunicacion', 'la tua comunicazione'),
-    tenso: E('conversa e raciocínio travam', 'talk and thinking get stuck', 'conversacion y razonamiento se traban', 'parola e ragionamento si bloccano'),
-    facil: E('as ideias saem com clareza', 'ideas come out clearly', 'las ideas salen con claridad', 'le idee escono con chiarezza'),
+    tenso: E('conversas e raciocínio pedem mais atenção que o normal', 'talking and thinking need more care than usual', 'conversar y razonar piden mas atencion que lo normal', 'parlare e ragionare chiedono piu attenzione del solito'),
+    facil: E('as ideias saem mais claras do que de costume', 'ideas come out clearer than usual', 'las ideas salen mas claras que de costumbre', 'le idee escono piu chiare del solito'),
   },
   venus: {
     nome: E('os seus afetos', 'your affections', 'tus afectos', 'i tuoi affetti'),
-    tenso: E('o afeto cobra mais do que dá', 'affection asks more than it gives', 'el afecto cobra mas de lo que da', 'l affetto chiede piu di quanto da'),
-    facil: E('o afeto corre sem esforço', 'affection flows without effort', 'el afecto corre sin esfuerzo', 'l affetto scorre senza sforzo'),
+    tenso: E('as trocas afetivas exigem mais esforço que o normal', 'affectionate exchanges take more effort than usual', 'los intercambios afectivos exigen mas esfuerzo que lo normal', 'gli scambi affettivi richiedono piu sforzo del solito'),
+    facil: E('as trocas afetivas acontecem com menos esforço', 'affectionate exchanges happen with less effort', 'los intercambios afectivos ocurren con menos esfuerzo', 'gli scambi affettivi avvengono con meno sforzo'),
   },
   mars: {
     nome: E('a sua ação', 'your drive to act', 'tu accion', 'la tua azione'),
-    tenso: E('a ação esbarra e irrita', 'action bumps and irritates', 'la accion tropieza e irrita', 'l azione urta e irrita'),
-    facil: E('a ação rende', 'action pays off', 'la accion rinde', 'l azione rende'),
+    tenso: E('agir encontra mais obstáculo do que de costume', 'acting meets more obstacles than usual', 'actuar encuentra mas obstaculos que de costumbre', 'agire incontra piu ostacoli del solito'),
+    facil: E('agir encontra menos obstáculo do que de costume', 'acting meets fewer obstacles than usual', 'actuar encuentra menos obstaculos que de costumbre', 'agire incontra meno ostacoli del solito'),
   },
   jupiter: {
     nome: E('a sua expansão', 'your sense of expansion', 'tu expansion', 'la tua espansione'),
-    tenso: E('o excesso cobra a conta', 'excess sends the bill', 'el exceso pasa la cuenta', 'l eccesso presenta il conto'),
-    facil: E('as portas abrem com facilidade', 'doors open easily', 'las puertas abren con facilidad', 'le porte si aprono facilmente'),
+    tenso: E('o impulso de ampliar pede mais critério que o normal', 'the urge to expand needs more judgement than usual', 'el impulso de ampliar pide mas criterio que lo normal', 'la spinta ad ampliare chiede piu criterio del solito'),
+    facil: E('ampliar custa menos esforço do que de costume', 'expanding takes less effort than usual', 'ampliar cuesta menos esfuerzo que de costumbre', 'ampliare costa meno sforzo del solito'),
   },
   saturn: {
     nome: E('a sua estrutura', 'your structure', 'tu estructura', 'la tua struttura'),
-    tenso: E('a estrutura pesa e limita', 'structure weighs and limits', 'la estructura pesa y limita', 'la struttura pesa e limita'),
-    facil: E('a estrutura sustenta o que você constrói', 'structure holds what you build', 'la estructura sostiene lo que construyes', 'la struttura sostiene cio che costruisci'),
+    tenso: E('compromissos e limites pesam mais que o normal', 'commitments and limits weigh more than usual', 'compromisos y limites pesan mas que lo normal', 'impegni e limiti pesano piu del solito'),
+    facil: E('o que você constrói se sustenta com menos esforço', 'what you build holds up with less effort', 'lo que construyes se sostiene con menos esfuerzo', 'cio che costruisci si regge con meno sforzo'),
   },
   uranus: {
     nome: E('a sua inquietação', 'your restlessness', 'tu inquietud', 'la tua inquietudine'),
-    tenso: E('o imprevisto desorganiza a rotina', 'the unexpected disrupts routine', 'lo imprevisto desorganiza la rutina', 'l imprevisto disorganizza la routine'),
-    facil: E('a mudança vem sem susto', 'change comes without a scare', 'el cambio viene sin susto', 'il cambiamento arriva senza spavento'),
+    tenso: E('o imprevisto desorganiza a rotina mais que o normal', 'the unexpected disrupts routine more than usual', 'lo imprevisto desorganiza la rutina mas que lo normal', 'l imprevisto disorganizza la routine piu del solito'),
+    facil: E('mudanças acontecem com menos sobressalto que o normal', 'changes happen with less of a jolt than usual', 'los cambios ocurren con menos sobresalto que lo normal', 'i cambiamenti avvengono con meno scossa del solito'),
   },
   neptune: {
     nome: E('a sua imaginação', 'your imagination', 'tu imaginacion', 'la tua immaginazione'),
-    tenso: E('a clareza se perde e o cansaço vem', 'clarity blurs and tiredness comes', 'la claridad se pierde y llega el cansancio', 'la chiarezza si perde e arriva la stanchezza'),
-    facil: E('a intuição fica afiada', 'intuition gets sharp', 'la intuicion se afina', 'l intuito si affina'),
+    tenso: E('a clareza custa mais e o cansaço aparece antes', 'clarity costs more and tiredness shows up earlier', 'la claridad cuesta mas y el cansancio aparece antes', 'la chiarezza costa di piu e la stanchezza arriva prima'),
+    facil: E('a intuição fica mais afiada que o normal', 'intuition gets sharper than usual', 'la intuicion se afina mas que lo normal', 'l intuito si affina piu del solito'),
   },
   pluto: {
     nome: E('o seu poder pessoal', 'your personal power', 'tu poder personal', 'il tuo potere personale'),
-    tenso: E('o controle vira disputa', 'control turns into a dispute', 'el control se vuelve disputa', 'il controllo diventa disputa'),
-    facil: E('a força se concentra onde importa', 'strength gathers where it matters', 'la fuerza se concentra donde importa', 'la forza si concentra dove conta'),
+    tenso: E('questões de controle aparecem mais que o normal', 'control issues come up more than usual', 'los temas de control aparecen mas que lo normal', 'le questioni di controllo emergono piu del solito'),
+    facil: E('a sua força se concentra melhor onde importa', 'your strength gathers better where it matters', 'tu fuerza se concentra mejor donde importa', 'la tua forza si concentra meglio dove conta'),
   },
   meio_do_ceu: {
     nome: E('a sua carreira', 'your career', 'tu carrera', 'la tua carriera'),
-    tenso: E('a carreira cobra e expõe', 'career demands and exposes', 'la carrera cobra y expone', 'la carriera chiede ed espone'),
-    facil: E('a carreira anda', 'career moves', 'la carrera avanza', 'la carriera avanza'),
+    tenso: E('a carreira exige e expõe mais que o normal', 'career demands and exposes more than usual', 'la carrera exige y expone mas que lo normal', 'la carriera chiede ed espone piu del solito'),
+    facil: E('a carreira anda com menos atrito que o normal', 'career moves with less friction than usual', 'la carrera avanza con menos roce que lo normal', 'la carriera avanza con meno attrito del solito'),
   },
   ascendente: {
     nome: E('a sua presença', 'your presence', 'tu presencia', 'la tua presenza'),
-    tenso: E('a imagem que você passa incomoda', 'the image you project grates', 'la imagen que das incomoda', 'l immagine che dai infastidisce'),
-    facil: E('a presença abre portas', 'your presence opens doors', 'la presencia abre puertas', 'la presenza apre porte'),
+    tenso: E('o jeito como você aparece encontra mais resistência que o normal', 'the way you come across meets more resistance than usual', 'la forma en que apareces encuentra mas resistencia que lo normal', 'il modo in cui ti presenti incontra piu resistenza del solito'),
+    facil: E('o jeito como você aparece abre caminho com mais facilidade', 'the way you come across opens doors more easily', 'la forma en que apareces abre camino con mas facilidad', 'il modo in cui ti presenti apre strada piu facilmente'),
   },
   northnode: {
     nome: E('a sua direção', 'your direction', 'tu direccion', 'la tua direzione'),
-    tenso: E('o rumo fica confuso', 'the path gets confusing', 'el rumbo se vuelve confuso', 'la rotta diventa confusa'),
-    facil: E('o rumo fica claro', 'the path gets clear', 'el rumbo se aclara', 'la rotta si chiarisce'),
+    tenso: E('o rumo fica menos nítido que o normal', 'the path gets less clear than usual', 'el rumbo queda menos nitido que lo normal', 'la rotta risulta meno nitida del solito'),
+    facil: E('o rumo fica mais nítido que o normal', 'the path gets clearer than usual', 'el rumbo queda mas nitido que lo normal', 'la rotta risulta piu nitida del solito'),
   },
 }
 

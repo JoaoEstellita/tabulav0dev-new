@@ -362,20 +362,31 @@ export function sintetizarODia(
   // ── 4) NO SALDO: o balanço, ponderado ────────────────────────────────────
   const b = balanco(ordenados)
   const casa = casaQueConcentra(ordenados)
+  // ⚠️ A CONTA PRECISA FECHAR NA FRENTE DE QUEM LE.
+  //
+  // Antes a frase anunciava `ordenados.length` como total e logo em seguida
+  // dava duas parcelas que nao somavam: "44 transitos ativos: os 27 que pedem
+  // cuidado pesam mais que os 15 de apoio" — 27 + 15 = 42. Os 2 que faltavam
+  // eram os NEUTROS, que nao entram em nenhum dos lados.
+  //
+  // Um numero que nao bate com as proprias parcelas faz o leitor desconfiar do
+  // resto do texto, e com razao. Como os neutros nao pesam no saldo, a saida e
+  // nao prometer um total: cita-se as duas parcelas, que e o que a frase
+  // realmente compara.
   const saldo = b.dominante === 'tenso'
-    ? T(`${ordenados.length} trânsitos ativos: os ${b.nTenso} que pedem cuidado pesam mais que os ${b.nHarmonico} de apoio.`,
-        `${ordenados.length} active transits: the ${b.nTenso} asking for care weigh more than the ${b.nHarmonico} supportive ones.`,
-        `${ordenados.length} transitos activos: los ${b.nTenso} que piden cuidado pesan mas que los ${b.nHarmonico} de apoyo.`,
-        `${ordenados.length} transiti attivi: i ${b.nTenso} che chiedono cura pesano piu dei ${b.nHarmonico} di sostegno.`)
+    ? T(`Dos trânsitos ativos, os ${b.nTenso} que pedem cuidado pesam mais que os ${b.nHarmonico} de apoio.`,
+        `Among the active transits, the ${b.nTenso} asking for care weigh more than the ${b.nHarmonico} supportive ones.`,
+        `De los transitos activos, los ${b.nTenso} que piden cuidado pesan mas que los ${b.nHarmonico} de apoyo.`,
+        `Fra i transiti attivi, i ${b.nTenso} che chiedono cura pesano piu dei ${b.nHarmonico} di sostegno.`)
     : b.dominante === 'harmonico'
-      ? T(`${ordenados.length} trânsitos ativos: os ${b.nHarmonico} de apoio pesam mais que os ${b.nTenso} que pedem cuidado.`,
-          `${ordenados.length} active transits: the ${b.nHarmonico} supportive ones weigh more than the ${b.nTenso} asking for care.`,
-          `${ordenados.length} transitos activos: los ${b.nHarmonico} de apoyo pesan mas que los ${b.nTenso} que piden cuidado.`,
-          `${ordenados.length} transiti attivi: i ${b.nHarmonico} di sostegno pesano piu dei ${b.nTenso} che chiedono cura.`)
-      : T(`${ordenados.length} trânsitos ativos, com apoio e pressão em equilíbrio.`,
-          `${ordenados.length} active transits, support and pressure in balance.`,
-          `${ordenados.length} transitos activos, con apoyo y presion en equilibrio.`,
-          `${ordenados.length} transiti attivi, con sostegno e pressione in equilibrio.`)
+      ? T(`Dos trânsitos ativos, os ${b.nHarmonico} de apoio pesam mais que os ${b.nTenso} que pedem cuidado.`,
+          `Among the active transits, the ${b.nHarmonico} supportive ones weigh more than the ${b.nTenso} asking for care.`,
+          `De los transitos activos, los ${b.nHarmonico} de apoyo pesan mas que los ${b.nTenso} que piden cuidado.`,
+          `Fra i transiti attivi, i ${b.nHarmonico} di sostegno pesano piu dei ${b.nTenso} che chiedono cura.`)
+      : T(`Entre os trânsitos ativos, apoio e pressão ficam em equilíbrio.`,
+          `Among the active transits, support and pressure stay in balance.`,
+          `Entre los transitos activos, apoyo y presion quedan en equilibrio.`,
+          `Fra i transiti attivi, sostegno e pressione restano in equilibrio.`)
 
   const concentra = casa
     ? T(` A Casa ${casa.casa} concentra ${casa.quantos} deles.`, ` House ${casa.casa} holds ${casa.quantos} of them.`,

@@ -143,7 +143,17 @@ describe('a síntese montada', () => {
 
   it('o saldo conta os trânsitos e aponta a casa que concentra', () => {
     const saldo = s.blocos.find((b) => b.chave === 'saldo')!.texto
-    expect(saldo).toContain('7 trânsitos ativos')
+    // ⚠️ A frase NAO anuncia mais um total.
+    //
+    // Ela dizia "44 transitos ativos: os 27 que pedem cuidado pesam mais que os
+    // 15 de apoio" — e 27 + 15 = 42. Os 2 que faltavam eram os NEUTROS, que nao
+    // entram em nenhum dos lados. Aqui no fixture a soma fechava por acaso
+    // (4 + 3 = 7), entao o teste passava enquanto a tela mostrava a conta errada.
+    //
+    // Um numero que nao bate com as proprias parcelas faz desconfiar do resto do
+    // texto. Agora so as duas parcelas aparecem, que e o que a frase compara.
+    expect(saldo).toContain('Dos trânsitos ativos')
+    expect(saldo, 'cita as duas parcelas que de fato compara').toMatch(/os 4 que pedem cuidado.*os 3 de apoio/)
     expect(saldo).toMatch(/Casa 10 concentra 2/)
   })
 
@@ -219,9 +229,18 @@ describe('o texto que sai, palavra por palavra', () => {
     // (jargão), sem "em atrito" (geometria, não efeito) e sem comentar o
     // próprio texto ("isso é informação, não contradição") — que era o que
     // soava estranho na tela.
+    // ⚠️ O vocabulario saiu do VEREDICTO. "A clareza se perde e o cansaco vem"
+    // decretava um resultado sobre a pessoa; lidas todo dia, uma apos a outra,
+    // essas frases faziam o app soar como quem repreende (relatado na tela:
+    // "a imagem que voce passa incomoda" ficou forte demais).
+    //
+    // A correcao nao foi suavizar com "pode ser que" — isso tiraria a
+    // assertividade sem devolver informacao. E dizer O QUE MUDA E EM RELACAO A
+    // QUE: "custa mais", "aparece antes", "mais que o normal" afirmam com a
+    // mesma firmeza e situam o dia contra a linha de base da pessoa.
     expect(porChave.hoje).toBe(
       'Hoje o Sol pressiona a sua imaginação e a Lua favorece. ' +
-      'A clareza se perde e o cansaço vem, mas a intuição fica afiada.',
+      'A clareza custa mais e o cansaço aparece antes, mas a intuição fica mais afiada que o normal.',
     )
 
     expect(porChave.fundo).toMatch(/^Dois movimentos longos sustentam o momento:/)
@@ -230,7 +249,7 @@ describe('o texto que sai, palavra por palavra', () => {
     expect(porChave.fundo).toMatch(/o que sobra ainda se arruma\.$/)
 
     expect(porChave.vemAi).toContain('Em 1 dia')
-    expect(porChave.saldo).toContain('7 trânsitos ativos')
+    expect(porChave.saldo).toContain('Dos trânsitos ativos')
     expect(porChave.conselho.length).toBeGreaterThan(20)
   })
 })
