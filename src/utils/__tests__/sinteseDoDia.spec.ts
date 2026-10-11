@@ -209,6 +209,28 @@ describe('a síntese montada', () => {
     if (mc) expect(mc.fonte).not.toMatch(/ a Meio do Céu/)
   })
 
+  it('o trânsito sobre o PRÓPRIO planeta diz qual é qual', () => {
+    // ⚠️ Saía "Sol em oposição a Sol", que lê como erro de digitação e não
+    // como informação — ainda por cima num dos trânsitos mais significativos
+    // que existem, o retorno do planeta a si mesmo. O segundo é o NATAL, o do
+    // mapa da pessoa, e dizer isso resolve a repetição e esclarece.
+    const AGORA2 = new Date('2026-10-11T12:00:00Z')
+    const hoje = (n: number) => new Date(AGORA2.getTime() + n * 864e5).toISOString()
+    const r = sintetizarODia([
+      { transitPlanet: 'Sun', natalPlanet: 'Sun', type: 'oposicao', strength: 90, house: 1, window: { exact: hoje(0) } },
+      { transitPlanet: 'Venus', natalPlanet: 'Venus', type: 'quadratura', strength: 70, house: 2, window: { exact: hoje(0) } },
+      { transitPlanet: 'Mars', natalPlanet: 'Meio do Céu', type: 'trigono', strength: 60, house: 10, window: { exact: hoje(0) } },
+    ], 'pt-BR', AGORA2)!
+
+    const fontes = r.frases.map((f) => f.fonte)
+    expect(fontes, 'nunca repete o planeta cru').not.toContain('Sol em oposição a Sol')
+    expect(fontes.some((f) => f === 'Sol em oposição ao seu Sol natal')).toBe(true)
+    // "com" não vira "ao": a contração depende da preposição do aspecto.
+    expect(fontes.some((f) => f === 'Vênus em quadratura com o seu Vênus natal')).toBe(true)
+    // E o ângulo segue com a contração dele, sem "natal" pendurado.
+    expect(fontes.some((f) => f === 'Marte em trígono ao Meio do Céu')).toBe(true)
+  })
+
   it('respeita o teto de frases', () => {
     // Num dia com dezenas de trânsitos ativos, sem teto isto deixa de ser
     // leitura e vira planilha.

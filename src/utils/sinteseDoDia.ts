@@ -248,12 +248,31 @@ function fonteDoTransito(t: TransitoAtivo, idioma: AppLanguage): string {
   const agente = translatePlanet(String(t.transitPlanet || ''), idioma)
   const alvo = String(t.natalPlanet || '')
   const chave = alvo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '')
-  const alvoLegivel =
-    chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc'
-      ? T('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
-      : chave === 'ascendente' || chave === 'ascendant' || chave === 'asc'
-        ? T('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')
-        : translatePlanet(alvo, idioma)
+  const ehAngulo =
+    chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc' ||
+    chave === 'ascendente' || chave === 'ascendant' || chave === 'asc'
+
+  // ⚠️ O transito pode tocar o PROPRIO planeta — e ai a frase saia "Sol em
+  // oposicao a Sol", que le como erro de digitacao, nao como informacao.
+  //
+  // E um dos casos mais significativos que existem (o retorno do planeta a si
+  // mesmo), entao merece ser dito com clareza: o segundo Sol e o NATAL, o do
+  // mapa da pessoa. "ao seu Sol natal" resolve a repeticao e ainda diz qual e
+  // qual.
+  const mesmoPlaneta =
+    !!t.transitPlanet && !!t.natalPlanet &&
+    String(t.transitPlanet).toLowerCase() === String(t.natalPlanet).toLowerCase()
+
+  const alvoLegivel = mesmoPlaneta
+    ? T(`seu ${translatePlanet(alvo, idioma)} natal`,
+        `your natal ${translatePlanet(alvo, idioma)}`,
+        `tu ${translatePlanet(alvo, idioma)} natal`,
+        `il tuo ${translatePlanet(alvo, idioma)} natale`)
+    : ehAngulo
+      ? (chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc'
+          ? T('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
+          : T('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente'))
+      : translatePlanet(alvo, idioma)
   const tipo = String(t.type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const par = ASPECTO_POR_EXTENSO[tipo]
   let asp = par ? T(par[0], par[1], par[2], par[3]) : T('sobre', 'over', 'sobre', 'su')
@@ -261,10 +280,9 @@ function fonteDoTransito(t: TransitoAtivo, idioma: AppLanguage): string {
   // Os angulos pedem artigo em portugues: "em oposicao a Meio do Ceu" esta
   // errado — o certo e "ao Meio do Ceu". Planeta nao leva artigo ("a Netuno"),
   // entao a contracao vale so para Ascendente e Meio do Ceu.
-  const ehAngulo =
-    chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc' ||
-    chave === 'ascendente' || chave === 'ascendant' || chave === 'asc'
-  if (ehAngulo && idioma === 'pt-BR') {
+  // "em oposicao a" + "seu Sol natal" tem o mesmo problema dos angulos: o
+  // certo e "ao seu Sol natal".
+  if ((ehAngulo || mesmoPlaneta) && idioma === 'pt-BR') {
     if (asp.endsWith(' a')) asp = `${asp.slice(0, -2)} ao`
     else if (asp.endsWith(' com')) asp = `${asp} o`
   }

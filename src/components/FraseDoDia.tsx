@@ -157,8 +157,14 @@ export default function FraseDoDia({ transitos }: Props) {
           {/* As outras leituras do dia, mesmo formato. Antes só o ponto mais
               tocado virava texto: num dia com dezenas de trânsitos ativos,
               uma frase só e todo o resto do céu em silêncio. */}
-          {leitura.frases.slice(1).map((f, i) => (
-            <View key={`frase-${i}`} style={s.fraseExtra}>
+          {leitura.frases.slice(1).map((f, i, arr) => (
+            <View
+              key={`frase-${i}`}
+              // A ultima frase precisa de respiro antes do primeiro rotulo de
+              // secao: sem isso "O FUNDO" encostava no texto de cima e os dois
+              // pareciam o mesmo bloco.
+              style={[s.fraseExtra, i === arr.length - 1 ? s.fraseUltima : null]}
+            >
               <TextoComGlossario style={s.texto}>{f.efeito}</TextoComGlossario>
               {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
             </View>
@@ -244,6 +250,9 @@ const s = StyleSheet.create({
   },
   fraseExtra: {
     marginTop: 14,
+  },
+  fraseUltima: {
+    marginBottom: 20,
   },
   rotulo: {
     color: '#8d94a8',
