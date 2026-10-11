@@ -71,7 +71,10 @@ type DeepLinkTabsParamList = {
 }
 type DeepLinkRootParamList = {
   Tabs: NavigatorScreenParams<DeepLinkTabsParamList> | undefined
-  Notifications: undefined
+  // "Notifications" saiu daqui junto com a tela: o inbox in-app foi aposentado
+  // em 10db59d (alertas so por push + agente WhatsApp). O tipo e o link
+  // sobreviveram a remocao, entao /notificacoes apontava para uma rota que
+  // nao existe — deep link que leva a lugar nenhum.
   AstroProfile: undefined
   NatalChartWheel: undefined
 }
@@ -94,7 +97,6 @@ const linking: LinkingOptions<DeepLinkRootParamList> = {
           Settings: "config",
         },
       },
-      Notifications: "notificacoes",
       AstroProfile: "perfil",
       NatalChartWheel: "mapa",
     },
