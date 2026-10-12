@@ -39,7 +39,7 @@ export interface TransitoAtivo {
 }
 
 export interface BlocoDaSintese {
-  chave: 'fundo' | 'hoje' | 'vemAi' | 'saldo'
+  chave: 'fundo' | 'hoje' | 'vemAi'
   rotulo: string
   texto: string
 }
@@ -250,15 +250,38 @@ function citar(t: TransitoAtivo, idioma: AppLanguage): string {
 }
 
 /** O aspecto por extenso, para a linha discreta da fonte. */
-const ASPECTO_POR_EXTENSO: Record<string, [string, string, string, string]> = {
-  conjuncao: ['em conjunção com', 'conjunct', 'en conjuncion con', 'in congiunzione con'],
-  oposicao: ['em oposição a', 'opposite', 'en oposicion a', 'in opposizione a'],
-  quadratura: ['em quadratura com', 'square', 'en cuadratura con', 'in quadratura con'],
-  trigono: ['em trígono a', 'trine', 'en trigono a', 'in trigono a'],
-  sextil: ['em sextil com', 'sextile', 'en sextil con', 'in sestile con'],
-  quincuncio: ['em quincúncio com', 'quincunx', 'en quincuncio con', 'in quinconce con'],
-  semiquadratura: ['em semiquadratura com', 'semisquare', 'en semicuadratura con', 'in semiquadrato con'],
-  sesquiquadratura: ['em sesquiquadratura com', 'sesquisquare', 'en sesquicuadratura con', 'in sesquiquadrato con'],
+/**
+ * Nome do aspecto e PREPOSIÇÃO, separados.
+ *
+ * Vinham colados ("em conjunção com"), o que impedia fatorar o alvo quando
+ * dois trânsitos tocam o mesmo ponto: "Sol em trígono ao seu Marte · Lua em
+ * sesquiquadratura com o seu Marte" repetia o Marte duas vezes.
+ *
+ * Separados, dá para escrever "Sol em trígono e Lua em sesquiquadratura com o
+ * seu Marte" — e a regência fica correta, porque a preposição que rege é a do
+ * ÚLTIMO aspecto citado.
+ */
+const ASPECTO_NOME: Record<string, [string, string, string, string]> = {
+  conjuncao: ['conjunção', 'conjunct', 'conjuncion', 'congiunzione'],
+  oposicao: ['oposição', 'opposite', 'oposicion', 'opposizione'],
+  quadratura: ['quadratura', 'square', 'cuadratura', 'quadratura'],
+  trigono: ['trígono', 'trine', 'trigono', 'trigono'],
+  sextil: ['sextil', 'sextile', 'sextil', 'sestile'],
+  quincuncio: ['quincúncio', 'quincunx', 'quincuncio', 'quinconce'],
+  semiquadratura: ['semiquadratura', 'semisquare', 'semicuadratura', 'semiquadrato'],
+  sesquiquadratura: ['sesquiquadratura', 'sesquisquare', 'sesquicuadratura', 'sesquiquadrato'],
+}
+
+/** Em pt/es/it o aspecto rege preposição; em inglês o nome já é a preposição. */
+const ASPECTO_PREP: Record<string, [string, string, string, string]> = {
+  conjuncao: ['com', '', 'con', 'con'],
+  oposicao: ['a', '', 'a', 'a'],
+  quadratura: ['com', '', 'con', 'con'],
+  trigono: ['a', '', 'a', 'a'],
+  sextil: ['com', '', 'con', 'con'],
+  quincuncio: ['com', '', 'con', 'con'],
+  semiquadratura: ['com', '', 'con', 'con'],
+  sesquiquadratura: ['com', '', 'con', 'con'],
 }
 
 /**
@@ -268,54 +291,83 @@ const ASPECTO_POR_EXTENSO: Record<string, [string, string, string, string]> = {
  * no app, e "ASC" contraria isso. "Ascendente" continua sendo o termo técnico,
  * só que legível para quem não decorou abreviação.
  */
-function fonteDoTransito(t: TransitoAtivo, idioma: AppLanguage): string {
+/** O ponto natal pelo nome, com possessivo — é o que o distingue do trânsito. */
+function alvoNatalLegivel(t: TransitoAtivo, idioma: AppLanguage): string {
   const T = tl(idioma)
-  const agente = translatePlanet(String(t.transitPlanet || ''), idioma)
   const alvo = String(t.natalPlanet || '')
   const chave = alvo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '')
-  const ehAngulo =
-    chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc' ||
-    chave === 'ascendente' || chave === 'ascendant' || chave === 'asc'
+  const nomeAlvo = translatePlanet(alvo, idioma)
 
-  // ⚠️ O transito pode tocar o PROPRIO planeta — e ai a frase saia "Sol em
-  // oposicao a Sol", que le como erro de digitacao, nao como informacao.
-  //
-  // E um dos casos mais significativos que existem (o retorno do planeta a si
-  // mesmo), entao merece ser dito com clareza: o segundo Sol e o NATAL, o do
-  // mapa da pessoa. "ao seu Sol natal" resolve a repeticao e ainda diz qual e
-  // qual.
+  // ⚠️ O transito pode tocar o PROPRIO planeta, e ai a frase saia "Sol em
+  // oposicao a Sol" — le como erro de digitacao, nao como informacao. E um dos
+  // transitos mais significativos que existem (o retorno do planeta a si
+  // mesmo), entao "natal" entra para dizer qual e qual.
   const mesmoPlaneta =
     !!t.transitPlanet && !!t.natalPlanet &&
     String(t.transitPlanet).toLowerCase() === String(t.natalPlanet).toLowerCase()
-
-  // ⚠️ "Sol em trígono a Marte" não diz QUAL é o trânsito e qual é o ponto do
-  // mapa da pessoa — e essa é a distinção que faz a frase significar algo.
-  //
-  // O possessivo resolve sem poluir: o alvo leva "seu/sua" porque é do mapa
-  // dela; o primeiro planeta, sem possessivo, é o céu de hoje. Mais econômico
-  // que carimbar "(trânsito)" e "(natal)" em toda linha.
-  const nomeAlvo = translatePlanet(alvo, idioma)
-  const alvoLegivel = mesmoPlaneta
-    ? T(`seu ${nomeAlvo} natal`, `your natal ${nomeAlvo}`, `tu ${nomeAlvo} natal`, `il tuo ${nomeAlvo} natale`)
-    : ehAngulo
-      ? (chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc'
-          ? T('seu Meio do Céu', 'your Midheaven', 'tu Medio Cielo', 'il tuo Medio Cielo')
-          : T('seu Ascendente', 'your Ascendant', 'tu Ascendente', 'il tuo Ascendente'))
-      : T(`seu ${nomeAlvo}`, `your ${nomeAlvo}`, `tu ${nomeAlvo}`, `il tuo ${nomeAlvo}`)
-  const tipo = String(t.type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const par = ASPECTO_POR_EXTENSO[tipo]
-  let asp = par ? T(par[0], par[1], par[2], par[3]) : T('sobre', 'over', 'sobre', 'su')
-
-  // Os angulos pedem artigo em portugues: "em oposicao a Meio do Ceu" esta
-  // errado — o certo e "ao Meio do Ceu". Planeta nao leva artigo ("a Netuno"),
-  // entao a contracao vale so para Ascendente e Meio do Ceu.
-  // "em oposição a" + "seu Marte" pede contração: "ao seu Marte". Como o alvo
-  // agora leva sempre possessivo, a regra vale para todos.
-  if (idioma === 'pt-BR') {
-    if (asp.endsWith(' a')) asp = `${asp.slice(0, -2)} ao`
-    else if (asp.endsWith(' com')) asp = `${asp} o`
+  if (mesmoPlaneta) {
+    return T(`seu ${nomeAlvo} natal`, `your natal ${nomeAlvo}`, `tu ${nomeAlvo} natal`, `il tuo ${nomeAlvo} natale`)
   }
-  return `${agente} ${asp} ${alvoLegivel}`
+  if (chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc') {
+    return T('seu Meio do Céu', 'your Midheaven', 'tu Medio Cielo', 'il tuo Medio Cielo')
+  }
+  if (chave === 'ascendente' || chave === 'ascendant' || chave === 'asc') {
+    return T('seu Ascendente', 'your Ascendant', 'tu Ascendente', 'il tuo Ascendente')
+  }
+  // ⚠️ "Sol em trigono a Marte" nao diz QUAL e o transito e qual e o ponto do
+  // mapa da pessoa — e essa distincao e o que faz a frase significar algo. O
+  // possessivo resolve sem poluir: o alvo leva "seu" porque e dela; o
+  // primeiro planeta, sem possessivo, e o ceu de hoje.
+  return T(`seu ${nomeAlvo}`, `your ${nomeAlvo}`, `tu ${nomeAlvo}`, `il tuo ${nomeAlvo}`)
+}
+
+const tipoDoAspecto = (t: TransitoAtivo) =>
+  String(t.type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+/** "Sol em trígono", "Lua em sesquiquadratura" — sem o alvo. */
+function agenteEAspecto(t: TransitoAtivo, idioma: AppLanguage): string {
+  const T = tl(idioma)
+  const agente = translatePlanet(String(t.transitPlanet || ''), idioma)
+  const par = ASPECTO_NOME[tipoDoAspecto(t)]
+  if (!par) return T(`${agente} sobre`, `${agente} over`, `${agente} sobre`, `${agente} su`)
+  const nome = T(par[0], par[1], par[2], par[3])
+  return idioma === 'en-US' ? `${agente} ${nome}` : `${agente} em ${nome}`
+}
+
+/**
+ * A ORIGEM da leitura, com o alvo citado UMA vez.
+ *
+ * ⚠️ Antes cada trânsito trazia o seu próprio alvo, e como as frases agrupam
+ * por ponto, o mesmo ponto aparecia duas vezes:
+ *
+ *     "Sol em trígono ao seu Marte · Lua em sesquiquadratura com o seu Marte"
+ *
+ * Fatorado, o alvo fica no fim e vale para os dois. A preposição que rege é a
+ * do ÚLTIMO aspecto citado — é ela que encosta no alvo.
+ */
+function fonteDosTransitos(ts: ReadonlyArray<TransitoAtivo>, idioma: AppLanguage): string {
+  if (!ts.length) return ''
+  const T = tl(idioma)
+  const alvo = alvoNatalLegivel(ts[ts.length - 1], idioma)
+  const partes = ts.map((t) => agenteEAspecto(t, idioma))
+
+  const parPrep = ASPECTO_PREP[tipoDoAspecto(ts[ts.length - 1])]
+  let prep = parPrep ? T(parPrep[0], parPrep[1], parPrep[2], parPrep[3]) : ''
+
+  // Contração em português: "a" + "seu" = "ao seu"; "com" + "seu" = "com o seu".
+  if (idioma === 'pt-BR') {
+    if (prep === 'a') prep = 'ao'
+    else if (prep === 'com') prep = 'com o'
+  }
+
+  const sujeitos = partes.length > 1
+    ? T(`${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`,
+        `${partes.slice(0, -1).join(', ')} and ${partes[partes.length - 1]}`,
+        `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`,
+        `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`)
+    : partes[0]
+
+  return [sujeitos, prep, alvo].filter(Boolean).join(' ')
 }
 
 /** Identidade de um trânsito, para a lista detalhada não repetir o que já foi dito. */
@@ -487,55 +539,16 @@ export function sintetizarODia(
     })
   }
 
-  // ── 4) NO SALDO: o balanço, ponderado ────────────────────────────────────
-  const b = balanco(ordenados)
-  const casa = casaQueConcentra(ordenados)
-  // ⚠️ A CONTA PRECISA FECHAR NA FRENTE DE QUEM LE.
+  // ── O SALDO SAIU ─────────────────────────────────────────────────────────
   //
-  // Antes a frase anunciava `ordenados.length` como total e logo em seguida
-  // dava duas parcelas que nao somavam: "44 transitos ativos: os 27 que pedem
-  // cuidado pesam mais que os 15 de apoio" — 27 + 15 = 42. Os 2 que faltavam
-  // eram os NEUTROS, que nao entram em nenhum dos lados.
+  // Havia um bloco "No saldo" com a contagem ponderada ("os 27 que pedem
+  // cuidado pesam mais que os 15 de apoio"). Decisao do Joao: tirar.
   //
-  // Um numero que nao bate com as proprias parcelas faz o leitor desconfiar do
-  // resto do texto, e com razao. Como os neutros nao pesam no saldo, a saida e
-  // nao prometer um total: cita-se as duas parcelas, que e o que a frase
-  // realmente compara.
-  const saldo = b.dominante === 'tenso'
-    ? T(`Dos trânsitos ativos, os ${b.nTenso} que pedem cuidado pesam mais que os ${b.nHarmonico} de apoio.`,
-        `Among the active transits, the ${b.nTenso} asking for care weigh more than the ${b.nHarmonico} supportive ones.`,
-        `De los transitos activos, los ${b.nTenso} que piden cuidado pesan mas que los ${b.nHarmonico} de apoyo.`,
-        `Fra i transiti attivi, i ${b.nTenso} che chiedono cura pesano piu dei ${b.nHarmonico} di sostegno.`)
-    : b.dominante === 'harmonico'
-      ? T(`Dos trânsitos ativos, os ${b.nHarmonico} de apoio pesam mais que os ${b.nTenso} que pedem cuidado.`,
-          `Among the active transits, the ${b.nHarmonico} supportive ones weigh more than the ${b.nTenso} asking for care.`,
-          `De los transitos activos, los ${b.nHarmonico} de apoyo pesan mas que los ${b.nTenso} que piden cuidado.`,
-          `Fra i transiti attivi, i ${b.nHarmonico} di sostegno pesano piu dei ${b.nTenso} che chiedono cura.`)
-      : T(`Entre os trânsitos ativos, apoio e pressão ficam em equilíbrio.`,
-          `Among the active transits, support and pressure stay in balance.`,
-          `Entre los transitos activos, apoyo y presion quedan en equilibrio.`,
-          `Fra i transiti attivi, sostegno e pressione restano in equilibrio.`)
+  // Faz sentido com o resto: as frases ja mostram, uma a uma, o que pressiona
+  // e o que favorece, agrupadas por tempo. O saldo resumia o que a tela
+  // inteira ja diz — e somava numero a uma leitura que tinha acabado de ficar
+  // legivel.
 
-  const concentra = casa
-    ? T(` A Casa ${casa.casa} concentra ${casa.quantos} deles.`, ` House ${casa.casa} holds ${casa.quantos} of them.`,
-        ` La Casa ${casa.casa} concentra ${casa.quantos} de ellos.`, ` La Casa ${casa.casa} ne concentra ${casa.quantos}.`)
-    : ''
-
-  blocos.push({
-    chave: 'saldo',
-    rotulo: T('No saldo', 'The balance', 'En el saldo', 'Il bilancio'),
-    texto: costurar(saldo, concentra),
-  })
-
-  // ── O CONSELHO SAIU ──────────────────────────────────────────────────────
-  //
-  // Havia um bloco "O que fazer" com uma recomendação derivada do balanço
-  // ("Decisão grande pode esperar…"). Decisão do João: tirar.
-  //
-  // Faz sentido com o resto: as frases do dia já dizem o que muda e em relação
-  // a quê, e a pessoa decide o que fazer com isso. O conselho vinha de um
-  // conjunto pequeno de moldes, então repetia com frequência — e conselho que
-  // se repete deixa de ser conselho.
   // ── AS FRASES DO DIA: efeito em destaque, origem discreta ───────────────
   //
   // Uma por PONTO DO MAPA tocado, não uma por trânsito: dois planetas no mesmo
@@ -618,7 +631,7 @@ export function sintetizarODia(
 
     frases.push({
       efeito,
-      fonte: citados.map((t) => fonteDoTransito(t, idioma)).join(' · '),
+      fonte: fonteDosTransitos(citados, idioma),
       chaves: citados.map(chaveDoTransito),
       fase,
       casa,

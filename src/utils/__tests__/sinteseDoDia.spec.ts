@@ -110,7 +110,7 @@ describe('a síntese montada', () => {
 
   it('produz os blocos do formato escolhido', () => {
     expect(s).toBeTruthy()
-    expect(s.blocos.map((b) => b.chave)).toEqual(['fundo', 'hoje', 'vemAi', 'saldo'])
+    expect(s.blocos.map((b) => b.chave)).toEqual(['fundo', 'hoje', 'vemAi'])
   })
 
   it('separa o período (lentos) do dia (rápidos)', () => {
@@ -141,20 +141,12 @@ describe('a síntese montada', () => {
     expect(vem, 'Sol quadratura Netuno chega em 1 dia').toMatch(/Em 1 dia/)
   })
 
-  it('o saldo conta os trânsitos e aponta a casa que concentra', () => {
-    const saldo = s.blocos.find((b) => b.chave === 'saldo')!.texto
-    // ⚠️ A frase NAO anuncia mais um total.
-    //
-    // Ela dizia "44 transitos ativos: os 27 que pedem cuidado pesam mais que os
-    // 15 de apoio" — e 27 + 15 = 42. Os 2 que faltavam eram os NEUTROS, que nao
-    // entram em nenhum dos lados. Aqui no fixture a soma fechava por acaso
-    // (4 + 3 = 7), entao o teste passava enquanto a tela mostrava a conta errada.
-    //
-    // Um numero que nao bate com as proprias parcelas faz desconfiar do resto do
-    // texto. Agora so as duas parcelas aparecem, que e o que a frase compara.
-    expect(saldo).toContain('Dos trânsitos ativos')
-    expect(saldo, 'cita as duas parcelas que de fato compara').toMatch(/os 4 que pedem cuidado.*os 3 de apoio/)
-    expect(saldo).toMatch(/Casa 10 concentra 2/)
+  it('não há mais bloco de saldo', () => {
+    // O "No saldo" saiu junto com o "O que fazer". Ambos resumiam o que a
+    // tela inteira já diz: as frases mostram, uma a uma e agrupadas por
+    // tempo, o que pressiona e o que favorece. O saldo somava número a uma
+    // leitura que tinha acabado de ficar legível.
+    expect(s.blocos.some((b) => (b.chave as string) === 'saldo')).toBe(false)
   })
 
   it('não há mais bloco de conselho', () => {
@@ -276,7 +268,14 @@ describe('bordas e idiomas', () => {
   it('um trânsito só ainda produz leitura', () => {
     const r = sintetizarODia([CEU_REAL[0]], 'pt-BR', AGORA)
     expect(r).toBeTruthy()
-    expect(r!.blocos.length).toBeGreaterThanOrEqual(2)
+    // Com um transito so sobram menos blocos (saldo e conselho sairam), mas a
+    // leitura existe: ao menos um bloco e a frase do dia.
+    expect(r!.blocos.length).toBeGreaterThanOrEqual(1)
+    // Este transito e LENTO, e as frases cobrem os rapidos — o que e de hoje.
+    // Os lentos sao o periodo e vivem no bloco "O fundo". Com so um lento, a
+    // leitura existe por ali, e o resumo cai nele.
+    expect(r!.blocos.some((b) => b.chave === 'fundo'), 'o lento vira fundo').toBe(true)
+    expect(r!.resumo.length, 'o topo nunca fica vazio').toBeGreaterThan(10)
   })
 
   it('fala os 4 idiomas, com es/it sem acento', () => {
@@ -336,7 +335,7 @@ describe('o texto que sai, palavra por palavra', () => {
     expect(porChave.fundo).toMatch(/o que sobra ainda se arruma\.$/)
 
     expect(porChave.vemAi).toContain('Em 1 dia')
-    expect(porChave.saldo).toContain('Dos trânsitos ativos')
+    expect(porChave.saldo, 'o bloco de saldo saiu').toBeUndefined()
     expect(porChave.conselho, 'o bloco de conselho saiu').toBeUndefined()
   })
 })

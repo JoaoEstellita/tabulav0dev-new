@@ -172,12 +172,17 @@ export default function FraseDoDia({ transitos }: Props) {
 
   const leituraDaFrase = fraseAberta != null ? leitura.leiturasDasFrases[fraseAberta] : null
 
-  /** "Casa 6 · Carreira, Saúde — chega ao exato em 3 dias" */
+  /**
+   * "Carreira, Saúde — chega ao exato em 3 dias"
+   *
+   * ⚠️ A CASA saiu. Com efeito, origem, casa, áreas e janela, cada frase
+   * virava cinco informações — e multiplicado por doze, a tela deixava de ser
+   * leitura. A casa é a mais técnica das cinco e a que menos muda o que a
+   * pessoa faz com a informação; as áreas dizem a mesma coisa em linguagem
+   * dela. Quem quiser a casa a encontra no modal, junto da leitura completa.
+   */
   const contextoDaFrase = (f: typeof leitura.frases[number]) => {
-    const onde = [
-      f.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${f.casa}` : '',
-      f.areas.join(', '),
-    ].filter(Boolean).join(' · ')
+    const onde = f.areas.join(', ')
     if (!onde) return f.quando || ''
     return f.quando ? `${onde} — ${f.quando}` : onde
   }
@@ -241,9 +246,14 @@ export default function FraseDoDia({ transitos }: Props) {
           A ordem inversa — "Hoje a Lua e Vênus pressionam a sua presença" antes
           do que isso significa — punha na frente o que menos importa para quem
           lê. O aspecto é a FONTE da informação, não a informação. */}
-      {leitura.frases[0] ? renderFrase(leitura.frases[0], 0, false) : (
-        <TextoComGlossario style={s.texto}>{leitura.aviso}</TextoComGlossario>
-      )}
+      {/* ⚠️ Fechado, so a primeira frase. Aberto, ela aparece DENTRO do seu
+          grupo — antes ficava acima do cabecalho "Acontecendo agora" mesmo
+          pertencendo a ele, e a tela sugeria que era outra coisa. */}
+      {!aberto ? (
+        leitura.frases[0] ? renderFrase(leitura.frases[0], 0, false) : (
+          <TextoComGlossario style={s.texto}>{leitura.aviso}</TextoComGlossario>
+        )
+      ) : null}
 
       {aberto ? (
         <View style={s.detalhe}>
@@ -255,7 +265,7 @@ export default function FraseDoDia({ transitos }: Props) {
             // A primeira frase já está no topo, fora do expandido.
             const doGrupo = leitura.frases
               .map((f, i) => ({ f, i }))
-              .filter(({ f, i }) => i > 0 && f.fase === g.fase)
+              .filter(({ f }) => f.fase === g.fase)
             if (!doGrupo.length) return null
             return (
               <View key={g.fase} style={s.grupo}>
