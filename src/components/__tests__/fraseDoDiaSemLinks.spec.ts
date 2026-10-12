@@ -40,21 +40,21 @@ describe('o aviso: uma frase', () => {
     expect(FRASE, 'a palavra-chave solta era a abertura genérica').not.toContain('palavraDeSentido')
   })
 
-  it('o expandido traz as camadas do momento', () => {
-    // A ordem "camadas antes da lista de aspectos" deixou de existir junto com
-    // a lista: agora o expandido é frases + camadas, e nada mais.
-    expect(FRASE).toContain('leitura.blocos.map')
-    // As frases agora vêm agrupadas por fase (agora / chegando / já passou),
-    // então o que precede as camadas é o loop de GRUPOS, não um slice.
+  it('o expandido é só as frases, agrupadas por tempo', () => {
+    // ⚠️ NÃO HÁ MAIS BLOCOS. Havia "O fundo" (os lentos em prosa), "Hoje" e
+    // "Vem aí" — três estruturas para contar o que as frases já contam, cada
+    // uma com a sua forma e o seu vocabulário. Saíram, uma a uma, junto com
+    // "No saldo" e "O que fazer".
+    expect(FRASE, 'uma estrutura só').not.toContain('leitura.blocos')
     expect(FRASE, 'as frases são agrupadas por tempo').toContain('GRUPOS.map')
-    expect(FRASE, 'as frases vêm antes das camadas').toMatch(
-      /GRUPOS\.map[\s\S]*leitura\.blocos\.map/,
-    )
   })
 
-  it('o bloco de hoje não se repete dentro do Ler mais', () => {
-    // Ele já está no topo, uma linha acima.
-    expect(FRASE).toMatch(/filter\(\(b\) => b\.chave !== 'hoje'\)/)
+  it('os lentos têm grupo próprio', () => {
+    // Era o que o bloco "O fundo" protegia: um trânsito de Plutão é tema de
+    // meses e um aspecto da Lua dura horas. Lado a lado sob "Acontecendo
+    // agora", os dois soam igual — e o de meses vira notícia do dia.
+    expect(FRASE).toContain("chave: 'lentos'")
+    expect(FRASE).toMatch(/chave === 'lentos' \? f\.lento/)
   })
 })
 

@@ -139,8 +139,6 @@ export default function FraseDoDia({ transitos }: Props) {
 
     // O bloco "hoje" ja esta no topo: repeti-lo logo abaixo faria o expandido
     // parecer que nao acrescenta nada.
-    const blocos = (sintese?.blocos || []).filter((b) => b.chave !== 'hoje')
-
     // A leitura completa de cada frase, pronta para o modal.
     const leiturasDasFrases = frases.map((f) => {
       const t = f.chaves.map((c) => porChaveDoTransito.get(c)).find(Boolean)
@@ -160,7 +158,7 @@ export default function FraseDoDia({ transitos }: Props) {
       }
     })
 
-    return { aviso, blocos, detalhes, frases, leiturasDasFrases }
+    return { aviso, detalhes, frases, leiturasDasFrases }
   }, [transitos, language])
 
   if (!leitura) return null
@@ -173,19 +171,17 @@ export default function FraseDoDia({ transitos }: Props) {
   const leituraDaFrase = fraseAberta != null ? leitura.leiturasDasFrases[fraseAberta] : null
 
   /**
-   * "Carreira, Saúde — chega ao exato em 3 dias"
+   * "chega ao ponto exato em 3 dias"
    *
-   * ⚠️ A CASA saiu. Com efeito, origem, casa, áreas e janela, cada frase
-   * virava cinco informações — e multiplicado por doze, a tela deixava de ser
-   * leitura. A casa é a mais técnica das cinco e a que menos muda o que a
-   * pessoa faz com a informação; as áreas dizem a mesma coisa em linguagem
-   * dela. Quem quiser a casa a encontra no modal, junto da leitura completa.
+   * ⚠️ Sobrou só a JANELA. A casa saiu primeiro, as áreas depois: com efeito,
+   * origem, casa, áreas e janela, cada frase virava cinco informações — e
+   * multiplicado por doze, a tela deixava de ser leitura.
+   *
+   * O que ficou é o que a frase não diz sozinha. O ponto atingido já está na
+   * linha da origem ("o seu Netuno"); a casa e as áreas continuam no modal,
+   * junto da leitura completa.
    */
-  const contextoDaFrase = (f: typeof leitura.frases[number]) => {
-    const onde = f.areas.join(', ')
-    if (!onde) return f.quando || ''
-    return f.quando ? `${onde} — ${f.quando}` : onde
-  }
+  const contextoDaFrase = (f: typeof leitura.frases[number]) => f.quando || ''
 
   /**
    * As frases em três tempos: o que é agora, o que vem, o que ficou.
@@ -195,10 +191,22 @@ export default function FraseDoDia({ transitos }: Props) {
    * e a pergunta da manhã é respondida primeiro.
    */
   const GRUPOS = [
-    { fase: 'agora' as const, titulo: tl('Acontecendo agora', 'Happening now', 'Sucediendo ahora', 'Sta accadendo ora') },
-    { fase: 'antes' as const, titulo: tl('Chegando', 'Coming up', 'Llegando', 'In arrivo') },
-    { fase: 'depois' as const, titulo: tl('Já passou do pico', 'Past the peak', 'Ya paso el pico', 'Oltre il picco') },
-  ]
+    { chave: 'agora', titulo: tl('Acontecendo agora', 'Happening now', 'Sucediendo ahora', 'Sta accadendo ora') },
+    { chave: 'antes', titulo: tl('Chegando', 'Coming up', 'Llegando', 'In arrivo') },
+    { chave: 'depois', titulo: tl('Já passou do pico', 'Past the peak', 'Ya paso el pico', 'Oltre il picco') },
+    // ⚠️ Os LENTOS em grupo próprio, não misturados aos tempos.
+    //
+    // Era o que o bloco "O fundo" protegia: um trânsito de Plutão é tema de
+    // meses e um aspecto da Lua dura horas — postos lado a lado sob
+    // "Acontecendo agora", os dois soam igual, e o de meses vira notícia do
+    // dia. Com o fundo removido, a distinção ganhou grupo em vez de sumir.
+    { chave: 'lentos', titulo: tl('Trânsitos lentos', 'Slow transits', 'Transitos lentos', 'Transiti lenti') },
+  ] as const
+
+  const frasesDoGrupo = (chave: typeof GRUPOS[number]['chave']) =>
+    leitura.frases
+      .map((f, i) => ({ f, i }))
+      .filter(({ f }) => (chave === 'lentos' ? f.lento : !f.lento && f.fase === chave))
 
   /**
    * Uma leitura do dia: efeito em destaque, origem discreta, e a leitura
@@ -262,13 +270,10 @@ export default function FraseDoDia({ transitos }: Props) {
               fazia crescer era a lista de aspectos abaixo, que repetia cada
               trânsito com o texto do catálogo. Sem ela, o céu inteiro cabe. */}
           {GRUPOS.map((g) => {
-            // A primeira frase já está no topo, fora do expandido.
-            const doGrupo = leitura.frases
-              .map((f, i) => ({ f, i }))
-              .filter(({ f }) => f.fase === g.fase)
+            const doGrupo = frasesDoGrupo(g.chave)
             if (!doGrupo.length) return null
             return (
-              <View key={g.fase} style={s.grupo}>
+              <View key={g.chave} style={s.grupo}>
                 <Text style={s.grupoTitulo}>{g.titulo}</Text>
                 {doGrupo.map(({ f, i }, pos) =>
                   renderFrase(f, i, pos === doGrupo.length - 1),
@@ -277,20 +282,12 @@ export default function FraseDoDia({ transitos }: Props) {
             )
           })}
 
-          {/* A leitura do momento, em camadas: o fundo (planetas lentos), o que
-              vem aí e o saldo. */}
-          {leitura.blocos.map((b) => (
-            <View key={b.chave} style={s.bloco}>
-              <Text style={s.blocoRotulo}>{b.rotulo}</Text>
-              <TextoComGlossario style={s.blocoTexto}>{b.texto}</TextoComGlossario>
-            </View>
-          ))}
         </View>
       ) : null}
 
       {/* O botão depende de haver o que expandir: outras frases, ou os blocos
           do momento. Antes dependia da lista de aspectos, que não existe mais. */}
-      {leitura.frases.length > 1 || leitura.blocos.length ? (
+      {leitura.frases.length > 1 ? (
         <Pressable onPress={alternar} style={s.botao} accessibilityRole="button">
           <Text style={s.botaoTexto}>
             {aberto

@@ -38,12 +38,6 @@ export interface TransitoAtivo {
   window?: { start?: string; exact?: string; end?: string; days?: number } | null
 }
 
-export interface BlocoDaSintese {
-  chave: 'fundo' | 'hoje' | 'vemAi'
-  rotulo: string
-  texto: string
-}
-
 /**
  * Uma leitura do dia: o EFEITO em destaque, a origem astrológica discreta.
  *
@@ -78,6 +72,16 @@ export interface FraseDoDia {
   areas: string[]
   /** "chega ao exato em 3 dias", "passou pelo ponto exato há 6 dias". */
   quando: string
+  /**
+   * Trânsito de planeta lento: tema de meses, não do dia.
+   *
+   * Essa distinção era a razão de existir do bloco "O fundo" — misturar um
+   * tema de meses com um aspecto que dura horas faz os dois soarem igual.
+   * Com o fundo removido, ela não podia sumir junto: passou a viver na
+   * própria frase, dita em palavras ("tema de meses") em vez de num bloco
+   * separado.
+   */
+  lento: boolean
 }
 
 export interface SinteseDoDia {
@@ -89,8 +93,6 @@ export interface SinteseDoDia {
    * céu ficava mudo — num dia com 44 trânsitos ativos, uma frase só.
    */
   frases: FraseDoDia[]
-  /** O detalhe, para o "Ler mais". */
-  blocos: BlocoDaSintese[]
 }
 
 /**
@@ -327,7 +329,9 @@ const tipoDoAspecto = (t: TransitoAtivo) =>
 /** "Sol em trígono", "Lua em sesquiquadratura" — sem o alvo. */
 function agenteEAspecto(t: TransitoAtivo, idioma: AppLanguage): string {
   const T = tl(idioma)
-  const agente = translatePlanet(String(t.transitPlanet || ''), idioma)
+  // Com artigo: "o Sol em quadratura e a Lua em trigono" le melhor que a
+  // lista crua de nomes, e o artigo ja existe no mapa de planetas.
+  const agente = comArtigo(String(t.transitPlanet || ''), idioma)
   const par = ASPECTO_NOME[tipoDoAspecto(t)]
   if (!par) return T(`${agente} sobre`, `${agente} over`, `${agente} sobre`, `${agente} su`)
   const nome = T(par[0], par[1], par[2], par[3])
@@ -413,152 +417,34 @@ export function sintetizarODia(
   const lentos = ordenados.filter((t) => LENTOS.has(String(t.transitPlanet)))
   const rapidos = ordenados.filter((t) => RAPIDOS.has(String(t.transitPlanet)))
 
-  const blocos: BlocoDaSintese[] = []
-
-  // ── 1) O FUNDO: os lentos, que são o período e não o dia ─────────────────
-  const fundo = lentos.slice(0, 2)
-  if (fundo.length) {
-    const citacoes = fundo.map((t) => {
-      const area = areasDe(t, idioma)[0]
-      const c = citar(t, idioma)
-      return area ? T(`${c}, mexendo em ${area}`, `${c}, stirring ${area}`, `${c}, moviendo ${area}`, `${c}, muovendo ${area}`) : c
-    })
-    const todosPassados = fundo.every((t) => faseDoTransito(t, agora) === 'depois')
-    const abertura = fundo.length > 1
-      ? T('Dois movimentos longos sustentam o momento:', 'Two long movements hold the moment:', 'Dos movimientos largos sostienen el momento:', 'Due movimenti lunghi sostengono il momento:')
-      : T('Um movimento longo sustenta o momento:', 'One long movement holds the moment:', 'Un movimiento largo sostiene el momento:', 'Un movimento lungo sostiene il momento:')
-    // Dizer o que a pessoa PERCEBE, não classificar a fase. "Fase de efeito,
-    // não de novidade" é vocabulário de quem escreve, não de quem lê.
-    const nota = todosPassados
-      ? T(' O momento mais forte dos dois já passou; o que sobra ainda se arruma.',
-          ' The strongest moment of both has passed; what remains is still settling.',
-          ' El momento mas fuerte de ambos ya paso; lo que queda aun se acomoda.',
-          ' Il momento piu forte dei due e gia passato; cio che resta si sta ancora sistemando.')
-      : ''
-    blocos.push({
-      chave: 'fundo',
-      rotulo: T('O fundo', 'The background', 'El fondo', 'Lo sfondo'),
-      texto: costurar(abertura, `${enumerar(citacoes, E)}.`, nota),
-    })
-  }
-
-  // ── 2) HOJE: quem toca o quê, e o que isso faz ───────────────────────────
+  // ── OS TRÊS BLOCOS SAÍRAM ────────────────────────────────────────────────
   //
-  // UM conjunto só para achar o foco e para listar quem o toca. Antes o foco
-  // era procurado num recorte e os trânsitos vinham de outro: o texto anunciava
-  // "Netuno é o ponto focal" e mostrava um trânsito só, parecendo erro de conta.
-  const conjuntoHoje = rapidos
-  const focal = pontoFocal(conjuntoHoje)
-  let textoHoje = ''
-
-  if (focal) {
-    // Dois trânsitos no mesmo ponto: diz o que CADA um faz, porque é a
-    // diferença entre eles que descreve o dia.
-    const noFoco = conjuntoHoje.filter((t) => t.natalPlanet === focal.planeta)
-    const ponto = nomeDoPonto(focal.planeta, idioma) || translatePlanet(focal.planeta, idioma)
-    const tensos = noFoco.filter((t) => naturezaReal(t) === 'desafiador')
-    const faceis = noFoco.filter((t) => naturezaReal(t) === 'harmonico')
-
-    const quem = (lista: TransitoAtivo[]) =>
-      enumerar(lista.map((t) => comArtigo(String(t.transitPlanet), idioma)), E)
-
-    if (tensos.length && faceis.length) {
-      // O caso mais comum e o mais informativo: um puxa, outro solta.
-      const efeitoTenso = efeitoNoPonto(focal.planeta, 'tenso', idioma)
-      const efeitoFacil = efeitoNoPonto(focal.planeta, 'facil', idioma)
-      textoHoje = costurar(
-        T(`Hoje ${quem(tensos)} pressiona ${ponto} e ${quem(faceis)} favorece.`,
-          `Today ${quem(tensos)} presses on ${ponto} and ${quem(faceis)} favours it.`,
-          `Hoy ${quem(tensos)} presiona ${ponto} y ${quem(faceis)} lo favorece.`,
-          `Oggi ${quem(tensos)} preme su ${ponto} e ${quem(faceis)} lo favorisce.`),
-        efeitoTenso && efeitoFacil
-          ? T(`${maiuscula(efeitoTenso)}, mas ${efeitoFacil}.`,
-              `${maiuscula(efeitoTenso)}, but ${efeitoFacil}.`,
-              `${maiuscula(efeitoTenso)}, pero ${efeitoFacil}.`,
-              `${maiuscula(efeitoTenso)}, ma ${efeitoFacil}.`)
-          : '',
-      )
-    } else {
-      const natureza = tensos.length ? 'tenso' : 'facil'
-      const efeito = efeitoNoPonto(focal.planeta, natureza, idioma)
-      const verbo = tensos.length
-        ? T('pressionam', 'press on', 'presionan', 'premono su')
-        : T('favorecem', 'favour', 'favorecen', 'favoriscono')
-      textoHoje = costurar(
-        T(`Hoje ${quem(noFoco)} ${verbo} ${ponto}.`,
-          `Today ${quem(noFoco)} ${verbo} ${ponto}.`,
-          `Hoy ${quem(noFoco)} ${verbo} ${ponto}.`,
-          `Oggi ${quem(noFoco)} ${verbo} ${ponto}.`),
-        efeito ? `${maiuscula(efeito)}.` : '',
-      )
-    }
-  } else {
-    // Sem convergência, o mais forte do dia manda — com o efeito dito.
-    const t = conjuntoHoje.find((x) => faseDoTransito(x, agora) !== 'antes') || conjuntoHoje[0]
-    if (t) {
-      const ponto = nomeDoPonto(String(t.natalPlanet), idioma) || translatePlanet(String(t.natalPlanet), idioma)
-      const efeito = efeitoNoPonto(String(t.natalPlanet), naturezaReal(t) === 'desafiador' ? 'tenso' : 'facil', idioma)
-      textoHoje = costurar(
-        T(`Hoje ${comArtigo(String(t.transitPlanet), idioma)} ${verboDoTransito(t, idioma)} ${ponto}.`,
-          `Today ${comArtigo(String(t.transitPlanet), idioma)} ${verboDoTransito(t, idioma)} ${ponto}.`,
-          `Hoy ${comArtigo(String(t.transitPlanet), idioma)} ${verboDoTransito(t, idioma)} ${ponto}.`,
-          `Oggi ${comArtigo(String(t.transitPlanet), idioma)} ${verboDoTransito(t, idioma)} ${ponto}.`),
-        efeito ? `${maiuscula(efeito)}.` : '',
-      )
-    }
-  }
-
-  if (textoHoje) {
-    blocos.push({ chave: 'hoje', rotulo: T('Hoje', 'Today', 'Hoy', 'Oggi'), texto: textoHoje })
-  }
-
-  // ── 3) VEM AÍ: o que ainda não chegou ao ponto exato ─────────────────────
-  const chegando = ordenados
-    .map((t) => ({ t, dias: diasAteExato(t, agora) }))
-    .filter((x) => x.dias != null && x.dias >= 1 && x.dias <= 10)
-    .sort((a, b) => (a.dias as number) - (b.dias as number))[0]
-
-  if (chegando) {
-    const { t, dias } = chegando
-    const area = areasDe(t, idioma)[0]
-    const casa = casaQueConcentra(ordenados)
-    const soma = casa && typeof t.house === 'number' && t.house === casa.casa
-      ? T(' — somando à área que o período já move.', ' — adding to the area the period already moves.',
-          ' — sumando al area que el periodo ya mueve.', ' — sommandosi all area che il periodo gia muove.')
-      : ''
-    blocos.push({
-      chave: 'vemAi',
-      rotulo: T('Vem aí', 'Coming up', 'Viene', 'In arrivo'),
-      texto: costurar(
-        T(`Em ${dias} ${dias === 1 ? 'dia' : 'dias'}, ${citar(t, idioma)} chega ao ponto exato`,
-          `In ${dias} ${dias === 1 ? 'day' : 'days'}, ${citar(t, idioma)} reaches its exact point`,
-          `En ${dias} ${dias === 1 ? 'dia' : 'dias'}, ${citar(t, idioma)} llega al punto exacto`,
-          `Tra ${dias} ${dias === 1 ? 'giorno' : 'giorni'}, ${citar(t, idioma)} arriva al punto esatto`),
-        soma || (area ? T(` em ${area}.`, ` on ${area}.`, ` en ${area}.`, ` su ${area}.`) : '.'),
-      ),
-    })
-  }
-
-  // ── O SALDO SAIU ─────────────────────────────────────────────────────────
+  // Havia "O fundo" (os lentos em prosa), "Hoje" e "Vem aí" — três estruturas
+  // para contar a mesma coisa que as frases já contam, cada uma com a sua
+  // forma e o seu vocabulário.
   //
-  // Havia um bloco "No saldo" com a contagem ponderada ("os 27 que pedem
-  // cuidado pesam mais que os 15 de apoio"). Decisao do Joao: tirar.
+  // "Vem aí" era o mais frágil: produzia frases como "Em 1 dia, Mercúrio sobre
+  // Plutão chega ao ponto exato em Amor" — que diz o quando e o quê, mas não
+  // diz o que MUDA, que é o trabalho deste módulo inteiro.
   //
-  // Faz sentido com o resto: as frases ja mostram, uma a uma, o que pressiona
-  // e o que favorece, agrupadas por tempo. O saldo resumia o que a tela
-  // inteira ja diz — e somava numero a uma leitura que tinha acabado de ficar
-  // legivel.
+  // O grupo "Chegando" das frases entrega as três coisas melhor: o efeito em
+  // destaque, o aspecto nomeado e a janela. E "O fundo" virou a marca `lento`
+  // dentro da própria frase, para a distinção entre período e dia não se
+  // perder junto com o bloco.
+  //
+  // Uma estrutura só, um vocabulário só.
 
-  // ── AS FRASES DO DIA: efeito em destaque, origem discreta ───────────────
+  // ⚠️ TODO o ceu, nao so os rapidos.
   //
-  // Uma por PONTO DO MAPA tocado, não uma por trânsito: dois planetas no mesmo
-  // ponto contam a mesma história e devem caber na mesma frase. Antes só o
-  // ponto mais tocado virava texto — num dia com dezenas de trânsitos ativos,
-  // todo o resto ficava mudo.
+  // As frases cobriam `conjuntoHoje` (= rapidos) porque os lentos tinham
+  // bloco proprio, "O fundo". Com o fundo removido, restringir aqui faria
+  // Urano e Plutao — os transitos mais significativos que a pessoa tem —
+  // sumirem da tela inteira.
   //
-  // Ordenadas por força somada: a primeira é a que a Home mostra sem abrir.
+  // O que o fundo protegia era a distincao entre periodo e dia, e ela segue
+  // viva: cada frase diz se e tema de meses ou se passa hoje.
   const porPonto = new Map<string, TransitoAtivo[]>()
-  for (const t of conjuntoHoje) {
+  for (const t of ordenados) {
     const alvo = String(t.natalPlanet || '')
     if (!alvo) continue
     const lista = porPonto.get(alvo) || []
@@ -636,16 +522,17 @@ export function sintetizarODia(
       fase,
       casa,
       areas,
+      lento: LENTOS.has(String(principal.transitPlanet || '')),
       // No grupo "acontecendo agora" a janela é redundante (é hoje, e o
       // cabeçalho já diz). Nos outros dois ela é a informação principal.
       quando: fase === 'agora' ? '' : janelaEmPalavras(principal.window as any, idioma as any, agora),
     })
   }
 
-  // O topo da Home leva a primeira frase; sem ela, o bloco "Hoje" ou o fundo.
-  const resumo = frases[0]
-    ? costurar(frases[0].efeito, '')
-    : textoHoje || blocos[0]?.texto || ''
+  // O topo da Home leva a primeira frase. Nao ha mais blocos para servirem de
+  // alternativa: sem frase, a sintese nao tem o que dizer — e dizer nada e
+  // melhor que uma frase vaga.
+  const resumo = frases[0] ? frases[0].efeito : ''
 
-  return { resumo, frases, blocos }
+  return { resumo, frases }
 }

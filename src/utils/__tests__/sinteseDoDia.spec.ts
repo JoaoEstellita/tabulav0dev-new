@@ -108,55 +108,55 @@ describe('balanço ponderado', () => {
 describe('a síntese montada', () => {
   const s = sintetizarODia(CEU_REAL, 'pt-BR', AGORA)!
 
-  it('produz os blocos do formato escolhido', () => {
+  it('produz as frases do dia', () => {
     expect(s).toBeTruthy()
-    expect(s.blocos.map((b) => b.chave)).toEqual(['fundo', 'hoje', 'vemAi'])
+    // ⚠️ NAO HA MAIS BLOCOS. Havia "O fundo" (lentos em prosa), "Hoje" e
+    // "Vem ai" — tres estruturas para contar o que as frases ja contam, cada
+    // uma com a sua forma e o seu vocabulario. Uma estrutura so.
+    expect(s.frases.length).toBeGreaterThan(0)
+    expect((s as any).blocos, 'os blocos sairam').toBeUndefined()
   })
 
   it('separa o período (lentos) do dia (rápidos)', () => {
-    // Era a confusão central: tema de meses tratado como novidade de hoje.
-    const fundo = s.blocos.find((b) => b.chave === 'fundo')!.texto
-    expect(fundo, 'o fundo é feito dos lentos').toContain('Plutão')
-    expect(fundo).toContain('Urano')
-    expect(fundo, 'Lua não é pano de fundo de nada').not.toContain('Lua')
-
-    const hoje = s.blocos.find((b) => b.chave === 'hoje')!.texto
-    // O bloco de hoje vem dos rápidos, e fala do EFEITO no ponto tocado —
-    // "a sua imaginação" diz mais a quem lê do que "Netuno".
-    expect(hoje, 'o foco de hoje vem dos rápidos').toContain('o Sol')
-    expect(hoje).toContain('a Lua')
-    expect(hoje, 'o ponto é dito pelo que ele governa').toContain('imaginação')
+    // A distincao continua: era a razao de existir do bloco "O fundo", e sem
+    // ele passou a viver na propria frase. Um transito de Plutao e tema de
+    // meses; um aspecto da Lua dura horas. Lado a lado sem marca, os dois
+    // soariam igual.
+    const lentas = s.frases.filter((f) => f.lento)
+    const rapidas = s.frases.filter((f) => !f.lento)
+    expect(lentas.length, 'os lentos viram frase, nao somem').toBeGreaterThan(0)
+    expect(rapidas.length).toBeGreaterThan(0)
+    expect(lentas.some((f) => f.fonte.includes('Plutão') || f.fonte.includes('Urano'))).toBe(true)
+    expect(rapidas.every((f) => !f.fonte.startsWith('Plutão')), 'lento nunca entra como rápido').toBe(true)
   })
 
-  it('diz que os lentos já passaram do ponto exato, sem jargão', () => {
-    // "Fase de efeito, não de novidade" classificava a fase em vocabulário de
-    // quem escreve. O que importa é o que a pessoa percebe.
-    const fundo = s.blocos.find((b) => b.chave === 'fundo')!.texto
-    expect(fundo).toMatch(/momento mais forte dos dois já passou/)
-    expect(fundo, 'nada de classificar a fase').not.toMatch(/fase de efeito/)
+  it('a janela é dita em palavras, sem jargão', () => {
+    const comJanela = s.frases.filter((f) => f.quando)
+    expect(comJanela.length).toBeGreaterThan(0)
+    for (const f of comJanela) {
+      expect(f.quando, 'nada de "aplicando" ou "separando"').not.toMatch(/aplicando|separando|orbe/i)
+    }
   })
 
   it('anuncia o que ainda vai chegar, com o prazo', () => {
-    const vem = s.blocos.find((b) => b.chave === 'vemAi')!.texto
-    expect(vem, 'Sol quadratura Netuno chega em 1 dia').toMatch(/Em 1 dia/)
+    // ⚠️ O bloco "Vem ai" produzia "Em 1 dia, Mercurio sobre Plutao chega ao
+    // ponto exato em Amor" — diz o quando e o que, mas nao diz o que MUDA,
+    // que e o trabalho deste modulo. O grupo "chegando" entrega as tres
+    // coisas: efeito, aspecto nomeado e janela.
+    const chegando = s.frases.filter((f) => f.fase === 'antes')
+    expect(chegando.length).toBeGreaterThan(0)
+    // "amanha" e "em 3 dias" sao as duas formas da janela proxima — a
+    // primeira nao tem numero, entao casar so por digito deixava passar.
+    expect(chegando.some((f) => /dia|amanhã/.test(f.quando))).toBe(true)
+    for (const f of chegando) expect(f.efeito, 'o efeito vem antes do prazo').toMatch(/\.$/)
   })
 
-  it('não há mais bloco de saldo', () => {
-    // O "No saldo" saiu junto com o "O que fazer". Ambos resumiam o que a
-    // tela inteira já diz: as frases mostram, uma a uma e agrupadas por
-    // tempo, o que pressiona e o que favorece. O saldo somava número a uma
-    // leitura que tinha acabado de ficar legível.
-    expect(s.blocos.some((b) => (b.chave as string) === 'saldo')).toBe(false)
+  it('não há mais os blocos de saldo, conselho e fundo', () => {
+    // Todos resumiam ou repetiam o que as frases dizem. Saíram por decisão do
+    // João, um a um, nesta ordem: "O que fazer", "No saldo", "O fundo".
+    expect((s as any).blocos).toBeUndefined()
   })
 
-  it('não há mais bloco de conselho', () => {
-    // O bloco "O que fazer" saiu por decisão do João, e faz sentido com o
-    // resto: as frases do dia já dizem o que muda e em relação a quê, e a
-    // pessoa decide o que fazer com isso. O conselho vinha de um conjunto
-    // pequeno de moldes, então repetia com frequência — e conselho que se
-    // repete deixa de ser conselho.
-    expect(s.blocos.some((b) => (b.chave as string) === 'conselho')).toBe(false)
-  })
 
   it('o resumo do topo é o EFEITO, não a origem astrológica', () => {
     // ⚠️ A ORDEM INVERTEU.
@@ -237,8 +237,8 @@ describe('a síntese montada', () => {
     ], 'pt-BR', AGORA2)!
 
     const fontes = r.frases.map((f) => f.fonte)
-    expect(fontes, 'nunca repete o planeta cru').not.toContain('Sol em oposição a Sol')
-    expect(fontes.some((f) => f === 'Sol em oposição ao seu Sol natal')).toBe(true)
+    expect(fontes, 'nunca repete o planeta cru').not.toContain('o Sol em oposição a Sol')
+    expect(fontes.some((f) => f === 'o Sol em oposição ao seu Sol natal')).toBe(true)
     // "com" não vira "ao": a contração depende da preposição do aspecto.
     expect(fontes.some((f) => f === 'Vênus em quadratura com o seu Vênus natal')).toBe(true)
     // O angulo tambem leva possessivo: e o que distingue o ponto do MAPA DA
@@ -253,9 +253,12 @@ describe('a síntese montada', () => {
     expect(s.frases.length).toBeLessThanOrEqual(4)
   })
 
-  it('o Meio do Céu é citado como lugar, não como planeta', () => {
-    const fundo = s.blocos.find((b) => b.chave === 'fundo')!.texto
-    expect(fundo).toContain('no topo do mapa')
+  it('o Meio do Céu é citado com possessivo, como ponto do mapa da pessoa', () => {
+    // Era "no topo do mapa" no bloco "O fundo", que saiu. Na frase o papel é
+    // outro: distinguir o ponto NATAL do planeta que transita hoje.
+    const mc = s.frases.find((f) => f.fonte.includes('Meio do Céu'))
+    expect(mc, 'o Meio do Céu aparece nas frases').toBeTruthy()
+    expect(mc!.fonte, 'com possessivo, porque é do mapa dela').toContain('seu Meio do Céu')
   })
 })
 
@@ -268,13 +271,11 @@ describe('bordas e idiomas', () => {
   it('um trânsito só ainda produz leitura', () => {
     const r = sintetizarODia([CEU_REAL[0]], 'pt-BR', AGORA)
     expect(r).toBeTruthy()
-    // Com um transito so sobram menos blocos (saldo e conselho sairam), mas a
-    // leitura existe: ao menos um bloco e a frase do dia.
-    expect(r!.blocos.length).toBeGreaterThanOrEqual(1)
-    // Este transito e LENTO, e as frases cobrem os rapidos — o que e de hoje.
-    // Os lentos sao o periodo e vivem no bloco "O fundo". Com so um lento, a
-    // leitura existe por ali, e o resumo cai nele.
-    expect(r!.blocos.some((b) => b.chave === 'fundo'), 'o lento vira fundo').toBe(true)
+    // ⚠️ Antes isto so produzia leitura porque o transito era LENTO e caia no
+    // bloco "O fundo". Com o fundo removido, as frases passaram a cobrir o
+    // ceu INTEIRO — sem isso, Urano e Plutao sumiriam da tela.
+    expect(r!.frases.length, 'um lento sozinho tambem vira frase').toBe(1)
+    expect(r!.frases[0].lento, 'marcado como tema de meses').toBe(true)
     expect(r!.resumo.length, 'o topo nunca fica vazio').toBeGreaterThan(10)
   })
 
@@ -282,20 +283,20 @@ describe('bordas e idiomas', () => {
     const ACENTO = /[áàâãéèêíìóòôõúùçñ]/i
     for (const idioma of ['es-ES', 'it-IT'] as const) {
       const r = sintetizarODia(CEU_REAL, idioma, AGORA)!
-      for (const b of r.blocos) {
-        expect(ACENTO.test(b.rotulo), `rótulo "${b.rotulo}" (${idioma})`).toBe(false)
-        expect(ACENTO.test(b.texto), `texto (${idioma}): ${b.texto}`).toBe(false)
+      for (const f of r.frases) {
+        expect(ACENTO.test(f.efeito), `efeito (${idioma}): ${f.efeito}`).toBe(false)
+        expect(ACENTO.test(f.fonte), `origem (${idioma}): ${f.fonte}`).toBe(false)
       }
     }
   })
 
-  it('nenhum bloco sai vazio ou com pontuação solta', () => {
+  it('nenhuma frase sai vazia ou com pontuação solta', () => {
     for (const idioma of ['pt-BR', 'en-US', 'es-ES', 'it-IT'] as const) {
       const r = sintetizarODia(CEU_REAL, idioma, AGORA)!
-      for (const b of r.blocos) {
-        expect(b.texto.trim().length, `${b.chave}/${idioma} vazio`).toBeGreaterThan(10)
-        expect(b.texto, `${b.chave}/${idioma} com espaço antes da pontuação`).not.toMatch(/\s[.,]/)
-        expect(b.texto, `${b.chave}/${idioma} com pontuação dupla`).not.toMatch(/[.,]{2}/)
+      for (const f of r.frases) {
+        expect(f.efeito.trim().length, idioma).toBeGreaterThan(10)
+        expect(f.efeito, 'sem pontuação solta').not.toMatch(/\s[.,;]|[.,;]{2}/)
+        expect(f.fonte.trim().length, idioma).toBeGreaterThan(5)
       }
     }
   })
@@ -308,34 +309,36 @@ describe('o texto que sai, palavra por palavra', () => {
    * pediu — texto é a parte do app que mais muda sem querer.
    */
   it('monta a leitura do céu de 08/10/2026', () => {
-    const s = sintetizarODia(CEU_REAL, 'pt-BR', AGORA)!
-    const porChave = Object.fromEntries(s.blocos.map((b) => [b.chave, b.texto]))
+    const r = sintetizarODia(CEU_REAL, 'pt-BR', AGORA)!
 
-    // Diz QUEM toca, O QUE é tocado e O QUE acontece. Sem "ponto focal"
-    // (jargão), sem "em atrito" (geometria, não efeito) e sem comentar o
-    // próprio texto ("isso é informação, não contradição") — que era o que
-    // soava estranho na tela.
-    // ⚠️ O vocabulario saiu do VEREDICTO. "A clareza se perde e o cansaco vem"
-    // decretava um resultado sobre a pessoa; lidas todo dia, uma apos a outra,
-    // essas frases faziam o app soar como quem repreende (relatado na tela:
-    // "a imagem que voce passa incomoda" ficou forte demais).
+    // O formato de cada frase: EFEITO em destaque, origem discreta, janela
+    // quando ela informa. A ordem antiga — "Hoje o Sol pressiona a sua
+    // imaginação e a Lua favorece" — punha na frente o que menos importa.
     //
-    // A correcao nao foi suavizar com "pode ser que" — isso tiraria a
-    // assertividade sem devolver informacao. E dizer O QUE MUDA E EM RELACAO A
-    // QUE: "custa mais", "aparece antes", "mais que o normal" afirmam com a
-    // mesma firmeza e situam o dia contra a linha de base da pessoa.
-    expect(porChave.hoje).toBe(
-      'Hoje o Sol pressiona a sua imaginação e a Lua favorece. ' +
-      'A clareza custa mais e o cansaço aparece antes, mas a intuição fica mais afiada que o normal.',
-    )
+    // ⚠️ E o vocabulário saiu do VEREDICTO. "A clareza se perde e o cansaço
+    // vem" decretava um resultado sobre a pessoa; lidas todo dia, uma após a
+    // outra, essas frases faziam o app soar como quem repreende. A correção
+    // não foi suavizar com "pode ser que" — foi dizer O QUE MUDA E EM RELAÇÃO
+    // A QUÊ, que afirma com a mesma firmeza e situa o dia contra a linha de
+    // base da própria pessoa.
+    const netuno = r.frases.find((f) => f.fonte.includes('Netuno'))!
+    expect(netuno.efeito).toBe('A intuição fica afiada enquanto a clareza se perde.')
+    expect(netuno.fonte).toBe('o Sol em quadratura e a Lua em trígono ao seu Netuno')
 
-    expect(porChave.fundo).toMatch(/^Dois movimentos longos sustentam o momento:/)
-    expect(porChave.fundo).toContain('Plutão no topo do mapa')
-    expect(porChave.fundo).toContain('Urano sobre Júpiter')
-    expect(porChave.fundo).toMatch(/o que sobra ainda se arruma\.$/)
+    // Os lentos agora são frase, não mais o bloco "O fundo" — e marcados,
+    // para um tema de meses não soar como novidade do dia.
+    const lentas = r.frases.filter((f) => f.lento)
+    expect(lentas.length, 'Urano e Plutão viram frase').toBeGreaterThanOrEqual(2)
+    expect(lentas.some((f) => f.fonte.includes('Plutão') && f.fonte.includes('seu Meio do Céu'))).toBe(true)
+    expect(lentas.some((f) => f.fonte.includes('Urano') && f.fonte.includes('seu Júpiter'))).toBe(true)
 
-    expect(porChave.vemAi).toContain('Em 1 dia')
-    expect(porChave.saldo, 'o bloco de saldo saiu').toBeUndefined()
-    expect(porChave.conselho, 'o bloco de conselho saiu').toBeUndefined()
+    // O que chega traz o prazo — era o papel do bloco "Vem aí", que produzia
+    // "Em 1 dia, Mercúrio sobre Plutão chega ao ponto exato em Amor": diz o
+    // quando e o quê, mas não diz o que MUDA.
+    const chegando = r.frases.filter((f) => f.fase === 'antes')
+    expect(chegando.some((f) => /dia|amanhã/.test(f.quando))).toBe(true)
+
+    // Uma estrutura só: os três blocos saíram.
+    expect((r as any).blocos).toBeUndefined()
   })
 })
