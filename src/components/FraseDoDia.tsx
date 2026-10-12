@@ -193,7 +193,6 @@ export default function FraseDoDia({ transitos }: Props) {
   const GRUPOS = [
     { chave: 'agora', titulo: tl('Acontecendo agora', 'Happening now', 'Sucediendo ahora', 'Sta accadendo ora') },
     { chave: 'antes', titulo: tl('Chegando', 'Coming up', 'Llegando', 'In arrivo') },
-    { chave: 'depois', titulo: tl('Já passou do pico', 'Past the peak', 'Ya paso el pico', 'Oltre il picco') },
     // ⚠️ Os LENTOS em grupo próprio, não misturados aos tempos.
     //
     // Era o que o bloco "O fundo" protegia: um trânsito de Plutão é tema de
@@ -201,6 +200,8 @@ export default function FraseDoDia({ transitos }: Props) {
     // "Acontecendo agora", os dois soam igual, e o de meses vira notícia do
     // dia. Com o fundo removido, a distinção ganhou grupo em vez de sumir.
     { chave: 'lentos', titulo: tl('Trânsitos lentos', 'Slow transits', 'Transitos lentos', 'Transiti lenti') },
+    // Por último: o que já passou é a informação menos acionável das quatro.
+    { chave: 'depois', titulo: tl('Já passou do pico', 'Past the peak', 'Ya paso el pico', 'Oltre il picco') },
   ] as const
 
   const frasesDoGrupo = (chave: typeof GRUPOS[number]['chave']) =>
@@ -216,12 +217,16 @@ export default function FraseDoDia({ transitos }: Props) {
    * e não abre nada é pior que um bloco que não parece.
    */
   const renderFrase = (f: typeof leitura.frases[number], i: number, ultima: boolean) => {
-    const temLeitura = !!leitura.leiturasDasFrases[i]
     const conteudo = (
       <>
         <View style={s.fraseTopo}>
           <TextoComGlossario style={[s.texto, s.fraseTexto]}>{f.efeito}</TextoComGlossario>
-          {temLeitura ? <Text style={s.chevron}>›</Text> : null}
+          {/* ⚠️ Em TODAS. Antes o chevron só aparecia quando havia texto
+              curado por trás, e a lista ficava visualmente irregular — umas
+              tocáveis, outras não, sem nada na tela explicando a diferença.
+              Sem catálogo o modal mostra o aspecto e a janela, que é menos,
+              mas é coerente. */}
+          <Text style={s.chevron}>›</Text>
         </View>
         {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
         {/* Onde pega e quando: a casa dá o setor do mapa, as áreas dizem o
@@ -230,19 +235,16 @@ export default function FraseDoDia({ transitos }: Props) {
         {contextoDaFrase(f) ? <Text style={s.contexto}>{contextoDaFrase(f)}</Text> : null}
       </>
     )
-    const estilo = [i > 0 ? s.fraseExtra : null, ultima ? s.fraseUltima : null]
-    return temLeitura ? (
+    return (
       <Pressable
         key={`frase-${i}`}
-        style={estilo}
+        style={[i > 0 ? s.fraseExtra : null, ultima ? s.fraseUltima : null]}
         onPress={() => setFraseAberta(i)}
         accessibilityRole="button"
         accessibilityLabel={f.efeito}
       >
         {conteudo}
       </Pressable>
-    ) : (
-      <View key={`frase-${i}`} style={estilo}>{conteudo}</View>
     )
   }
 
@@ -301,16 +303,23 @@ export default function FraseDoDia({ transitos }: Props) {
       {/* A leitura completa do trânsito que originou a frase — o texto curado
           do catálogo, que saiu da tela para caber atrás de um toque. */}
       <ReadingDetailModal
-        visible={!!leituraDaFrase}
+        visible={fraseAberta != null}
         onClose={() => setFraseAberta(null)}
-        title={leituraDaFrase?.titulo || ''}
-        timingLabel={[leituraDaFrase?.quando, leituraDaFrase?.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${leituraDaFrase.casa}` : '']
-          .filter(Boolean)
-          .join('  ·  ')}
+        // Sem catálogo, o título é a própria origem — "o Sol em quadratura ao
+        // seu Netuno" já identifica o trânsito sem depender de texto curado.
+        title={leituraDaFrase?.titulo || (fraseAberta != null ? leitura.frases[fraseAberta]?.fonte : '') || ''}
+        timingLabel={[
+          leituraDaFrase?.quando || (fraseAberta != null ? leitura.frases[fraseAberta]?.quando : ''),
+          leituraDaFrase?.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${leituraDaFrase.casa}` : '',
+        ].filter(Boolean).join('  ·  ')}
         // O efeito da frase vira a abertura do modal: quem tocou veio dali, e
         // reencontrar a mesma frase no topo confirma que abriu o que queria.
         directText={fraseAberta != null ? (leitura.frases[fraseAberta]?.efeito || '') : ''}
-        fullText={leituraDaFrase?.corpo || ''}
+        // Sem leitura curada o modal não fica vazio: mostra a janela, que é
+        // a informação que a tela não cabia.
+        fullText={leituraDaFrase?.corpo
+          || (fraseAberta != null ? leitura.frases[fraseAberta]?.quando : '')
+          || ''}
         statusColor={
           leituraDaFrase?.natureza === 'desafiador' ? '#f2544b'
             : leituraDaFrase?.natureza === 'harmonico' ? '#4ade80'

@@ -378,6 +378,41 @@ function fonteDosTransitos(ts: ReadonlyArray<TransitoAtivo>, idioma: AppLanguage
 const chaveDoTransito = (t: TransitoAtivo) =>
   `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
 
+const MES = [
+  ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+  ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'],
+]
+
+/**
+ * Quanto tempo o trânsito LENTO ainda dura.
+ *
+ * ⚠️ Para um lento, dizer "passou pelo ponto exato há 9 dias" informa pouco e
+ * engana um pouco: dá a impressão de algo que terminou, quando Plutão sobre o
+ * Meio do Céu ainda tem meses pela frente. O pico passou; o trânsito, não.
+ *
+ * O que importa num tema de meses é até quando ele dura — e isso muda o que a
+ * pessoa faz com a informação.
+ */
+function duracaoDoLento(t: TransitoAtivo, idioma: AppLanguage, agora: Date): string {
+  const T = tl(idioma)
+  const fim = t.window?.end ? new Date(t.window.end) : null
+  if (!fim || isNaN(fim.getTime()) || fim <= agora) {
+    return T('tema de meses', 'a theme of months', 'tema de meses', 'tema di mesi')
+  }
+  const idx = idioma === 'en-US' ? 1 : idioma === 'es-ES' ? 2 : idioma === 'it-IT' ? 3 : 0
+  const mes = MES[idx][fim.getMonth()]
+  const dias = Math.round((fim.getTime() - agora.getTime()) / 86400000)
+  // Até uns dois meses a data fecha a conta; além disso, o mês já basta e o
+  // número de dias vira precisão falsa num trânsito que ainda vai mudar.
+  if (dias <= 60) {
+    return T(`até ${fim.getDate()} de ${mes}`, `until ${mes} ${fim.getDate()}`,
+             `hasta el ${fim.getDate()} de ${mes}`, `fino al ${fim.getDate()} di ${mes}`)
+  }
+  return T(`até ${mes}`, `until ${mes}`, `hasta ${mes}`, `fino a ${mes}`)
+}
+
 /**
  * O VERBO do trânsito — o que ele faz com o ponto.
  *
@@ -525,7 +560,13 @@ export function sintetizarODia(
       lento: LENTOS.has(String(principal.transitPlanet || '')),
       // No grupo "acontecendo agora" a janela é redundante (é hoje, e o
       // cabeçalho já diz). Nos outros dois ela é a informação principal.
-      quando: fase === 'agora' ? '' : janelaEmPalavras(principal.window as any, idioma as any, agora),
+      // No grupo "acontecendo agora" a janela e redundante (e hoje, e o
+      // cabecalho ja diz). Para o LENTO, o que informa e ate quando dura —
+      // "passou do pico ha 9 dias" sugere algo encerrado num transito que
+      // ainda tem meses pela frente.
+      quando: LENTOS.has(String(principal.transitPlanet || ''))
+        ? duracaoDoLento(principal, idioma, agora)
+        : fase === 'agora' ? '' : janelaEmPalavras(principal.window as any, idioma as any, agora),
     })
   }
 

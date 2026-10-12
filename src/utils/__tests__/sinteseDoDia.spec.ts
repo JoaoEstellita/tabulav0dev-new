@@ -206,6 +206,41 @@ describe('a síntese montada', () => {
     expect(marte, 'não cola os dois lados com "mas"').not.toMatch(/ — mas /)
   })
 
+  it('o lento diz até quando dura, não quando foi o pico', () => {
+    // ⚠️ Para um transito LENTO, "passou pelo ponto exato ha 9 dias" informa
+    // pouco e engana um pouco: da a impressao de algo encerrado, quando
+    // Plutao sobre o Meio do Ceu ainda tem meses pela frente. O pico passou;
+    // o transito, nao.
+    const AG = new Date('2026-10-11T12:00:00Z')
+    const q = (n: number) => new Date(AG.getTime() + n * 864e5).toISOString()
+    const r = sintetizarODia([
+      { transitPlanet: 'Pluto', natalPlanet: 'Meio do Céu', type: 'conjuncao', strength: 96, house: 10, window: { exact: q(-9), end: q(220) } },
+      { transitPlanet: 'Uranus', natalPlanet: 'Jupiter', type: 'conjuncao', strength: 90, house: 2, window: { exact: q(-6), end: q(40) } },
+      { transitPlanet: 'Saturn', natalPlanet: 'Venus', type: 'quadratura', strength: 85, house: 7, window: { exact: q(2) } },
+      { transitPlanet: 'Sun', natalPlanet: 'Neptune', type: 'quadratura', strength: 56, house: 6, window: { exact: q(-2) } },
+    ], 'pt-BR', AG)!
+
+    const plutao = r.frases.find((f) => f.fonte.includes('Plutão'))!
+    const urano = r.frases.find((f) => f.fonte.includes('Urano'))!
+    const saturno = r.frases.find((f) => f.fonte.includes('Saturno'))!
+    const sol = r.frases.find((f) => f.fonte.includes('Sol'))!
+
+    // Longe: o mes basta — numero de dias seria precisao falsa num transito
+    // que ainda vai mudar de velocidade.
+    expect(plutao.quando).toBe('até maio')
+    // Perto: a data fecha a conta.
+    expect(urano.quando).toBe('até 20 de novembro')
+    // Sem fim conhecido, nao inventa data.
+    expect(saturno.quando).toBe('tema de meses')
+    // O rapido continua falando do pico, que para ele e o que importa.
+    expect(sol.quando).toMatch(/passou pelo ponto exato/)
+
+    for (const f of [plutao, urano, saturno]) {
+      expect(f.lento, 'marcado como lento').toBe(true)
+      expect(f.quando, 'lento nunca fala de pico').not.toMatch(/pico|ponto exato/)
+    }
+  })
+
   it('uma frase por PONTO tocado, não uma por trânsito', () => {
     // Sol em quadratura a Netuno e Lua em trígono a Netuno contam a mesma
     // história — cabem na mesma frase, com a ressalva ("mas").
