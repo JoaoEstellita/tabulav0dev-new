@@ -1561,8 +1561,29 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                               <Ionicons name="book-outline" size={15} color={corAspecto} />
                             </View>
 
+                            {/* ⚠️ Dizia só "Sol → Saturno", e quem lê não tem como
+                                saber qual lado é o céu de hoje e qual é o ponto do
+                                mapa de nascimento — relatado na tela como "não está
+                                misturado?".
+
+                                O dado está certo (a fonte é
+                                `aspectsTransitsToNatalTN`: planet1 transita,
+                                planet2 é natal), e "Saturno → Saturno" é o retorno
+                                de Saturno, não uma duplicata. Faltava a tela dizer
+                                isso. O possessivo marca o natal, como nas frases do
+                                dia: sem possessivo é o trânsito. */}
                             <Text style={styles.cartaoAspectoPar}>
-                              {translatePlanet(a.planet1, language)} → {translatePlanet(a.planet2, language)}
+                              {translatePlanet(a.planet1, language)}
+                              {' '}
+                              <Text style={styles.cartaoAspectoLado}>
+                                {tl('hoje', 'today', 'hoy', 'oggi')}
+                              </Text>
+                              {' → '}
+                              <Text style={styles.cartaoAspectoLado}>
+                                {tl('seu', 'your', 'tu', 'il tuo')}
+                              </Text>
+                              {' '}
+                              {translatePlanet(a.planet2, language)}
                             </Text>
 
                             <Text style={styles.cartaoAspectoMeta}>
@@ -1679,6 +1700,9 @@ const styles = StyleSheet.create({
   cartaoAspectoTopo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cartaoAspectoTitulo: { fontSize: 15.5, fontWeight: '700' },
   cartaoAspectoPar: { color: '#dde2ee', fontSize: 15, marginTop: 2 },
+  // "hoje" e "seu" sao qualificadores, nao nomes: ficam um tom abaixo para o
+  // olho achar os dois planetas primeiro e a distincao depois.
+  cartaoAspectoLado: { color: '#8d94a8', fontWeight: '400' },
   cartaoAspectoMeta: { color: '#8d94a8', fontSize: 14, marginTop: 4 },
   cartaoAspectoAcao: { fontSize: 14, fontWeight: '700', marginTop: 7 },
   controlesDaRoda: {
