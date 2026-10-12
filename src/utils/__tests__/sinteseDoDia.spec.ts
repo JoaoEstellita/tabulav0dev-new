@@ -249,8 +249,10 @@ describe('a síntese montada', () => {
     expect(fontes.some((f) => f === 'Sol em oposição ao seu Sol natal')).toBe(true)
     // "com" não vira "ao": a contração depende da preposição do aspecto.
     expect(fontes.some((f) => f === 'Vênus em quadratura com o seu Vênus natal')).toBe(true)
-    // E o ângulo segue com a contração dele, sem "natal" pendurado.
-    expect(fontes.some((f) => f === 'Marte em trígono ao Meio do Céu')).toBe(true)
+    // O angulo tambem leva possessivo: e o que distingue o ponto do MAPA DA
+    // PESSOA do planeta que transita hoje. Sem "natal" pendurado, que so faz
+    // falta quando os dois nomes sao iguais.
+    expect(fontes.some((f) => f === 'Marte em trígono ao seu Meio do Céu')).toBe(true)
   })
 
   it('respeita o teto de frases', () => {

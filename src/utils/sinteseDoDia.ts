@@ -2,7 +2,7 @@ import { translatePlanet, aspectNature, type AppLanguage } from './astro/pt'
 import { areasAffectedByTransit } from './transitLifeAreas'
 import { getLifeAreaLabelI18n } from '../constants/lifeAreas'
 import { nomeDoPonto, efeitoNoPonto } from './efeitoDoTransito'
-import { enumerar, costurar } from './leituraDoDia'
+import { enumerar, costurar, janelaEmPalavras } from './leituraDoDia'
 
 /**
  * Síntese do momento a partir de TODOS os trânsitos ativos.
@@ -59,10 +59,25 @@ export interface BlocoDaSintese {
 export interface FraseDoDia {
   /** O que muda hoje — o texto que ganha destaque. */
   efeito: string
-  /** De onde vem: "Sol em quadratura com Netuno · Lua em trígono a Netuno". */
+  /** De onde vem: "Sol em quadratura com o seu Netuno · Lua em trígono ao seu Netuno". */
   fonte: string
   /** Identifica os trânsitos citados, para a lista detalhada não repetir. */
   chaves: string[]
+  /**
+   * Onde está no arco: chegando, exato agora, ou já passou do pico.
+   *
+   * É o que permite agrupar a leitura por TEMPO em vez de por força. Doze
+   * frases numa lista única são doze blocos iguais; separadas em "acontecendo
+   * agora", "chegando" e "já passou", viram uma narrativa — e respondem
+   * primeiro a pergunta que a pessoa tem de manhã, que é "o que é hoje?".
+   */
+  fase: Fase
+  /** A casa tocada, quando há uma. */
+  casa: number | null
+  /** Onde isso pega na vida (no máximo duas — três viram lista). */
+  areas: string[]
+  /** "chega ao exato em 3 dias", "passou pelo ponto exato há 6 dias". */
+  quando: string
 }
 
 export interface SinteseDoDia {
@@ -273,16 +288,20 @@ function fonteDoTransito(t: TransitoAtivo, idioma: AppLanguage): string {
     !!t.transitPlanet && !!t.natalPlanet &&
     String(t.transitPlanet).toLowerCase() === String(t.natalPlanet).toLowerCase()
 
+  // ⚠️ "Sol em trígono a Marte" não diz QUAL é o trânsito e qual é o ponto do
+  // mapa da pessoa — e essa é a distinção que faz a frase significar algo.
+  //
+  // O possessivo resolve sem poluir: o alvo leva "seu/sua" porque é do mapa
+  // dela; o primeiro planeta, sem possessivo, é o céu de hoje. Mais econômico
+  // que carimbar "(trânsito)" e "(natal)" em toda linha.
+  const nomeAlvo = translatePlanet(alvo, idioma)
   const alvoLegivel = mesmoPlaneta
-    ? T(`seu ${translatePlanet(alvo, idioma)} natal`,
-        `your natal ${translatePlanet(alvo, idioma)}`,
-        `tu ${translatePlanet(alvo, idioma)} natal`,
-        `il tuo ${translatePlanet(alvo, idioma)} natale`)
+    ? T(`seu ${nomeAlvo} natal`, `your natal ${nomeAlvo}`, `tu ${nomeAlvo} natal`, `il tuo ${nomeAlvo} natale`)
     : ehAngulo
       ? (chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc'
-          ? T('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
-          : T('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente'))
-      : translatePlanet(alvo, idioma)
+          ? T('seu Meio do Céu', 'your Midheaven', 'tu Medio Cielo', 'il tuo Medio Cielo')
+          : T('seu Ascendente', 'your Ascendant', 'tu Ascendente', 'il tuo Ascendente'))
+      : T(`seu ${nomeAlvo}`, `your ${nomeAlvo}`, `tu ${nomeAlvo}`, `il tuo ${nomeAlvo}`)
   const tipo = String(t.type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const par = ASPECTO_POR_EXTENSO[tipo]
   let asp = par ? T(par[0], par[1], par[2], par[3]) : T('sobre', 'over', 'sobre', 'su')
@@ -290,9 +309,9 @@ function fonteDoTransito(t: TransitoAtivo, idioma: AppLanguage): string {
   // Os angulos pedem artigo em portugues: "em oposicao a Meio do Ceu" esta
   // errado — o certo e "ao Meio do Ceu". Planeta nao leva artigo ("a Netuno"),
   // entao a contracao vale so para Ascendente e Meio do Ceu.
-  // "em oposicao a" + "seu Sol natal" tem o mesmo problema dos angulos: o
-  // certo e "ao seu Sol natal".
-  if ((ehAngulo || mesmoPlaneta) && idioma === 'pt-BR') {
+  // "em oposição a" + "seu Marte" pede contração: "ao seu Marte". Como o alvo
+  // agora leva sempre possessivo, a regra vale para todos.
+  if (idioma === 'pt-BR') {
     if (asp.endsWith(' a')) asp = `${asp.slice(0, -2)} ao`
     else if (asp.endsWith(' com')) asp = `${asp} o`
   }
@@ -535,9 +554,24 @@ export function sintetizarODia(
   }
 
   const frases: FraseDoDia[] = []
+  // ⚠️ A ordem deixa de ser só por força.
+  //
+  // Doze frases ordenadas por peso são doze blocos iguais, e a pessoa não tem
+  // como saber o que é de HOJE. Primeiro o que está exato agora, depois o que
+  // vem, por último o que já passou do pico — dentro de cada grupo, a força
+  // continua mandando.
+  const PESO_DA_FASE: Record<Fase, number> = { agora: 0, antes: 1, depois: 2 }
   const gruposOrdenados = [...porPonto.entries()]
-    .map(([alvo, ts]) => ({ alvo, ts, peso: ts.reduce((a, t) => a + forca(t), 0) }))
-    .sort((a, b) => b.peso - a.peso)
+    .map(([alvo, ts]) => {
+      const ordenadosPorForca = [...ts].sort((a, b) => forca(b) - forca(a))
+      return {
+        alvo,
+        ts,
+        peso: ts.reduce((a, t) => a + forca(t), 0),
+        fase: faseDoTransito(ordenadosPorForca[0], agora),
+      }
+    })
+    .sort((a, b) => (PESO_DA_FASE[a.fase] - PESO_DA_FASE[b.fase]) || (b.peso - a.peso))
 
   for (const g of gruposOrdenados) {
     const tensos = g.ts.filter((t) => naturezaReal(t) === 'desafiador')
@@ -570,10 +604,28 @@ export function sintetizarODia(
     // Os mais fortes primeiro, no máximo dois por linha: três origens numa
     // linha discreta deixam de ser referência e viram outra frase para ler.
     const citados = [...g.ts].sort((a, b) => forca(b) - forca(a)).slice(0, 2)
+    const principal = citados[0]
+
+    // A fase vem do trânsito mais forte do grupo: é ele que define se a
+    // leitura é de hoje, do que vem ou do que ficou.
+    const fase = faseDoTransito(principal, agora)
+
+    // Duas áreas no máximo. A terceira em diante deixa de informar e vira
+    // lista — e a frase acima já disse o que acontece.
+    const areas = [...new Set(citados.flatMap((t) => areasDe(t, idioma)))].slice(0, 2)
+
+    const casa = citados.map((t) => Number(t.house)).find((h) => Number.isFinite(h) && h > 0) || null
+
     frases.push({
       efeito,
       fonte: citados.map((t) => fonteDoTransito(t, idioma)).join(' · '),
       chaves: citados.map(chaveDoTransito),
+      fase,
+      casa,
+      areas,
+      // No grupo "acontecendo agora" a janela é redundante (é hoje, e o
+      // cabeçalho já diz). Nos outros dois ela é a informação principal.
+      quando: fase === 'agora' ? '' : janelaEmPalavras(principal.window as any, idioma as any, agora),
     })
   }
 

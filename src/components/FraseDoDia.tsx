@@ -172,6 +172,29 @@ export default function FraseDoDia({ transitos }: Props) {
 
   const leituraDaFrase = fraseAberta != null ? leitura.leiturasDasFrases[fraseAberta] : null
 
+  /** "Casa 6 · Carreira, Saúde — chega ao exato em 3 dias" */
+  const contextoDaFrase = (f: typeof leitura.frases[number]) => {
+    const onde = [
+      f.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${f.casa}` : '',
+      f.areas.join(', '),
+    ].filter(Boolean).join(' · ')
+    if (!onde) return f.quando || ''
+    return f.quando ? `${onde} — ${f.quando}` : onde
+  }
+
+  /**
+   * As frases em três tempos: o que é agora, o que vem, o que ficou.
+   *
+   * Doze frases ordenadas só por força são doze blocos iguais, e a pessoa não
+   * tem como achar o que é de HOJE. Separadas por fase, viram uma narrativa —
+   * e a pergunta da manhã é respondida primeiro.
+   */
+  const GRUPOS = [
+    { fase: 'agora' as const, titulo: tl('Acontecendo agora', 'Happening now', 'Sucediendo ahora', 'Sta accadendo ora') },
+    { fase: 'antes' as const, titulo: tl('Chegando', 'Coming up', 'Llegando', 'In arrivo') },
+    { fase: 'depois' as const, titulo: tl('Já passou do pico', 'Past the peak', 'Ya paso el pico', 'Oltre il picco') },
+  ]
+
   /**
    * Uma leitura do dia: efeito em destaque, origem discreta, e a leitura
    * completa a um toque.
@@ -188,6 +211,10 @@ export default function FraseDoDia({ transitos }: Props) {
           {temLeitura ? <Text style={s.chevron}>›</Text> : null}
         </View>
         {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
+        {/* Onde pega e quando: a casa dá o setor do mapa, as áreas dizem o
+            que isso é na vida, e a janela só aparece fora do grupo "agora"
+            (ali é hoje, e o cabeçalho já disse). */}
+        {contextoDaFrase(f) ? <Text style={s.contexto}>{contextoDaFrase(f)}</Text> : null}
       </>
     )
     const estilo = [i > 0 ? s.fraseExtra : null, ultima ? s.fraseUltima : null]
@@ -220,13 +247,25 @@ export default function FraseDoDia({ transitos }: Props) {
 
       {aberto ? (
         <View style={s.detalhe}>
-          {/* TODAS as leituras do dia, não só as mais fortes.
+          {/* TODAS as leituras do dia, agrupadas por tempo.
               O teto de quatro existia para a tela não crescer — mas o que a
               fazia crescer era a lista de aspectos abaixo, que repetia cada
               trânsito com o texto do catálogo. Sem ela, o céu inteiro cabe. */}
-          {leitura.frases.slice(1).map((f, i, arr) =>
-            renderFrase(f, i + 1, i === arr.length - 1),
-          )}
+          {GRUPOS.map((g) => {
+            // A primeira frase já está no topo, fora do expandido.
+            const doGrupo = leitura.frases
+              .map((f, i) => ({ f, i }))
+              .filter(({ f, i }) => i > 0 && f.fase === g.fase)
+            if (!doGrupo.length) return null
+            return (
+              <View key={g.fase} style={s.grupo}>
+                <Text style={s.grupoTitulo}>{g.titulo}</Text>
+                {doGrupo.map(({ f, i }, pos) =>
+                  renderFrase(f, i, pos === doGrupo.length - 1),
+                )}
+              </View>
+            )
+          })}
 
           {/* A leitura do momento, em camadas: o fundo (planetas lentos), o que
               vem aí e o saldo. */}
@@ -328,6 +367,26 @@ const s = StyleSheet.create({
   },
   fraseUltima: {
     marginBottom: 20,
+  },
+  // A casa, as áreas e a janela: o contexto, abaixo da origem. Mesmo tom da
+  // origem, um pouco mais apagado — é a camada menos urgente das três.
+  contexto: {
+    color: '#6d7589',
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: 2,
+  },
+  grupo: {
+    marginBottom: 6,
+  },
+  // Subdivisão de "O seu dia", não seção irmã de "O FUNDO": por isso sem
+  // caixa alta e sem o espaçamento de letra dos rótulos de seção.
+  grupoTitulo: {
+    color: '#9aa3b8',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginTop: 4,
   },
   rotulo: {
     color: '#8d94a8',

@@ -44,8 +44,11 @@ describe('o aviso: uma frase', () => {
     // A ordem "camadas antes da lista de aspectos" deixou de existir junto com
     // a lista: agora o expandido é frases + camadas, e nada mais.
     expect(FRASE).toContain('leitura.blocos.map')
-    expect(FRASE, 'as outras frases vêm antes das camadas').toMatch(
-      /frases\.slice\(1\)[\s\S]*leitura\.blocos\.map/,
+    // As frases agora vêm agrupadas por fase (agora / chegando / já passou),
+    // então o que precede as camadas é o loop de GRUPOS, não um slice.
+    expect(FRASE, 'as frases são agrupadas por tempo').toContain('GRUPOS.map')
+    expect(FRASE, 'as frases vêm antes das camadas').toMatch(
+      /GRUPOS\.map[\s\S]*leitura\.blocos\.map/,
     )
   })
 
