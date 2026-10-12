@@ -140,21 +140,53 @@ export default function FraseDoDia({ transitos }: Props) {
     // O bloco "hoje" ja esta no topo: repeti-lo logo abaixo faria o expandido
     // parecer que nao acrescenta nada.
     // A leitura completa de cada frase, pronta para o modal.
+    /**
+     * A leitura completa de CADA aspecto que originou a frase.
+     *
+     * ⚠️ Antes isto pegava só o primeiro (`.find(Boolean)`), e a frase cita
+     * até dois: "Mercúrio em conjunção e a Lua em conjunção com o seu Plutão"
+     * abria o modal de Mercúrio e o da Lua não existia em lugar nenhum. A
+     * linha prometia dois trânsitos e o toque entregava um.
+     *
+     * Os dois num modal só, em sequência, em vez de uma lista intermediária:
+     * a frase acima já disse o que eles fazem juntos, e obrigar a escolher
+     * entre dois nomes antes de ler seria um passo a mais para a mesma coisa.
+     */
     const leiturasDasFrases = frases.map((f) => {
-      const t = f.chaves.map((c) => porChaveDoTransito.get(c)).find(Boolean)
-      if (!t) return null
-      const n = narrar(t)
-      const corpo = String(n?.modalBody || n?.shortText || '').trim()
-      if (!corpo) return null
+      const partes = f.chaves
+        .map((c) => porChaveDoTransito.get(c))
+        .filter(Boolean)
+        .map((t: any) => {
+          const n = narrar(t)
+          const corpo = String(n?.modalBody || n?.shortText || '').trim()
+          if (!corpo) return null
+          return {
+            titulo: buildTransitTitle(
+              { transitPlanet: t.transitPlanet, aspectLabel: t.type, targetLabel: t.natalPlanet },
+              language as any,
+            ),
+            quando: janelaEmPalavras(t.window, idioma),
+            casa: typeof t.house === 'number' && t.house > 0 ? t.house : null,
+            corpo,
+          }
+        })
+        .filter(Boolean) as Array<{ titulo: string; quando: string; casa: number | null; corpo: string }>
+
+      if (!partes.length) return null
+      const primeiro = f.chaves.map((c) => porChaveDoTransito.get(c)).find(Boolean)
       return {
-        titulo: buildTransitTitle(
-          { transitPlanet: t.transitPlanet, aspectLabel: t.type, targetLabel: t.natalPlanet },
-          language as any,
-        ),
-        quando: janelaEmPalavras(t.window, idioma),
-        casa: typeof t.house === 'number' && t.house > 0 ? t.house : null,
-        corpo,
-        natureza: aspectNature(String(t.type)),
+        titulo: partes[0].titulo,
+        quando: partes[0].quando,
+        casa: partes[0].casa,
+        // Um corpo só, com o título de cada aspecto separando os textos quando
+        // há mais de um — senão os dois viram um parágrafo sem dono.
+        corpo: partes.length === 1
+          ? partes[0].corpo
+          : partes.map((p) => `${p.titulo}\n${p.corpo}`).join('\n\n'),
+        natureza: aspectNature(String((primeiro as any)?.type || '')),
+        // Com dois, o título do modal não pode ser o do primeiro: ele diria
+        // menos do que a linha que a pessoa tocou.
+        varios: partes.length > 1,
       }
     })
 
@@ -307,7 +339,14 @@ export default function FraseDoDia({ transitos }: Props) {
         onClose={() => setFraseAberta(null)}
         // Sem catálogo, o título é a própria origem — "o Sol em quadratura ao
         // seu Netuno" já identifica o trânsito sem depender de texto curado.
-        title={leituraDaFrase?.titulo || (fraseAberta != null ? leitura.frases[fraseAberta]?.fonte : '') || ''}
+        title={
+          (leituraDaFrase?.varios || !leituraDaFrase?.titulo)
+            // Com mais de um aspecto, o título é a linha de origem inteira —
+            // é ela que a pessoa tocou, e nomear só o primeiro esconderia o
+            // segundo antes mesmo de abrir.
+            ? ((fraseAberta != null ? leitura.frases[fraseAberta]?.fonte : '') || '')
+            : leituraDaFrase.titulo
+        }
         timingLabel={[
           leituraDaFrase?.quando || (fraseAberta != null ? leitura.frases[fraseAberta]?.quando : ''),
           leituraDaFrase?.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${leituraDaFrase.casa}` : '',

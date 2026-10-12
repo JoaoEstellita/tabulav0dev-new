@@ -78,6 +78,19 @@ describe('o detalhe: aspecto e texto, nada mais', () => {
     expect(FRASE).toContain('.slice(0, MAX_DETALHES)')
   })
 
+  it('o modal traz TODOS os aspectos da frase, não só o primeiro', () => {
+    // ⚠️ Pegava so o primeiro (`.find(Boolean)`), e a frase cita ate dois:
+    // "Mercurio em conjuncao e a Lua em conjuncao com o seu Plutao" abria o
+    // modal de Mercurio e o da Lua nao existia em lugar nenhum. A linha
+    // prometia dois transitos e o toque entregava um.
+    //
+    // Os dois num modal so, em sequencia — obrigar a escolher entre dois
+    // nomes antes de ler seria um passo a mais para a mesma coisa.
+    expect(FRASE).toContain('const partes = f.chaves')
+    expect(FRASE, 'cada texto vem com o titulo do seu aspecto').toMatch(/partes\.map\(\(p\) => `\$\{p\.titulo\}/)
+    expect(FRASE, 'sabe quando ha mais de um').toContain('varios: partes.length > 1')
+  })
+
   it('a leitura completa fica atrás de um toque, não numa lista', () => {
     // A lista de aspectos SAIU da tela. Era ela que fazia o card crescer —
     // cada trânsito com quatro a cinco linhas do catálogo — e repetia, porque
