@@ -39,7 +39,7 @@ export interface TransitoAtivo {
 }
 
 export interface BlocoDaSintese {
-  chave: 'fundo' | 'hoje' | 'vemAi' | 'saldo' | 'conselho'
+  chave: 'fundo' | 'hoje' | 'vemAi' | 'saldo'
   rotulo: string
   texto: string
 }
@@ -78,8 +78,18 @@ export interface SinteseDoDia {
   blocos: BlocoDaSintese[]
 }
 
-/** Teto de frases: acima disto a leitura deixa de ser leitura e vira planilha. */
-const MAX_FRASES = 4
+/**
+ * Sem teto: TODO ponto tocado vira frase.
+ *
+ * O teto existia para a leitura não virar planilha — mas o que fazia a tela
+ * crescer não eram as frases, e sim a lista de aspectos logo abaixo, que
+ * repetia cada trânsito com quatro a cinco linhas de texto do catálogo.
+ *
+ * Medido num dia de 44 trânsitos: 12 pontos distintos = 12 frases, ~24 linhas.
+ * Menos que as 40+ do formato anterior, cobrindo o céu inteiro em vez de um
+ * quarto dele. Cada frase é uma leitura fechada; nenhuma repete a outra,
+ * porque o agrupamento é POR PONTO.
+ */
 
 /** Meses a anos no mesmo ponto: são o período, não o dia. */
 const LENTOS = new Set(['Saturn', 'Uranus', 'Neptune', 'Pluto', 'Jupiter'])
@@ -498,31 +508,15 @@ export function sintetizarODia(
     texto: costurar(saldo, concentra),
   })
 
-  // ── 5) CONSELHO: derivado da combinação, não de um molde ─────────────────
-  const lentoPassado = lentos.find((t) => faseDoTransito(t, agora) === 'depois')
-  const apoioHoje = rapidos.find((t) => aspectNature(String(t.type)) === 'harmonico')
-  const conselho = b.dominante === 'tenso' && lentoPassado
-    ? T('Decisão grande pode esperar: o que pesa já passou do pico e ainda está assentando.',
-        'A big decision can wait: what weighs is past its peak and still settling.',
-        'La decision grande puede esperar: lo que pesa ya paso el pico y aun se asienta.',
-        'La decisione grande puo aspettare: cio che pesa e gia oltre il picco e si sta assestando.')
-    : b.dominante === 'tenso'
-      ? T('Vale reduzir o que não é essencial e escolher uma frente só.',
-          'Worth cutting what is not essential and picking a single front.',
-          'Vale reducir lo que no es esencial y elegir un solo frente.',
-          'Vale ridurre cio che non e essenziale e scegliere un fronte solo.')
-      : apoioHoje
-        ? T('É dia de usar a abertura: o que depende de iniciativa anda melhor agora.',
-            'A day to use the opening: whatever depends on initiative moves better now.',
-            'Es dia de usar la apertura: lo que depende de iniciativa anda mejor ahora.',
-            'E giorno da usare l apertura: cio che dipende da iniziativa va meglio ora.')
-        : T('Nada no céu de hoje empurra nem segura: o que andar, anda pelo seu ritmo.',
-            'Nothing in today sky pushes or holds: what moves, moves at your own pace.',
-            'Nada en el cielo de hoy empuja ni frena: lo que ande, anda a tu ritmo.',
-            'Niente nel cielo di oggi spinge o trattiene: cio che va, va al tuo ritmo.')
-
-  blocos.push({ chave: 'conselho', rotulo: T('O que fazer', 'What to do', 'Que hacer', 'Cosa fare'), texto: conselho })
-
+  // ── O CONSELHO SAIU ──────────────────────────────────────────────────────
+  //
+  // Havia um bloco "O que fazer" com uma recomendação derivada do balanço
+  // ("Decisão grande pode esperar…"). Decisão do João: tirar.
+  //
+  // Faz sentido com o resto: as frases do dia já dizem o que muda e em relação
+  // a quê, e a pessoa decide o que fazer com isso. O conselho vinha de um
+  // conjunto pequeno de moldes, então repetia com frequência — e conselho que
+  // se repete deixa de ser conselho.
   // ── AS FRASES DO DIA: efeito em destaque, origem discreta ───────────────
   //
   // Uma por PONTO DO MAPA tocado, não uma por trânsito: dois planetas no mesmo
@@ -546,7 +540,6 @@ export function sintetizarODia(
     .sort((a, b) => b.peso - a.peso)
 
   for (const g of gruposOrdenados) {
-    if (frases.length >= MAX_FRASES) break
     const tensos = g.ts.filter((t) => naturezaReal(t) === 'desafiador')
     const faceis = g.ts.filter((t) => naturezaReal(t) === 'harmonico')
     // Sem lado definido não há efeito a descrever — citar só o aspecto seria

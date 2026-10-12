@@ -8,6 +8,7 @@ import { buildTransitTitle } from '../utils/transitPresentation'
 import TextoComGlossario from './TextoComGlossario'
 import { sintetizarODia } from '../utils/sinteseDoDia'
 import { janelaEmPalavras, type IdiomaLeitura } from '../utils/leituraDoDia'
+import ReadingDetailModal from './ReadingDetailModal'
 
 /**
  * A leitura do dia: um aviso curto, e o resto a um toque.
@@ -59,6 +60,8 @@ const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength 
 export default function FraseDoDia({ transitos }: Props) {
   const { language } = useAppLanguage()
   const [aberto, setAberto] = useState(false)
+  // Qual frase está com a leitura completa aberta (índice), ou null.
+  const [fraseAberta, setFraseAberta] = useState<number | null>(null)
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
@@ -98,16 +101,24 @@ export default function FraseDoDia({ transitos }: Props) {
     // A primeira fica visivel; as outras entram no "Ver mais".
     const frases = sintese?.frases || []
 
-    // ── O DETALHE: aspecto e texto, nada mais ──────────────────────────────
+    // ── A LEITURA COMPLETA, atrás de um toque ──────────────────────────────
     //
-    // ⚠️ Sem o descarte abaixo, o mesmo transito aparecia DUAS VEZES na mesma
-    // tela: citado na linha de origem de uma frase ("Sol em quadratura com
-    // Netuno") e de novo na lista detalhada logo abaixo. A frase ja disse o que
-    // ele faz; repetir o nome nao acrescenta, so faz a tela parecer maior do
-    // que o conteudo que tem.
-    const jaCitados = new Set(frases.flatMap((f) => f.chaves))
+    // Antes isto era uma LISTA na tela, abaixo das frases: cada trânsito com
+    // quatro a cinco linhas do catálogo. Era o que fazia o card crescer — e
+    // repetia, porque a frase logo acima já tinha dito o que aquele trânsito
+    // faz.
+    //
+    // O texto curado é o ativo mais caro do projeto e não podia sumir. Então
+    // ele saiu da tela e foi para o toque: cada frase abre a leitura completa
+    // do trânsito que a originou. A tela fica limpa, o catálogo continua a um
+    // toque, e nada aparece duas vezes.
+    //
+    // Indexado por chave para a frase achar o seu: a frase sabe quais
+    // trânsitos citou (`f.chaves`), e é por aí que o modal é montado.
+    const porChaveDoTransito = new Map<string, TransitoRico>()
+    for (const t of ordenados) porChaveDoTransito.set(`${t.transitPlanet}|${t.type}|${t.natalPlanet}`, t)
+
     const detalhes = ordenados
-      .filter((t) => !jaCitados.has(`${t.transitPlanet}|${t.type}|${t.natalPlanet}`))
       .slice(0, MAX_DETALHES)
       .map((t) => {
       const n = narrar(t)
@@ -129,7 +140,27 @@ export default function FraseDoDia({ transitos }: Props) {
     // O bloco "hoje" ja esta no topo: repeti-lo logo abaixo faria o expandido
     // parecer que nao acrescenta nada.
     const blocos = (sintese?.blocos || []).filter((b) => b.chave !== 'hoje')
-    return { aviso, blocos, detalhes, frases }
+
+    // A leitura completa de cada frase, pronta para o modal.
+    const leiturasDasFrases = frases.map((f) => {
+      const t = f.chaves.map((c) => porChaveDoTransito.get(c)).find(Boolean)
+      if (!t) return null
+      const n = narrar(t)
+      const corpo = String(n?.modalBody || n?.shortText || '').trim()
+      if (!corpo) return null
+      return {
+        titulo: buildTransitTitle(
+          { transitPlanet: t.transitPlanet, aspectLabel: t.type, targetLabel: t.natalPlanet },
+          language as any,
+        ),
+        quando: janelaEmPalavras(t.window, idioma),
+        casa: typeof t.house === 'number' && t.house > 0 ? t.house : null,
+        corpo,
+        natureza: aspectNature(String(t.type)),
+      }
+    })
+
+    return { aviso, blocos, detalhes, frases, leiturasDasFrases }
   }, [transitos, language])
 
   if (!leitura) return null
@@ -137,6 +168,42 @@ export default function FraseDoDia({ transitos }: Props) {
   const alternar = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setAberto((v) => !v)
+  }
+
+  const leituraDaFrase = fraseAberta != null ? leitura.leiturasDasFrases[fraseAberta] : null
+
+  /**
+   * Uma leitura do dia: efeito em destaque, origem discreta, e a leitura
+   * completa a um toque.
+   *
+   * Tocável só quando HÁ texto curado por trás — um bloco que parece clicável
+   * e não abre nada é pior que um bloco que não parece.
+   */
+  const renderFrase = (f: typeof leitura.frases[number], i: number, ultima: boolean) => {
+    const temLeitura = !!leitura.leiturasDasFrases[i]
+    const conteudo = (
+      <>
+        <View style={s.fraseTopo}>
+          <TextoComGlossario style={[s.texto, s.fraseTexto]}>{f.efeito}</TextoComGlossario>
+          {temLeitura ? <Text style={s.chevron}>›</Text> : null}
+        </View>
+        {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
+      </>
+    )
+    const estilo = [i > 0 ? s.fraseExtra : null, ultima ? s.fraseUltima : null]
+    return temLeitura ? (
+      <Pressable
+        key={`frase-${i}`}
+        style={estilo}
+        onPress={() => setFraseAberta(i)}
+        accessibilityRole="button"
+        accessibilityLabel={f.efeito}
+      >
+        {conteudo}
+      </Pressable>
+    ) : (
+      <View key={`frase-${i}`} style={estilo}>{conteudo}</View>
+    )
   }
 
   return (
@@ -147,61 +214,34 @@ export default function FraseDoDia({ transitos }: Props) {
           A ordem inversa — "Hoje a Lua e Vênus pressionam a sua presença" antes
           do que isso significa — punha na frente o que menos importa para quem
           lê. O aspecto é a FONTE da informação, não a informação. */}
-      <TextoComGlossario style={s.texto}>{leitura.frases[0]?.efeito || leitura.aviso}</TextoComGlossario>
-      {leitura.frases[0]?.fonte ? (
-        <Text style={s.fonte}>{leitura.frases[0].fonte}</Text>
-      ) : null}
+      {leitura.frases[0] ? renderFrase(leitura.frases[0], 0, false) : (
+        <TextoComGlossario style={s.texto}>{leitura.aviso}</TextoComGlossario>
+      )}
 
       {aberto ? (
         <View style={s.detalhe}>
-          {/* As outras leituras do dia, mesmo formato. Antes só o ponto mais
-              tocado virava texto: num dia com dezenas de trânsitos ativos,
-              uma frase só e todo o resto do céu em silêncio. */}
-          {leitura.frases.slice(1).map((f, i, arr) => (
-            <View
-              key={`frase-${i}`}
-              // A ultima frase precisa de respiro antes do primeiro rotulo de
-              // secao: sem isso "O FUNDO" encostava no texto de cima e os dois
-              // pareciam o mesmo bloco.
-              style={[s.fraseExtra, i === arr.length - 1 ? s.fraseUltima : null]}
-            >
-              <TextoComGlossario style={s.texto}>{f.efeito}</TextoComGlossario>
-              {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
-            </View>
-          ))}
+          {/* TODAS as leituras do dia, não só as mais fortes.
+              O teto de quatro existia para a tela não crescer — mas o que a
+              fazia crescer era a lista de aspectos abaixo, que repetia cada
+              trânsito com o texto do catálogo. Sem ela, o céu inteiro cabe. */}
+          {leitura.frases.slice(1).map((f, i, arr) =>
+            renderFrase(f, i + 1, i === arr.length - 1),
+          )}
+
           {/* A leitura do momento, em camadas: o fundo (planetas lentos), o que
-              vem aí, o saldo e o que fazer. Vem ANTES da lista de aspectos —
-              primeiro o sentido, depois o detalhe técnico. */}
+              vem aí e o saldo. */}
           {leitura.blocos.map((b) => (
             <View key={b.chave} style={s.bloco}>
               <Text style={s.blocoRotulo}>{b.rotulo}</Text>
               <TextoComGlossario style={s.blocoTexto}>{b.texto}</TextoComGlossario>
             </View>
           ))}
-          {leitura.detalhes.map((d) => (
-            <View key={d.chave} style={s.item}>
-              <View style={s.itemTopo}>
-                <View style={[s.pino, d.natureza === 'desafiador' ? s.pinoTenso : d.natureza === 'harmonico' ? s.pinoBom : s.pinoNeutro]} />
-                <Text style={s.itemTitulo}>{d.aspecto}</Text>
-              </View>
-
-              {/* Quando chega ao ponto exato, em palavras. A forma compacta
-                  ("pico ha 6d") cabe num chip, mas no meio do texto não se lê. */}
-              {d.quando || d.casa ? (
-                <Text style={s.itemMeta}>
-                  {[d.quando, d.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${d.casa}` : '']
-                    .filter(Boolean)
-                    .join('  ·  ')}
-                </Text>
-              ) : null}
-
-              <TextoComGlossario style={s.itemTexto}>{d.corpo}</TextoComGlossario>
-            </View>
-          ))}
         </View>
       ) : null}
 
-      {leitura.detalhes.length ? (
+      {/* O botão depende de haver o que expandir: outras frases, ou os blocos
+          do momento. Antes dependia da lista de aspectos, que não existe mais. */}
+      {leitura.frases.length > 1 || leitura.blocos.length ? (
         <Pressable onPress={alternar} style={s.botao} accessibilityRole="button">
           <Text style={s.botaoTexto}>
             {aberto
@@ -211,6 +251,26 @@ export default function FraseDoDia({ transitos }: Props) {
           </Text>
         </Pressable>
       ) : null}
+
+      {/* A leitura completa do trânsito que originou a frase — o texto curado
+          do catálogo, que saiu da tela para caber atrás de um toque. */}
+      <ReadingDetailModal
+        visible={!!leituraDaFrase}
+        onClose={() => setFraseAberta(null)}
+        title={leituraDaFrase?.titulo || ''}
+        timingLabel={[leituraDaFrase?.quando, leituraDaFrase?.casa ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${leituraDaFrase.casa}` : '']
+          .filter(Boolean)
+          .join('  ·  ')}
+        // O efeito da frase vira a abertura do modal: quem tocou veio dali, e
+        // reencontrar a mesma frase no topo confirma que abriu o que queria.
+        directText={fraseAberta != null ? (leitura.frases[fraseAberta]?.efeito || '') : ''}
+        fullText={leituraDaFrase?.corpo || ''}
+        statusColor={
+          leituraDaFrase?.natureza === 'desafiador' ? '#f2544b'
+            : leituraDaFrase?.natureza === 'harmonico' ? '#4ade80'
+              : '#8d94a8'
+        }
+      />
     </View>
   )
 }
@@ -250,6 +310,21 @@ const s = StyleSheet.create({
   },
   fraseExtra: {
     marginTop: 14,
+  },
+  // O efeito e o chevron na mesma linha: a seta precisa ficar ao lado do
+  // texto, nao abaixo dele, senao deixa de parecer um controle.
+  fraseTopo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  fraseTexto: { flex: 1 },
+  // Discreto de proposito: sinaliza que ha mais, sem disputar atencao com o
+  // texto. Quem nao quiser aprofundar nao precisa notar.
+  chevron: {
+    color: '#5f6b84',
+    fontSize: 22,
+    lineHeight: 25,
+    marginLeft: 8,
   },
   fraseUltima: {
     marginBottom: 20,

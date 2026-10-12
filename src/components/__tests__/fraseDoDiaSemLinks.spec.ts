@@ -40,13 +40,13 @@ describe('o aviso: uma frase', () => {
     expect(FRASE, 'a palavra-chave solta era a abertura genérica').not.toContain('palavraDeSentido')
   })
 
-  it('o expandido traz as camadas antes da lista de aspectos', () => {
-    // Primeiro o sentido (fundo, vem aí, saldo, o que fazer), depois o detalhe
-    // técnico de cada trânsito.
-    const blocos = FRASE.indexOf('leitura.blocos.map')
-    const aspectos = FRASE.indexOf('leitura.detalhes.map')
-    expect(blocos).toBeGreaterThan(-1)
-    expect(blocos, 'as camadas vêm antes dos aspectos').toBeLessThan(aspectos)
+  it('o expandido traz as camadas do momento', () => {
+    // A ordem "camadas antes da lista de aspectos" deixou de existir junto com
+    // a lista: agora o expandido é frases + camadas, e nada mais.
+    expect(FRASE).toContain('leitura.blocos.map')
+    expect(FRASE, 'as outras frases vêm antes das camadas').toMatch(
+      /frases\.slice\(1\)[\s\S]*leitura\.blocos\.map/,
+    )
   })
 
   it('o bloco de hoje não se repete dentro do Ler mais', () => {
@@ -75,12 +75,17 @@ describe('o detalhe: aspecto e texto, nada mais', () => {
     expect(FRASE).toContain('.slice(0, MAX_DETALHES)')
   })
 
-  it('não repete na lista o trânsito que já foi citado como origem', () => {
-    // Sem isto o mesmo trânsito aparecia DUAS VEZES na mesma tela: na linha de
-    // origem de uma frase ("Sol em quadratura com Netuno") e de novo na lista
-    // detalhada logo abaixo. A frase já disse o que ele faz.
-    expect(FRASE).toContain('jaCitados')
-    expect(FRASE).toMatch(/filter\(\(t\) => !jaCitados\.has/)
+  it('a leitura completa fica atrás de um toque, não numa lista', () => {
+    // A lista de aspectos SAIU da tela. Era ela que fazia o card crescer —
+    // cada trânsito com quatro a cinco linhas do catálogo — e repetia, porque
+    // a frase logo acima já dizia o que aquele trânsito faz.
+    //
+    // O texto curado é o ativo mais caro do projeto e não podia sumir: foi
+    // para o toque. Cada frase abre a leitura completa do trânsito que a
+    // originou.
+    expect(FRASE).toContain('ReadingDetailModal')
+    expect(FRASE).toContain('porChaveDoTransito')
+    expect(FRASE, 'o corpo do modal vem do catálogo curado').toMatch(/modalBody \|\| n\?\.shortText/)
   })
 
   it('tem o controle de expandir, nos dois sentidos', () => {
@@ -91,10 +96,24 @@ describe('o detalhe: aspecto e texto, nada mais', () => {
 
 describe('o que não pode voltar', () => {
   it('nenhuma PALAVRA do texto responde a toque', () => {
-    // O único toque permitido é o do botão "Ler mais", que é um controle
-    // separado, abaixo do parágrafo.
+    // ⚠️ A REGRA QUE ORIGINOU ESTE TESTE CONTINUA VALENDO.
+    //
+    // Duas tentativas de tornar PALAVRAS do texto tocáveis foram rejeitadas no
+    // device: pontilhados dourados no meio do parágrafo leem como corretor
+    // ortográfico, e tiram do lugar o texto que está sendo lido.
+    //
+    // O que mudou é outra coisa: o BLOCO inteiro da frase virou tocável, com
+    // chevron à direita — um padrão de lista, reconhecível, que não interfere
+    // na leitura do parágrafo. Foi o que permitiu tirar a lista de aspectos da
+    // tela sem perder o texto curado do catálogo.
+    //
+    // A distinção que este teste protege: tocável é o bloco, nunca um trecho
+    // dentro da frase.
     const toques = FRASE.match(/onPress=\{[^}]*\}/g) || []
-    expect(toques, 'só o botão de expandir pode ter onPress').toEqual(['onPress={alternar}'])
+    expect(toques.sort(), 'apenas o bloco da frase e o botão de expandir').toEqual(
+      ['onPress={() => setFraseAberta(i)}', 'onPress={alternar}'].sort(),
+    )
+    expect(FRASE, 'o texto em si nunca recebe toque').not.toMatch(/<TextoComGlossario[^>]*onPress/)
     expect(FRASE).not.toMatch(/\bonAbrirTransito\b/)
     expect(FRASE).not.toMatch(/\bonSelectTransit\b/)
   })

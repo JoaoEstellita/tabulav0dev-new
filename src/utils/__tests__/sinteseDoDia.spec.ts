@@ -110,7 +110,7 @@ describe('a síntese montada', () => {
 
   it('produz os blocos do formato escolhido', () => {
     expect(s).toBeTruthy()
-    expect(s.blocos.map((b) => b.chave)).toEqual(['fundo', 'hoje', 'vemAi', 'saldo', 'conselho'])
+    expect(s.blocos.map((b) => b.chave)).toEqual(['fundo', 'hoje', 'vemAi', 'saldo'])
   })
 
   it('separa o período (lentos) do dia (rápidos)', () => {
@@ -157,17 +157,13 @@ describe('a síntese montada', () => {
     expect(saldo).toMatch(/Casa 10 concentra 2/)
   })
 
-  it('o conselho sai da combinação, não de um molde fixo', () => {
-    // Tenso dominante + lento já passado = esperar, não agir.
-    const conselho = s.blocos.find((b) => b.chave === 'conselho')!.texto
-    expect(conselho).toMatch(/pode esperar/)
-
-    // Mudando o céu, muda o conselho.
-    const calmo = sintetizarODia(
-      [{ transitPlanet: 'Venus', natalPlanet: 'Moon', type: 'trigono', strength: 70, house: 4, window: { exact: dias(0) } }],
-      'pt-BR', AGORA,
-    )!
-    expect(calmo.blocos.find((b) => b.chave === 'conselho')!.texto).not.toMatch(/pode esperar/)
+  it('não há mais bloco de conselho', () => {
+    // O bloco "O que fazer" saiu por decisão do João, e faz sentido com o
+    // resto: as frases do dia já dizem o que muda e em relação a quê, e a
+    // pessoa decide o que fazer com isso. O conselho vinha de um conjunto
+    // pequeno de moldes, então repetia com frequência — e conselho que se
+    // repete deixa de ser conselho.
+    expect(s.blocos.some((b) => (b.chave as string) === 'conselho')).toBe(false)
   })
 
   it('o resumo do topo é o EFEITO, não a origem astrológica', () => {
@@ -313,6 +309,6 @@ describe('o texto que sai, palavra por palavra', () => {
 
     expect(porChave.vemAi).toContain('Em 1 dia')
     expect(porChave.saldo).toContain('Dos trânsitos ativos')
-    expect(porChave.conselho.length).toBeGreaterThan(20)
+    expect(porChave.conselho, 'o bloco de conselho saiu').toBeUndefined()
   })
 })
