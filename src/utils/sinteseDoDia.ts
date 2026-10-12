@@ -546,19 +546,26 @@ export function sintetizarODia(
     // devolver a geometria, que é justamente o que este módulo existe p/ evitar.
     if (!tensos.length && !faceis.length) continue
 
-    const efeitoTenso = (tensos.length ? efeitoNoPonto(g.alvo, 'tenso', idioma) : '') || ''
-    const efeitoFacil = (faceis.length ? efeitoNoPonto(g.alvo, 'facil', idioma) : '') || ''
-    let efeito = ''
-    if (efeitoTenso && efeitoFacil) {
-      // Um puxa e o outro solta: a ressalva importa mais que a soma.
-      efeito = T(`${maiuscula(efeitoTenso)} — mas ${efeitoFacil}.`,
-                 `${maiuscula(efeitoTenso)} — but ${efeitoFacil}.`,
-                 `${maiuscula(efeitoTenso)} — pero ${efeitoFacil}.`,
-                 `${maiuscula(efeitoTenso)} — ma ${efeitoFacil}.`)
-    } else if (efeitoTenso || efeitoFacil) {
-      efeito = `${maiuscula(efeitoTenso || efeitoFacil)}.`
-    }
-    if (!efeito) continue
+    // ⚠️ Quando o ponto recebe os DOIS lados, isto colava `tenso` e `facil`
+    // com um "mas". Como os dois foram escritos como espelhos, o resultado se
+    // desdizia:
+    //
+    //     "Agir encontra mais obstáculo do que de costume — mas agir
+    //      encontra menos obstáculo do que de costume."
+    //
+    // Funcionava por acaso quando os lados falavam de sujeitos diferentes
+    // ("a clareza custa mais… mas a intuição fica mais afiada"). Com o mesmo
+    // sujeito, virava contradição literal.
+    //
+    // Estar dividido é uma situação real e comum — um trânsito pressiona o
+    // ponto enquanto outro o favorece — e tem texto próprio, que descreve a
+    // DIVISÃO em vez de empilhar duas afirmações opostas.
+    const misto = tensos.length && faceis.length
+    const efeitoBruto = misto
+      ? efeitoNoPonto(g.alvo, 'misto', idioma)
+      : efeitoNoPonto(g.alvo, tensos.length ? 'tenso' : 'facil', idioma)
+    if (!efeitoBruto) continue
+    const efeito = `${maiuscula(efeitoBruto)}.`
 
     // Os mais fortes primeiro, no máximo dois por linha: três origens numa
     // linha discreta deixam de ser referência e viram outra frase para ler.

@@ -191,12 +191,38 @@ describe('a síntese montada', () => {
     }
   })
 
+  it('ponto dividido tem texto PRÓPRIO, não dois opostos colados', () => {
+    // ⚠️ Antes isto colava `tenso` e `facil` com um "mas". Como os dois foram
+    // escritos como espelhos, a frase se desdizia:
+    //
+    //     "Agir encontra mais obstáculo do que de costume — mas agir
+    //      encontra menos obstáculo do que de costume."
+    //
+    // Passava despercebido quando os lados falavam de sujeitos diferentes
+    // ("a clareza custa mais… mas a intuição fica mais afiada"); com o mesmo
+    // sujeito, virava contradição literal na tela.
+    const AG = new Date('2026-10-11T12:00:00Z')
+    const q = (n: number) => new Date(AG.getTime() + n * 864e5).toISOString()
+    const r = sintetizarODia([
+      { transitPlanet: 'Sun', natalPlanet: 'Mars', type: 'trigono', strength: 80, house: 6, window: { exact: q(0) } },
+      { transitPlanet: 'Moon', natalPlanet: 'Mars', type: 'sesquiquadratura', strength: 75, house: 6, window: { exact: q(0) } },
+    ], 'pt-BR', AG)!
+
+    const marte = r.frases[0].efeito
+    expect(marte, 'descreve a divisão').toBe('A ação rende numa frente e esbarra em outra.')
+    expect(marte, 'nunca se desdiz').not.toMatch(/mais obstáculo.*menos obstáculo/)
+    expect(marte, 'não cola os dois lados com "mas"').not.toMatch(/ — mas /)
+  })
+
   it('uma frase por PONTO tocado, não uma por trânsito', () => {
     // Sol em quadratura a Netuno e Lua em trígono a Netuno contam a mesma
     // história — cabem na mesma frase, com a ressalva ("mas").
     const netuno = s.frases.find((f) => f.fonte.includes('Netuno'))!
     expect(netuno.chaves.length, 'os dois trânsitos a Netuno na mesma frase').toBe(2)
-    expect(netuno.efeito, 'um pressiona e o outro alivia').toContain('mas')
+    // O texto do estado MISTO descreve a divisão; não é mais a colagem de
+    // `tenso` + "mas" + `facil`.
+    expect(netuno.efeito, 'diz que o ponto está dividido')
+      .toBe('A intuição fica afiada enquanto a clareza se perde.')
   })
 
   it('os ângulos levam artigo em português', () => {
