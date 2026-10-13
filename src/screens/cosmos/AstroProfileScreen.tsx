@@ -18,7 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import TextoComGlossario from '../../components/TextoComGlossario'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText, isMinorNatalAspect } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText, isMinorAspect } from '../../utils/natalInterpretation'
 import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { natalMoonPhase } from '../../astro/moonPhase'
@@ -237,7 +237,7 @@ type ProfileContentProps = {
 export function AstroProfileContent({ transitData, loading, registerAnchor, chartMeta, interpMode = 'natal' }: ProfileContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
-  const { mostrarMenores, alternar: alternarMenores } = useAspectosMenores()
+  const { mostrarMenores } = useAspectosMenores()
 
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [birthInfo, setBirthInfo] = useState<{ date?: string; time?: string }>({})
@@ -286,7 +286,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
         // Aspectos menores escondidos a pedido. O filtro é aqui, no dado, e não
         // na renderização: assim um planeta que só tem menores não imprime o
         // título "Aspectos natais" sobre uma lista vazia.
-        .filter(a => mostrarMenores || !isMinorNatalAspect(String(a.type)))
+        .filter(a => mostrarMenores || !isMinorAspect(String(a.type)))
         .sort((a, b) => (a.orb ?? 99) - (b.orb ?? 99))
       const entries: { label: string; text: string | null; orb: number | null }[] = []
       for (const a of mine) {
@@ -308,13 +308,6 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     }
     return out
   }, [ct?.aspectsNatalToNatal, language, interpMode, mostrarMenores])
-
-  // Quantos aspectos menores o mapa tem. Sem o número, "Aspectos menores" é um
-  // interruptor sem etiqueta: não dá para saber se desligar tira 2 linhas ou 20.
-  const totalMenores = useMemo(() => {
-    const list = Array.isArray(ct?.aspectsNatalToNatal) ? ct!.aspectsNatalToNatal : []
-    return list.filter(a => isMinorNatalAspect(String(a.type))).length
-  }, [ct?.aspectsNatalToNatal])
 
   const elemental = ct?.chartSummary?.elemental?.natal
   const modality = ct?.chartSummary?.modality?.natal
@@ -368,7 +361,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     const detected = detectAspects(angles, planetsInput, aspectsConfig as any)
     const out: { key: string; label: string; text: string }[] = []
     for (const d of detected) {
-      if (!mostrarMenores && isMinorNatalAspect(String(d.type))) continue
+      if (!mostrarMenores && isMinorAspect(String(d.type))) continue
       const body = resolveNamedPointAspectText(d.planet1, d.type, d.planet2, language)
       if (!body) continue // sem composer para o par → pula
       const ptLabel = d.planet1 === 'Ascendant'
@@ -623,39 +616,12 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
             </Text>
           </View>
         ) : null}
-        {/* ⚠️ Controle ANTES da primeira leitura, não no fim nem em Configurações:
-            ele muda o que todos os cards abaixo mostram, e um controle que
-            aparece depois do conteúdo que governa é encontrado tarde demais.
-            Linha solta, sem moldura de card — é um ajuste de leitura, não uma
-            seção do mapa. Só aparece se houver menor para esconder. */}
-        {totalMenores > 0 ? (
-          <TouchableOpacity
-            onPress={alternarMenores}
-            style={styles.menoresLinha}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: mostrarMenores }}
-            accessibilityLabel={tl(
-              'Mostrar aspectos menores', 'Show minor aspects',
-              'Mostrar aspectos menores', 'Mostra aspetti minori',
-            )}
-          >
-            <View style={[styles.menoresCaixa, mostrarMenores ? styles.menoresCaixaAtiva : null]}>
-              {mostrarMenores ? <Text style={styles.menoresMarca}>✓</Text> : null}
-            </View>
-            <Text style={styles.menoresTexto}>
-              {tl(
-                'Aspectos menores', 'Minor aspects',
-                'Aspectos menores', 'Aspetti minori',
-              )}
-              <Text style={styles.menoresConta}>  {totalMenores}</Text>
-            </Text>
-            <Text style={styles.menoresDica}>
-              {mostrarMenores
-                ? tl('tocar para ocultar', 'tap to hide', 'tocar para ocultar', 'tocca per nascondere')
-                : tl('tocar para mostrar', 'tap to show', 'tocar para mostrar', 'tocca per mostrare')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+        {/* ⚠️ O controle de aspectos menores SAIU daqui: virou o rodapé do card
+            da grade (`ControleAspectosMenores`). Solto entre o filtro de
+            planetas e as leituras, ele lia como ajuste global do app em vez de
+            controle daquela grade — e ficava longe de metade do que governa.
+            O estado é o mesmo (`useAspectosMenores`), então mexer na grade
+            muda estas interpretações junto. */}
 
         {/* Visão Geral — síntese do mapa (temperamento + ênfases). Abre a leitura. Só no natal. */}
         {interpMode === 'natal' && chartOverview ? (

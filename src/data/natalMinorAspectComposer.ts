@@ -60,6 +60,12 @@ type Dinamica = { verb: string; interaction: string; advice: string }
 // senão os três viram o mesmo aviso de tensão com as palavras trocadas.
 export const NATAL_MINOR_ASPECT_DYNAMIC: Record<string, Record<string, Dinamica>> = {
   'pt-BR': {
+    // 30°: signos vizinhos. Apoio discreto que só rende se for acionado.
+    semissextil: {
+      verb: 'se ajudam de leve, quase sem você perceber',
+      interaction: 'São vizinhas no mapa: uma puxa a outra devagar, e o apoio aparece mais no acumulado do que num momento.',
+      advice: 'Não é um talento que se impõe — rende quando você vai atrás dele de propósito.',
+    },
     // 150°: signos sem elemento, modalidade ou polaridade em comum.
     quincuncio: {
       verb: 'não se encaixam de imediato',
@@ -80,6 +86,11 @@ export const NATAL_MINOR_ASPECT_DYNAMIC: Record<string, Record<string, Dinamica>
     },
   },
   'en-US': {
+    semissextil: {
+      verb: 'help each other quietly, almost unnoticed',
+      interaction: 'They are neighbors in the chart: one nudges the other slowly, and the support shows over time rather than in a moment.',
+      advice: 'It is not a gift that imposes itself — it pays off when you go after it on purpose.',
+    },
     quincuncio: {
       verb: 'do not fit together straight away',
       interaction: 'These two parts share no common language: neither is wrong, but one has to give way for the other to work.',
@@ -97,6 +108,11 @@ export const NATAL_MINOR_ASPECT_DYNAMIC: Record<string, Record<string, Dinamica>
     },
   },
   'es-ES': {
+    semissextil: {
+      verb: 'se ayudan apenas, casi sin que lo notes',
+      interaction: 'Son vecinas en el mapa: una empuja a la otra despacio, y el apoyo se ve mas en el acumulado que en un momento.',
+      advice: 'No es un talento que se impone — rinde cuando lo buscas a proposito.',
+    },
     quincuncio: {
       verb: 'no encajan de inmediato',
       interaction: 'Son dos partes sin lenguaje comun: ninguna esta equivocada, pero una debe ceder para que la otra funcione.',
@@ -114,6 +130,11 @@ export const NATAL_MINOR_ASPECT_DYNAMIC: Record<string, Record<string, Dinamica>
     },
   },
   'it-IT': {
+    semissextil: {
+      verb: 'si aiutano appena, quasi senza che tu te ne accorga',
+      interaction: 'Sono vicine nel tema: una spinge l altra piano, e il sostegno si vede nel lungo periodo piu che in un momento.',
+      advice: 'Non e un talento che si impone — rende quando lo cerchi di proposito.',
+    },
     quincuncio: {
       verb: 'non si incastrano subito',
       interaction: 'Sono due parti senza una lingua comune: nessuna sbaglia, ma una deve cedere perche l altra funzioni.',

@@ -238,7 +238,6 @@ describe('a síntese montada', () => {
     // ele é ruído repetido em doze linhas.
     const lento = r.frases.find((f) => f.lento)!
     expect(lento.quando).toContain('14/06/26 a 20/04/27')
-    expect(lento.quando, 'lento ativo não lê como compromisso futuro').toContain('em curso')
     // Sem ano = duas barras (dd/mm a dd/mm); com ano = quatro. Conta no que o
     // código produziu, não num literal repetido do `toContain` acima — senão o
     // teste compara a expectativa consigo mesma e passa com qualquer código.

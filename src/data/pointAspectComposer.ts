@@ -71,6 +71,7 @@ type Dyn = { verb: string; advice: string }
  */
 export const POINT_ASPECT_DYNAMIC: Record<string, Record<string, Dyn>> = {
   'pt-BR': {
+    semissextil: { verb: 'recebe um empurrao discreto de', advice: 'Apoio de fundo, que aparece no acumulado — rende quando voce vai atras.' },
     conjuncao: { verb: 'se funde com', advice: 'As duas forças agem como uma só — intensas e inseparáveis nesse tema.' },
     sextil: { verb: 'encontra facilidade com', advice: 'Há um apoio natural que rende quando você o aciona.' },
     quadratura: { verb: 'entra em tensão com', advice: 'Um atrito que pede trabalho consciente — o desafio faz crescer.' },
@@ -81,6 +82,7 @@ export const POINT_ASPECT_DYNAMIC: Record<string, Record<string, Dyn>> = {
     sesquiquadratura: { verb: 'força a barra com', advice: 'Pressão que aparece quando se insiste no mesmo jeito; cede ao mudar a abordagem.' },
   },
   'en-US': {
+    semissextil: { verb: 'gets a quiet nudge from', advice: 'Background support that shows over time — it pays off when you go after it.' },
     conjuncao: { verb: 'merges with', advice: 'The two forces act as one — intense and inseparable in this theme.' },
     sextil: { verb: 'finds ease with', advice: 'A natural support that pays off when you activate it.' },
     quadratura: { verb: 'enters tension with', advice: 'A friction that asks for conscious work — the challenge makes you grow.' },
@@ -91,6 +93,7 @@ export const POINT_ASPECT_DYNAMIC: Record<string, Record<string, Dyn>> = {
     sesquiquadratura: { verb: 'pushes hard against', advice: 'Pressure that shows up when you insist on the same approach; it eases when you change it.' },
   },
   'es-ES': {
+    semissextil: { verb: 'recibe un empujon discreto de', advice: 'Apoyo de fondo, que se ve en el acumulado — rinde cuando lo buscas.' },
     conjuncao: { verb: 'se funde con', advice: 'Las dos fuerzas actuan como una sola, intensas e inseparables en este tema.' },
     sextil: { verb: 'encuentra facilidad con', advice: 'Un apoyo natural que rinde cuando lo activas.' },
     quadratura: { verb: 'entra en tension con', advice: 'Un roce que pide trabajo consciente; el desafio hace crecer.' },
@@ -101,6 +104,7 @@ export const POINT_ASPECT_DYNAMIC: Record<string, Record<string, Dyn>> = {
     sesquiquadratura: { verb: 'fuerza la mano con', advice: 'Presion que aparece al insistir en lo mismo; cede al cambiar el enfoque.' },
   },
   'it-IT': {
+    semissextil: { verb: 'riceve una spinta discreta da', advice: 'Sostegno di fondo, che si vede nel lungo periodo — rende quando lo cerchi.' },
     conjuncao: { verb: 'si fonde con', advice: 'Le due forze agiscono come una sola, intense e inseparabili in questo tema.' },
     sextil: { verb: 'trova facilita con', advice: 'Un supporto naturale che rende quando lo attivi.' },
     quadratura: { verb: 'entra in tensione con', advice: 'Un attrito che chiede lavoro consapevole; la sfida fa crescere.' },

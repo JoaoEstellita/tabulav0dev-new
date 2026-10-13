@@ -24,6 +24,9 @@ import TextoComGlossario from '../../components/TextoComGlossario'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import AspectGrid from '../../components/AspectGrid'
+import { useAspectosMenores } from '../../hooks/useAspectosMenores'
+import ControleMenores from '../../components/ControleAspectosMenores'
+import { isMinorAspect } from '../../utils/natalInterpretation'
 import { aspectBetween } from '../../utils/nodeAspects'
 import { translatePlanet, translateSignName } from '../../utils/astro/pt'
 import { getPlanetMeaning } from '../../data/planetMeaning'
@@ -295,6 +298,7 @@ type ChartContentProps = {
 export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, mostrarGrade = true }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
+  const { mostrarMenores, alternar: alternarMenores } = useAspectosMenores()
   // Modal de interpretação do aspecto clicado na grade — abre no lugar, sem rolar.
   const [aspectModal, setAspectModal] = useState<{ title: string; subtitle: string; body: string } | null>(null)
   const openNatalAspectModal = React.useCallback((a: { planet1: string; planet2: string; type: string }) => {
@@ -460,6 +464,17 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     }
     return [...aspects, ...extra]
   }, [aspects, natalPlanets, natalNorthNode])
+
+  /**
+   * O que a GRADE mostra, respeitando o controle de aspectos menores.
+   *
+   * ⚠️ O filtro é só da GRADE e das interpretações — a RODA continua
+   * desenhando tudo. Apagar linha da roda mudaria o desenho do mapa, e o
+   * controle é de leitura, não de cálculo: o aspecto existe, só não está
+   * listado.
+   */
+  const menoresFora = <T extends { type?: string }>(list: T[]) =>
+    mostrarMenores ? list : list.filter((a) => !isMinorAspect(String(a?.type || '')))
 
   // Aspectos com nódulos na BI-RODA: trânsito→nódulo-natal + nódulo-trânsito→natal.
   const tnAspectsWithNodes = useMemo(() => {
@@ -1130,9 +1145,15 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 cross
                 rowPlanets={transitGridPoints}
                 colPlanets={natalGridPoints}
-                aspects={tnAspectsWithNodes}
+                aspects={menoresFora(tnAspectsWithNodes)}
                 onSelectCell={openTransitAspectModal}
                 onSelectPlanet={setPlanetaDaGrade}
+              />
+              <ControleMenores
+                mostrar={mostrarMenores}
+                alternar={alternarMenores}
+                quantos={tnAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
+                language={language}
               />
             </View>
           ) : null
@@ -1153,7 +1174,13 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               )}
             </Text>
             {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
-            <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} onSelectAspect={openNatalAspectModal} />
+            <AspectGrid planets={natalGridPoints} aspects={menoresFora(natalAspectsWithNodes)} onSelectAspect={openNatalAspectModal} />
+            <ControleMenores
+              mostrar={mostrarMenores}
+              alternar={alternarMenores}
+              quantos={natalAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
+              language={language}
+            />
           </View>
         ) : null}
 

@@ -85,6 +85,14 @@ export interface FraseDoDia {
   /** "chega ao exato em 3 dias", "passou pelo ponto exato há 6 dias". */
   quando: string
   /**
+   * Quando o trânsito principal da frase COMEÇOU (ISO), para ordenar.
+   *
+   * ⚠️ `quando` é texto formatado e não serve para ordenar — "03/10 a 23/10" e
+   * "13/04/26 a 13/04/27" não se comparam como string, e a comparação até
+   * funcionaria por acidente dentro do mesmo ano, que é o pior tipo de bug.
+   */
+  inicio: string | null
+  /**
    * Trânsito de planeta lento: tema de meses, não do dia.
    *
    * Essa distinção era a razão de existir do bloco "O fundo" — misturar um
@@ -543,55 +551,39 @@ function faseDaJanela(t: TransitoAtivo, idioma: AppLanguage, agora: Date): strin
   const exato = data(t.window?.exact)
   const fim = data(t.window?.end)
 
-  // Acaba hoje: e o que mais muda a decisao do dia, entao ganha da info de pico.
+  // ⚠️ SÓ DOIS CASOS. A primeira versão rotulava TODA linha — "pico em 2 dias",
+  // "depois do pico", "em curso" — e com dez trânsitos na tela cada linha virava
+  // duas, com a maioria carregando "depois do pico", que é o rótulo mais comum e
+  // o que menos muda a decisão de hoje.
+  //
+  // Marcador que aparece sempre não marca nada. Ficam os dois que mudam o que a
+  // pessoa faz AGORA: o dia do pico e o último dia. O resto é o período, e o
+  // período já está nas datas ao lado.
   if (fim && diasDeCalendario(fim, agora) === 0) {
     return T('último dia', 'last day', 'ultimo dia', 'ultimo giorno')
   }
-  // Ainda nao comecou (aparece nos lentos que entram no periodo listado).
-  if (ini) {
-    const d = diasDeCalendario(ini, agora)
-    if (d === 1) return T('começa amanhã', 'starts tomorrow', 'empieza manana', 'inizia domani')
-    if (d > 1) return T(`começa em ${d} dias`, `starts in ${d} days`, `empieza en ${d} dias`, `inizia tra ${d} giorni`)
+  if (exato && diasDeCalendario(exato, agora) === 0) {
+    return T('pico hoje', 'peak today', 'pico hoy', 'picco oggi')
   }
-  if (!exato) return ''
-
-  const d = diasDeCalendario(exato, agora)
-  if (d === 0) return T('pico hoje', 'peak today', 'pico hoy', 'picco oggi')
-  if (d === 1) return T('pico amanhã', 'peak tomorrow', 'pico manana', 'picco domani')
-  if (d > 1 && d <= 45) {
-    return T(`pico em ${d} dias`, `peak in ${d} days`, `pico en ${d} dias`, `picco tra ${d} giorni`)
-  }
-  if (d > 45) {
-    // Alem de um mes e meio, o numero de dias e precisao falsa: o mes basta.
-    const idx = idioma === 'en-US' ? 1 : idioma === 'es-ES' ? 2 : idioma === 'it-IT' ? 3 : 0
-    const mes = MES[idx][exato.getMonth()]
-    return T(`pico em ${mes}`, `peak in ${mes}`, `pico en ${mes}`, `picco a ${mes}`)
-  }
-  return T('depois do pico', 'past the peak', 'despues del pico', 'dopo il picco')
+  // Datas sem fase: o começo, o fim e o pico futuro se leem direto do período.
+  void ini
+  return ''
 }
 
 /**
- * O periodo COMPLETO de um transito: datas + onde hoje esta nelas.
+ * O periodo de um transito: as datas, e a fase só quando ela é excecao.
  *
- * ⚠️ Nos LENTOS entra "em curso" na frente. "12/04/26 a 12/04/27" com hoje em
- * 13/10/26 le como compromisso marcado, nao como algo acontecendo — e esse
- * transito ja esta ativo ha seis meses. Duas datas de anos diferentes sao a
- * informacao mais abstrata do card sem isso.
+ * ⚠️ "em curso" saiu. Ele resolvia uma leitura ruim — "12/04/26 a 12/04/27" com
+ * hoje em 13/10/26 parece compromisso marcado, nao algo ja ativo ha seis meses —
+ * mas custava duas palavras em TODA linha de lento, e com o periodo mais a fase
+ * a linha quebrava em duas. O agrupamento "Transitos lentos" ja diz que aquilo
+ * e um tema em andamento; o rotulo repetia por linha o que o titulo diz uma vez.
  */
 function janelaCompleta(t: TransitoAtivo, idioma: AppLanguage, agora: Date, lento: boolean): string {
-  const T = tl(idioma)
   const datas = periodoEmDatas(t, idioma, agora)
     || (lento ? duracaoDoLento(t, idioma, agora) : janelaEmPalavras(t.window as any, idioma as any, agora))
   const fase = faseDaJanela(t, idioma, agora)
-
-  const ini = t.window?.start ? new Date(t.window.start) : null
-  const fim = t.window?.end ? new Date(t.window.end) : null
-  const emCurso = lento
-    && !!ini && !isNaN(ini.getTime()) && ini <= agora
-    && !!fim && !isNaN(fim.getTime()) && fim >= agora
-  const curso = emCurso ? T('em curso', 'under way', 'en curso', 'in corso') : ''
-
-  return [curso, datas, fase].filter(Boolean).join('  ·  ')
+  return [datas, fase].filter(Boolean).join('  ·  ')
 }
 
 function duracaoDoLento(t: TransitoAtivo, idioma: AppLanguage, agora: Date): string {
@@ -796,6 +788,7 @@ export function sintetizarODia(
       //
       // Sem data conhecida, cai no relativo: melhor "tema de meses" que nada.
       quando: janelaCompleta(principal, idioma, agora, LENTOS.has(String(principal.transitPlanet || ''))),
+      inicio: principal.window?.start || null,
     })
   }
 

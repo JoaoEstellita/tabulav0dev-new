@@ -7,6 +7,8 @@ import { aspectNature } from '../utils/astro/pt'
 import { buildTransitTitle } from '../utils/transitPresentation'
 import TextoComGlossario from './TextoComGlossario'
 import { sintetizarODia } from '../utils/sinteseDoDia'
+import { useAspectosMenores } from '../hooks/useAspectosMenores'
+import { isMinorAspect } from '../utils/natalInterpretation'
 import { janelaEmPalavras, type IdiomaLeitura } from '../utils/leituraDoDia'
 import ReadingDetailModal from './ReadingDetailModal'
 
@@ -59,6 +61,7 @@ const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength 
 
 export default function FraseDoDia({ transitos }: Props) {
   const { language } = useAppLanguage()
+  const { mostrarMenores } = useAspectosMenores()
   const [aberto, setAberto] = useState(false)
   // Qual frase está com a leitura completa aberta (índice), ou null.
   const [fraseAberta, setFraseAberta] = useState<number | null>(null)
@@ -66,7 +69,13 @@ export default function FraseDoDia({ transitos }: Props) {
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
   const leitura = useMemo(() => {
-    const lista = (transitos || []).filter((t) => t?.transitPlanet && t?.natalPlanet && t?.type)
+    // ⚠️ O filtro entra ANTES da síntese, não na renderização: os trânsitos
+    // menores influenciariam o agrupamento por ponto, o balanço tenso×fácil e
+    // a escolha da frase. Escondê-los só na tela deixaria o texto descrevendo
+    // um céu que a pessoa não está vendo.
+    const lista = (transitos || [])
+      .filter((t) => t?.transitPlanet && t?.natalPlanet && t?.type)
+      .filter((t) => mostrarMenores || !isMinorAspect(String(t.type || '')))
     if (!lista.length) return null
 
     const ordenados = [...lista].sort((a, b) => forca(b) - forca(a))
@@ -213,7 +222,7 @@ export default function FraseDoDia({ transitos }: Props) {
     )
 
     return { aviso, detalhes, frases, leiturasDasFrases, contagem, total: ordenados.length }
-  }, [transitos, language])
+  }, [transitos, language, mostrarMenores])
 
   if (!leitura) return null
 
@@ -251,30 +260,64 @@ export default function FraseDoDia({ transitos }: Props) {
   const contextoDaFrase = (f: typeof leitura.frases[number]) => f.quando || ''
 
   /**
-   * As frases em três tempos: o que é agora, o que vem, o que ficou.
+   * DUAS listas: o que está acontecendo, e o pano de fundo.
    *
-   * Doze frases ordenadas só por força são doze blocos iguais, e a pessoa não
-   * tem como achar o que é de HOJE. Separadas por fase, viram uma narrativa —
-   * e a pergunta da manhã é respondida primeiro.
+   * ⚠️ Eram quatro — "Acontecendo agora", "Chegando", "Trânsitos lentos" e "Já
+   * passou do pico". Quatro títulos sobre dez frases dão em média duas frases
+   * por título: o cabeçalho ocupava quase tanto quanto o conteúdo, e a
+   * diferença entre "chegando" e "acontecendo" não muda o que a pessoa faz —
+   * os três estão na janela, todos valem hoje.
+   *
+   * O que continua separado é a ESCALA DE TEMPO, que é a distinção que importa:
+   * um trânsito de Plutão é tema de meses e um aspecto da Lua dura horas. Lado
+   * a lado sob o mesmo título, os dois soam igual e o de meses vira notícia do
+   * dia. (Era o que o antigo bloco "O fundo" protegia.)
    */
   const GRUPOS = [
-    { chave: 'agora', titulo: tl('Acontecendo agora', 'Happening now', 'Sucediendo ahora', 'Sta accadendo ora') },
-    { chave: 'antes', titulo: tl('Chegando', 'Coming up', 'Llegando', 'In arrivo') },
-    // ⚠️ Os LENTOS em grupo próprio, não misturados aos tempos.
-    //
-    // Era o que o bloco "O fundo" protegia: um trânsito de Plutão é tema de
-    // meses e um aspecto da Lua dura horas — postos lado a lado sob
-    // "Acontecendo agora", os dois soam igual, e o de meses vira notícia do
-    // dia. Com o fundo removido, a distinção ganhou grupo em vez de sumir.
+    { chave: 'ativos', titulo: tl('Acontecendo agora', 'Happening now', 'Sucediendo ahora', 'Sta accadendo ora') },
     { chave: 'lentos', titulo: tl('Trânsitos lentos', 'Slow transits', 'Transitos lentos', 'Transiti lenti') },
-    // Por último: o que já passou é a informação menos acionável das quatro.
-    { chave: 'depois', titulo: tl('Já passou do pico', 'Past the peak', 'Ya paso el pico', 'Oltre il picco') },
   ] as const
 
-  const frasesDoGrupo = (chave: typeof GRUPOS[number]['chave']) =>
-    leitura.frases
+  /**
+   * Mais recente no topo.
+   *
+   * ⚠️ Pela data de INÍCIO (`inicio`, ISO), não pelo texto do período: "03/10 a
+   * 23/10" e "13/04/26 a 13/04/27" não se comparam como string, e dentro de um
+   * mesmo ano a comparação até daria certo por acidente — o pior tipo de bug,
+   * porque só quebra na virada.
+   *
+   * Sem data conhecida a frase vai para o fim: ordem instável é pior que ordem
+   * previsível, e uma frase sem janela não tem como disputar o topo.
+   */
+  const maisRecentePrimeiro = (a: { f: typeof leitura.frases[number] }, b: { f: typeof leitura.frases[number] }) => {
+    const ms = (v: string | null) => {
+      if (!v) return Number.NEGATIVE_INFINITY
+      const t = new Date(v).getTime()
+      return Number.isFinite(t) ? t : Number.NEGATIVE_INFINITY
+    }
+    return ms(b.f.inicio) - ms(a.f.inicio)
+  }
+
+  /**
+   * A frase que o card mostra FECHADO.
+   *
+   * ⚠️ Tem de ser a MESMA que abre a lista. Ela era `frases[0]`, que vem na
+   * ordem da síntese (por fase), enquanto a lista aberta reordena por mais
+   * recente — então abrir o card trocava a frase do topo, e a leitura parecia
+   * saltar sem motivo. Fechado é a capa da lista, não outra escolha.
+   */
+  const frasesDoGrupo = (chave: typeof GRUPOS[number]['chave']) => {
+    const doGrupo = leitura.frases
       .map((f, i) => ({ f, i }))
-      .filter(({ f }) => (chave === 'lentos' ? f.lento : !f.lento && f.fase === chave))
+      .filter(({ f }) => (chave === 'lentos' ? f.lento : !f.lento))
+    // Só a lista de ativos reordena: nos lentos, "mais recente" não quer dizer
+    // nada útil — todos começaram há meses e a ordem por peso serve melhor.
+    return chave === 'ativos' ? doGrupo.sort(maisRecentePrimeiro) : doGrupo
+  }
+
+  // Sem nenhum trânsito rápido, a capa é o primeiro lento — o card nunca fica
+  // sem capa só porque o dia é só pano de fundo.
+  const capa = frasesDoGrupo('ativos')[0]?.f || frasesDoGrupo('lentos')[0]?.f || leitura.frases[0]
 
   /**
    * Uma leitura do dia: efeito em destaque, origem discreta, e a leitura
@@ -371,14 +414,14 @@ export default function FraseDoDia({ transitos }: Props) {
           A contagem acima já deu a forma do dia; aqui vai o que ela resume.
           O box inteiro abre: um alvo do tamanho de duas palavras no canto erra
           fácil, e o resto do card parecia inerte sem motivo. */}
-      {!aberto && leitura.frases[0] ? (
+      {!aberto && capa ? (
         <Pressable onPress={alternar} accessibilityRole="button">
-          <Text style={s.panoramaDestaque} numberOfLines={2}>{leitura.frases[0].efeito}</Text>
+          <Text style={s.panoramaDestaque} numberOfLines={2}>{capa.efeito}</Text>
           {/* ⚠️ Mostrava só a PRIMEIRA origem. A frase cita até dois trânsitos,
               e esconder um deles fechado fazia a linha entregar menos do que o
               texto promete — "Mercúrio em conjunção com o seu Plutão" sozinho
               não explica por que a frase fala de concentração de força. */}
-          {leitura.frases[0].origens.map((o, k) => (
+          {capa.origens.map((o, k) => (
             <Text key={`p-${k}`} style={s.fonte} numberOfLines={1}>
               {o.texto}
               {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}

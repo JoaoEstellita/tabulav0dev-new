@@ -153,8 +153,22 @@ describe('natal planet-aspect catalog coverage', () => {
   })
 
   it('resolveNatalPlanetAspectText returns null for unknown aspect', () => {
+    // Erro de digitação: não é aspecto nenhum, e inventar texto para ele seria
+    // pior que não responder.
     expect(resolveNatalPlanetAspectText('sun', 'quinquncio', 'moon')).toBeNull()
-    expect(resolveNatalPlanetAspectText('sun', 'semisextil', 'moon')).toBeNull()
+  })
+
+  // ⚠️ `semisextil` passou a RESOLVER. Ele estava aqui como "desconhecido"
+  // porque não tinha texto — mas o motor sempre o emitiu (`aspects.config`,
+  // 30°), então a tela mostrava título e orbe com um vão embaixo. Agora o
+  // composer de menores o cobre, junto de quincúncio, semiquadratura e
+  // sesquiquadratura.
+  it('semissextil resolve, em qualquer grafia', () => {
+    for (const v of ['semisextil', 'semissextil', 'semisextile', 'semisestile']) {
+      const t = resolveNatalPlanetAspectText('sun', v, 'moon')
+      expect(t, v).toBeTruthy()
+      expect(t!.length, v).toBeGreaterThan(50)
+    }
   })
 
   it('resolveNatalPlanetAspectText returns null for self-aspect', () => {

@@ -246,21 +246,22 @@ const MINOR_ASPECT_ALIAS: Record<string, string> = {
   semicuadratura: 'semiquadratura', semiquadrato: 'semiquadratura',
   sesquiquadratura: 'sesquiquadratura', sesquisquare: 'sesquiquadratura',
   sesquicuadratura: 'sesquiquadratura', sesquiquadrato: 'sesquiquadratura',
+  // 30 graus. O motor o emite (`aspects.config`), ele conta como menor e entra
+  // na CONTAGEM do controle — sem texto, ligar os menores acrescentaria uma
+  // linha muda e o número prometeria mais do que aparece.
+  semissextil: 'semissextil', semisextil: 'semissextil',
+  semisextile: 'semissextil', semisestile: 'semissextil',
 }
 
-// Semissextil (30°) não tem composer nem catálogo — entra aqui só para ser
-// reconhecido como menor e poder ser escondido junto com os outros.
-const OUTROS_MENORES = new Set(['semissextil', 'semisextil', 'semisextile', 'semisestile'])
-
 /**
- * O aspecto é MENOR (fraco)? Usado pela aba Mapa para esconder, a pedido, o que
- * não pesa na leitura. Vale para quincúncio, semiquadratura, sesquiquadratura e
- * semissextil — os maiores (conjunção, sextil, quadratura, trígono, oposição)
- * respondem false.
+ * O aspecto é MENOR (fraco)? Usado pela grade, pela leitura do dia e pelas
+ * interpretações para esconder, a pedido, o que não pesa. Vale para quincúncio,
+ * semiquadratura, sesquiquadratura e semissextil — os maiores (conjunção,
+ * sextil, quadratura, trígono, oposição) respondem false.
  */
-export function isMinorNatalAspect(aspect: string): boolean {
+export function isMinorAspect(aspect: string): boolean {
   const asp = normalizeAspect(aspect)
-  return Boolean(MINOR_ASPECT_ALIAS[asp]) || OUTROS_MENORES.has(asp)
+  return Boolean(MINOR_ASPECT_ALIAS[asp])
 }
 
 /**

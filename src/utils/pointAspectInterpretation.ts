@@ -34,6 +34,10 @@ function normAspect(value: string): string {
     // normalização aqui, o nome não casava e o texto não saía.
     .replace(/sesquisquare|sesquiquadratura|sesquicuadratura|sesquiquadrato/g, 'sesquiquadratura')
     .replace(/semisquare|semiquadratura|semicuadratura|semiquadrato/g, 'semiquadratura')
+    // DEPOIS dos outros: "semissextil" contem "sextil", e o replace de sextil
+    // la em cima ja o deixou como "semissextil" com um "s" so — por isso o
+    // padrao aceita as duas grafias.
+    .replace(/semisextile|semissextil|semisextil|semisestile/g, 'semissextil')
 }
 
 // aliases dos pontos (o engine usa NorthNode/SouthNode/Ascendant/Midheaven)

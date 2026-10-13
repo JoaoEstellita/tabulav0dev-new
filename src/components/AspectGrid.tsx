@@ -2,6 +2,7 @@ import React from "react"
 import { ScrollView, View, Text } from "react-native"
 import Svg, { Rect, Text as SvgText, G } from "react-native-svg"
 import { norm, transitCellId } from '../astro/transitCellId'
+import { ASPECT_SYM, ASPECT_TONE, ASPECT_LABEL, ORDEM_DA_LEGENDA } from '../astro/aspectSymbols'
 
 /**
  * Grade de aspectos (aspectarian). Dois modos:
@@ -32,27 +33,6 @@ const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Sat
 // nome e regras diferentes (a de lá remove espaços, esta não): enquanto nenhum
 // corpo tiver espaço no nome elas coincidem, mas um "North Node" cairia em
 // chaves distintas nos dois lados e o toque abriria o trânsito errado, sem erro.
-const ASPECT_SYM: Record<string, string> = {
-  conjuncao: "☌", conjunction: "☌",
-  sextil: "⚹", sextile: "⚹",
-  quadratura: "□", square: "□",
-  trigono: "△", trine: "△",
-  oposicao: "☍", opposition: "☍",
-  quincuncio: "⚻", quincunx: "⚻",
-}
-const ASPECT_TONE: Record<string, string> = {
-  conjuncao: "#FFD700", conjunction: "#FFD700",
-  sextil: "#22C55E", sextile: "#22C55E",
-  trigono: "#4A90E2", trine: "#4A90E2",
-  quadratura: "#EF4444", square: "#EF4444",
-  oposicao: "#F59E0B", opposition: "#F59E0B",
-  quincuncio: "#B39DDB", quincunx: "#B39DDB",
-}
-const ASPECT_LABEL: Record<string, string> = {
-  conjuncao: "Conjunção", sextil: "Sextil", quadratura: "Quadratura",
-  trigono: "Trígono", oposicao: "Oposição", quincuncio: "Quincúncio",
-}
-
 const CELL = 30
 
 const glyphOf = (name: string) => PLANET_SYMBOLS[name] || name.slice(0, 2)
@@ -97,7 +77,9 @@ function AspectLegend({ present, extra }: { present: string[]; extra?: React.Rea
 
 function presentAspects(list: AspectLike[]): string[] {
   const set = new Set(list.map((a) => norm(a.type)).filter((t) => ASPECT_SYM[t]))
-  return ["conjuncao", "sextil", "quadratura", "trigono", "oposicao", "quincuncio"].filter((t) => set.has(t))
+  // A legenda lista só o que a grade está mostrando — com os menores
+  // desligados, nenhum dos dois últimos entra.
+  return ORDEM_DA_LEGENDA.filter((t) => set.has(t))
 }
 
 // Texto do aspecto (glifo + orbe) centralizado numa célula.

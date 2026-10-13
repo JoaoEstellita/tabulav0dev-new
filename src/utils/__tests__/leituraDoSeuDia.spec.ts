@@ -49,24 +49,37 @@ describe('leitura do "Seu dia"', () => {
     expect(o.texto.startsWith('A Lua')).toBe(true)
   })
 
-  // ⚠️ O período sozinho não diz se o trânsito está subindo, no pico ou
-  // acabando — e é isso que muda o que a pessoa faz com a informação.
-  describe('fase: onde HOJE está dentro da janela', () => {
-    const casos: Array<[string, TransitoAtivo['window'], string]> = [
-      ['acaba hoje',    { start: iso('2026-10-11'), exact: iso('2026-10-12'), end: iso('2026-10-13') }, 'último dia'],
-      ['exato hoje',    { start: iso('2026-10-03'), exact: iso('2026-10-13'), end: iso('2026-10-21') }, 'pico hoje'],
-      ['exato amanhã',  { start: iso('2026-10-07'), exact: iso('2026-10-14'), end: iso('2026-10-18') }, 'pico amanhã'],
-      ['exato em dias', { start: iso('2026-10-07'), exact: iso('2026-10-15'), end: iso('2026-10-18') }, 'pico em 2 dias'],
-      ['pico passou',   { start: iso('2026-10-01'), exact: iso('2026-10-09'), end: iso('2026-10-20') }, 'depois do pico'],
-      ['pico distante', { start: iso('2026-08-21'), exact: iso('2026-12-02'), end: iso('2026-12-20') }, 'pico em dezembro'],
+  // ⚠️ A fase é EXCEÇÃO, não rótulo. A primeira versão marcava toda linha
+  // ("pico em 2 dias", "depois do pico", "em curso") e com dez trânsitos cada
+  // linha virava duas — a maioria carregando "depois do pico", que é o rótulo
+  // mais comum e o que menos muda a decisão de hoje. Marcador que aparece
+  // sempre não marca nada.
+  describe('fase aparece só quando muda a decisão de hoje', () => {
+    const marca: Array<[string, TransitoAtivo['window'], string]> = [
+      ['acaba hoje', { start: iso('2026-10-11'), exact: iso('2026-10-12'), end: iso('2026-10-13') }, 'último dia'],
+      ['exato hoje', { start: iso('2026-10-03'), exact: iso('2026-10-13'), end: iso('2026-10-21') }, 'pico hoje'],
     ]
-    for (const [nome, window, esperado] of casos) {
-      it(nome, () => {
+    for (const [nome, window, esperado] of marca) {
+      it(`marca: ${nome}`, () => {
         expect(linhas([transito({ window })])[0].quando).toContain(esperado)
       })
     }
 
-    // "último dia" ganha de "pico" de propósito: é o que mais muda a decisão.
+    // O período basta para tudo o mais: começo, fim e pico futuro se leem das datas.
+    const soDatas: Array<[string, TransitoAtivo['window']]> = [
+      ['exato amanhã',  { start: iso('2026-10-07'), exact: iso('2026-10-14'), end: iso('2026-10-18') }],
+      ['exato em dias', { start: iso('2026-10-07'), exact: iso('2026-10-15'), end: iso('2026-10-18') }],
+      ['pico passou',   { start: iso('2026-10-01'), exact: iso('2026-10-09'), end: iso('2026-10-20') }],
+      ['pico distante', { start: iso('2026-08-21'), exact: iso('2026-12-02'), end: iso('2026-12-20') }],
+    ]
+    for (const [nome, window] of soDatas) {
+      it(`sem marca: ${nome}`, () => {
+        const q = linhas([transito({ window })])[0].quando
+        expect(q, nome).toMatch(/^\d{2}\/\d{2}(\/\d{2})? a \d{2}\/\d{2}(\/\d{2})?$/)
+      })
+    }
+
+    // "último dia" ganha de "pico hoje" de propósito: é o que mais muda a decisão.
     it('o fim de hoje tem prioridade sobre a informação de pico', () => {
       const q = linhas([transito({
         window: { start: iso('2026-10-11'), exact: iso('2026-10-13'), end: iso('2026-10-13') },
@@ -76,23 +89,23 @@ describe('leitura do "Seu dia"', () => {
     })
   })
 
-  // ⚠️ "12/04/26 a 12/04/27" com hoje em 13/10/26 lê como compromisso marcado,
-  // não como algo que já está acontecendo há seis meses.
-  it('trânsito lento ativo é marcado como "em curso"', () => {
+  // "em curso" foi removido: custava duas palavras em TODA linha de lento, e o
+  // título do grupo "Trânsitos lentos" já diz que aquilo é tema em andamento.
+  it('o lento mostra só as datas, sem rótulo "em curso"', () => {
     const q = linhas([transito({
       transitPlanet: 'Uranus', natalPlanet: 'Jupiter',
       window: { start: iso('2026-04-12'), exact: iso('2027-03-10'), end: iso('2027-04-12') },
     })])[0].quando
-    expect(q).toContain('em curso')
-    expect(q).toContain('12/04/26')
-    expect(q).toContain('12/04/27')
+    expect(q).toBe('12/04/26 a 12/04/27')
+  })
 
-    // Rápido não leva "em curso": a janela dele cabe no dia, e o rótulo só
-    // teria sentido onde a escala é de meses.
-    const rapido = linhas([transito({
-      window: { start: iso('2026-10-11'), exact: iso('2026-10-12'), end: iso('2026-10-14') },
-    })])[0].quando
-    expect(rapido).not.toContain('em curso')
+  // ⚠️ Ordenar pelo TEXTO do período daria certo por acidente dentro do mesmo
+  // ano e quebraria na virada — por isso a frase carrega a data crua.
+  it('a frase expõe a data de início crua, para a tela ordenar', () => {
+    const s = sintetizarODia([transito({
+      window: { start: iso('2026-04-12'), exact: iso('2027-03-10'), end: iso('2027-04-12') },
+    })], 'pt-BR' as any, HOJE)!
+    expect(s.frases[0].inicio).toBe(iso('2026-04-12'))
   })
 
   // ⚠️ O "em" era português e vazava para es-ES e it-IT: "Sole em trigono",
