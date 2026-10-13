@@ -295,11 +295,19 @@ export default function FraseDoDia({ transitos }: Props) {
               mas é coerente. */}
           <Text style={[s.chevron, { color: CORES[f.natureza] }]}>›</Text>
         </View>
-        {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
-        {/* Onde pega e quando: a casa dá o setor do mapa, as áreas dizem o
-            que isso é na vida, e a janela só aparece fora do grupo "agora"
-            (ali é hoje, e o cabeçalho já disse). */}
-        {contextoDaFrase(f) ? <Text style={s.contexto}>{contextoDaFrase(f)}</Text> : null}
+        {/* ⚠️ Uma linha por trânsito, cada uma com a SUA janela.
+            A frase cita até dois, e a janela era uma só — a do mais forte.
+            "Mercúrio em conjunção e a Lua em conjunção com o seu Plutão ·
+            10/10 a 16/10" não diz de quem é o período, e os dois têm janelas
+            diferentes: a Lua passa em dois dias, Mercúrio leva uma semana.
+            Um período solto embaixo de dois trânsitos parece valer para os
+            dois — pior que não ter. */}
+        {f.origens.length ? f.origens.map((o, k) => (
+          <Text key={`o-${k}`} style={s.fonte}>
+            {o.texto}
+            {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
+          </Text>
+        )) : (f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null)}
       </>
     )
     return (
@@ -328,17 +336,18 @@ export default function FraseDoDia({ transitos }: Props) {
       {/* O rótulo e o controle na MESMA linha. O "Ver mais" era um botão
           largo e centralizado embaixo, que ocupava uma faixa inteira para
           dizer uma palavra — num card que precisa ser curto quando fechado. */}
+      {/* A contagem ao LADO do rótulo, não numa linha própria: ela é a
+          legenda do dia, não um parágrafo. Assim o box fechado fecha em três
+          ou quatro linhas. */}
       <View style={s.cabecalho}>
         <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
-        {leitura.frases.length ? (
-          <Pressable onPress={alternar} hitSlop={10} accessibilityRole="button">
-            <Text style={s.verMais}>
-              {aberto
-                ? tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')
-                : tl('Ver mais', 'See more', 'Ver mas', 'Vedi altro')}
-              {aberto ? ' ▴' : ' ▾'}
-            </Text>
-          </Pressable>
+        {tensos || faceis ? (
+          <Text style={s.contagem} numberOfLines={1}>
+            {[
+              tensos ? tl(`${tensos} pedem atenção`, `${tensos} ask for care`, `${tensos} piden cuidado`, `${tensos} chiedono cura`) : '',
+              faceis ? tl(`${faceis} favorecem`, `${faceis} favour`, `${faceis} favorecen`, `${faceis} favoriscono`) : '',
+            ].filter(Boolean).join('  ·  ')}
+          </Text>
         ) : null}
       </View>
 
@@ -347,13 +356,23 @@ export default function FraseDoDia({ transitos }: Props) {
           dizer que havia outras onze nem de que tipo. O panorama dá a forma
           do dia numa olhada; o detalhe fica a um toque.
           Nada aqui é clicável: é resumo, não leitura. */}
-      {!aberto ? (
-        <View style={s.panorama}>
-          <Text style={s.panoramaLinha}>{resumoDoDia.join(' · ')}</Text>
-          {leitura.frases[0] ? (
-            <Text style={s.panoramaDestaque} numberOfLines={2}>{leitura.frases[0].efeito}</Text>
-          ) : null}
-        </View>
+      {/* FECHADO: o trânsito do topo, completo — efeito, origem e período.
+          A contagem acima já deu a forma do dia; aqui vai o que ela resume.
+          O box inteiro abre: um alvo do tamanho de duas palavras no canto erra
+          fácil, e o resto do card parecia inerte sem motivo. */}
+      {!aberto && leitura.frases[0] ? (
+        <Pressable onPress={alternar} accessibilityRole="button">
+          <Text style={s.panoramaDestaque} numberOfLines={2}>{leitura.frases[0].efeito}</Text>
+          {leitura.frases[0].origens.slice(0, 1).map((o, k) => (
+            <Text key={`p-${k}`} style={s.fonte} numberOfLines={1}>
+              {o.texto}
+              {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
+            </Text>
+          ))}
+          <View style={s.verMaisLinha}>
+            <Text style={s.verMais}>{tl('Ver mais', 'See more', 'Ver mas', 'Vedi altro')} ▾</Text>
+          </View>
+        </Pressable>
       ) : null}
 
       {aberto ? (
@@ -370,6 +389,15 @@ export default function FraseDoDia({ transitos }: Props) {
               </View>
             )
           })}
+
+          {/* ⚠️ Fechar também daqui. Com doze frases abertas, o único controle
+              ficava no topo — a pessoa terminava de ler lá embaixo e tinha que
+              rolar a tela inteira de volta para fechar. */}
+          <Pressable onPress={alternar} style={s.fechar} accessibilityRole="button">
+            <Text style={s.verMais}>
+              {tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')} ▴
+            </Text>
+          </Pressable>
         </View>
       ) : null}
 
@@ -481,7 +509,10 @@ const s = StyleSheet.create({
   // Discreto: é um controle, não uma chamada. O dourado do card já é usado
   // pelo que importa (o título do aspecto no modal).
   verMais: { color: '#8d94a8', fontSize: 14, fontWeight: '600' },
-  panorama: { gap: 6 },
+  // A contagem divide a linha do rótulo: mesma altura, mesmo tom.
+  contagem: { color: '#9aa3b8', fontSize: 14, flexShrink: 1, textAlign: 'right' },
+  verMaisLinha: { alignItems: 'flex-end', marginTop: 8 },
+  fechar: { alignItems: 'center', paddingVertical: 10, marginTop: 2 },
   panoramaLinha: { color: '#9aa3b8', fontSize: 14, lineHeight: 20 },
   panoramaDestaque: { color: '#edf0f6', fontSize: 16, lineHeight: 24 },
   grupo: {

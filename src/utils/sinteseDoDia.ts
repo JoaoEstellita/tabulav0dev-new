@@ -53,8 +53,20 @@ export interface TransitoAtivo {
 export interface FraseDoDia {
   /** O que muda hoje — o texto que ganha destaque. */
   efeito: string
-  /** De onde vem: "Sol em quadratura com o seu Netuno · Lua em trígono ao seu Netuno". */
+  /** De onde vem, tudo numa linha (compatibilidade). */
   fonte: string
+  /**
+   * Cada trânsito citado, com o SEU período.
+   *
+   * ⚠️ A frase agrupa por ponto e cita até dois trânsitos — mas a janela era
+   * uma só, a do mais forte. "Mercúrio em conjunção e a Lua em conjunção com o
+   * seu Plutão · 10/10 a 16/10" não diz de QUEM é esse período, e os dois têm
+   * janelas diferentes: a Lua passa em dois dias, Mercúrio leva uma semana.
+   *
+   * Um período solto embaixo de dois trânsitos é pior que nenhum: parece valer
+   * para os dois.
+   */
+  origens: Array<{ texto: string; quando: string }>
   /** Identifica os trânsitos citados, para a lista detalhada não repetir. */
   chaves: string[]
   /**
@@ -557,7 +569,24 @@ export function sintetizarODia(
         fase: faseDoTransito(ordenadosPorForca[0], agora),
       }
     })
-    .sort((a, b) => (PESO_DA_FASE[a.fase] - PESO_DA_FASE[b.fase]) || (b.peso - a.peso))
+    // ⚠️ Dentro do grupo, o MAIS RECENTE primeiro — nao o mais forte.
+    //
+    // A forca ordenava bem a lista inteira, mas dentro de um grupo ja separado
+    // por tempo ela mistura: um transito que passou do pico ha duas semanas
+    // ficava acima de um que esta exato hoje so por pesar mais. Quem abre o
+    // app de manha quer o que esta acontecendo agora no topo.
+    //
+    // Proximidade do ponto exato e o criterio: quanto mais perto do pico, mais
+    // "agora" ele e. A forca segue como desempate.
+    .sort((a, b) => {
+      const porFase = PESO_DA_FASE[a.fase] - PESO_DA_FASE[b.fase]
+      if (porFase) return porFase
+      const dist = (g: typeof a) => {
+        const d = diasAteExato([...g.ts].sort((x, y) => forca(y) - forca(x))[0], agora)
+        return d == null ? Number.POSITIVE_INFINITY : Math.abs(d)
+      }
+      return (dist(a) - dist(b)) || (b.peso - a.peso)
+    })
 
   for (const g of gruposOrdenados) {
     const tensos = g.ts.filter((t) => naturezaReal(t) === 'desafiador')
@@ -605,6 +634,16 @@ export function sintetizarODia(
     frases.push({
       efeito,
       fonte: fonteDosTransitos(citados, idioma),
+      // Uma linha por trânsito, cada uma com a sua janela. Desfaz a fatoração
+      // do alvo (que aparecia uma vez só) — mas o alvo repetido custa menos
+      // que um período que não se sabe de quem é.
+      origens: citados.map((t) => ({
+        texto: fonteDosTransitos([t], idioma),
+        quando: periodoEmDatas(t, idioma, agora)
+          || (LENTOS.has(String(t.transitPlanet || ''))
+            ? duracaoDoLento(t, idioma, agora)
+            : janelaEmPalavras(t.window as any, idioma as any, agora)),
+      })),
       chaves: citados.map(chaveDoTransito),
       fase,
       casa,

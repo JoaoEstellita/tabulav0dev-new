@@ -644,6 +644,20 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* ⚠️ O filtro de planetas vem logo DEPOIS DA RODA, não lá embaixo
+            depois do status.
+            Ele atua sobre a roda — escolher um planeta destaca o que ele toca
+            — e ficava a duas seções de distância do que controla, separado
+            pela grade e pelo status. Controle longe do controlado parece outra
+            coisa, e ninguém procura por ele ali. */}
+        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+          transitData!.currentTransits!.planetComparisons.length > 0 &&
+          transitData?.currentTransits?.chartSummary && (
+            <AnimatedMount>
+              <PlanetQuickNav showCosmosEntry={false} />
+            </AnimatedMount>
+          )}
+
 
         {/* Status das areas de vida — depois da grade.
             A grade mostra o que o ceu faz; o status diz onde isso pega na vida.
@@ -675,13 +689,6 @@ export default function HomeScreen() {
         {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
         <MatchInviteCard />
 
-        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
-          transitData!.currentTransits!.planetComparisons.length > 0 &&
-          transitData?.currentTransits?.chartSummary && (
-            <AnimatedMount>
-              <PlanetQuickNav showCosmosEntry={false} />
-            </AnimatedMount>
-          )}
 
 
         {Array.isArray(transitData?.currentTransits?.planetComparisons) &&

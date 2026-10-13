@@ -125,8 +125,12 @@ describe('o que não pode voltar', () => {
     //
     // A distinção que este teste protege: tocável é o bloco, nunca um trecho
     // dentro da frase.
-    const toques = FRASE.match(/onPress=\{[^}]*\}/g) || []
-    expect(toques.sort(), 'apenas o bloco da frase e o botão de expandir').toEqual(
+    const toques = [...new Set(FRASE.match(/onPress=\{[^}]*\}/g) || [])].sort()
+    // Dois destinos, e so dois: abrir a leitura daquela frase, ou abrir/fechar
+    // a lista. `alternar` aparece mais de uma vez — no box fechado e no botao
+    // de fechar embaixo — porque o alvo de toque do tamanho de duas palavras,
+    // no canto, erra facil.
+    expect(toques, 'apenas o bloco da frase e o controle de expandir').toEqual(
       ['onPress={() => setFraseAberta(i)}', 'onPress={alternar}'].sort(),
     )
     expect(FRASE, 'o texto em si nunca recebe toque').not.toMatch(/<TextoComGlossario[^>]*onPress/)
