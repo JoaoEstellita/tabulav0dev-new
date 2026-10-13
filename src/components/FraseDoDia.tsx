@@ -190,7 +190,29 @@ export default function FraseDoDia({ transitos }: Props) {
       }
     })
 
-    return { aviso, detalhes, frases, leiturasDasFrases }
+    /**
+     * O PANORAMA do dia — o que o box mostra fechado.
+     *
+     * ⚠️ Fechado, o card mostrava a primeira frase e mais nada. Era leitura
+     * pela metade: a pessoa lia uma de doze sem saber que havia outras onze,
+     * nem de que tipo.
+     *
+     * O panorama responde antes de abrir: quantos trânsitos, quantos pedem
+     * atenção, quantos favorecem. Dá a forma do dia numa olhada, e quem quiser
+     * o detalhe abre.
+     */
+    const contagem = ordenados.reduce(
+      (acc, t) => {
+        const n = aspectNature(String(t.type))
+        if (n === 'desafiador') acc.tensos += 1
+        else if (n === 'harmonico') acc.faceis += 1
+        else acc.neutros += 1
+        return acc
+      },
+      { tensos: 0, faceis: 0, neutros: 0 },
+    )
+
+    return { aviso, detalhes, frases, leiturasDasFrases, contagem, total: ordenados.length }
   }, [transitos, language])
 
   if (!leitura) return null
@@ -201,6 +223,19 @@ export default function FraseDoDia({ transitos }: Props) {
   }
 
   const leituraDaFrase = fraseAberta != null ? leitura.leiturasDasFrases[fraseAberta] : null
+
+  /**
+   * A cor do toque diz de que lado a frase pende, antes de lê-la.
+   *
+   * Mesmas cores da roda, para o olho reconhecer sem aprender outra legenda:
+   * vermelho onde pesa, verde onde favorece. O azul fica para o DIVIDIDO —
+   * quando o ponto recebe os dois lados e não pende para nenhum.
+   */
+  const CORES = {
+    tenso: '#f2544b',
+    facil: '#4ade80',
+    misto: '#7f9ac4',
+  } as const
 
   /**
    * "chega ao ponto exato em 3 dias"
@@ -258,7 +293,7 @@ export default function FraseDoDia({ transitos }: Props) {
               tocáveis, outras não, sem nada na tela explicando a diferença.
               Sem catálogo o modal mostra o aspecto e a janela, que é menos,
               mas é coerente. */}
-          <Text style={s.chevron}>›</Text>
+          <Text style={[s.chevron, { color: CORES[f.natureza] }]}>›</Text>
         </View>
         {f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null}
         {/* Onde pega e quando: a casa dá o setor do mapa, as áreas dizem o
@@ -280,29 +315,49 @@ export default function FraseDoDia({ transitos }: Props) {
     )
   }
 
+  const { tensos, faceis } = leitura.contagem
+  const resumoDoDia = [
+    tl(`${leitura.total} trânsitos ativos`, `${leitura.total} active transits`,
+       `${leitura.total} transitos activos`, `${leitura.total} transiti attivi`),
+    tensos ? tl(`${tensos} pedem atenção`, `${tensos} ask for care`, `${tensos} piden cuidado`, `${tensos} chiedono cura`) : '',
+    faceis ? tl(`${faceis} favorecem`, `${faceis} favour you`, `${faceis} favorecen`, `${faceis} favoriscono`) : '',
+  ].filter(Boolean)
+
   return (
     <View style={s.caixa}>
-      <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
+      {/* O rótulo e o controle na MESMA linha. O "Ver mais" era um botão
+          largo e centralizado embaixo, que ocupava uma faixa inteira para
+          dizer uma palavra — num card que precisa ser curto quando fechado. */}
+      <View style={s.cabecalho}>
+        <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
+        {leitura.frases.length ? (
+          <Pressable onPress={alternar} hitSlop={10} accessibilityRole="button">
+            <Text style={s.verMais}>
+              {aberto
+                ? tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')
+                : tl('Ver mais', 'See more', 'Ver mas', 'Vedi altro')}
+              {aberto ? ' ▴' : ' ▾'}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
 
-      {/* O EFEITO primeiro, a origem depois e em segundo plano.
-          A ordem inversa — "Hoje a Lua e Vênus pressionam a sua presença" antes
-          do que isso significa — punha na frente o que menos importa para quem
-          lê. O aspecto é a FONTE da informação, não a informação. */}
-      {/* ⚠️ Fechado, so a primeira frase. Aberto, ela aparece DENTRO do seu
-          grupo — antes ficava acima do cabecalho "Acontecendo agora" mesmo
-          pertencendo a ele, e a tela sugeria que era outra coisa. */}
+      {/* FECHADO: o panorama, não a leitura.
+          Mostrava a primeira frase e mais nada — leitura pela metade, sem
+          dizer que havia outras onze nem de que tipo. O panorama dá a forma
+          do dia numa olhada; o detalhe fica a um toque.
+          Nada aqui é clicável: é resumo, não leitura. */}
       {!aberto ? (
-        leitura.frases[0] ? renderFrase(leitura.frases[0], 0, false) : (
-          <TextoComGlossario style={s.texto}>{leitura.aviso}</TextoComGlossario>
-        )
+        <View style={s.panorama}>
+          <Text style={s.panoramaLinha}>{resumoDoDia.join(' · ')}</Text>
+          {leitura.frases[0] ? (
+            <Text style={s.panoramaDestaque} numberOfLines={2}>{leitura.frases[0].efeito}</Text>
+          ) : null}
+        </View>
       ) : null}
 
       {aberto ? (
         <View style={s.detalhe}>
-          {/* TODAS as leituras do dia, agrupadas por tempo.
-              O teto de quatro existia para a tela não crescer — mas o que a
-              fazia crescer era a lista de aspectos abaixo, que repetia cada
-              trânsito com o texto do catálogo. Sem ela, o céu inteiro cabe. */}
           {GRUPOS.map((g) => {
             const doGrupo = frasesDoGrupo(g.chave)
             if (!doGrupo.length) return null
@@ -315,21 +370,7 @@ export default function FraseDoDia({ transitos }: Props) {
               </View>
             )
           })}
-
         </View>
-      ) : null}
-
-      {/* O botão depende de haver o que expandir: outras frases, ou os blocos
-          do momento. Antes dependia da lista de aspectos, que não existe mais. */}
-      {leitura.frases.length > 1 ? (
-        <Pressable onPress={alternar} style={s.botao} accessibilityRole="button">
-          <Text style={s.botaoTexto}>
-            {aberto
-              ? tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')
-              : tl('Ler mais', 'Read more', 'Leer mas', 'Leggi di piu')}
-            {aberto ? '  ▲' : '  ▼'}
-          </Text>
-        </Pressable>
       ) : null}
 
       {/* A leitura completa do trânsito que originou a frase — o texto curado
@@ -431,6 +472,18 @@ const s = StyleSheet.create({
     lineHeight: 19,
     marginTop: 2,
   },
+  cabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  // Discreto: é um controle, não uma chamada. O dourado do card já é usado
+  // pelo que importa (o título do aspecto no modal).
+  verMais: { color: '#8d94a8', fontSize: 14, fontWeight: '600' },
+  panorama: { gap: 6 },
+  panoramaLinha: { color: '#9aa3b8', fontSize: 14, lineHeight: 20 },
+  panoramaDestaque: { color: '#edf0f6', fontSize: 16, lineHeight: 24 },
   grupo: {
     marginBottom: 6,
   },

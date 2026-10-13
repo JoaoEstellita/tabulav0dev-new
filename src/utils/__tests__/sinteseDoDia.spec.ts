@@ -206,39 +206,55 @@ describe('a síntese montada', () => {
     expect(marte, 'não cola os dois lados com "mas"').not.toMatch(/ — mas /)
   })
 
-  it('o lento diz até quando dura, não quando foi o pico', () => {
-    // ⚠️ Para um transito LENTO, "passou pelo ponto exato ha 9 dias" informa
-    // pouco e engana um pouco: da a impressao de algo encerrado, quando
-    // Plutao sobre o Meio do Ceu ainda tem meses pela frente. O pico passou;
-    // o transito, nao.
-    const AG = new Date('2026-10-11T12:00:00Z')
+  it('o período vem em DATAS, não em tempo relativo', () => {
+    // ⚠️ Era relativo: "chega ao exato em 3 dias", "até maio", "no ponto exato
+    // agora". Le facil, mas deixa a pergunta pratica sem resposta — quando
+    // comeca e quando acaba. Para marcar uma conversa ou escolher uma semana,
+    // a pessoa precisa da data.
+    //
+    // Vale para TODOS os grupos, inclusive o "acontecendo agora", que antes
+    // ficava sem janela por ser redundante com o cabecalho. Era redundante
+    // enquanto a janela dizia so "hoje".
+    const AG = new Date('2026-10-12T12:00:00Z')
     const q = (n: number) => new Date(AG.getTime() + n * 864e5).toISOString()
     const r = sintetizarODia([
-      { transitPlanet: 'Pluto', natalPlanet: 'Meio do Céu', type: 'conjuncao', strength: 96, house: 10, window: { exact: q(-9), end: q(220) } },
-      { transitPlanet: 'Uranus', natalPlanet: 'Jupiter', type: 'conjuncao', strength: 90, house: 2, window: { exact: q(-6), end: q(40) } },
-      { transitPlanet: 'Saturn', natalPlanet: 'Venus', type: 'quadratura', strength: 85, house: 7, window: { exact: q(2) } },
-      { transitPlanet: 'Sun', natalPlanet: 'Neptune', type: 'quadratura', strength: 56, house: 6, window: { exact: q(-2) } },
+      { transitPlanet: 'Mercury', natalPlanet: 'Pluto', type: 'conjuncao', strength: 90, house: 7, window: { start: q(-2), exact: q(0), end: q(4) } },
+      { transitPlanet: 'Sun', natalPlanet: 'Neptune', type: 'quadratura', strength: 60, house: 5, window: { start: q(1), exact: q(3), end: q(6) } },
+      { transitPlanet: 'Uranus', natalPlanet: 'Jupiter', type: 'conjuncao', strength: 95, house: 2, window: { start: q(-120), exact: q(-6), end: q(190) } },
     ], 'pt-BR', AG)!
 
-    const plutao = r.frases.find((f) => f.fonte.includes('Plutão'))!
-    const urano = r.frases.find((f) => f.fonte.includes('Urano'))!
-    const saturno = r.frases.find((f) => f.fonte.includes('Saturno'))!
-    const sol = r.frases.find((f) => f.fonte.includes('Sol'))!
+    const agora = r.frases.find((f) => f.fase === 'agora')!
+    expect(agora.quando, 'o que acontece hoje também diz de quando a quando').toBe('10/10 a 16/10')
 
-    // Longe: o mes basta — numero de dias seria precisao falsa num transito
-    // que ainda vai mudar de velocidade.
-    expect(plutao.quando).toBe('até maio')
-    // Perto: a data fecha a conta.
-    expect(urano.quando).toBe('até 20 de novembro')
-    // Sem fim conhecido, nao inventa data.
-    expect(saturno.quando).toBe('tema de meses')
-    // O rapido continua falando do pico, que para ele e o que importa.
-    expect(sol.quando).toMatch(/passou pelo ponto exato/)
+    const chegando = r.frases.find((f) => f.fonte.includes('Netuno'))!
+    expect(chegando.quando).toBe('13/10 a 18/10')
 
-    for (const f of [plutao, urano, saturno]) {
-      expect(f.lento, 'marcado como lento').toBe(true)
-      expect(f.quando, 'lento nunca fala de pico').not.toMatch(/pico|ponto exato/)
-    }
+    // O ano só aparece quando o período cruza a virada — dentro do mesmo ano
+    // ele é ruído repetido em doze linhas.
+    const lento = r.frases.find((f) => f.lento)!
+    expect(lento.quando).toBe('14/06/26 a 20/04/27')
+    // Sem ano = duas barras (dd/mm a dd/mm); com ano = quatro.
+    expect((agora.quando.match(/\//g) || []).length, 'sem ano quando não cruza').toBe(2)
+    expect((lento.quando.match(/\//g) || []).length, 'com ano quando cruza').toBe(4)
+  })
+
+  it('a frase diz de que lado pende, para o toque ter cor', () => {
+    // Varrer doze frases por cor é mais rápido que ler doze frases: vermelho
+    // onde pesa, verde onde favorece, azul no dividido — que não pende para
+    // lado nenhum.
+    const AG = new Date('2026-10-12T12:00:00Z')
+    const q = (n: number) => new Date(AG.getTime() + n * 864e5).toISOString()
+    const r = sintetizarODia([
+      { transitPlanet: 'Sun', natalPlanet: 'Mars', type: 'trigono', strength: 80, house: 6, window: { exact: q(0) } },
+      { transitPlanet: 'Moon', natalPlanet: 'Mars', type: 'quadratura', strength: 75, house: 6, window: { exact: q(0) } },
+      { transitPlanet: 'Venus', natalPlanet: 'Saturn', type: 'quadratura', strength: 70, house: 7, window: { exact: q(0) } },
+      { transitPlanet: 'Mercury', natalPlanet: 'Jupiter', type: 'sextil', strength: 65, house: 2, window: { exact: q(0) } },
+    ], 'pt-BR', AG)!
+
+    const porFonte = (p: string) => r.frases.find((f) => f.fonte.includes(p))!
+    expect(porFonte('Marte').natureza, 'os dois lados = dividido').toBe('misto')
+    expect(porFonte('Saturno').natureza).toBe('tenso')
+    expect(porFonte('Júpiter').natureza).toBe('facil')
   })
 
   it('uma frase por PONTO tocado, não uma por trânsito', () => {

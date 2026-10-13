@@ -82,6 +82,14 @@ export interface FraseDoDia {
    * separado.
    */
   lento: boolean
+  /**
+   * De que lado o ponto pende: pressiona, favorece, ou os dois.
+   *
+   * É o que permite colorir o toque — vermelho pede atenção, verde favorece,
+   * azul para o dividido, que não pende para lado nenhum. Varrer doze frases
+   * por cor é mais rápido que ler doze frases.
+   */
+  natureza: 'tenso' | 'facil' | 'misto'
 }
 
 export interface SinteseDoDia {
@@ -186,7 +194,19 @@ export function pontoFocal(transitos: ReadonlyArray<TransitoAtivo>): { planeta: 
  * conjunções pesadas era lido como "apoio predomina".
  */
 const CONJUNCAO_PESADA = new Set(['Saturn', 'Pluto', 'Mars', 'Uranus', 'Neptune'])
-const CONJUNCAO_LEVE = new Set(['Venus', 'Jupiter', 'Sun', 'Moon'])
+// ⚠️ MERCURIO faltava nas duas listas, e isso APAGAVA transitos.
+//
+// Conjuncao de planeta fora das duas caia em 'neutro', e a frase era
+// descartada (so entram pontos com lado definido). Entao toda conjuncao de
+// Mercurio sumia da leitura — e Mercurio conjunto a um ponto natal e um dos
+// transitos mais frequentes que existem.
+//
+// Passava despercebido quando outro planeta tocava o mesmo ponto no mesmo dia:
+// o grupo sobrevivia pelo outro, e a ausencia de Mercurio nao aparecia.
+//
+// Ele entra como LEVE: Mercurio nao pesa por si — assume a cor do que toca —,
+// e em conjuncao o que faz e ativar.
+const CONJUNCAO_LEVE = new Set(['Venus', 'Jupiter', 'Sun', 'Moon', 'Mercury'])
 
 function naturezaReal(t: TransitoAtivo): 'desafiador' | 'harmonico' | 'outro' {
   const n = aspectNature(String(t.type || ''))
@@ -395,6 +415,38 @@ const MES = [
  * O que importa num tema de meses é até quando ele dura — e isso muda o que a
  * pessoa faz com a informação.
  */
+/**
+ * O período do trânsito, em datas: "10/10 a 16/10".
+ *
+ * ⚠️ Antes isto era relativo — "chega ao exato em 3 dias", "até abril", "no
+ * ponto exato agora". Lê fácil, mas deixa a pergunta prática sem resposta:
+ * quando começa e quando acaba. Para marcar uma conversa ou escolher uma
+ * semana, a pessoa precisa da data.
+ *
+ * Só põe o ano quando o período cruza a virada — dentro do mesmo ano ele é
+ * ruído repetido em doze linhas.
+ */
+function periodoEmDatas(t: TransitoAtivo, idioma: AppLanguage, agora: Date): string {
+  const T = tl(idioma)
+  const bruto = (v?: string) => (v ? new Date(v) : null)
+  const valida = (d: Date | null): d is Date => !!d && !isNaN(d.getTime())
+  const ini = bruto(t.window?.start)
+  const fim = bruto(t.window?.end)
+  if (!valida(ini) && !valida(fim)) return ''
+
+  const ano = agora.getFullYear()
+  const cruzaAno = (valida(ini) && ini.getFullYear() !== ano) || (valida(fim) && fim.getFullYear() !== ano)
+  const dd = (d: Date) => String(d.getDate()).padStart(2, '0')
+  const mm = (d: Date) => String(d.getMonth() + 1).padStart(2, '0')
+  const fmt = (d: Date) => (cruzaAno ? dd(d) + '/' + mm(d) + '/' + String(d.getFullYear()).slice(-2) : dd(d) + '/' + mm(d))
+
+  if (valida(ini) && valida(fim)) {
+    return T(fmt(ini) + ' a ' + fmt(fim), fmt(ini) + ' to ' + fmt(fim), fmt(ini) + ' a ' + fmt(fim), fmt(ini) + ' al ' + fmt(fim))
+  }
+  if (valida(fim)) return T('até ' + fmt(fim), 'until ' + fmt(fim), 'hasta ' + fmt(fim), 'fino al ' + fmt(fim))
+  return T('desde ' + fmt(ini as Date), 'since ' + fmt(ini as Date), 'desde ' + fmt(ini as Date), 'dal ' + fmt(ini as Date))
+}
+
 function duracaoDoLento(t: TransitoAtivo, idioma: AppLanguage, agora: Date): string {
   const T = tl(idioma)
   const fim = t.window?.end ? new Date(t.window.end) : null
@@ -558,15 +610,21 @@ export function sintetizarODia(
       casa,
       areas,
       lento: LENTOS.has(String(principal.transitPlanet || '')),
-      // No grupo "acontecendo agora" a janela é redundante (é hoje, e o
-      // cabeçalho já diz). Nos outros dois ela é a informação principal.
-      // No grupo "acontecendo agora" a janela e redundante (e hoje, e o
-      // cabecalho ja diz). Para o LENTO, o que informa e ate quando dura —
-      // "passou do pico ha 9 dias" sugere algo encerrado num transito que
-      // ainda tem meses pela frente.
-      quando: LENTOS.has(String(principal.transitPlanet || ''))
-        ? duracaoDoLento(principal, idioma, agora)
-        : fase === 'agora' ? '' : janelaEmPalavras(principal.window as any, idioma as any, agora),
+      natureza: misto ? 'misto' : (tensos.length ? 'tenso' : 'facil'),
+      // ⚠️ DATA, nao mais tempo relativo — e para TODOS os grupos, inclusive o
+      // "acontecendo agora", que antes ficava sem janela por ser redundante
+      // com o cabecalho.
+      //
+      // Era redundante enquanto a janela dizia so "hoje". Dizendo de quando a
+      // quando, deixa de ser: "chega ao exato em 3 dias" le facil mas nao
+      // responde a pergunta pratica — para marcar uma conversa ou escolher uma
+      // semana, a pessoa precisa da data.
+      //
+      // Sem data conhecida, cai no relativo: melhor "tema de meses" que nada.
+      quando: periodoEmDatas(principal, idioma, agora)
+        || (LENTOS.has(String(principal.transitPlanet || ''))
+          ? duracaoDoLento(principal, idioma, agora)
+          : janelaEmPalavras(principal.window as any, idioma as any, agora)),
     })
   }
 
