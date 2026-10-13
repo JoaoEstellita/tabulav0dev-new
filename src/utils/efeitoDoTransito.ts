@@ -142,6 +142,28 @@ const PONTOS: Record<string, EfeitoDoPonto> = {
     facil: E('o rumo fica mais nítido que o normal', 'the path gets clearer than usual', 'el rumbo queda mas nitido que lo normal', 'la rotta risulta piu nitida del solito'),
     misto: E('o rumo clareia num ponto e confunde em outro', 'the path clears at one point and confuses at another', 'el rumbo se aclara en un punto y confunde en otro', 'la rotta si chiarisce in un punto e confonde in un altro'),
   },
+  // ⚠️ DSC e IC faltavam, e o motor os EMITE: no dado de produção de 13/10, 3
+  // dos 6 usuários tinham trânsito a IC e 3 a DSC. Sem entrada aqui,
+  // `efeitoNoPonto` devolvia null e `sinteseDoDia` fazia `continue` — a frase
+  // sumia do "Seu dia" sem deixar rastro. (No WhatsApp era pior: saía "Hoje
+  // Mercúrio pressiona DSC", com a sigla crua e sem leitura.)
+  //
+  // Os quatro ângulos são dois EIXOS: quem mexe no Ascendente mexe no
+  // Descendente, e quem mexe no Meio do Céu mexe no Fundo do Céu. Cada ponta
+  // tem leitura própria porque o que a pessoa sente é diferente — a presença
+  // dela x o encontro com o outro; o que aparece x o que sustenta.
+  descendente: {
+    nome: E('as suas relações', 'your relationships', 'tus relaciones', 'le tue relazioni'),
+    tenso: E('lidar com o outro exige mais do que o normal', 'dealing with other people takes more than usual', 'tratar con el otro exige mas que lo normal', 'avere a che fare con l altro chiede piu del solito'),
+    facil: E('o encontro com o outro acontece com menos esforço', 'meeting other people happens with less effort', 'el encuentro con el otro sucede con menos esfuerzo', 'l incontro con l altro avviene con meno sforzo'),
+    misto: E('uma relação acolhe enquanto outra cobra', 'one relationship welcomes while another demands', 'una relacion acoge mientras otra cobra', 'una relazione accoglie mentre un altra chiede'),
+  },
+  fundo_do_ceu: {
+    nome: E('a sua base', 'your foundation', 'tu base', 'la tua base'),
+    tenso: E('o lado de casa e das raízes pesa mais que o normal', 'home and roots weigh more than usual', 'el lado de casa y de las raices pesa mas que lo normal', 'il lato di casa e delle radici pesa piu del solito'),
+    facil: E('a vida em casa dá mais sustentação que de costume', 'life at home gives more support than usual', 'la vida en casa da mas sustento que de costumbre', 'la vita in casa da piu sostegno del solito'),
+    misto: E('a base sustenta de um lado e cobra do outro', 'the foundation holds on one side and demands on the other', 'la base sostiene de un lado y cobra del otro', 'la base sostiene da un lato e chiede dall altro'),
+  },
 }
 
 const chave = (alvo: string): string =>
@@ -156,6 +178,9 @@ const ALIAS: Record<string, string> = {
   meiodoceu: 'meio_do_ceu', midheaven: 'meio_do_ceu', mc: 'meio_do_ceu',
   ascendant: 'ascendente', asc: 'ascendente',
   nodonorte: 'northnode', northnode: 'northnode', nortenode: 'northnode',
+  // O motor emite as siglas: no dado de produção vieram como 'DSC' e 'IC'.
+  dsc: 'descendente', descendant: 'descendente', descendente: 'descendente',
+  ic: 'fundo_do_ceu', imumcoeli: 'fundo_do_ceu', fundodoceu: 'fundo_do_ceu', fondocielo: 'fundo_do_ceu',
 }
 
 function achar(alvo: string): EfeitoDoPonto | null {
