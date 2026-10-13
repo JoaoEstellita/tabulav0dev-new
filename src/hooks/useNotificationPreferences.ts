@@ -97,8 +97,21 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     positive: false,
     messages: true,
   },
+  // ⚠️ LIGADO por padrão, e GÊMEO do `notification-prefs.js` do backend — mudar
+  // só um faz a tela mostrar desligado enquanto o servidor trata como ligado.
+  //
+  // Esta funcionalidade tinha TRÊS portas fechadas (`forecastFilters.weekly`,
+  // `inApp.types.weekly_digest`, `push.types.weekly_digest`) e os gates do cron
+  // são sequenciais, então era preciso passar por todas. Isso não é opt-in: é
+  // indistinguível de algo que nunca foi lançado.
+  //
+  // A prova: a conta do João tinha `forecastFilters.weekly: true` — ele achou o
+  // toggle em Configurações e ligou — e mesmo assim não recebia nada, porque
+  // `inApp.weekly` seguia false.
+  //
+  // Agora UM interruptor decide: este.
   forecastFilters: {
-    weekly: false,
+    weekly: true,
   },
   quietHours: {
     enabled: false,
@@ -145,7 +158,10 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       group_message: true,
       astro_event_personal: false,
       astro_event_collective: false,
-      weekly_digest: false,
+      // Segue `forecastFilters.weekly`. In-app é PASSIVO — um card no inbox,
+      // visto quando a pessoa abre o app. O push continua false: digest semanal
+      // que vibra o celular é o tipo de notificação que faz gente desligar todas.
+      weekly_digest: true,
       daily_summary: false,
     },
   },
