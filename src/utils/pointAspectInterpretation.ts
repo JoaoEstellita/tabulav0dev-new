@@ -30,6 +30,10 @@ function normAspect(value: string): string {
     .replace(/trine|trigono|trino/g, 'trigono')
     .replace(/opposition|oposicao|oposicion|opposizione/g, 'oposicao')
     .replace(/quincunx|quincuncio|quincuncion|quinconce|inconjunct/g, 'quincuncio')
+    // Aspectos duros MENORES. O motor já os classifica como tensos; sem a
+    // normalização aqui, o nome não casava e o texto não saía.
+    .replace(/sesquisquare|sesquiquadratura|sesquicuadratura|sesquiquadrato/g, 'sesquiquadratura')
+    .replace(/semisquare|semiquadratura|semicuadratura|semiquadrato/g, 'semiquadratura')
 }
 
 // aliases dos pontos (o engine usa NorthNode/SouthNode/Ascendant/Midheaven)
@@ -38,6 +42,11 @@ const POINT_ALIAS: Record<string, string> = {
   southnode: 'southnode', snode: 'southnode', nodosul: 'southnode',
   ascendant: 'ascendant', asc: 'ascendant', ascendente: 'ascendant',
   midheaven: 'midheaven', mc: 'midheaven', meiodoceu: 'midheaven', mediocielo: 'midheaven',
+  // ⚠️ O eixo tem DOIS lados, e só um estava aqui. O engine emite Descendant e
+  // ImumCoeli (e o app às vezes usa DSC/IC); sem os aliases, todo aspecto a
+  // eles caía fora e o modal abria sem leitura.
+  descendant: 'descendant', dsc: 'descendant', desc: 'descendant', descendente: 'descendant',
+  imumcoeli: 'imumcoeli', ic: 'imumcoeli', fundodoceu: 'imumcoeli', fondocielo: 'imumcoeli',
 }
 
 /**

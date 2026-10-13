@@ -333,15 +333,26 @@ export default function FraseDoDia({ transitos }: Props) {
 
   return (
     <View style={s.caixa}>
-      {/* O rótulo e o controle na MESMA linha. O "Ver mais" era um botão
-          largo e centralizado embaixo, que ocupava uma faixa inteira para
-          dizer uma palavra — num card que precisa ser curto quando fechado. */}
       {/* A contagem ao LADO do rótulo, não numa linha própria: ela é a
           legenda do dia, não um parágrafo. Assim o box fechado fecha em três
-          ou quatro linhas. */}
-      <View style={s.cabecalho}>
+          ou quatro linhas.
+
+          ⚠️ ABERTO, o cabeçalho vira o controle de fechar. Com a lista inteira
+          na tela, quem está no topo não deve precisar rolar até o fim para
+          sair dela — e quem terminou de ler lá embaixo tem o botão de baixo.
+          O "Ver mais" de abrir fica no rodapé do box fechado, junto do que ele
+          revela. */}
+      <Pressable
+        onPress={aberto ? alternar : undefined}
+        style={s.cabecalho}
+        accessibilityRole={aberto ? 'button' : undefined}
+      >
         <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
-        {tensos || faceis ? (
+        {aberto ? (
+          <Text style={s.verMais}>
+            {tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')} ▴
+          </Text>
+        ) : tensos || faceis ? (
           <Text style={s.contagem} numberOfLines={1}>
             {[
               tensos ? tl(`${tensos} pedem atenção`, `${tensos} ask for care`, `${tensos} piden cuidado`, `${tensos} chiedono cura`) : '',
@@ -349,7 +360,7 @@ export default function FraseDoDia({ transitos }: Props) {
             ].filter(Boolean).join('  ·  ')}
           </Text>
         ) : null}
-      </View>
+      </Pressable>
 
       {/* FECHADO: o panorama, não a leitura.
           Mostrava a primeira frase e mais nada — leitura pela metade, sem
@@ -363,7 +374,11 @@ export default function FraseDoDia({ transitos }: Props) {
       {!aberto && leitura.frases[0] ? (
         <Pressable onPress={alternar} accessibilityRole="button">
           <Text style={s.panoramaDestaque} numberOfLines={2}>{leitura.frases[0].efeito}</Text>
-          {leitura.frases[0].origens.slice(0, 1).map((o, k) => (
+          {/* ⚠️ Mostrava só a PRIMEIRA origem. A frase cita até dois trânsitos,
+              e esconder um deles fechado fazia a linha entregar menos do que o
+              texto promete — "Mercúrio em conjunção com o seu Plutão" sozinho
+              não explica por que a frase fala de concentração de força. */}
+          {leitura.frases[0].origens.map((o, k) => (
             <Text key={`p-${k}`} style={s.fonte} numberOfLines={1}>
               {o.texto}
               {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}

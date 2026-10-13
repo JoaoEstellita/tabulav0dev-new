@@ -125,14 +125,15 @@ describe('o que não pode voltar', () => {
     //
     // A distinção que este teste protege: tocável é o bloco, nunca um trecho
     // dentro da frase.
-    const toques = [...new Set(FRASE.match(/onPress=\{[^}]*\}/g) || [])].sort()
-    // Dois destinos, e so dois: abrir a leitura daquela frase, ou abrir/fechar
-    // a lista. `alternar` aparece mais de uma vez — no box fechado e no botao
-    // de fechar embaixo — porque o alvo de toque do tamanho de duas palavras,
-    // no canto, erra facil.
-    expect(toques, 'apenas o bloco da frase e o controle de expandir').toEqual(
-      ['onPress={() => setFraseAberta(i)}', 'onPress={alternar}'].sort(),
-    )
+    // Dois DESTINOS, e so dois: abrir a leitura daquela frase, ou alternar a
+    // lista. A forma varia (condicional no cabecalho, direto no botao de
+    // baixo) e isso nao importa — importa que nenhum toque leve a outro lugar,
+    // e que nenhum esteja DENTRO do texto.
+    const toques = [...new Set(FRASE.match(/onPress=\{[^}]*\}/g) || [])]
+    const destinoValido = (t: string) => /setFraseAberta|alternar/.test(t)
+    const invasores = toques.filter((t) => !destinoValido(t))
+    expect(invasores, `toque com destino inesperado:
+${invasores.join('\n')}`).toEqual([])
     expect(FRASE, 'o texto em si nunca recebe toque').not.toMatch(/<TextoComGlossario[^>]*onPress/)
     expect(FRASE).not.toMatch(/\bonAbrirTransito\b/)
     expect(FRASE).not.toMatch(/\bonSelectTransit\b/)
