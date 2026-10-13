@@ -326,7 +326,43 @@ const ASPECTO_PREP: Record<string, [string, string, string, string]> = {
  * só que legível para quem não decorou abreviação.
  */
 /** O ponto natal pelo nome, com possessivo — é o que o distingue do trânsito. */
-function alvoNatalLegivel(t: TransitoAtivo, idioma: AppLanguage): string {
+/**
+ * O alvo natal e FEMININO neste idioma?
+ *
+ * ⚠️ "o Sol em trigono ao seu Lua" e "Jupiter em sextil com o seu Lua" sairam
+ * assim na tela do Joao: a Lua e feminina e o possessivo estava fixo no
+ * masculino. Em italiano o buraco e maior — Luna E Venere sao femininas, e a
+ * frase saia "il tuo Luna".
+ *
+ * Espanhol usa "tu", que nao flexiona; ingles usa "your". So pt-BR e it-IT
+ * precisam saber o genero.
+ */
+const ALVO_FEMININO: Partial<Record<AppLanguage, Set<string>>> = {
+  'pt-BR': new Set(['lua', 'lilith']),
+  'it-IT': new Set(['luna', 'venere', 'lilith']),
+}
+
+function alvoEhFeminino(nomeAlvo: string, idioma: AppLanguage): boolean {
+  const set = ALVO_FEMININO[idioma]
+  if (!set) return false
+  return set.has(String(nomeAlvo || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''))
+}
+
+/** "seu Marte" / "sua Lua" — o possessivo que concorda com o alvo. */
+function possessivo(nomeAlvo: string, idioma: AppLanguage, prepA = false): string {
+  const fem = alvoEhFeminino(nomeAlvo, idioma)
+  if (idioma === 'en-US') return 'your'
+  if (idioma === 'es-ES') return 'tu'
+  // Em italiano a preposicao "a" funde com o artigo do possessivo: "al tuo
+  // Plutone", "alla tua Luna". Por isso ela chega ate aqui em vez de ficar solta.
+  if (idioma === 'it-IT') {
+    if (prepA) return fem ? 'alla tua' : 'al tuo'
+    return fem ? 'la tua' : 'il tuo'
+  }
+  return fem ? 'sua' : 'seu'
+}
+
+function alvoNatalLegivel(t: TransitoAtivo, idioma: AppLanguage, prepA = false): string {
   const T = tl(idioma)
   const alvo = String(t.natalPlanet || '')
   const chave = alvo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '')
@@ -340,7 +376,9 @@ function alvoNatalLegivel(t: TransitoAtivo, idioma: AppLanguage): string {
     !!t.transitPlanet && !!t.natalPlanet &&
     String(t.transitPlanet).toLowerCase() === String(t.natalPlanet).toLowerCase()
   if (mesmoPlaneta) {
-    return T(`seu ${nomeAlvo} natal`, `your natal ${nomeAlvo}`, `tu ${nomeAlvo} natal`, `il tuo ${nomeAlvo} natale`)
+    const p = possessivo(nomeAlvo, idioma, prepA)
+    return T(`${p} ${nomeAlvo} natal`, `your natal ${nomeAlvo}`, `${p} ${nomeAlvo} natal`,
+             `${p} ${nomeAlvo} ${alvoEhFeminino(nomeAlvo, idioma) ? 'natale' : 'natale'}`)
   }
   if (chave === 'meiodoceu' || chave === 'midheaven' || chave === 'mc') {
     return T('seu Meio do Céu', 'your Midheaven', 'tu Medio Cielo', 'il tuo Medio Cielo')
@@ -352,7 +390,8 @@ function alvoNatalLegivel(t: TransitoAtivo, idioma: AppLanguage): string {
   // mapa da pessoa — e essa distincao e o que faz a frase significar algo. O
   // possessivo resolve sem poluir: o alvo leva "seu" porque e dela; o
   // primeiro planeta, sem possessivo, e o ceu de hoje.
-  return T(`seu ${nomeAlvo}`, `your ${nomeAlvo}`, `tu ${nomeAlvo}`, `il tuo ${nomeAlvo}`)
+  const p = possessivo(nomeAlvo, idioma, prepA)
+  return T(`${p} ${nomeAlvo}`, `your ${nomeAlvo}`, `${p} ${nomeAlvo}`, `${p} ${nomeAlvo}`)
 }
 
 const tipoDoAspecto = (t: TransitoAtivo) =>
@@ -367,7 +406,11 @@ function agenteEAspecto(t: TransitoAtivo, idioma: AppLanguage): string {
   const par = ASPECTO_NOME[tipoDoAspecto(t)]
   if (!par) return T(`${agente} sobre`, `${agente} over`, `${agente} sobre`, `${agente} su`)
   const nome = T(par[0], par[1], par[2], par[3])
-  return idioma === 'en-US' ? `${agente} ${nome}` : `${agente} em ${nome}`
+  // ⚠️ O "em" era português e vazava para TODOS os idiomas menos o inglês:
+  // "Sole em trigono", "Sol em trigono a tu Luna". A preposição que liga o
+  // agente ao aspecto muda por idioma.
+  const liga = T('em', '', 'en', 'in')
+  return [agente, liga, nome].filter(Boolean).join(' ')
 }
 
 /**
@@ -384,17 +427,27 @@ function agenteEAspecto(t: TransitoAtivo, idioma: AppLanguage): string {
 function fonteDosTransitos(ts: ReadonlyArray<TransitoAtivo>, idioma: AppLanguage): string {
   if (!ts.length) return ''
   const T = tl(idioma)
-  const alvo = alvoNatalLegivel(ts[ts.length - 1], idioma)
+  const ultimo = ts[ts.length - 1]
   const partes = ts.map((t) => agenteEAspecto(t, idioma))
 
-  const parPrep = ASPECTO_PREP[tipoDoAspecto(ts[ts.length - 1])]
+  const parPrep = ASPECTO_PREP[tipoDoAspecto(ultimo)]
   let prep = parPrep ? T(parPrep[0], parPrep[1], parPrep[2], parPrep[3]) : ''
 
   // Contração em português: "a" + "seu" = "ao seu"; "com" + "seu" = "com o seu".
+  // ⚠️ E concorda com o GENERO do alvo, senão sai "ao seu Lua" / "com o seu Lua".
+  const fem = alvoEhFeminino(translatePlanet(String(ultimo.natalPlanet || ''), idioma), idioma)
+  // ⚠️ Em italiano a preposição "a" FUNDE com o artigo do possessivo ("al tuo
+  // Plutone", "alla tua Luna"); solta, saía "a la tua Luna", que não é italiano.
+  // Por isso ela viaja até o alvo em vez de ficar entre os dois.
+  const fundeNoAlvo = idioma === 'it-IT' && prep === 'a'
   if (idioma === 'pt-BR') {
-    if (prep === 'a') prep = 'ao'
-    else if (prep === 'com') prep = 'com o'
+    if (prep === 'a') prep = fem ? 'à' : 'ao'
+    else if (prep === 'com') prep = fem ? 'com a' : 'com o'
+  } else if (fundeNoAlvo) {
+    prep = ''
   }
+
+  const alvo = alvoNatalLegivel(ultimo, idioma, fundeNoAlvo)
 
   const sujeitos = partes.length > 1
     ? T(`${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`,
@@ -457,6 +510,88 @@ function periodoEmDatas(t: TransitoAtivo, idioma: AppLanguage, agora: Date): str
   }
   if (valida(fim)) return T('até ' + fmt(fim), 'until ' + fmt(fim), 'hasta ' + fmt(fim), 'fino al ' + fmt(fim))
   return T('desde ' + fmt(ini as Date), 'since ' + fmt(ini as Date), 'desde ' + fmt(ini as Date), 'dal ' + fmt(ini as Date))
+}
+
+/** Dias inteiros de calendario entre hoje e uma data (ignora a hora). */
+function diasDeCalendario(alvo: Date, agora: Date): number {
+  const a = new Date(alvo.getFullYear(), alvo.getMonth(), alvo.getDate()).getTime()
+  const b = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime()
+  return Math.round((a - b) / 86400000)
+}
+
+/**
+ * ONDE HOJE ESTA dentro da janela — a pergunta que o periodo sozinho nao responde.
+ *
+ * ⚠️ "07/10 a 18/10" nao diz se o transito esta subindo, no pico, ou acabando,
+ * e e justamente isso que muda o que a pessoa faz com a informacao. Um transito
+ * no ponto exato hoje le completamente diferente de um que esta se afastando —
+ * e os dois aparecem com a mesma cara na lista.
+ *
+ * O dado ja existia: `window.exact`. A matinal do WhatsApp ja imprime "pico
+ * hoje"; o app nao imprimia nada. Mesmo dado, dois comportamentos.
+ *
+ * Fragmento CURTO de proposito (no maximo tres palavras): ele entra depois das
+ * datas, e a linha de origem precisa continuar sendo discreta.
+ */
+function faseDaJanela(t: TransitoAtivo, idioma: AppLanguage, agora: Date): string {
+  const T = tl(idioma)
+  const data = (v?: string) => {
+    const d = v ? new Date(v) : null
+    return d && !isNaN(d.getTime()) ? d : null
+  }
+  const ini = data(t.window?.start)
+  const exato = data(t.window?.exact)
+  const fim = data(t.window?.end)
+
+  // Acaba hoje: e o que mais muda a decisao do dia, entao ganha da info de pico.
+  if (fim && diasDeCalendario(fim, agora) === 0) {
+    return T('último dia', 'last day', 'ultimo dia', 'ultimo giorno')
+  }
+  // Ainda nao comecou (aparece nos lentos que entram no periodo listado).
+  if (ini) {
+    const d = diasDeCalendario(ini, agora)
+    if (d === 1) return T('começa amanhã', 'starts tomorrow', 'empieza manana', 'inizia domani')
+    if (d > 1) return T(`começa em ${d} dias`, `starts in ${d} days`, `empieza en ${d} dias`, `inizia tra ${d} giorni`)
+  }
+  if (!exato) return ''
+
+  const d = diasDeCalendario(exato, agora)
+  if (d === 0) return T('pico hoje', 'peak today', 'pico hoy', 'picco oggi')
+  if (d === 1) return T('pico amanhã', 'peak tomorrow', 'pico manana', 'picco domani')
+  if (d > 1 && d <= 45) {
+    return T(`pico em ${d} dias`, `peak in ${d} days`, `pico en ${d} dias`, `picco tra ${d} giorni`)
+  }
+  if (d > 45) {
+    // Alem de um mes e meio, o numero de dias e precisao falsa: o mes basta.
+    const idx = idioma === 'en-US' ? 1 : idioma === 'es-ES' ? 2 : idioma === 'it-IT' ? 3 : 0
+    const mes = MES[idx][exato.getMonth()]
+    return T(`pico em ${mes}`, `peak in ${mes}`, `pico en ${mes}`, `picco a ${mes}`)
+  }
+  return T('depois do pico', 'past the peak', 'despues del pico', 'dopo il picco')
+}
+
+/**
+ * O periodo COMPLETO de um transito: datas + onde hoje esta nelas.
+ *
+ * ⚠️ Nos LENTOS entra "em curso" na frente. "12/04/26 a 12/04/27" com hoje em
+ * 13/10/26 le como compromisso marcado, nao como algo acontecendo — e esse
+ * transito ja esta ativo ha seis meses. Duas datas de anos diferentes sao a
+ * informacao mais abstrata do card sem isso.
+ */
+function janelaCompleta(t: TransitoAtivo, idioma: AppLanguage, agora: Date, lento: boolean): string {
+  const T = tl(idioma)
+  const datas = periodoEmDatas(t, idioma, agora)
+    || (lento ? duracaoDoLento(t, idioma, agora) : janelaEmPalavras(t.window as any, idioma as any, agora))
+  const fase = faseDaJanela(t, idioma, agora)
+
+  const ini = t.window?.start ? new Date(t.window.start) : null
+  const fim = t.window?.end ? new Date(t.window.end) : null
+  const emCurso = lento
+    && !!ini && !isNaN(ini.getTime()) && ini <= agora
+    && !!fim && !isNaN(fim.getTime()) && fim >= agora
+  const curso = emCurso ? T('em curso', 'under way', 'en curso', 'in corso') : ''
+
+  return [curso, datas, fase].filter(Boolean).join('  ·  ')
 }
 
 function duracaoDoLento(t: TransitoAtivo, idioma: AppLanguage, agora: Date): string {
@@ -637,12 +772,12 @@ export function sintetizarODia(
       // Uma linha por trânsito, cada uma com a sua janela. Desfaz a fatoração
       // do alvo (que aparecia uma vez só) — mas o alvo repetido custa menos
       // que um período que não se sabe de quem é.
+      // ⚠️ `maiuscula` porque a linha ABRE com o agente, e Sol e Lua levam
+      // artigo ("a Lua em conjunção…"). Minúscula no começo da linha lê como
+      // erro de digitação, não como estilo.
       origens: citados.map((t) => ({
-        texto: fonteDosTransitos([t], idioma),
-        quando: periodoEmDatas(t, idioma, agora)
-          || (LENTOS.has(String(t.transitPlanet || ''))
-            ? duracaoDoLento(t, idioma, agora)
-            : janelaEmPalavras(t.window as any, idioma as any, agora)),
+        texto: maiuscula(fonteDosTransitos([t], idioma)),
+        quando: janelaCompleta(t, idioma, agora, LENTOS.has(String(t.transitPlanet || ''))),
       })),
       chaves: citados.map(chaveDoTransito),
       fase,
@@ -660,10 +795,7 @@ export function sintetizarODia(
       // semana, a pessoa precisa da data.
       //
       // Sem data conhecida, cai no relativo: melhor "tema de meses" que nada.
-      quando: periodoEmDatas(principal, idioma, agora)
-        || (LENTOS.has(String(principal.transitPlanet || ''))
-          ? duracaoDoLento(principal, idioma, agora)
-          : janelaEmPalavras(principal.window as any, idioma as any, agora)),
+      quando: janelaCompleta(principal, idioma, agora, LENTOS.has(String(principal.transitPlanet || ''))),
     })
   }
 

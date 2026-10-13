@@ -223,19 +223,28 @@ describe('a síntese montada', () => {
       { transitPlanet: 'Uranus', natalPlanet: 'Jupiter', type: 'conjuncao', strength: 95, house: 2, window: { start: q(-120), exact: q(-6), end: q(190) } },
     ], 'pt-BR', AG)!
 
+    // ⚠️ `toContain`, não `toBe`: o período agora vem acompanhado da FASE
+    // ("pico hoje", "último dia", "em curso"), porque as datas sozinhas não
+    // dizem onde hoje está dentro delas. O que este teste guarda é que a
+    // janela vem em DATAS — não que ela seja só isso.
     const agora = r.frases.find((f) => f.fase === 'agora')!
-    expect(agora.quando, 'o que acontece hoje também diz de quando a quando').toBe('10/10 a 16/10')
+    expect(agora.quando, 'o que acontece hoje também diz de quando a quando').toContain('10/10 a 16/10')
+    expect(agora.quando, 'e diz onde hoje está na janela').toContain('pico hoje')
 
     const chegando = r.frases.find((f) => f.fonte.includes('Netuno'))!
-    expect(chegando.quando).toBe('13/10 a 18/10')
+    expect(chegando.quando).toContain('13/10 a 18/10')
 
     // O ano só aparece quando o período cruza a virada — dentro do mesmo ano
     // ele é ruído repetido em doze linhas.
     const lento = r.frases.find((f) => f.lento)!
-    expect(lento.quando).toBe('14/06/26 a 20/04/27')
-    // Sem ano = duas barras (dd/mm a dd/mm); com ano = quatro.
-    expect((agora.quando.match(/\//g) || []).length, 'sem ano quando não cruza').toBe(2)
-    expect((lento.quando.match(/\//g) || []).length, 'com ano quando cruza').toBe(4)
+    expect(lento.quando).toContain('14/06/26 a 20/04/27')
+    expect(lento.quando, 'lento ativo não lê como compromisso futuro').toContain('em curso')
+    // Sem ano = duas barras (dd/mm a dd/mm); com ano = quatro. Conta no que o
+    // código produziu, não num literal repetido do `toContain` acima — senão o
+    // teste compara a expectativa consigo mesma e passa com qualquer código.
+    const barras = (s: string) => (s.match(/\//g) || []).length
+    expect(barras(agora.quando), 'sem ano quando não cruza').toBe(2)
+    expect(barras(lento.quando), 'com ano quando cruza').toBe(4)
   })
 
   it('a frase diz de que lado pende, para o toque ter cor', () => {

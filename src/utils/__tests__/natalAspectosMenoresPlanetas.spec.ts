@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveNatalPlanetAspectText, resolveNatalMinorAspectText } from '../natalInterpretation'
+import { resolveNatalPlanetAspectText, resolveNatalMinorAspectText, isMinorNatalAspect } from '../natalInterpretation'
 import { resolveSolarReturnAspectText, resolveLunarReturnAspectText } from '../solarReturnInterpretation'
 
 // ⚠️ Segundo buraco da mesma família do de ângulos: o catálogo curado tem
@@ -90,6 +90,35 @@ describe('aspectos menores entre planetas', () => {
     // E os ângulos, que não têm domínio de ano nenhum.
     expect(resolveSolarReturnAspectText('Mercury', 'conjunção', 'Ascendant', 'pt-BR')).toBeTruthy()
     expect(resolveLunarReturnAspectText('Moon', 'semiquadratura', 'ImumCoeli', 'pt-BR')).toBeTruthy()
+  })
+
+  // O toggle da aba Mapa esconde o que esta função classifica como menor. Se ela
+  // marcasse um aspecto maior por engano, desligar os menores apagaria leitura de
+  // verdade do mapa — e ninguém notaria, porque o conteúdo some em silêncio.
+  it('isMinorNatalAspect separa menor de maior em todos os idiomas', () => {
+    const menores = [
+      'quincúncio', 'quincunx', 'quinconce', 'inconjunct', 'quincuncio',
+      'semiquadratura', 'semisquare', 'semicuadratura', 'semiquadrato',
+      'sesquiquadratura', 'sesquisquare', 'sesquicuadratura', 'sesquiquadrato',
+      'semissextil', 'semisextile', 'semisestile',
+    ]
+    for (const a of menores) expect(isMinorNatalAspect(a), a).toBe(true)
+
+    const maiores = [
+      'conjunção', 'conjunction', 'conjuncion', 'congiunzione',
+      'sextil', 'sextile', 'sestile',
+      'quadratura', 'square', 'cuadratura',
+      'trígono', 'trine', 'trigono', 'trino',
+      'oposição', 'opposition', 'oposicion', 'opposizione',
+    ]
+    for (const a of maiores) expect(isMinorNatalAspect(a), a).toBe(false)
+
+    // ⚠️ O caso que engana: "semiquadratura" contém "quadratura", e
+    // "semisquare" contém "square". Se a classificação olhasse só o trecho, o
+    // maior e o menor cairiam no mesmo lado.
+    expect(isMinorNatalAspect('quadratura')).toBe(false)
+    expect(isMinorNatalAspect('semiquadratura')).toBe(true)
+    expect(isMinorNatalAspect('')).toBe(false)
   })
 
   it('en-US sem "will" (regra do projeto: presente, não futuro)', () => {

@@ -248,6 +248,21 @@ const MINOR_ASPECT_ALIAS: Record<string, string> = {
   sesquicuadratura: 'sesquiquadratura', sesquiquadrato: 'sesquiquadratura',
 }
 
+// Semissextil (30°) não tem composer nem catálogo — entra aqui só para ser
+// reconhecido como menor e poder ser escondido junto com os outros.
+const OUTROS_MENORES = new Set(['semissextil', 'semisextil', 'semisextile', 'semisestile'])
+
+/**
+ * O aspecto é MENOR (fraco)? Usado pela aba Mapa para esconder, a pedido, o que
+ * não pesa na leitura. Vale para quincúncio, semiquadratura, sesquiquadratura e
+ * semissextil — os maiores (conjunção, sextil, quadratura, trígono, oposição)
+ * respondem false.
+ */
+export function isMinorNatalAspect(aspect: string): boolean {
+  const asp = normalizeAspect(aspect)
+  return Boolean(MINOR_ASPECT_ALIAS[asp]) || OUTROS_MENORES.has(asp)
+}
+
 /**
  * Texto de quincúncio / semiquadratura / sesquiquadratura entre dois PLANETAS.
  * Composto a partir da função natal de cada planeta e da dinâmica do aspecto —
