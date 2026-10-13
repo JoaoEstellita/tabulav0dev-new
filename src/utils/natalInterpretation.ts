@@ -20,6 +20,7 @@ import { LUNAR_NODE_SIGN_I18N_OVERRIDES } from '../data/lunarNodeSignOverridesI1
 import { LUNAR_NODE_HOUSE_PTBR_OVERRIDES } from '../data/lunarNodeHouseOverridesPtBR'
 import { LUNAR_NODE_HOUSE_I18N_OVERRIDES } from '../data/lunarNodeHouseOverridesI18n'
 import { normalizeSign } from '../astro/normalize'
+import { resolveNamedPointAspectText } from './pointAspectInterpretation'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -181,7 +182,22 @@ export function resolveNatalPlanetAspectText(
   language?: string | null,
 ): string | null {
   const keyRaw = buildNatalAspectKey(planet1, aspect, planet2)
-  if (!keyRaw) return null
+
+  // ⚠️ O catálogo curado é de PLANETA × PLANETA. Quando um dos lados é um
+  // ângulo (Ascendente, Meio do Céu, Descendente, Fundo do Céu) ou um nódulo,
+  // a chave nem se forma — e a tela mostrava o aspecto com título e orbe e
+  // NENHUM texto embaixo.
+  //
+  // Visto na aba Mapa: "Mercúrio conjunção Ascendente · 5.2°", "Lua
+  // semiquadratura Fundo do Céu · 1.3°" — linha após linha sem leitura, no
+  // meio de outras que tinham. Lê como defeito do mapa da pessoa, não como
+  // falta de catálogo.
+  //
+  // O composer de pontos nomeados cobre exatamente esses casos. É FALLBACK,
+  // não primeira escolha: onde há texto curado, o curado ganha.
+  const comPonto = () => resolveNamedPointAspectText(planet1, aspect, planet2, language)
+
+  if (!keyRaw) return comPonto()
   const key = normalizeCatalogKey(keyRaw)
   const lang = normalizeLanguage(language)
 
@@ -190,14 +206,14 @@ export function resolveNatalPlanetAspectText(
       ASPECT_I18N_NORMALIZED[lang]?.[key] ||
       NATAL_PLANET_ASPECT_I18N_OVERRIDES[lang]?.[keyRaw]
     if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
-    return null
+    return comPonto()
   }
 
   const ptText =
     ASPECT_PTBR_NORMALIZED[key] ||
     NATAL_PLANET_ASPECT_PTBR_OVERRIDES[keyRaw]
   if (ptText && ptText.trim().length >= 50) return ptText.trim()
-  return null
+  return comPonto()
 }
 
 /**

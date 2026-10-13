@@ -658,6 +658,38 @@ export default function HomeScreen() {
             </AnimatedMount>
           )}
 
+        {/* ⚠️ A GRADE vem logo depois da roda e do filtro, antes do status.
+            Ela é a mesma informação da roda em outra forma — e o filtro de
+            planetas atua nas duas. Com o status no meio, o controle ficava
+            separado de metade do que controla, e a leitura saltava de "o que
+            o céu faz" para "onde isso pega na vida" e voltava. */}
+        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+          transitData!.currentTransits!.planetComparisons.length > 0 &&
+          transitData?.currentTransits?.chartSummary && (
+            <View {...aTransits}>
+            <AnimatedMount>
+              <View style={styles.section}>
+                <TransitComparisonCard
+                  planetComparisons={transitData.currentTransits.planetComparisons}
+                  chartSummary={transitData.currentTransits.chartSummary}
+                  ascendant={transitData.currentTransits.ascendant}
+                  midheaven={transitData.currentTransits.midheaven}
+                  natalAscendant={transitData.currentTransits.natalAscendant}
+                  natalMidheaven={transitData.currentTransits.natalMidheaven}
+                  housesCusps={transitData.currentTransits.houses}
+                  natalHousesCusps={transitData.currentTransits.natalHouses}
+                  lifeAreas={lifeAreasForDisplay || transitData.lifeAreas}
+                  lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
+                  personalWindows={transitData.dailyOverview?.personalTodayRich || []}
+                  showOverviewHeader={false}
+                  housesApproximate={transitData.currentTransits.natalHousesApproximate ?? false}
+                  registerAnchor={registerWheelAnchor}
+                />
+              </View>
+            </AnimatedMount>
+            </View>
+          )}
+
 
         {/* Status das areas de vida — depois da grade.
             A grade mostra o que o ceu faz; o status diz onde isso pega na vida.
@@ -691,32 +723,6 @@ export default function HomeScreen() {
 
 
 
-        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
-          transitData!.currentTransits!.planetComparisons.length > 0 &&
-          transitData?.currentTransits?.chartSummary && (
-            <View {...aTransits}>
-            <AnimatedMount>
-              <View style={styles.section}>
-                <TransitComparisonCard
-                  planetComparisons={transitData.currentTransits.planetComparisons}
-                  chartSummary={transitData.currentTransits.chartSummary}
-                  ascendant={transitData.currentTransits.ascendant}
-                  midheaven={transitData.currentTransits.midheaven}
-                  natalAscendant={transitData.currentTransits.natalAscendant}
-                  natalMidheaven={transitData.currentTransits.natalMidheaven}
-                  housesCusps={transitData.currentTransits.houses}
-                  natalHousesCusps={transitData.currentTransits.natalHouses}
-                  lifeAreas={lifeAreasForDisplay || transitData.lifeAreas}
-                  lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
-                  personalWindows={transitData.dailyOverview?.personalTodayRich || []}
-                  showOverviewHeader={false}
-                  housesApproximate={transitData.currentTransits.natalHousesApproximate ?? false}
-                  registerAnchor={registerWheelAnchor}
-                />
-              </View>
-            </AnimatedMount>
-            </View>
-          )}
 
         {loading && !transitData && (
           <View style={styles.chartLoadingContainer}>
