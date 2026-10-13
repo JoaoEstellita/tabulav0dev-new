@@ -21,6 +21,7 @@ import { LUNAR_NODE_HOUSE_PTBR_OVERRIDES } from '../data/lunarNodeHouseOverrides
 import { LUNAR_NODE_HOUSE_I18N_OVERRIDES } from '../data/lunarNodeHouseOverridesI18n'
 import { normalizeSign } from '../astro/normalize'
 import { resolveNamedPointAspectText } from './pointAspectInterpretation'
+import { NATAL_PLANET_FUNCTION, NATAL_MINOR_CONJUNCTION, NATAL_MINOR_ASPECT_DYNAMIC } from '../data/natalMinorAspectComposer'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -193,11 +194,19 @@ export function resolveNatalPlanetAspectText(
   // meio de outras que tinham. Lê como defeito do mapa da pessoa, não como
   // falta de catálogo.
   //
-  // O composer de pontos nomeados cobre exatamente esses casos. É FALLBACK,
-  // não primeira escolha: onde há texto curado, o curado ganha.
-  const comPonto = () => resolveNamedPointAspectText(planet1, aspect, planet2, language)
+  // E há um segundo buraco com a mesma cara: o catálogo cobre os 45 pares de
+  // planetas nos 5 aspectos MAIORES (225 chaves, exatamente). Quincúncio,
+  // semiquadratura e sesquiquadratura entre dois planetas nunca estiveram lá —
+  // "Júpiter quincúncio Urano · 0.1°", "Júpiter semiquadratura Sol · 0.3°".
+  //
+  // Os dois composers são FALLBACK, não primeira escolha: onde há texto curado,
+  // o curado ganha. Ordem: ângulos/nódulos primeiro (o composer de pontos exige
+  // que um lado seja ponto nomeado), depois planeta×planeta menor.
+  const comComposer = () =>
+    resolveNamedPointAspectText(planet1, aspect, planet2, language) ||
+    resolveNatalMinorAspectText(planet1, aspect, planet2, language)
 
-  if (!keyRaw) return comPonto()
+  if (!keyRaw) return comComposer()
   const key = normalizeCatalogKey(keyRaw)
   const lang = normalizeLanguage(language)
 
@@ -206,14 +215,14 @@ export function resolveNatalPlanetAspectText(
       ASPECT_I18N_NORMALIZED[lang]?.[key] ||
       NATAL_PLANET_ASPECT_I18N_OVERRIDES[lang]?.[keyRaw]
     if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
-    return comPonto()
+    return comComposer()
   }
 
   const ptText =
     ASPECT_PTBR_NORMALIZED[key] ||
     NATAL_PLANET_ASPECT_PTBR_OVERRIDES[keyRaw]
   if (ptText && ptText.trim().length >= 50) return ptText.trim()
-  return comPonto()
+  return comComposer()
 }
 
 /**
@@ -221,6 +230,58 @@ export function resolveNatalPlanetAspectText(
  */
 export function buildNatalAspectKeyPublic(planet1: string, aspect: string, planet2: string): string | null {
   return buildNatalAspectKey(planet1, aspect, planet2)
+}
+
+// ─── Aspectos MENORES entre planetas (composer) ──────────────────────────────
+
+// ⚠️ `normalizeAspect` acima não conhece os menores — e não deve conhecer, senão
+// `buildNatalAspectKey` montaria chaves que o catálogo curado não tem. O mapa
+// abaixo é a porta deles. Cuidado com a ordem dentro de `normalizeAspect`:
+// "semisquare" já chega aqui como "semiquadratura" (o `square` vira
+// "quadratura" no meio da palavra), enquanto "quincunx" chega intacto.
+const MINOR_ASPECT_ALIAS: Record<string, string> = {
+  quincuncio: 'quincuncio', quincunx: 'quincuncio', quincuncion: 'quincuncio',
+  quinconce: 'quincuncio', inconjunct: 'quincuncio', inconjuncao: 'quincuncio',
+  semiquadratura: 'semiquadratura', semisquare: 'semiquadratura',
+  semicuadratura: 'semiquadratura', semiquadrato: 'semiquadratura',
+  sesquiquadratura: 'sesquiquadratura', sesquisquare: 'sesquiquadratura',
+  sesquicuadratura: 'sesquiquadratura', sesquiquadrato: 'sesquiquadratura',
+}
+
+/**
+ * Texto de quincúncio / semiquadratura / sesquiquadratura entre dois PLANETAS.
+ * Composto a partir da função natal de cada planeta e da dinâmica do aspecto —
+ * o catálogo curado só cobre os 5 aspectos maiores.
+ * Retorna null se algum lado não for planeta ou o aspecto não for menor.
+ */
+export function resolveNatalMinorAspectText(
+  planet1: string,
+  aspect: string,
+  planet2: string,
+  language?: string | null,
+): string | null {
+  const p1 = normalizePlanet(planet1)
+  const p2 = normalizePlanet(planet2)
+  if (!KNOWN_PLANETS.has(p1) || !KNOWN_PLANETS.has(p2) || p1 === p2) return null
+
+  const asp = MINOR_ASPECT_ALIAS[normalizeAspect(aspect)]
+  if (!asp) return null
+
+  const lang = normalizeLanguage(language)
+  const funcoes = NATAL_PLANET_FUNCTION[lang] || NATAL_PLANET_FUNCTION['pt-BR']
+  const dyn = (NATAL_MINOR_ASPECT_DYNAMIC[lang] || NATAL_MINOR_ASPECT_DYNAMIC['pt-BR'])[asp]
+
+  // Mesma ordem canônica da chave do catálogo (planeta mais pessoal primeiro).
+  // Sem isso a frase trocaria de sujeito conforme a ordem em que o motor emitiu
+  // o par, e o mesmo aspecto leria diferente em telas diferentes.
+  const [a, b] = (PLANET_ORDER[p1] ?? 99) <= (PLANET_ORDER[p2] ?? 99) ? [p1, p2] : [p2, p1]
+  const f1 = funcoes[a]
+  const f2 = funcoes[b]
+  if (!f1 || !f2 || !dyn) return null
+
+  const conectivo = NATAL_MINOR_CONJUNCTION[lang] || NATAL_MINOR_CONJUNCTION['pt-BR']
+  const abertura = `${f1} ${conectivo} ${f2} ${dyn.verb}`
+  return `${abertura.charAt(0).toUpperCase()}${abertura.slice(1)}. ${dyn.interaction} ${dyn.advice}`
 }
 
 // ─── Natal Ruler in House Catalog ────────────────────────────────────────────
