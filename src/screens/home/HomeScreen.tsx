@@ -170,6 +170,12 @@ export default function HomeScreen() {
   // Âncoras do tour guiado (holofote) — destacam os recursos reais.
   const aHeader = useTourAnchor('home.header')
   const aMoon = useTourAnchor('home.moon')
+  // ⚠️ "O seu dia" nao tinha ancora. E o PRIMEIRO card da tela e o que mais
+  // mudou — frases agrupadas por tempo, origem discreta, toque abrindo a
+  // leitura curada —, e o tour passava direto dele: ia do cabecalho para a
+  // Lua, para as areas, para a roda. A parte que mais mudou era a unica sem
+  // explicacao.
+  const aToday = useTourAnchor('home.today')
   const aAreas = useTourAnchor('home.areas')
   const aWheel = useTourAnchor('home.wheel')
   const aTransits = useTourAnchor('home.transits')
@@ -189,14 +195,27 @@ export default function HomeScreen() {
       body: tl('Sol é o que te move; Lua, como você sente; Ascendente (↑), a impressão que você passa ao chegar. Toque na foto para trocá-la.', 'Sun is what drives you; Moon, how you feel; Ascendant (↑), the impression you give on arrival. Tap the photo to change it.', 'El Sol es lo que te mueve; la Luna, como sientes; el Ascendente (↑), la impresion que das al llegar. Toca la foto para cambiarla.', 'Il Sole e cio che ti muove; la Luna, come senti; l Ascendente (↑), l impressione che dai quando arrivi. Tocca la foto per cambiarla.') },
     { id: 'home.moon', title: tl('A Lua de hoje', "Today's Moon", 'La Luna de hoy', 'La Luna di oggi'),
       body: tl('A Lua muda de signo a cada dois dias e e a parte do ceu que mexe mais rapido com o seu humor. Toque para ver a fase de hoje.', 'The Moon changes sign every couple of days and is the part of the sky that shifts your mood fastest. Tap to see today\'s phase.', 'La Luna cambia de signo cada dos dias y es la parte del cielo que mueve mas rapido tu animo. Toca para ver la fase de hoy.', 'La Luna cambia segno ogni due giorni ed e la parte del cielo che muove piu in fretta il tuo umore. Tocca per vedere la fase di oggi.') },
-    { id: 'home.areas', title: tl('O que o dia mexe na sua vida', 'What today stirs in your life', 'Lo que el dia mueve en tu vida', 'Cosa il giorno muove nella tua vita'),
-      body: tl('Oito partes da vida — amor, trabalho, dinheiro, saúde e outras. A barra mostra o quanto cada uma está em movimento hoje. Toque numa para entender o porquê.', 'Eight parts of life — love, work, money, health and others. The bar shows how much each one is in motion today. Tap one to understand why.', 'Ocho partes de la vida — amor, trabajo, dinero, salud y otras. La barra muestra cuanto se mueve cada una hoy. Toca una para entender el porque.', 'Otto parti della vita — amore, lavoro, denaro, salute e altre. La barra mostra quanto ognuna e in movimento oggi. Tocca una per capire il perche.') },
+    { id: 'home.today', title: tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata'),
+      body: tl('O que o céu de hoje mexe em você, em frases diretas. Elas vêm separadas por tempo: o que acontece agora, o que está chegando e os trânsitos longos, que duram meses. Toque em qualquer frase para a leitura completa.', 'What today\'s sky stirs in you, in plain sentences. They come split by time: what is happening now, what is coming, and the long transits that last months. Tap any sentence for the full reading.', 'Lo que el cielo de hoy mueve en ti, en frases directas. Vienen separadas por tiempo: lo que pasa ahora, lo que llega y los transitos largos, que duran meses. Toca cualquier frase para la lectura completa.', 'Cio che il cielo di oggi muove in te, in frasi dirette. Arrivano divise per tempo: cosa accade ora, cosa sta arrivando e i transiti lunghi, che durano mesi. Tocca una frase per la lettura completa.') },
     { id: 'home.wheel', title: tl('Seu mapa e o céu de agora', 'Your chart and the sky right now', 'Tu mapa y el cielo de ahora', 'Il tuo tema e il cielo di adesso'),
       body: tl('O círculo de dentro é o céu de quando você nasceu; o de fora, onde os planetas estão agora. Onde eles se encontram, algo é ativado. Toque num encontro para ler.', 'The inner circle is the sky when you were born; the outer one, where the planets are now. Where they meet, something gets activated. Tap a meeting to read it.', 'El circulo interno es el cielo de cuando naciste; el externo, donde estan los planetas ahora. Donde se encuentran, algo se activa. Toca un encuentro para leerlo.', 'Il cerchio interno e il cielo di quando sei nato; quello esterno, dove sono i pianeti adesso. Dove si incontrano, qualcosa si attiva. Tocca un incontro per leggerlo.') },
+    { id: 'home.areas', title: tl('O que o dia mexe na sua vida', 'What today stirs in your life', 'Lo que el dia mueve en tu vida', 'Cosa il giorno muove nella tua vita'),
+      body: tl('Oito partes da vida — amor, trabalho, dinheiro, saúde e outras. A barra mostra o quanto cada uma está em movimento hoje. Toque numa para entender o porquê.', 'Eight parts of life — love, work, money, health and others. The bar shows how much each one is in motion today. Tap one to understand why.', 'Ocho partes de la vida — amor, trabajo, dinero, salud y otras. La barra muestra cuanto se mueve cada una hoy. Toca una para entender el porque.', 'Otto parti della vita — amore, lavoro, denaro, salute e altre. La barra mostra quanto ognuna e in movimento oggi. Tocca una per capire il perche.') },
         { id: 'home.transits', title: tl('A tabela de encontros', 'The meetings table', 'La tabla de encuentros', 'La tabella degli incontri'),
       body: tl('A mesma coisa da roda, em forma de tabela: cada símbolo é uma conversa entre dois planetas do seu mapa. Toque em qualquer um para a leitura em português.', 'The same as the wheel, as a table: each symbol is a conversation between two planets of your chart. Tap any of them for the plain reading.', 'Lo mismo de la rueda, en forma de tabla: cada simbolo es una conversacion entre dos planetas de tu mapa. Toca cualquiera para la lectura clara.', 'La stessa cosa della ruota, in tabella: ogni simbolo e una conversazione tra due pianeti del tuo tema. Tocca uno qualsiasi per la lettura chiara.') },
+    // ⚠️ POR ULTIMO DE PROPOSITO, fora da ordem da tela (onde o banner fica
+    // entre as areas e a grade).
+    //
+    // Ele e CONDICIONAL: so existe enquanto a permissao de push nao foi dada.
+    // No meio do tour, um passo sem holofote quebraria a sequencia para quem
+    // ja permitiu; no fim, ele apenas nao acontece.
+    //
+    // E vale ensina-lo: medido na base, so 12 de 65 pessoas tem token de push
+    // — o gargalo nao e a entrega, e a permissao nunca pedida na hora certa.
+    { id: 'home.notif', title: tl('Avisos no seu celular', 'Alerts on your phone', 'Avisos en tu celular', 'Avvisi sul telefono'),
+      body: tl('Para saber dos dias importantes sem precisar abrir o app. Avisamos quando um trânsito chega ao ponto exato ou quando o dia pede atenção — não todo dia, só quando há o que dizer.', 'So you hear about the days that matter without opening the app. We let you know when a transit hits its exact point or when the day asks for care — not every day, only when there is something to say.', 'Para enterarte de los dias importantes sin abrir la app. Avisamos cuando un transito llega al punto exacto o cuando el dia pide atencion — no todos los dias, solo cuando hay algo que decir.', 'Per sapere dei giorni importanti senza aprire l app. Avvisiamo quando un transito arriva al punto esatto o quando il giorno chiede attenzione — non ogni giorno, solo quando c e qualcosa da dire.') },
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
-  const { openTour: openHomeTour } = useTabTour('tour_seen_home_v2', 'Home', buildHomeTour)
+  const { openTour: openHomeTour } = useTabTour('tour_seen_home_v3', 'Home', buildHomeTour)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
@@ -593,10 +612,12 @@ export default function HomeScreen() {
             pergunta de quem abre o app de manha. O desenho mostra de onde ela
             saiu, a grade abre o detalhe e o status fecha dizendo onde isso pega
             na vida. */}
-        <FraseDoDia
-          transitos={transitData?.dailyOverview?.personalTodayRich}
-          areas={orderedLifeAreas}
-        />
+        <View {...aToday}>
+          <FraseDoDia
+            transitos={transitData?.dailyOverview?.personalTodayRich}
+            areas={orderedLifeAreas}
+          />
+        </View>
 
         {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
         {transitData && (
