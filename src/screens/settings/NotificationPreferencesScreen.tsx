@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
+import { PRESETS, RITMO_DO_PERFIL, perfilDoRitmo, type PerfilDeNotificacao } from "../../constants/notificationPresets"
 
 export default function NotificationPreferencesScreen() {
   const { t } = useAppLanguage()
@@ -22,101 +23,18 @@ export default function NotificationPreferencesScreen() {
     setSaving(false)
   }
 
-  const applyPreset = async (preset: "essential" | "balanced" | "silent") => {
-    const basePushTypes = { ...(prefs.push?.types || defaults.push.types) }
-    const baseInAppTypes = { ...(prefs.inApp?.types || defaults.inApp.types) }
-    if (preset === "essential") {
-      await savePreferences({
-        pushEnabled: true,
-        astroEventsPersonalEnabled: true,
-        astroEventsCollectiveEnabled: false,
-        groupFilters: {
-          critical: true,
-          positive: false,
-          messages: true,
-        },
-        forecastFilters: {
-          weekly: false,
-        },
-        push: {
-          frequencyProfile: "focus",
-          types: {
-            ...basePushTypes,
-            user_status_critical: true,
-            member_status_critical: true,
-            user_status_positive: true,
-            user_status_highlight: false,
-            astro_event_personal: true,
-            astro_event_collective: false,
-            group_message: true,
-            weekly_digest: false,
-          },
-        },
-        inApp: {
-          types: {
-            ...baseInAppTypes,
-            user_status_critical: true,
-            member_status_critical: true,
-            user_status_positive: true,
-            user_status_highlight: true,
-            astro_event_personal: true,
-            astro_event_collective: false,
-            group_message: true,
-          },
-        },
-      })
-      return
-    }
-    if (preset === "balanced") {
-      await savePreferences({
-        pushEnabled: true,
-        astroEventsPersonalEnabled: true,
-        astroEventsCollectiveEnabled: true,
-        groupFilters: {
-          critical: true,
-          positive: true,
-          messages: true,
-        },
-        forecastFilters: {
-          weekly: true,
-        },
-        push: {
-          frequencyProfile: "balanced",
-          types: {
-            ...basePushTypes,
-            user_status_critical: true,
-            member_status_critical: true,
-            user_status_positive: true,
-            user_status_highlight: true,
-            astro_event_personal: true,
-            astro_event_collective: true,
-            group_message: true,
-            weekly_digest: true,
-          },
-        },
-        inApp: {
-          types: {
-            ...baseInAppTypes,
-            user_status_critical: true,
-            member_status_critical: true,
-            user_status_positive: true,
-            user_status_highlight: true,
-            astro_event_personal: true,
-            astro_event_collective: true,
-            group_message: true,
-            weekly_digest: true,
-          },
-        },
-      })
-      return
-    }
-    await savePreferences({
-      pushEnabled: false,
-      push: {
-        frequencyProfile: "quiet",
-        types: Object.keys(basePushTypes).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
-      },
-    })
+  /**
+   * ⚠️ Os perfis saíram daqui para `constants/notificationPresets.ts`.
+   *
+   * Escritos à mão nesta tela, cada chave aparecia três vezes e "Equilibrado"
+   * dizia ser o estado inicial do app sem ser: o padrão tinha
+   * `push.weekly_digest: false` e o perfil ligava. Escolher "Equilibrado" dava
+   * resultado diferente de nunca ter tocado em nada, com o mesmo nome.
+   *
+   * Lá, Equilibrado DERIVA do padrão — não há como divergir de novo.
+   */
+  const applyPreset = async (perfil: PerfilDeNotificacao) => {
+    await savePreferences(PRESETS[perfil]())
   }
 
   const pushTypes = prefs.push?.types || defaults.push.types
@@ -146,6 +64,8 @@ export default function NotificationPreferencesScreen() {
     return `${quietHours.start} - ${quietHours.end}`
   }, [quietHours, t])
   const frequencyProfile = prefs.push?.frequencyProfile || "balanced"
+  // O ritmo é 1 para 1 com o perfil, então ele diz qual está marcado.
+  const perfilAtivo = perfilDoRitmo(frequencyProfile)
   const enabledPushTypeCount = useMemo(
     () => Object.values(pushTypes).filter((value) => value !== false).length,
     [pushTypes]
@@ -251,16 +171,23 @@ export default function NotificationPreferencesScreen() {
           <>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t("nprefs.push.section")}</Text>
+              {/* ⚠️ Esta fileira MUDAVA tudo e não mostrava qual estava ativa,
+                  enquanto a de "Frequência de envio" logo abaixo mostrava e
+                  mudava só o ritmo — e duas das três palavras eram as mesmas
+                  nas duas. Dava para ver "Silencioso" marcado embaixo depois de
+                  tocar "Silencioso" em cima, sem saber qual das duas fez o quê. */}
               <View style={styles.presetRow}>
-                <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("essential")}>
-                  <Text style={styles.presetBtnText}>{t("nprefs.preset.essential")}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("balanced")}>
-                  <Text style={styles.presetBtnText}>{t("nprefs.preset.balanced")}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("silent")}>
-                  <Text style={styles.presetBtnText}>{t("nprefs.preset.silent")}</Text>
-                </TouchableOpacity>
+                {(["essencial", "equilibrado", "silencioso"] as PerfilDeNotificacao[]).map((perfil) => (
+                  <TouchableOpacity
+                    key={perfil}
+                    style={[styles.presetBtn, perfilAtivo === perfil && styles.presetBtnActive]}
+                    onPress={() => applyPreset(perfil)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: perfilAtivo === perfil }}
+                  >
+                    <Text style={styles.presetBtnText}>{t(`nprefs.preset.${perfil}`)}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
               {renderToggle(
                 t("nprefs.push.enabled.title"),
@@ -275,19 +202,19 @@ export default function NotificationPreferencesScreen() {
                     style={[styles.presetBtn, frequencyProfile === "focus" && styles.presetBtnActive]}
                     onPress={() => savePreferences({ push: { frequencyProfile: "focus" } })}
                   >
-                    <Text style={styles.presetBtnText}>{t("nprefs.freq.focus")}</Text>
+                    <Text style={styles.presetBtnText}>{t("nprefs.ritmo.imediato")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.presetBtn, frequencyProfile === "balanced" && styles.presetBtnActive]}
                     onPress={() => savePreferences({ push: { frequencyProfile: "balanced" } })}
                   >
-                    <Text style={styles.presetBtnText}>{t("nprefs.freq.balanced")}</Text>
+                    <Text style={styles.presetBtnText}>{t("nprefs.ritmo.normal")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.presetBtn, frequencyProfile === "quiet" && styles.presetBtnActive]}
                     onPress={() => savePreferences({ push: { frequencyProfile: "quiet" } })}
                   >
-                    <Text style={styles.presetBtnText}>{t("nprefs.freq.quiet")}</Text>
+                    <Text style={styles.presetBtnText}>{t("nprefs.ritmo.espacado")}</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.previewText}>
