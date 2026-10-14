@@ -286,6 +286,19 @@ type ChartContentProps = {
    * quem abriu o app querendo saber como esta o dia.
    */
   mostrarGrade?: boolean
+  /**
+   * O que entra ENTRE a roda e a grade de aspectos.
+   *
+   * ⚠️ Existe porque as duas moram neste componente, e de fora não há como pôr
+   * nada no meio. A Home tentou duas vezes mover o filtro de planetas "para
+   * cima da grade" mexendo na ordem DELA, e as duas falharam em silêncio: o
+   * que ela reordenou foi o card de planetas, enquanto a grade — a que a
+   * pessoa chama de grade — seguiu grudada na roda, com o filtro embaixo.
+   *
+   * O filtro atua na roda E na grade. Ficar depois das duas o fazia parecer
+   * controle de outra coisa.
+   */
+  entreRodaEGrade?: React.ReactNode
 }
 
 /**
@@ -295,7 +308,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, mostrarGrade = true }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, mostrarGrade = true, entreRodaEGrade }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { mostrarMenores, alternar: alternarMenores } = useAspectosMenores()
@@ -1115,6 +1128,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             </TouchableOpacity>
           </View>
         ) : null}
+
+        {entreRodaEGrade}
 
         {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
         {!mostrarGrade ? null : showTransits ? (
