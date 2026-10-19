@@ -21,7 +21,9 @@ import AvisoConteudoIncompleto from '../../components/AvisoConteudoIncompleto'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
-import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER } from '../../constants/lifeAreas'
+import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER, getLifeAreaLabelI18n } from '../../constants/lifeAreas'
+import RodaDeStatus from '../../components/RodaDeStatus'
+import type { EixoDaRoda } from '../../utils/geometriaDaRoda'
 import FraseDoDia from '../../components/FraseDoDia'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
@@ -473,6 +475,30 @@ export default function HomeScreen() {
     })
   }, [orderedLifeAreas, normalizeDisplayArea, transitData?.currentTransits, backendCurrentTransits])
 
+  /**
+   * Os eixos da roda de status.
+   *
+   * ⚠️ Derivados do MESMO `memoizedAreas` que alimenta os cards acima dela, e na
+   * MESMA ordem. Montar uma lista própria aqui faria a roda e os cards
+   * discordarem no dia em que um dos dois mudasse — e a ordem fixa é o que
+   * permite comparar a silhueta de hoje com a de ontem.
+   */
+  const eixosDaRoda = React.useMemo<EixoDaRoda[]>(() => {
+    return memoizedAreas.map(({ name, normalizedArea }) => ({
+      chave: name,
+      rotulo: getLifeAreaLabelI18n(name, language),
+      // `percentage` ja vem 0-100 ou null. O null segue adiante COMO null: a
+      // roda pinta "sem dado" em cinza em vez de fingir zero, que sairia
+      // vermelho de critico.
+      valor: typeof (normalizedArea as any)?.percentage === 'number' ? (normalizedArea as any).percentage : null,
+    }))
+  }, [memoizedAreas, language])
+
+  const abrirAreaDaRoda = React.useCallback((chave: string) => {
+    const alvo = memoizedAreas.find((a) => a.name === chave)
+    if (alvo) handleAreaPress(alvo.name, alvo.normalizedArea)
+  }, [memoizedAreas, handleAreaPress])
+
   if (loading && !transitData) {
     return (
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -650,6 +676,17 @@ export default function HomeScreen() {
                 // interações, pra não travar a abertura da Home. Não pula o layout.
                 <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
               )}
+            </View>
+          </AnimatedMount>
+          </View>
+        )}
+
+        {/* ⚠️ O status e a roda ficam FORA do bloco da roda natal.
+            Uma versão anterior os inseriu DENTRO dele — compilava e renderizava,
+            então passou despercebido — e isso os tornava filhos da seção da
+            roda e, pior, os prendia ao `{transitData && (`: sem trânsito
+            carregado, os cards de status sumiam mesmo havendo dado do backend.
+            São seções irmãs, não conteúdo da roda. */}
 
         {/* ⚠️ O STATUS vem logo DEPOIS DA GRADE, não depois dos cards de
             planeta. A roda e a grade dizem o que o céu faz; o status diz
@@ -676,10 +713,24 @@ export default function HomeScreen() {
           </AnimatedMount>
           </View>
         )}
-            </View>
+
+        {/* ⚠️ A RODA DE STATUS vem logo DEPOIS dos cards de área — posição
+            provisória, para irmos ajustando. É a MESMA informação dos cards
+            acima, em outra forma: um retrato de "eu hoje" em vez de oito
+            fichas. Juntas, a lista dá o detalhe e a roda dá a silhueta;
+            separadas por outra seção, pareceriam assuntos diferentes.
+
+            Só aparece com dado — um octógono vazio pareceria defeito. */}
+        {eixosDaRoda.length >= 3 ? (
+          <AnimatedMount>
+            <RodaDeStatus
+              eixos={eixosDaRoda}
+              aoTocarEixo={abrirAreaDaRoda}
+              titulo={tl('O seu retrato de hoje', 'Your portrait today', 'Tu retrato de hoy', 'Il tuo ritratto di oggi')}
+              legenda={tl('Toque numa área para ler', 'Tap an area to read', 'Toca un area para leer', 'Tocca un area per leggere')}
+            />
           </AnimatedMount>
-          </View>
-        )}
+        ) : null}
 
         {/* ⚠️ O filtro NÃO fica mais aqui: ele é passado para dentro da roda,
             em `entreRodaEGrade`. A grade de aspectos mora no mesmo componente

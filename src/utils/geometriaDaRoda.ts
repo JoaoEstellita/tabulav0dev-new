@@ -1,0 +1,130 @@
+/**
+ * A geometria da roda de status — só matemática, sem React.
+ *
+ * ⚠️ Fora do componente de propósito. Importar um `.tsx` puxa `react-native`,
+ * que o vitest não parseia (Flow), e aí nenhum teste alcança estas contas. Duas
+ * vezes hoje foi preciso extrair dado testável de dentro de UI (a tabela de
+ * símbolos da grade, o padrão de notificações); aqui já começa separado.
+ */
+
+/** Um eixo da roda: a área, o rótulo e o valor de 0 a 100 (ou nulo). */
+export type EixoDaRoda = {
+  chave: string
+  rotulo: string
+  valor: number | null
+}
+
+export type Ponto = { x: number; y: number }
+
+/**
+ * O ângulo de um eixo, em radianos.
+ *
+ * ⚠️ Começa no TOPO e anda no sentido horário — é como as pessoas leem uma roda
+ * de atributos, e é o que a referência que o João mandou faz. Sem o `-90°` a
+ * primeira área nasceria na direita, e a figura inteira pareceria girada.
+ */
+export function anguloDoEixo(indice: number, total: number): number {
+  if (total <= 0) return 0
+  return (indice / total) * Math.PI * 2 - Math.PI / 2
+}
+
+/** Prende o valor entre 0 e 100. Nulo e lixo viram 0 — nunca NaN na tela. */
+export function fracaoDoValor(valor: number | null | undefined): number {
+  const n = Number(valor)
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(100, n)) / 100
+}
+
+/**
+ * Onde um ponto cai, dado o eixo e a fração do raio.
+ *
+ * ⚠️ O raio é proporcional ao valor (linear), não à raiz. Isso significa que a
+ * ÁREA cresce com o quadrado: um valor duas vezes maior ocupa quatro vezes mais
+ * espaço. É o defeito clássico do radar, e a saída aqui não é distorcer o raio
+ * — é nunca deixar a área carregar a mensagem. Por isso cada vértice leva o
+ * número escrito, e os anéis de 35 e 62 dão a referência.
+ */
+export function pontoNoEixo(
+  indice: number,
+  total: number,
+  fracao: number,
+  raio: number,
+  centro: Ponto,
+): Ponto {
+  const a = anguloDoEixo(indice, total)
+  const r = Math.max(0, Math.min(1, fracao)) * raio
+  return { x: centro.x + Math.cos(a) * r, y: centro.y + Math.sin(a) * r }
+}
+
+/** Os vértices do polígono dos valores, na ordem dos eixos. */
+export function poligonoDosValores(eixos: EixoDaRoda[], raio: number, centro: Ponto): Ponto[] {
+  return eixos.map((e, i) => pontoNoEixo(i, eixos.length, fracaoDoValor(e.valor), raio, centro))
+}
+
+/**
+ * Um anel de referência — o contorno do polígono regular numa certa fração.
+ *
+ * Desenhado como POLÍGONO, não como círculo: num radar o valor mora no vértice,
+ * e um anel circular passaria por dentro das arestas, fazendo um valor que
+ * encosta no limiar parecer abaixo dele.
+ */
+export function anelDeReferencia(fracao: number, total: number, raio: number, centro: Ponto): Ponto[] {
+  return Array.from({ length: total }, (_, i) => pontoNoEixo(i, total, fracao, raio, centro))
+}
+
+/** "x,y x,y ..." — o formato que o `points` do SVG espera. */
+export function paraPoints(pontos: Ponto[]): string {
+  return pontos.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')
+}
+
+/**
+ * Onde o rótulo de um eixo fica, e como ancorá-lo.
+ *
+ * ⚠️ O ancoramento muda com o lado: à direita da roda o texto cresce para fora
+ * (`start`), à esquerda para dentro (`end`), e em cima e embaixo fica centrado.
+ * Sem isso, os rótulos das laterais invadem o desenho ou saem da tela — num
+ * celular estreito, com oito deles, é o primeiro jeito de quebrar o layout.
+ */
+export function rotuloDoEixo(
+  indice: number,
+  total: number,
+  raio: number,
+  centro: Ponto,
+  folga: number,
+): { x: number; y: number; ancora: 'start' | 'middle' | 'end' } {
+  const a = anguloDoEixo(indice, total)
+  const cos = Math.cos(a)
+  const p = { x: centro.x + cos * (raio + folga), y: centro.y + Math.sin(a) * (raio + folga) }
+  // A tolerância evita que um eixo quase vertical (cos ~ 0) seja tratado como
+  // lateral e empurre o texto para cima do desenho.
+  const ancora = Math.abs(cos) < 0.25 ? 'middle' : cos > 0 ? 'start' : 'end'
+  return { ...p, ancora }
+}
+
+/**
+ * A cor do valor, pelas MESMAS faixas que os cards de área usam.
+ *
+ * ⚠️ Os limiares vêm de fora (`STATUS_THRESHOLDS`, que o backend pode redefinir
+ * em runtime) justamente para a roda não criar uma terceira régua: a tela já
+ * tem os cards e a grade falando em crítico/moderado/bom.
+ *
+ * E a cor NUNCA anda sozinha: o validador de paleta mediu verde↔âmbar em ΔE 8.9
+ * sob protanopia — passa no piso, mas por pouco. Por isso o componente escreve
+ * o número em cada vértice.
+ */
+export function corDoValor(
+  valor: number | null | undefined | '',
+  limiares: { criticalBelow: number; positiveAbove: number },
+  cores: { critico: string; moderado: string; bom: string; vazio: string },
+): string {
+  // ⚠️ `Number(null)` e `Number('')` dao ZERO, e `isFinite(0)` e true — sem este
+  // guarda, uma area SEM DADO sairia vermelha de critico, dizendo que a vida da
+  // pessoa esta em crise quando so falta o numero. Esta armadilha ja mordeu o
+  // projeto outras vezes; aqui ela foi pega pelo teste.
+  if (valor === null || valor === undefined || valor === '') return cores.vazio
+  const n = Number(valor)
+  if (!Number.isFinite(n)) return cores.vazio
+  if (n >= limiares.positiveAbove) return cores.bom
+  if (n >= limiares.criticalBelow) return cores.moderado
+  return cores.critico
+}
