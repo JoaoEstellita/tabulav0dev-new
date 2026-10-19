@@ -8,6 +8,7 @@ import {
   paraPoints,
   rotuloDoEixo,
   corDoValor,
+  melhorGiro,
 } from '../geometriaDaRoda'
 
 const CENTRO = { x: 100, y: 100 }
@@ -120,6 +121,77 @@ describe('geometria da roda de status', () => {
     expect(corDoValor(NaN, lim, cores)).toBe('V')
     // E zero DE VERDADE continua sendo critico, nao vazio.
     expect(corDoValor(0, lim, cores)).toBe('C')
+  })
+
+  // ⚠️ O giro é o que torna possível mostrar o NOME INTEIRO sem encolher a roda.
+  // Medido: com os rótulos reais, "Espiritualidade" caía na lateral esquerda —
+  // a posição mais apertada — e sozinha limitava o diâmetro a 140px; numa tela
+  // de 320pt não cabia nada. Girando, os nomes longos vão para topo e base, que
+  // dispõem da largura toda.
+  describe('giro que faz o nome inteiro caber', () => {
+    const ROTULOS = ['Amor', 'Saúde', 'Família', 'Comunicação', 'Carreira', 'Finanças', 'Espiritualidade', 'Transformação']
+    const medir = (t: string) => t.length * 11 * 0.55 + 2
+
+    it('girar NÃO reordena — só muda a posição inicial', () => {
+      const n = 8
+      // Com giro 1, o eixo 0 ocupa onde o eixo 1 estaria sem giro.
+      expect(anguloDoEixo(0, n, 1)).toBeCloseTo(anguloDoEixo(1, n, 0), 10)
+      // E a distância entre vizinhos continua a mesma, que é o que garante que
+      // a figura de hoje se compare com a de ontem.
+      const passo = (Math.PI * 2) / n
+      for (let g = 0; g < n; g++) {
+        for (let i = 1; i < n; i++) {
+          expect(anguloDoEixo(i, n, g) - anguloDoEixo(i - 1, n, g)).toBeCloseTo(passo, 10)
+        }
+      }
+    })
+
+    it('o giro escolhido cabe com TODOS os rótulos, em qualquer tela', () => {
+      for (const lado of [280, 320, 350, 360]) {
+        const { giro, raio } = melhorGiro(ROTULOS, lado, medir, 12)
+        expect(raio, `tela ${lado}`).toBeGreaterThan(0)
+        const centro = { x: lado / 2, y: lado / 2 }
+        ROTULOS.forEach((rot, i) => {
+          const cos = Math.cos(anguloDoEixo(i, ROTULOS.length, giro))
+          const x = centro.x + cos * (raio + 12)
+          const disponivel = Math.abs(cos) < 0.25 ? 2 * Math.min(x, lado - x) : cos > 0 ? lado - x : x
+          expect(medir(rot), `${rot} na tela ${lado}`).toBeLessThanOrEqual(disponivel + 0.001)
+        })
+      }
+    })
+
+    // ⚠️ A primeira versão deste teste comparava `melhorGiro` CONSIGO MESMO num
+    // laço — passava com qualquer implementação. Agora o raio de cada giro é
+    // calculado aqui, de forma independente, e o escolhido tem de ser o maior.
+    it('o giro escolhido é o MAIOR possível, não o primeiro que serve', () => {
+      const lado = 350
+      const centro = lado / 2
+      const raioDoGiro = (g: number) => {
+        let melhor = 0
+        for (let r = 10; r < centro; r++) {
+          let cabe = true
+          ROTULOS.forEach((rot, i) => {
+            const cos = Math.cos(anguloDoEixo(i, ROTULOS.length, g))
+            const x = centro + cos * (r + 12)
+            const disp = Math.abs(cos) < 0.25 ? 2 * Math.min(x, lado - x) : cos > 0 ? lado - x : x
+            if (medir(rot) > disp) cabe = false
+          })
+          if (cabe) melhor = r
+        }
+        return melhor
+      }
+
+      const escolhido = melhorGiro(ROTULOS, lado, medir, 12)
+      const todos = Array.from({ length: 8 }, (_, g) => raioDoGiro(g))
+      expect(escolhido.raio).toBe(Math.max(...todos))
+      // E ganha de não girar, que era o ponto de existir.
+      expect(escolhido.raio).toBeGreaterThan(todos[0])
+    })
+
+    it('lista vazia ou largura zero não quebra', () => {
+      expect(melhorGiro([], 320, medir, 12)).toEqual({ giro: 0, raio: 0 })
+      expect(melhorGiro(ROTULOS, 0, medir, 12)).toEqual({ giro: 0, raio: 0 })
+    })
   })
 
   // Os limiares vêm do backend em runtime; a roda não pode ter régua própria.

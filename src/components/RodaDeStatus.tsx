@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
-import Svg, { Polygon, Line, Circle } from 'react-native-svg'
+import Svg, { Polygon, Line, Circle, Defs, RadialGradient, LinearGradient, Stop } from 'react-native-svg'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import {
   poligonoDosValores,
@@ -10,6 +10,7 @@ import {
   fracaoDoValor,
   paraPoints,
   corDoValor,
+  melhorGiro,
   type EixoDaRoda,
 } from '../utils/geometriaDaRoda'
 
@@ -19,22 +20,20 @@ import {
  * ⚠️ Escolha de PRODUTO, não de legibilidade. Para comparar magnitudes uma barra
  * lê melhor — num radar a área cresce com o QUADRADO do valor e o ângulo
  * distorce a comparação. O que o radar dá e a barra não é identidade: uma figura
- * que a pessoa reconhece como "eu hoje". Para isso valer sem enganar, três
- * regras:
+ * que a pessoa reconhece como "eu hoje". Para valer sem enganar, três regras:
  *
  *  1. A ÁREA NUNCA CARREGA A MENSAGEM — o número vai escrito em cada eixo.
- *  2. A ORDEM DOS EIXOS É FIXA (a mesma dos cards abaixo) e nunca ordenada por
- *     valor: ordenar mudaria a silhueta todo dia e a figura de hoje deixaria de
- *     se comparar com a de ontem.
+ *  2. A ORDEM DOS EIXOS É FIXA e nunca ordenada por valor: ordenar mudaria a
+ *     silhueta todo dia e a figura de hoje deixaria de se comparar com a de
+ *     ontem. (O GIRO do conjunto é outra coisa e é livre — ver `melhorGiro`.)
  *  3. A ESCALA É 0–100 FIXA. Auto-escalar pelo próprio mínimo e máximo ficaria
  *     mais dramático e seria mentira: quem tem tudo entre 28 e 49 veria a mesma
  *     figura de quem tem tudo entre 60 e 90.
  *
  * Medido no banco: a amplitude entre áreas tem mediana de 30 pontos e mínimo de
  * 8, e os valores vivem entre ~26 e ~77 — num eixo 0–100 cheio o polígono fica
- * quase circular. Daí os dois ANÉIS DE REFERÊNCIA nos limiares que o app já usa
- * (35 e 62): a leitura deixa de ser "que forma é essa" e vira "o que furou o
- * anel de baixo".
+ * quase circular. Daí os ANÉIS DE REFERÊNCIA nos limiares que o app já usa (35 e
+ * 62): a leitura deixa de ser "que forma é essa" e vira "o que furou o anel".
  */
 
 type Props = {
@@ -57,63 +56,63 @@ const CORES = {
   vazio: '#4B5563',
 } as const
 
-const TRILHO = '#2A3142'
+const TRILHO = '#232B3D'
 const TINTA = '#8892a4'
-const TINTA_FORTE = '#E8ECF5'
+const TINTA_FORTE = '#F2F5FA'
+const ACENTO = '#9BB4E8'
 
+const FONTE_ROTULO = 11
 /**
- * ⚠️ No eixo vai uma MARCA CURTA; o nome inteiro vive na legenda abaixo.
- *
- * O nome completo ao redor da roda não cabe, e isso foi medido, não achado.
- * Primeiro como `<SvgText>`: texto em SVG não quebra linha nem é medido, e nas
- * telas reais (360/390/430pt) "Comunicação" estourava 35px para fora do
- * desenho. Depois como `<Text>` nativo numa caixa larga o bastante para o nome
- * inteiro: aí a roda encolhia para 110–138px de diâmetro, e numa tela de 320pt
- * colapsava para 70px COM 4 colisões entre rótulos. E "Espiritualidade" é uma
- * palavra só — não tem onde quebrar, então caixa estreita a corta com
- * reticências.
- *
- * Oito nomes longos em português ao redor de um radar de celular é um conflito
- * real de layout, e pior em espanhol e italiano. A saída é a mesma da ficha de
- * atributos que inspirou isto: marca curta no eixo, nome por extenso embaixo.
- * Com 34px de caixa, o desenho vai a 176–244px e dá ZERO estouro e ZERO colisão
- * em todas as telas.
- *
- * A marca são as 3 primeiras letras do próprio rótulo — não um vocabulário
- * novo, só uma chave visual que a legenda resolve. Assim nada precisa ser
- * traduzido duas vezes.
+ * ⚠️ Medida APROXIMADA do texto, porque em React Native não dá para medir antes
+ * de renderizar. O fator 0.55 da largura por caractere é conservador para a
+ * fonte do sistema; errar para mais só encolhe um pouco a roda, enquanto errar
+ * para menos cortaria o nome — então o erro aceitável tem lado.
  */
-const LARGURA_ROTULO = 34
+const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.55 + 2
+const FOLGA_ROTULO = 12
 
 export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Props) {
   const { width } = useWindowDimensions()
 
   // O teto evita que num tablet a roda vire pôster; o piso evita que num
   // aparelho estreito ela encolha até o polígono virar um ponto.
-  const lado = Math.min(340, Math.max(260, width - 48))
+  const lado = Math.min(360, Math.max(270, width - 40))
   const centro = { x: lado / 2, y: lado / 2 }
-  // Folga = caixa da marca + respiro. Medido: com isto não há estouro nem
-  // colisão de 320 a 430pt de tela.
-  const raio = lado / 2 - (LARGURA_ROTULO + 14)
-
   const total = eixos.length
+
   const limiares = {
     criticalBelow: STATUS_THRESHOLDS.criticalBelow,
     positiveAbove: STATUS_THRESHOLDS.positiveAbove,
   }
 
+  /**
+   * ⚠️ O giro e o raio saem de uma BUSCA, não de números escolhidos a dedo.
+   *
+   * Com os nomes por extenso, "Espiritualidade" caía na lateral esquerda — a
+   * posição mais apertada — e sozinha limitava o diâmetro a 140px; numa tela de
+   * 320pt não cabia nada. Girando o conjunto, os nomes longos vão para topo e
+   * base, onde o rótulo centraliza e dispõe da largura toda, e o diâmetro vai a
+   * 224px. Como os rótulos mudam de tamanho por idioma, isso é calculado em
+   * runtime em vez de ficar fixo.
+   */
+  const { giro, raio } = useMemo(
+    () => melhorGiro(eixos.map((e) => e.rotulo), lado, medirRotulo, FOLGA_ROTULO),
+    [eixos, lado],
+  )
+
   const geo = useMemo(() => {
-    if (!total) return null
+    if (!total || raio <= 0) return null
     return {
-      valores: paraPoints(poligonoDosValores(eixos, raio, centro)),
-      borda: paraPoints(anelDeReferencia(1, total, raio, centro)),
-      critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro)),
-      bom: paraPoints(anelDeReferencia(limiares.positiveAbove / 100, total, raio, centro)),
+      valores: paraPoints(poligonoDosValores(eixos, raio, centro, giro)),
+      borda: paraPoints(anelDeReferencia(1, total, raio, centro, giro)),
+      meio: paraPoints(anelDeReferencia(0.5, total, raio, centro, giro)),
+      critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro, giro)),
+      bom: paraPoints(anelDeReferencia(limiares.positiveAbove / 100, total, raio, centro, giro)),
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eixos, raio, lado, total, limiares.criticalBelow, limiares.positiveAbove])
+  }, [eixos, raio, giro, lado, total, limiares.criticalBelow, limiares.positiveAbove])
 
-  // Sem eixo não há roda — e um octógono vazio no topo da tela parece defeito.
+  // Sem eixo não há roda — e um octógono vazio na tela parece defeito.
   if (!total || !geo) return null
 
   return (
@@ -122,11 +121,36 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
 
       <View style={{ width: lado, height: lado, alignSelf: 'center' }}>
         <Svg width={lado} height={lado}>
+          <Defs>
+            {/* Brilho suave no miolo: dá profundidade sem desenhar nada por
+                cima dos dados. */}
+            <RadialGradient id="miolo" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={ACENTO} stopOpacity={0.14} />
+              <Stop offset="100%" stopColor={ACENTO} stopOpacity={0} />
+            </RadialGradient>
+            {/* O preenchimento do polígono desce de cima para baixo: a figura
+                ganha volume e deixa de parecer um adesivo chapado. */}
+            <LinearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#A9C2F2" stopOpacity={0.42} />
+              <Stop offset="100%" stopColor="#6E8BC4" stopOpacity={0.16} />
+            </LinearGradient>
+          </Defs>
+
+          <Polygon points={geo.borda} fill="url(#miolo)" />
+
           {/* Raios: dão a direção de cada eixo sem competir com o polígono. */}
           {eixos.map((e, i) => {
-            const p = pontoNoEixo(i, total, 1, raio, centro)
+            const p = pontoNoEixo(i, total, 1, raio, centro, giro)
             return (
-              <Line key={`raio-${e.chave}`} x1={centro.x} y1={centro.y} x2={p.x} y2={p.y} stroke={TRILHO} strokeWidth={1} />
+              <Line
+                key={`raio-${e.chave}`}
+                x1={centro.x}
+                y1={centro.y}
+                x2={p.x}
+                y2={p.y}
+                stroke={TRILHO}
+                strokeWidth={1}
+              />
             )
           })}
 
@@ -134,40 +158,57 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
               vértice, e um anel circular passaria por dentro das arestas — um
               valor que encosta no limiar pareceria estar abaixo dele. */}
           <Polygon points={geo.borda} fill="none" stroke={TRILHO} strokeWidth={1} />
-          <Polygon points={geo.critico} fill="none" stroke={CORES.critico} strokeWidth={1} strokeOpacity={0.4} strokeDasharray="3 4" />
-          <Polygon points={geo.bom} fill="none" stroke={CORES.bom} strokeWidth={1} strokeOpacity={0.4} strokeDasharray="3 4" />
+          <Polygon points={geo.meio} fill="none" stroke={TRILHO} strokeWidth={1} strokeOpacity={0.6} />
+          <Polygon
+            points={geo.critico}
+            fill="none"
+            stroke={CORES.critico}
+            strokeWidth={1}
+            strokeOpacity={0.45}
+            strokeDasharray="2 5"
+          />
+          <Polygon
+            points={geo.bom}
+            fill="none"
+            stroke={CORES.bom}
+            strokeWidth={1}
+            strokeOpacity={0.45}
+            strokeDasharray="2 5"
+          />
 
           {/* O polígono dos valores: ele dá a silhueta; quem informa é o número. */}
           <Polygon
             points={geo.valores}
-            fill="#7F9AC4"
-            fillOpacity={0.22}
-            stroke="#7F9AC4"
-            strokeWidth={2}
+            fill="url(#area)"
+            stroke={ACENTO}
+            strokeWidth={2.5}
             strokeLinejoin="round"
           />
 
           {eixos.map((e, i) => {
-            const p = pontoNoEixo(i, total, fracaoDoValor(e.valor), raio, centro)
+            const p = pontoNoEixo(i, total, fracaoDoValor(e.valor), raio, centro, giro)
+            const cor = corDoValor(e.valor, limiares, CORES)
             return (
               <React.Fragment key={`ponto-${e.chave}`}>
-                {/* Anel escuro em volta do ponto: sem ele, um vértice sobre a
-                    linha do polígono some dentro do próprio traço. */}
-                <Circle cx={p.x} cy={p.y} r={5.5} fill="#161728" />
-                <Circle cx={p.x} cy={p.y} r={4} fill={corDoValor(e.valor, limiares, CORES)} />
+                {/* Halo + anel escuro: sem eles, um vértice sobre a linha do
+                    polígono some dentro do próprio traço. */}
+                <Circle cx={p.x} cy={p.y} r={9} fill={cor} fillOpacity={0.18} />
+                <Circle cx={p.x} cy={p.y} r={5.5} fill="#12142A" />
+                <Circle cx={p.x} cy={p.y} r={4} fill={cor} />
               </React.Fragment>
             )
           })}
         </Svg>
 
-        {/* Rótulo + número + alvo de toque, tudo na mesma caixa.
+        {/* Nome + número + alvo de toque na mesma caixa.
             ⚠️ Juntos de propósito: o ponto do vértice tem 4px e ninguém acerta
-            nele. Com o rótulo sendo o alvo, o toque fica do tamanho de uma
+            nele. Com o nome sendo o alvo, o toque fica do tamanho de uma
             palavra — e fica óbvio o que é tocável. */}
         {eixos.map((e, i) => {
-          const r = rotuloDoEixo(i, total, raio, centro, 10)
+          const r = rotuloDoEixo(i, total, raio, centro, FOLGA_ROTULO, giro)
+          const largura = Math.ceil(medirRotulo(e.rotulo))
           const esquerda =
-            r.ancora === 'start' ? r.x : r.ancora === 'end' ? r.x - LARGURA_ROTULO : r.x - LARGURA_ROTULO / 2
+            r.ancora === 'start' ? r.x : r.ancora === 'end' ? r.x - largura : r.x - largura / 2
           const alinhamento = r.ancora === 'start' ? 'left' : r.ancora === 'end' ? 'right' : 'center'
           const temValor = e.valor !== null && e.valor !== undefined
           const Caixa: any = aoTocarEixo ? Pressable : View
@@ -180,14 +221,14 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
               style={{
                 position: 'absolute',
                 left: esquerda,
-                top: r.y - 18,
-                width: LARGURA_ROTULO,
-                alignItems: alinhamento === 'left' ? 'flex-start' : alinhamento === 'right' ? 'flex-end' : 'center',
+                top: r.y - 17,
+                width: largura,
+                alignItems:
+                  alinhamento === 'left' ? 'flex-start' : alinhamento === 'right' ? 'flex-end' : 'center',
               }}
             >
-              {/* A marca: 3 letras. O nome inteiro está na legenda abaixo. */}
-              <Text style={[s.marca, { textAlign: alinhamento }]} numberOfLines={1}>
-                {e.rotulo.slice(0, 3)}
+              <Text style={[s.rotulo, { textAlign: alinhamento }]} numberOfLines={1}>
+                {e.rotulo}
               </Text>
               {/* ⚠️ O NÚMERO, sempre. É ele que faz a roda não depender nem da
                   área (que engana) nem da cor (verde e âmbar quase se encostam
@@ -200,69 +241,48 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
         })}
       </View>
 
-      {/* ⚠️ A LEGENDA É PARTE DO GRÁFICO, não um apêndice: ela resolve a marca
-          de 3 letras do eixo e carrega o nome por extenso, que não cabe lá.
-          Também é um alvo de toque confortável — bem maior que o ponto de 4px
-          do vértice. */}
-      <View style={s.lista}>
-        {eixos.map((e) => {
-          const temValor = e.valor !== null && e.valor !== undefined
-          const Caixa: any = aoTocarEixo ? Pressable : View
-          return (
-            <Caixa
-              key={`lista-${e.chave}`}
-              onPress={aoTocarEixo ? () => aoTocarEixo(e.chave) : undefined}
-              accessibilityRole={aoTocarEixo ? 'button' : undefined}
-              style={s.listaItem}
-            >
-              <View style={[s.bolinha, { backgroundColor: corDoValor(e.valor, limiares, CORES) }]} />
-              <Text style={s.listaNome} numberOfLines={1}>{e.rotulo}</Text>
-              <Text style={[s.listaValor, { color: temValor ? TINTA_FORTE : CORES.vazio }]}>
-                {temValor ? Math.round(Number(e.valor)) : '—'}
-              </Text>
-            </Caixa>
-          )
-        })}
+      {/* O que os anéis tracejados significam. Sem isto são dois contornos
+          decorativos e a escala perde a referência. */}
+      <View style={s.faixas}>
+        <View style={s.faixaItem}>
+          <View style={[s.tracinho, { backgroundColor: CORES.critico }]} />
+          <Text style={s.faixaTexto}>{limiares.criticalBelow}</Text>
+        </View>
+        <View style={s.faixaItem}>
+          <View style={[s.tracinho, { backgroundColor: CORES.bom }]} />
+          <Text style={s.faixaTexto}>{limiares.positiveAbove}</Text>
+        </View>
+        {legenda ? <Text style={s.rodape}>{legenda}</Text> : null}
       </View>
-
-      {/* O que os dois anéis tracejados querem dizer. Sem isto são dois
-          contornos decorativos e a escala perde a referência. */}
-      <Text style={s.faixas}>
-        {`tracejado vermelho ${limiares.criticalBelow} · verde ${limiares.positiveAbove}`}
-      </Text>
-
-      {legenda ? <Text style={s.rodape}>{legenda}</Text> : null}
     </View>
   )
 }
 
 const s = StyleSheet.create({
   bloco: {
-    backgroundColor: '#161728',
-    borderRadius: 12,
+    backgroundColor: '#13162B',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#252b38',
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    borderColor: '#242B40',
+    paddingTop: 14,
+    paddingBottom: 10,
+    paddingHorizontal: 8,
     marginBottom: 12,
   },
   titulo: {
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     color: TINTA,
+    textAlign: 'center',
     marginBottom: 2,
   },
-  marca: { fontSize: 10, color: TINTA, lineHeight: 12 },
-  valor: { fontSize: 13, fontWeight: '700' },
-  lista: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
-  // Duas colunas: oito itens numa coluna só esticariam o card demais, e em
-  // quatro o nome por extenso voltaria a nao caber.
-  listaItem: { flexDirection: 'row', alignItems: 'center', width: '50%', paddingVertical: 4, paddingRight: 6 },
-  bolinha: { width: 7, height: 7, borderRadius: 4, marginRight: 6 },
-  listaNome: { flex: 1, fontSize: 12, color: TINTA },
-  listaValor: { fontSize: 12, fontWeight: '700', marginLeft: 4 },
-  faixas: { fontSize: 10, color: '#5c6477', textAlign: 'center', marginTop: 6 },
-  rodape: { fontSize: 11, color: '#5c6477', textAlign: 'center', marginTop: 6 },
+  rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 13 },
+  valor: { fontSize: 15, fontWeight: '800', lineHeight: 18 },
+  faixas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' },
+  faixaItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 7 },
+  tracinho: { width: 10, height: 2, borderRadius: 1, marginRight: 4, opacity: 0.7 },
+  faixaTexto: { fontSize: 10, color: '#5c6477' },
+  rodape: { fontSize: 10, color: '#5c6477', marginLeft: 10 },
 })

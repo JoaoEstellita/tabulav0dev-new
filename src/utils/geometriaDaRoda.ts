@@ -23,9 +23,55 @@ export type Ponto = { x: number; y: number }
  * de atributos, e é o que a referência que o João mandou faz. Sem o `-90°` a
  * primeira área nasceria na direita, e a figura inteira pareceria girada.
  */
-export function anguloDoEixo(indice: number, total: number): number {
+export function anguloDoEixo(indice: number, total: number, giro = 0): number {
   if (total <= 0) return 0
-  return (indice / total) * Math.PI * 2 - Math.PI / 2
+  return ((indice + giro) / total) * Math.PI * 2 - Math.PI / 2
+}
+
+/**
+ * Quantas posições girar a roda para o nome mais longo cair onde há espaço.
+ *
+ * ⚠️ O ângulo inicial é livre, a ORDEM não. Girar o conjunto não reordena nada
+ * — cada área mantém os mesmos vizinhos — mas muda QUAL posição cada nome
+ * ocupa, e as posições têm espaço muito diferente: no topo e na base o rótulo
+ * centraliza e dispõe da largura toda; nas laterais ele só tem o que sobra de
+ * um lado.
+ *
+ * Medido: "Espiritualidade" caía exatamente na lateral esquerda e sozinha
+ * limitava o diâmetro a 140px — numa tela de 320pt não cabia de jeito nenhum.
+ * Girando 6 posições os nomes longos vão para topo e base, e o diâmetro vai a
+ * 224px com o nome INTEIRO. O giro é calculado, não fixo, porque o tamanho dos
+ * rótulos muda com o idioma.
+ */
+export function melhorGiro(
+  rotulos: string[],
+  lado: number,
+  medirTexto: (texto: string) => number,
+  folga: number,
+): { giro: number; raio: number } {
+  const total = rotulos.length
+  if (!total || lado <= 0) return { giro: 0, raio: 0 }
+  const centro = lado / 2
+  let melhor = { giro: 0, raio: 0 }
+
+  for (let giro = 0; giro < total; giro++) {
+    let raio = 0
+    for (let r = Math.floor(centro * 0.2); r < centro; r++) {
+      let cabe = true
+      for (let i = 0; i < total; i++) {
+        const cos = Math.cos(anguloDoEixo(i, total, giro))
+        const x = centro + cos * (r + folga)
+        // No topo e na base o texto centraliza: o espaço é o dobro da menor
+        // sobra. Nas laterais ele cresce para fora, e só conta aquele lado.
+        const disponivel =
+          Math.abs(cos) < 0.25 ? 2 * Math.min(x, lado - x) : cos > 0 ? lado - x : x
+        if (medirTexto(rotulos[i]) > disponivel) { cabe = false; break }
+      }
+      if (cabe) raio = r
+    }
+    if (raio > melhor.raio) melhor = { giro, raio }
+  }
+  return melhor
 }
 
 /** Prende o valor entre 0 e 100. Nulo e lixo viram 0 — nunca NaN na tela. */
@@ -50,15 +96,16 @@ export function pontoNoEixo(
   fracao: number,
   raio: number,
   centro: Ponto,
+  giro = 0,
 ): Ponto {
-  const a = anguloDoEixo(indice, total)
+  const a = anguloDoEixo(indice, total, giro)
   const r = Math.max(0, Math.min(1, fracao)) * raio
   return { x: centro.x + Math.cos(a) * r, y: centro.y + Math.sin(a) * r }
 }
 
 /** Os vértices do polígono dos valores, na ordem dos eixos. */
-export function poligonoDosValores(eixos: EixoDaRoda[], raio: number, centro: Ponto): Ponto[] {
-  return eixos.map((e, i) => pontoNoEixo(i, eixos.length, fracaoDoValor(e.valor), raio, centro))
+export function poligonoDosValores(eixos: EixoDaRoda[], raio: number, centro: Ponto, giro = 0): Ponto[] {
+  return eixos.map((e, i) => pontoNoEixo(i, eixos.length, fracaoDoValor(e.valor), raio, centro, giro))
 }
 
 /**
@@ -68,8 +115,8 @@ export function poligonoDosValores(eixos: EixoDaRoda[], raio: number, centro: Po
  * e um anel circular passaria por dentro das arestas, fazendo um valor que
  * encosta no limiar parecer abaixo dele.
  */
-export function anelDeReferencia(fracao: number, total: number, raio: number, centro: Ponto): Ponto[] {
-  return Array.from({ length: total }, (_, i) => pontoNoEixo(i, total, fracao, raio, centro))
+export function anelDeReferencia(fracao: number, total: number, raio: number, centro: Ponto, giro = 0): Ponto[] {
+  return Array.from({ length: total }, (_, i) => pontoNoEixo(i, total, fracao, raio, centro, giro))
 }
 
 /** "x,y x,y ..." — o formato que o `points` do SVG espera. */
@@ -91,8 +138,9 @@ export function rotuloDoEixo(
   raio: number,
   centro: Ponto,
   folga: number,
+  giro = 0,
 ): { x: number; y: number; ancora: 'start' | 'middle' | 'end' } {
-  const a = anguloDoEixo(indice, total)
+  const a = anguloDoEixo(indice, total, giro)
   const cos = Math.cos(a)
   const p = { x: centro.x + cos * (raio + folga), y: centro.y + Math.sin(a) * (raio + folga) }
   // A tolerância evita que um eixo quase vertical (cos ~ 0) seja tratado como
