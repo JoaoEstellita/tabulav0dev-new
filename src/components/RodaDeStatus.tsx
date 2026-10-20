@@ -40,8 +40,6 @@ type Props = {
   eixos: EixoDaRoda[]
   /** Abre a leitura daquela área. Sem isto, a roda é só enfeite. */
   aoTocarEixo?: (chave: string) => void
-  titulo?: string
-  legenda?: string
 }
 
 // ⚠️ As MESMAS cores dos cards de área. Uma terceira régua de cor na mesma tela
@@ -71,7 +69,7 @@ const FONTE_ROTULO = 11
 const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.55 + 2
 const FOLGA_ROTULO = 12
 
-export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Props) {
+export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
   const { width } = useWindowDimensions()
 
   // O teto evita que num tablet a roda vire pôster; o piso evita que num
@@ -117,8 +115,6 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
 
   return (
     <View style={s.bloco}>
-      {titulo ? <Text style={s.titulo}>{titulo}</Text> : null}
-
       <View style={{ width: lado, height: lado, alignSelf: 'center' }}>
         <Svg width={lado} height={lado}>
           <Defs>
@@ -193,7 +189,9 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
                 {/* Halo + anel escuro: sem eles, um vértice sobre a linha do
                     polígono some dentro do próprio traço. */}
                 <Circle cx={p.x} cy={p.y} r={9} fill={cor} fillOpacity={0.18} />
-                <Circle cx={p.x} cy={p.y} r={5.5} fill="#12142A" />
+                {/* O anel escuro acompanha o FUNDO DO APP (o degrade vai de
+                    #0F0F23 a #1A1A3A), nao mais o fundo de um card. */}
+                <Circle cx={p.x} cy={p.y} r={5.5} fill="#141731" />
                 <Circle cx={p.x} cy={p.y} r={4} fill={cor} />
               </React.Fragment>
             )
@@ -241,48 +239,18 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, titulo, legenda }: Pr
         })}
       </View>
 
-      {/* O que os anéis tracejados significam. Sem isto são dois contornos
-          decorativos e a escala perde a referência. */}
-      <View style={s.faixas}>
-        <View style={s.faixaItem}>
-          <View style={[s.tracinho, { backgroundColor: CORES.critico }]} />
-          <Text style={s.faixaTexto}>{limiares.criticalBelow}</Text>
-        </View>
-        <View style={s.faixaItem}>
-          <View style={[s.tracinho, { backgroundColor: CORES.bom }]} />
-          <Text style={s.faixaTexto}>{limiares.positiveAbove}</Text>
-        </View>
-        {legenda ? <Text style={s.rodape}>{legenda}</Text> : null}
-      </View>
     </View>
   )
 }
 
 const s = StyleSheet.create({
+  // ⚠️ SEM moldura: a roda assenta direto no fundo do app, sem card em volta.
+  // Por isso nada de `backgroundColor` nem `borderWidth` aqui — qualquer um dos
+  // dois recortaria um retangulo sobre o degrade da tela.
   bloco: {
-    backgroundColor: '#13162B',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#242B40',
-    paddingTop: 14,
-    paddingBottom: 10,
-    paddingHorizontal: 8,
-    marginBottom: 12,
-  },
-  titulo: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    color: TINTA,
-    textAlign: 'center',
-    marginBottom: 2,
+    paddingVertical: 8,
+    marginBottom: 4,
   },
   rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 13 },
   valor: { fontSize: 15, fontWeight: '800', lineHeight: 18 },
-  faixas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' },
-  faixaItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 7 },
-  tracinho: { width: 10, height: 2, borderRadius: 1, marginRight: 4, opacity: 0.7 },
-  faixaTexto: { fontSize: 10, color: '#5c6477' },
-  rodape: { fontSize: 10, color: '#5c6477', marginLeft: 10 },
 })

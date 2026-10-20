@@ -688,6 +688,21 @@ export default function HomeScreen() {
             carregado, os cards de status sumiam mesmo havendo dado do backend.
             São seções irmãs, não conteúdo da roda. */}
 
+        {/* ⚠️ A RODA DE STATUS vem ANTES dos cards de área, e sem moldura:
+            ela assenta direto no fundo do app.
+
+            É a MESMA informação dos cards logo abaixo, em outra forma — a roda
+            dá a silhueta do dia de uma olhada, os cards dão o detalhe de cada
+            área. Nessa ordem a leitura vai do todo para a parte; invertida,
+            a pessoa percorria oito fichas antes de ver o conjunto.
+
+            Só aparece com dado — um octógono vazio pareceria defeito. */}
+        {eixosDaRoda.length >= 3 ? (
+          <AnimatedMount>
+            <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
+          </AnimatedMount>
+        ) : null}
+
         {/* ⚠️ O STATUS vem logo DEPOIS DA GRADE, não depois dos cards de
             planeta. A roda e a grade dizem o que o céu faz; o status diz
             onde isso pega na vida — é o fecho dessa leitura. Com os cards
@@ -713,24 +728,6 @@ export default function HomeScreen() {
           </AnimatedMount>
           </View>
         )}
-
-        {/* ⚠️ A RODA DE STATUS vem logo DEPOIS dos cards de área — posição
-            provisória, para irmos ajustando. É a MESMA informação dos cards
-            acima, em outra forma: um retrato de "eu hoje" em vez de oito
-            fichas. Juntas, a lista dá o detalhe e a roda dá a silhueta;
-            separadas por outra seção, pareceriam assuntos diferentes.
-
-            Só aparece com dado — um octógono vazio pareceria defeito. */}
-        {eixosDaRoda.length >= 3 ? (
-          <AnimatedMount>
-            <RodaDeStatus
-              eixos={eixosDaRoda}
-              aoTocarEixo={abrirAreaDaRoda}
-              titulo={tl('O seu retrato de hoje', 'Your portrait today', 'Tu retrato de hoy', 'Il tuo ritratto di oggi')}
-              legenda={tl('Toque numa área para ler', 'Tap an area to read', 'Toca un area para leer', 'Tocca un area per leggere')}
-            />
-          </AnimatedMount>
-        ) : null}
 
         {/* ⚠️ O filtro NÃO fica mais aqui: ele é passado para dentro da roda,
             em `entreRodaEGrade`. A grade de aspectos mora no mesmo componente
