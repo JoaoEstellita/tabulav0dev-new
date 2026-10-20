@@ -66,8 +66,20 @@ const FONTE_ROTULO = 11
  * fonte do sistema; errar para mais só encolhe um pouco a roda, enquanto errar
  * para menos cortaria o nome — então o erro aceitável tem lado.
  */
-const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.55 + 2
-const FOLGA_ROTULO = 12
+/**
+ * ⚠️ O PADDING DO CHIP ENTRA NA MEDIDA.
+ *
+ * Cada área é um botão, e o que a faz parecer botão é o chip em volta. Se a
+ * busca do raio medisse só o texto, os chips estourariam para fora do desenho —
+ * o mesmo erro que já custou duas versões deste componente.
+ *
+ * A folga caiu de 12 para 6 junto: o padding do chip cumpre o papel de afastar
+ * o rótulo da borda que a folga cumpria antes. Medido, o par custa pouco —
+ * diâmetro de 224 para 212 numa tela de 390pt.
+ */
+const PADDING_CHIP = 6
+const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.55 + 2 + PADDING_CHIP * 2
+const FOLGA_ROTULO = 6
 
 export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
   const { width } = useWindowDimensions()
@@ -207,24 +219,29 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
           const largura = Math.ceil(medirRotulo(e.rotulo))
           const esquerda =
             r.ancora === 'start' ? r.x : r.ancora === 'end' ? r.x - largura : r.x - largura / 2
-          const alinhamento = r.ancora === 'start' ? 'left' : r.ancora === 'end' ? 'right' : 'center'
+          // Dentro do chip o texto sempre centraliza; quem muda com o lado da
+          // roda e a POSICAO do chip, nao o alinhamento do conteudo.
+          const alinhamento = 'center' as const
           const temValor = e.valor !== null && e.valor !== undefined
-          const Caixa: any = aoTocarEixo ? Pressable : View
-          return (
-            <Caixa
-              key={`rotulo-${e.chave}`}
-              onPress={aoTocarEixo ? () => aoTocarEixo(e.chave) : undefined}
-              accessibilityRole={aoTocarEixo ? 'button' : undefined}
-              accessibilityLabel={`${e.rotulo}: ${temValor ? Math.round(Number(e.valor)) : 'sem dado'}`}
-              style={{
-                position: 'absolute',
-                left: esquerda,
-                top: r.y - 17,
-                width: largura,
-                alignItems:
-                  alinhamento === 'left' ? 'flex-start' : alinhamento === 'right' ? 'flex-end' : 'center',
-              }}
-            >
+          const cor = corDoValor(e.valor, limiares, CORES)
+          // ⚠️ O chip É o sinal de que dá para tocar. Sem ele, oito textos
+          // soltos ao redor de um desenho não se parecem com botões, e a leitura
+          // completa de cada área ficava escondida atrás de um toque que ninguém
+          // adivinha. A borda leva a COR DA FAIXA, então o chip também repete o
+          // status sem gastar mais espaço.
+          const estilo = (pressed: boolean) => [
+            s.chip,
+            {
+              position: 'absolute' as const,
+              left: esquerda,
+              top: r.y - 19,
+              width: largura,
+              borderColor: pressed ? cor : `${cor}66`,
+              backgroundColor: pressed ? 'rgba(155,180,232,0.18)' : 'rgba(255,255,255,0.04)',
+            },
+          ]
+          const conteudo = (
+            <>
               <Text style={[s.rotulo, { textAlign: alinhamento }]} numberOfLines={1}>
                 {e.rotulo}
               </Text>
@@ -234,7 +251,33 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
               <Text style={[s.valor, { color: temValor ? TINTA_FORTE : CORES.vazio }]}>
                 {temValor ? Math.round(Number(e.valor)) : '—'}
               </Text>
-            </Caixa>
+            </>
+          )
+
+          // ⚠️ `View` NÃO aceita `style` como função — só `Pressable` aceita.
+          // Trocar o componente por uma variável `any` e passar a função nos dois
+          // casos compila (o `any` engole) e quebra em runtime quando a roda é
+          // montada sem `aoTocarEixo`.
+          if (!aoTocarEixo) {
+            return (
+              <View key={`rotulo-${e.chave}`} style={estilo(false)}>
+                {conteudo}
+              </View>
+            )
+          }
+
+          return (
+            <Pressable
+              key={`rotulo-${e.chave}`}
+              onPress={() => aoTocarEixo(e.chave)}
+              accessibilityRole="button"
+              accessibilityLabel={`${e.rotulo}: ${temValor ? Math.round(Number(e.valor)) : 'sem dado'}`}
+              android_ripple={{ color: 'rgba(155,180,232,0.25)', borderless: false }}
+              hitSlop={6}
+              style={({ pressed }) => estilo(pressed)}
+            >
+              {conteudo}
+            </Pressable>
           )
         })}
       </View>
@@ -250,6 +293,14 @@ const s = StyleSheet.create({
   bloco: {
     paddingVertical: 8,
     marginBottom: 4,
+  },
+  chip: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: PADDING_CHIP,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
   },
   rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 13 },
   valor: { fontSize: 15, fontWeight: '800', lineHeight: 18 },
