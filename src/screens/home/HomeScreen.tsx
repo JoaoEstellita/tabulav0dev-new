@@ -649,6 +649,25 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* ⚠️ A RODA DE STATUS vem logo depois de "O seu dia" e ANTES da roda
+            natal — e sem moldura, assentando direto no fundo do app.
+
+            A ordem de leitura fica: a frase diz o que muda hoje, a roda mostra
+            o retrato do dia inteiro de uma olhada, e só então vem o céu (roda
+            natal, grade) e o detalhe por área. Do resumo ao detalhe, sem a
+            pessoa precisar percorrer oito fichas antes de ver o conjunto.
+
+            ⚠️ São DUAS rodas na mesma tela, e isso é deliberado: esta é a sua
+            VIDA em oito áreas; a de baixo é o CÉU. Não são a mesma coisa em
+            escalas diferentes — por isso esta não tem moldura e aquela tem.
+
+            Só aparece com dado — um octógono vazio pareceria defeito. */}
+        {eixosDaRoda.length >= 3 ? (
+          <AnimatedMount>
+            <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
+          </AnimatedMount>
+        ) : null}
+
         {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
         {transitData && (
           <View {...aWheel}>
@@ -688,20 +707,6 @@ export default function HomeScreen() {
             carregado, os cards de status sumiam mesmo havendo dado do backend.
             São seções irmãs, não conteúdo da roda. */}
 
-        {/* ⚠️ A RODA DE STATUS vem ANTES dos cards de área, e sem moldura:
-            ela assenta direto no fundo do app.
-
-            É a MESMA informação dos cards logo abaixo, em outra forma — a roda
-            dá a silhueta do dia de uma olhada, os cards dão o detalhe de cada
-            área. Nessa ordem a leitura vai do todo para a parte; invertida,
-            a pessoa percorria oito fichas antes de ver o conjunto.
-
-            Só aparece com dado — um octógono vazio pareceria defeito. */}
-        {eixosDaRoda.length >= 3 ? (
-          <AnimatedMount>
-            <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
-          </AnimatedMount>
-        ) : null}
 
         {/* ⚠️ O STATUS vem logo DEPOIS DA GRADE, não depois dos cards de
             planeta. A roda e a grade dizem o que o céu faz; o status diz
