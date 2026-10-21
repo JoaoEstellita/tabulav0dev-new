@@ -489,6 +489,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const menoresFora = <T extends { type?: string }>(list: T[]) =>
     mostrarMenores ? list : list.filter((a) => !isMinorAspect(String(a?.type || '')))
 
+
   // Aspectos com nódulos na BI-RODA: trânsito→nódulo-natal + nódulo-trânsito→natal.
   const tnAspectsWithNodes = useMemo(() => {
     if (!showTransits) return tnAspects
@@ -511,6 +512,27 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     }
     return [...tnAspects, ...extra]
   }, [showTransits, tnAspects, transitPlanets, natalPlanets, natalNorthNode, currentNorthNode])
+
+  /**
+   * Planetas em trânsito que NÃO entram na grade hoje.
+   *
+   * ⚠️ A grade só cria linha para quem tem ao menos um aspecto, e isso é certo
+   * — linha vazia é ruído. Mas o efeito colateral é invisível: com os aspectos
+   * menores ocultos, um planeta cujos únicos aspectos de hoje são menores
+   * DESAPARECE inteiro da tabela, enquanto continua visível nas colunas do
+   * natal. Lê como se o app tivesse perdido o planeta.
+   *
+   * Relatado: Mercúrio sumiu das linhas num dia em que fazia só aspectos
+   * menores, com 16 deles ocultos pelo filtro.
+   */
+  const foraDaGrade = useMemo(() => {
+    if (!showTransits) return [] as string[]
+    const comAspecto = new Set(menoresFora(tnAspectsWithNodes).map((a: any) => String(a?.planet1 || '')))
+    return transitGridPoints
+      .map((p) => p.name)
+      .filter((nome) => !comAspecto.has(nome))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showTransits, tnAspectsWithNodes, transitGridPoints, mostrarMenores])
 
   // Dimensões do SVG. Na bi-roda o natal encolhe (scale) p/ abrir o anel externo.
   // NITIDEZ: tudo que define o desenho cai em pixel inteiro.
@@ -1164,6 +1186,27 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 onSelectCell={openTransitAspectModal}
                 onSelectPlanet={setPlanetaDaGrade}
               />
+              {/* ⚠️ Sem esta linha, o planeta ausente parece defeito do app. Com
+                  ela, vira informação: hoje ele não toca o mapa. A redação muda
+                  com o filtro — com os menores ocultos seria FALSO dizer "sem
+                  aspecto", porque ele tem; só não tem dos maiores. */}
+              {foraDaGrade.length ? (
+                <Text style={styles.aspectGridHint}>
+                  {mostrarMenores
+                    ? tl(
+                        `Sem aspecto hoje: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                        `No aspect today: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                        `Sin aspecto hoy: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                        `Senza aspetti oggi: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                      )
+                    : tl(
+                        `Sem aspecto maior hoje: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Ligue os aspectos menores para ver os deles.`,
+                        `No major aspect today: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Turn on minor aspects to see theirs.`,
+                        `Sin aspecto mayor hoy: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Activa los aspectos menores para ver los suyos.`,
+                        `Senza aspetti maggiori oggi: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Attiva gli aspetti minori per vedere i loro.`,
+                      )}
+                </Text>
+              ) : null}
               <ControleMenores
                 mostrar={mostrarMenores}
                 alternar={alternarMenores}

@@ -59,7 +59,7 @@ const TINTA = '#8892a4'
 const TINTA_FORTE = '#F2F5FA'
 const ACENTO = '#9BB4E8'
 
-const FONTE_ROTULO = 11
+const FONTE_ROTULO = 10
 /**
  * ⚠️ Medida APROXIMADA do texto, porque em React Native não dá para medir antes
  * de renderizar. O fator 0.55 da largura por caractere é conservador para a
@@ -78,7 +78,19 @@ const FONTE_ROTULO = 11
  * diâmetro de 224 para 212 numa tela de 390pt.
  */
 const PADDING_CHIP = 6
-const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.55 + 2 + PADDING_CHIP * 2
+/**
+ * ⚠️ O fator era 0.55 e CORTAVA "Amor" — virava "Am…".
+ *
+ * A média por caractere subestima palavra curta com letra larga: "Amor" tem A
+ * maiúsculo e m, bem acima da média. Como a largura do chip vinha daqui, o chip
+ * nascia estreito demais e o texto era elidido.
+ *
+ * Duas defesas agora: o fator subiu para 0.62, folgado para o pior caso, e o
+ * chip passou a se DIMENSIONAR PELO CONTEÚDO em vez de receber largura fixa —
+ * então esta medida só governa o espaçamento, e uma estimativa um pouco errada
+ * não corta mais nenhum nome.
+ */
+const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.62 + 2 + PADDING_CHIP * 2
 const FOLGA_ROTULO = 6
 
 export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
@@ -115,7 +127,7 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
     return {
       valores: paraPoints(poligonoDosValores(eixos, raio, centro, giro)),
       borda: paraPoints(anelDeReferencia(1, total, raio, centro, giro)),
-      meio: paraPoints(anelDeReferencia(0.5, total, raio, centro, giro)),
+      teias: [0.25, 0.5, 0.75].map((f) => paraPoints(anelDeReferencia(f, total, raio, centro, giro))),
       critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro, giro)),
       bom: paraPoints(anelDeReferencia(limiares.positiveAbove / 100, total, raio, centro, giro)),
     }
@@ -158,15 +170,27 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
                 y2={p.y}
                 stroke={TRILHO}
                 strokeWidth={1}
+                strokeOpacity={0.55}
               />
             )
           })}
 
           {/* ⚠️ Os anéis são POLÍGONOS, não círculos: num radar o valor mora no
               vértice, e um anel circular passaria por dentro das arestas — um
-              valor que encosta no limiar pareceria estar abaixo dele. */}
+              valor que encosta no limiar pareceria estar abaixo dele.
+              Três teias fracas em vez de uma: dão noção de escala sem pedir
+              atenção, como o papel milimetrado atrás de um gráfico. */}
+          {geo.teias.map((pts, k) => (
+            <Polygon
+              key={`teia-${k}`}
+              points={pts}
+              fill="none"
+              stroke={TRILHO}
+              strokeWidth={1}
+              strokeOpacity={0.45}
+            />
+          ))}
           <Polygon points={geo.borda} fill="none" stroke={TRILHO} strokeWidth={1} />
-          <Polygon points={geo.meio} fill="none" stroke={TRILHO} strokeWidth={1} strokeOpacity={0.6} />
           <Polygon
             points={geo.critico}
             fill="none"
@@ -184,7 +208,18 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
             strokeDasharray="2 5"
           />
 
-          {/* O polígono dos valores: ele dá a silhueta; quem informa é o número. */}
+          {/* O polígono dos valores: ele dá a silhueta; quem informa é o número.
+              O traço vai em DUAS camadas — uma larga e quase transparente por
+              baixo faz as vezes de brilho, que o SVG do React Native não tem
+              como sombra. */}
+          <Polygon
+            points={geo.valores}
+            fill="none"
+            stroke={ACENTO}
+            strokeWidth={7}
+            strokeOpacity={0.14}
+            strokeLinejoin="round"
+          />
           <Polygon
             points={geo.valores}
             fill="url(#area)"
@@ -200,11 +235,14 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
               <React.Fragment key={`ponto-${e.chave}`}>
                 {/* Halo + anel escuro: sem eles, um vértice sobre a linha do
                     polígono some dentro do próprio traço. */}
-                <Circle cx={p.x} cy={p.y} r={9} fill={cor} fillOpacity={0.18} />
+                <Circle cx={p.x} cy={p.y} r={10} fill={cor} fillOpacity={0.16} />
                 {/* O anel escuro acompanha o FUNDO DO APP (o degrade vai de
                     #0F0F23 a #1A1A3A), nao mais o fundo de um card. */}
-                <Circle cx={p.x} cy={p.y} r={5.5} fill="#141731" />
-                <Circle cx={p.x} cy={p.y} r={4} fill={cor} />
+                <Circle cx={p.x} cy={p.y} r={6} fill="#141731" />
+                <Circle cx={p.x} cy={p.y} r={4.5} fill={cor} />
+                {/* Ponto claro no centro: o vértice deixa de ser um disco chapado
+                    e passa a ter brilho, como uma conta de vidro. */}
+                <Circle cx={p.x - 1} cy={p.y - 1} r={1.4} fill="#FFFFFF" fillOpacity={0.75} />
               </React.Fragment>
             )
           })}
@@ -216,9 +254,24 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
             palavra — e fica óbvio o que é tocável. */}
         {eixos.map((e, i) => {
           const r = rotuloDoEixo(i, total, raio, centro, FOLGA_ROTULO, giro)
-          const largura = Math.ceil(medirRotulo(e.rotulo))
-          const esquerda =
-            r.ancora === 'start' ? r.x : r.ancora === 'end' ? r.x - largura : r.x - largura / 2
+          /**
+           * ⚠️ Sem `width`: o chip se ajusta ao próprio texto.
+           *
+           * Antes ele recebia a largura ESTIMADA, e quando a estimativa errava
+           * para menos o nome era cortado — foi o que aconteceu com "Amor".
+           * Agora a caixa é presa pelo lado que importa e solta do outro, então
+           * ela cresce o quanto o texto precisar e NUNCA passa da borda:
+           *
+           *   direita  left: x,  right: 0        cresce para a direita, até a borda
+           *   esquerda left: 0,  right: lado-x   cresce para a esquerda, até a borda
+           *   topo/base left: 0, right: 0        centraliza, que é onde o eixo está
+           */
+          const prende =
+            r.ancora === 'start'
+              ? { left: r.x, right: 0, alignItems: 'flex-start' as const }
+              : r.ancora === 'end'
+              ? { left: 0, right: lado - r.x, alignItems: 'flex-end' as const }
+              : { left: 0, right: 0, alignItems: 'center' as const }
           // Dentro do chip o texto sempre centraliza; quem muda com o lado da
           // roda e a POSICAO do chip, nao o alinhamento do conteudo.
           const alinhamento = 'center' as const
@@ -229,15 +282,12 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
           // completa de cada área ficava escondida atrás de um toque que ninguém
           // adivinha. A borda leva a COR DA FAIXA, então o chip também repete o
           // status sem gastar mais espaço.
+          const caixa = { position: 'absolute' as const, top: r.y - 19, ...prende }
           const estilo = (pressed: boolean) => [
             s.chip,
             {
-              position: 'absolute' as const,
-              left: esquerda,
-              top: r.y - 19,
-              width: largura,
-              borderColor: pressed ? cor : `${cor}66`,
-              backgroundColor: pressed ? 'rgba(155,180,232,0.18)' : 'rgba(255,255,255,0.04)',
+              borderColor: pressed ? cor : `${cor}55`,
+              backgroundColor: pressed ? 'rgba(155,180,232,0.20)' : 'rgba(18,22,44,0.72)',
             },
           ]
           const conteudo = (
@@ -248,7 +298,10 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
               {/* ⚠️ O NÚMERO, sempre. É ele que faz a roda não depender nem da
                   área (que engana) nem da cor (verde e âmbar quase se encostam
                   sob protanopia). */}
-              <Text style={[s.valor, { color: temValor ? TINTA_FORTE : CORES.vazio }]}>
+              {/* O número na COR DA FAIXA: o numeral continua sendo o canal que
+                  não depende de cor, então pintá-lo não tira acessibilidade —
+                  e amarra o chip ao ponto correspondente na roda. */}
+              <Text style={[s.valor, { color: temValor ? cor : CORES.vazio }]}>
                 {temValor ? Math.round(Number(e.valor)) : '—'}
               </Text>
             </>
@@ -260,24 +313,25 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
           // montada sem `aoTocarEixo`.
           if (!aoTocarEixo) {
             return (
-              <View key={`rotulo-${e.chave}`} style={estilo(false)}>
-                {conteudo}
+              <View key={`rotulo-${e.chave}`} style={caixa}>
+                <View style={estilo(false)}>{conteudo}</View>
               </View>
             )
           }
 
           return (
-            <Pressable
-              key={`rotulo-${e.chave}`}
-              onPress={() => aoTocarEixo(e.chave)}
-              accessibilityRole="button"
-              accessibilityLabel={`${e.rotulo}: ${temValor ? Math.round(Number(e.valor)) : 'sem dado'}`}
-              android_ripple={{ color: 'rgba(155,180,232,0.25)', borderless: false }}
-              hitSlop={6}
-              style={({ pressed }) => estilo(pressed)}
-            >
-              {conteudo}
-            </Pressable>
+            <View key={`rotulo-${e.chave}`} style={caixa}>
+              <Pressable
+                onPress={() => aoTocarEixo(e.chave)}
+                accessibilityRole="button"
+                accessibilityLabel={`${e.rotulo}: ${temValor ? Math.round(Number(e.valor)) : 'sem dado'}`}
+                android_ripple={{ color: 'rgba(155,180,232,0.25)', borderless: false }}
+                hitSlop={8}
+                style={({ pressed }) => estilo(pressed)}
+              >
+                {conteudo}
+              </Pressable>
+            </View>
           )
         })}
       </View>
@@ -297,9 +351,9 @@ const s = StyleSheet.create({
   chip: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: PADDING_CHIP,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingHorizontal: PADDING_CHIP + 2,
+    paddingVertical: 4,
+    borderRadius: 12,
     borderWidth: 1,
   },
   rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 13 },
