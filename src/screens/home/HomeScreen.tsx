@@ -23,6 +23,7 @@ import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER, getLifeAreaLabelI18n } from '../../constants/lifeAreas'
 import RodaDeStatus from '../../components/RodaDeStatus'
+import ClimaEmocional from '../../components/ClimaEmocional'
 import type { EixoDaRoda } from '../../utils/geometriaDaRoda'
 import FraseDoDia from '../../components/FraseDoDia'
 import { useUserSettings } from '../../hooks/useUserSettings'
@@ -667,6 +668,25 @@ export default function HomeScreen() {
             <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
           </AnimatedMount>
         ) : null}
+
+        {/* ⚠️ O CLIMA EMOCIONAL vem logo depois da roda, e é o MESMO céu em
+            outra pergunta: a roda diz onde o dia pega na vida; estes seis anéis
+            dizem que tom ele tende a ter.
+
+            ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado
+            nenhum sobre o estado emocional real da pessoa. São derivados dos
+            trânsitos, e o componente carrega a linha que diz isso. Se um dia
+            alguém remover aquela linha por achá-la ruído, os números passam a
+            afirmar o que o dado não sustenta.
+
+            `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
+            a frase lá em cima e o clima aqui nunca discordam. */}
+        <AnimatedMount>
+          <ClimaEmocional
+            transitos={transitData?.dailyOverview?.personalTodayRich as any}
+            idioma={language}
+          />
+        </AnimatedMount>
 
         {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
         {transitData && (
