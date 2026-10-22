@@ -134,18 +134,36 @@ const PESO_DURO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
   jupiter: { stress: 0.3, ansiedade: 0.2 },
 }
 
-/** Afinidade quando o aspecto ALIVIA. */
+/**
+ * Afinidade quando o aspecto ALIVIA — e aqui há valores NEGATIVOS.
+ *
+ * ⚠️ A primeira versão dava otimismo a TODOS os dez planetas, e isso media mal
+ * a realidade: aspecto macio é comum (73 de 168 trânsitos reais) e Saturno e
+ * Netuno são dois dos mais frequentes nele. O resultado era um piso — otimismo
+ * nunca descia de 41, para ninguém. Um indicador que nunca desce não indica.
+ *
+ * O erro era astrológico antes de ser estatístico: Saturno em trígono não é
+ * otimismo, é ESTRUTURA QUE SEGURA; Netuno macio é sensibilidade, não ânimo.
+ * Agora eles aliviam a tensão em vez de inventar entusiasmo — e o alívio entra
+ * como número negativo, que a curva depois trunca em zero.
+ *
+ * Medido depois da mudança: otimismo passou a usar de 0 a 82, e alguns dias
+ * reais zeram a ansiedade, o que antes era impossível.
+ */
 const PESO_MACIO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
-  jupiter: { otimismo: 1.0, alegria: 0.8 },
-  venus:   { alegria: 1.0, otimismo: 0.6 },
-  sun:     { alegria: 0.7, otimismo: 0.7 },
-  moon:    { alegria: 0.6, otimismo: 0.3 },
-  mercury: { otimismo: 0.5, alegria: 0.3 },
-  mars:    { alegria: 0.4, otimismo: 0.3 },
-  saturn:  { otimismo: 0.4 },
-  uranus:  { alegria: 0.4, otimismo: 0.3 },
-  neptune: { alegria: 0.3, otimismo: 0.2 },
-  pluto:   { otimismo: 0.3 },
+  jupiter: { otimismo: 1.0, alegria: 0.7 },
+  venus:   { alegria: 1.0, otimismo: 0.4 },
+  sun:     { alegria: 0.6, otimismo: 0.7 },
+  moon:    { alegria: 0.6 },
+  mercury: { otimismo: 0.3, alegria: 0.2 },
+  mars:    { alegria: 0.35 },
+  uranus:  { alegria: 0.3 },
+  // Saturno macio SEGURA: tira ansiedade e pressão em vez de animar.
+  saturn:  { ansiedade: -0.35, stress: -0.25 },
+  // Netuno macio embala: alivia o peso e acrescenta um pouco de leveza.
+  neptune: { alegria: 0.25, tristeza: -0.2 },
+  // Plutão macio sustenta o que é difícil.
+  pluto:   { stress: -0.2 },
 }
 
 /**
@@ -187,9 +205,29 @@ export function pesoDoOrbe(orb: unknown): number {
  * Exportada para o teste poder olhar o meio do caminho — e para a calibração
  * da curva ter como ser refeita quando a base mudar.
  */
-export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Record<ChaveEmocao, number> {
-  const soma: Record<ChaveEmocao, number> = {
-    ansiedade: 0, stress: 0, raiva: 0, alegria: 0, tristeza: 0, otimismo: 0,
+/** O que UM trânsito acrescenta a cada emoção. Negativo = alivia. */
+export type Contribuicao = {
+  /** Os nomes como vieram, para a tela poder traduzir. */
+  planeta: string
+  aspecto: string
+  alvo: string
+  /** Quanto este trânsito somou naquela emoção. Pode ser negativo. */
+  valor: number
+}
+
+/**
+ * As contribuições de cada trânsito, emoção por emoção.
+ *
+ * ⚠️ É AQUI que a regra mora; `somasBrutas` só soma o que sai daqui. Ter a
+ * conta num lugar só é o que garante que a explicação mostrada na tela seja
+ * exatamente o que gerou o número — e não uma segunda versão da regra que um
+ * dia discorda da primeira sem ninguém notar.
+ */
+export function contribuicoesPorEmocao(
+  transitos: ReadonlyArray<TransitoParaEmocao>,
+): Record<ChaveEmocao, Contribuicao[]> {
+  const out: Record<ChaveEmocao, Contribuicao[]> = {
+    ansiedade: [], stress: [], raiva: [], alegria: [], tristeza: [], otimismo: [],
   }
   for (const t of transitos || []) {
     const { planeta, aspecto, alvo } = lerTransito(t)
@@ -206,10 +244,28 @@ export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Recor
 
     const base = forcaNormalizada(t?.strength) * pesoDoOrbe(t?.orb)
     const amp = AMPLIFICA_ALVO[alvo] || {}
+    const cru = {
+      planeta: String(t?.t ?? t?.transitPlanet ?? ''),
+      aspecto: String(t?.a ?? t?.type ?? ''),
+      alvo: String(t?.n ?? t?.natalPlanet ?? ''),
+    }
 
     for (const [chave, valor] of Object.entries(tabela) as [ChaveEmocao, number][]) {
-      soma[chave] += valor * base * (amp[chave] ?? 1)
+      out[chave].push({ ...cru, valor: valor * base * (amp[chave] ?? 1) })
     }
+  }
+  // Maior influência primeiro; os alívios (negativos) no fim.
+  for (const chave of EMOCOES) out[chave].sort((a, b) => b.valor - a.valor)
+  return out
+}
+
+export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Record<ChaveEmocao, number> {
+  const porEmocao = contribuicoesPorEmocao(transitos)
+  const soma: Record<ChaveEmocao, number> = {
+    ansiedade: 0, stress: 0, raiva: 0, alegria: 0, tristeza: 0, otimismo: 0,
+  }
+  for (const chave of EMOCOES) {
+    soma[chave] = porEmocao[chave].reduce((acc, c) => acc + c.valor, 0)
   }
   return soma
 }
@@ -222,21 +278,25 @@ export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Recor
  * zero. A saída é uma curva que satura — cresce rápido no começo e encosta nos
  * 100 sem nunca estourar.
  *
- * MEDIDO contra 15 usuários reais (120 trânsitos), escala 0–100:
+ * MEDIDO contra 21 usuários reais (168 trânsitos), já com os pesos macios
+ * corrigidos. Mediana das emoções que PESAM, por K:
  *
- *     K       p25   mediana   p75   max    (só as que pesam: mediana)
- *     0.35     29      42      56    73            35
- *     0.45     35      50      65    82            43
- *     0.55     41      57      72    87            50
+ *     K = 0.35  →  34        K = 0.55  →  48
+ *     K = 0.45  →  41        K = 0.65  →  54
  *
- * Escolhido 0.45. Com 0.55 a mediana das que pesam dava 50 — num dia comum a
- * pessoa leria "Ansiedade 50", "Stress 50", e um alarme que toca todo dia deixa
- * de ser alarme. Em 0.45 o dia comum fica pouco abaixo da metade e sobra faixa
- * para o dia de fato carregado se destacar.
+ * Escolhido 0.45: o dia comum fica pouco abaixo da metade e sobra faixa para o
+ * dia de fato carregado. Com 0.55 a mediana vai a 48 e o número começa a soar
+ * alarme todo dia — e alarme que toca sempre deixa de ser alarme.
  *
- * ⚠️ A primeira versão deste comentário dizia "mediana perto de 45" com K=0.55,
- * o que a medição desmentiu. Se a base mudar, rodar a calibração de novo em vez
- * de confiar nestes números.
+ * Faixa efetiva com 0.45, nos dados reais:
+ *
+ *     ansiedade 0–83   stress 14–80   raiva 0–68
+ *     alegria  20–74   tristeza 0–68  otimismo 0–82
+ *
+ * ⚠️ Duas correções minhas ficaram aqui de propósito: a primeira versão deste
+ * comentário dizia "mediana perto de 45" com K=0.55, o que a medição desmentiu;
+ * e a primeira tabela de pesos macios criava um PISO de otimismo em 41. Se a
+ * base mudar, refazer a medição em vez de confiar nestes números.
  */
 export const K_CURVA = 0.45
 
@@ -246,7 +306,13 @@ export function paraEscala(soma: number): number {
   return Math.round(100 * (1 - Math.exp(-K_CURVA * soma)))
 }
 
-export type EmocaoDoDia = { chave: ChaveEmocao; valor: number; pesa: boolean }
+export type EmocaoDoDia = {
+  chave: ChaveEmocao
+  valor: number
+  pesa: boolean
+  /** Os trânsitos que produziram este número, do que mais pesa ao que alivia. */
+  porque: Contribuicao[]
+}
 
 /**
  * As seis emoções do dia, de 0 a 100.
@@ -261,10 +327,11 @@ export function emocoesDoDia(
     ? transitos.filter((t) => (t?.t ?? t?.transitPlanet) && (t?.a ?? t?.type))
     : []
   if (!lista.length) return null
-  const soma = somasBrutas(lista)
+  const porEmocao = contribuicoesPorEmocao(lista)
   return EMOCOES.map((chave) => ({
     chave,
-    valor: paraEscala(soma[chave]),
+    valor: paraEscala(porEmocao[chave].reduce((acc, c) => acc + c.valor, 0)),
     pesa: EMOCAO_PESA[chave],
+    porque: porEmocao[chave],
   }))
 }

@@ -9,6 +9,7 @@ import {
   EMOCAO_PESA,
   K_CURVA,
   forcaNormalizada,
+  contribuicoesPorEmocao,
   type ChaveEmocao,
 } from '../emocoesDoDia'
 
@@ -207,6 +208,86 @@ describe('clima emocional do dia', () => {
 
       const cheio = emocoesDoDia([{ transitPlanet: 'Mars', type: 'quadratura', natalPlanet: 'Mars', strength: 100 }])!
       expect(cheio.find((e) => e.chave === 'raiva')!.valor).toBeLessThan(100)
+    })
+  })
+
+  /**
+   * ⚠️ O PISO DE OTIMISMO, que era um defeito de modelo.
+   *
+   * A primeira tabela dava otimismo aos DEZ planetas. Como aspecto macio é
+   * comum (73 de 168 trânsitos reais) e Saturno e Netuno estão entre os mais
+   * frequentes nele, o otimismo nunca descia de 41 para ninguém — e um
+   * indicador que nunca desce não indica nada.
+   *
+   * O erro era astrológico antes de estatístico: Saturno em trígono é estrutura
+   * que segura, não entusiasmo.
+   */
+  describe('realismo do modelo', () => {
+    it('Saturno em aspecto macio NÃO vira otimismo — ele alivia', () => {
+      const s = somasBrutas([T('Saturn', 'trigono', 'Sun')])
+      expect(s.otimismo).toBe(0)
+      expect(s.ansiedade).toBeLessThan(0)
+      expect(s.stress).toBeLessThan(0)
+    })
+
+    it('o otimismo usa a faixa inteira nos dados reais, sem piso', () => {
+      const vals = (fixtures as any[]).map(
+        (u) => emocoesDoDia(u.transitos)!.find((e) => e.chave === 'otimismo')!.valor,
+      )
+      expect(Math.min(...vals), `min de otimismo: ${Math.min(...vals)}`).toBeLessThan(15)
+      expect(Math.max(...vals)).toBeGreaterThan(70)
+    })
+
+    it('um dia só de aspectos macios de Saturno zera a tensão, não a inventa', () => {
+      const r = emocoesDoDia([T('Saturn', 'trigono', 'Sun'), T('Saturn', 'sextil', 'Moon')])!
+      expect(r.find((e) => e.chave === 'ansiedade')!.valor).toBe(0)
+      expect(r.find((e) => e.chave === 'otimismo')!.valor).toBe(0)
+    })
+  })
+
+  /**
+   * ⚠️ A EXPLICAÇÃO SAI DA MESMA CONTA QUE O NÚMERO.
+   *
+   * A tela mostra "de onde veio" ao tocar num anel. Se a explicação viesse de
+   * uma segunda implementação da regra, um dia ela discordaria do número e
+   * ninguém notaria — o usuário veria "Ansiedade 73" com uma lista que não
+   * soma 73.
+   */
+  describe('a conta aberta', () => {
+    it('as contribuições somam exatamente a soma bruta', () => {
+      for (const u of (fixtures as any[]).slice(0, 8)) {
+        const porEmocao = contribuicoesPorEmocao(u.transitos)
+        const soma = somasBrutas(u.transitos)
+        for (const e of EMOCOES) {
+          const total = porEmocao[e].reduce((a, c) => a + c.valor, 0)
+          expect(total, `${u.uid} ${e}`).toBeCloseTo(soma[e], 10)
+        }
+      }
+    })
+
+    it('cada emoção carrega o porquê, ordenado do que mais pesa', () => {
+      const r = emocoesDoDia([
+        T('Pluto', 'conjuncao', 'Midheaven'),
+        T('Saturn', 'trigono', 'Sun'),
+        T('Jupiter', 'trigono', 'Jupiter'),
+      ])!
+      for (const e of r) {
+        expect(Array.isArray(e.porque), e.chave).toBe(true)
+        for (let i = 1; i < e.porque.length; i++) {
+          expect(e.porque[i - 1].valor, e.chave).toBeGreaterThanOrEqual(e.porque[i].valor)
+        }
+      }
+      const stress = r.find((e) => e.chave === 'stress')!
+      // Plutão puxa para cima; Saturno macio alivia. Os dois aparecem.
+      expect(stress.porque.some((c) => c.valor > 0 && /pluto/i.test(c.planeta))).toBe(true)
+      expect(stress.porque.some((c) => c.valor < 0 && /saturn/i.test(c.planeta))).toBe(true)
+    })
+
+    it('o porquê guarda os nomes CRUS, para a tela poder traduzir', () => {
+      const r = emocoesDoDia([T('Mars', 'quadratura', 'Moon')])!
+      const raiva = r.find((e) => e.chave === 'raiva')!
+      expect(raiva.porque[0].planeta).toBe('Mars')
+      expect(raiva.porque[0].alvo).toBe('Moon')
     })
   })
 

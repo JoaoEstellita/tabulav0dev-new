@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildTransitTitle } from '../transitPresentation'
+import { buildTransitTitle, rotuloDeAspecto } from '../transitPresentation'
 
 // Os rótulos "(trânsito)/(natal)" existem porque títulos como "Lua □ Lua" ou
 // "Plutão △ Júpiter" não diziam qual lado era qual. Mas eles SÓ podem aparecer
@@ -55,5 +55,42 @@ describe('buildTransitTitle — rótulos trânsito/natal', () => {
     expect(buildTransitTitle(base, 'es-ES')).toContain('(transito)')
     expect(buildTransitTitle(base, 'it-IT')).toContain('(transito)')
     expect(buildTransitTitle(base, 'it-IT')).toContain('(natale)')
+  })
+})
+
+/**
+ * ⚠️ O token do motor NÃO é texto de tela.
+ *
+ * `transitosRicos` grava `oposicao`, `quincuncio`, `trigono` — sem acento — e o
+ * caminho do forecast grava em inglês (`square`, `trine`). Toda tela que mostrar
+ * o token direto escreve errado em pt-BR, e isso não quebra nada: só aparece
+ * torto para o usuário.
+ */
+describe('rótulo do aspecto', () => {
+  it('acentua o token cru do motor em pt-BR', () => {
+    expect(rotuloDeAspecto('oposicao')).toBe('Oposição')
+    expect(rotuloDeAspecto('quincuncio')).toBe('Quincúncio')
+    expect(rotuloDeAspecto('trigono')).toBe('Trígono')
+    expect(rotuloDeAspecto('conjuncao')).toBe('Conjunção')
+  })
+
+  it('aceita o token em inglês que vem do forecast', () => {
+    expect(rotuloDeAspecto('square')).toBe('Quadratura')
+    expect(rotuloDeAspecto('trine')).toBe('Trígono')
+    expect(rotuloDeAspecto('opposition')).toBe('Oposição')
+  })
+
+  it('respeita o idioma, sem tilde em es-ES nem acento em it-IT', () => {
+    expect(rotuloDeAspecto('oposicao', 'es-ES')).toBe('Oposicion')
+    expect(rotuloDeAspecto('conjuncao', 'it-IT')).toBe('Congiunzione')
+    expect(rotuloDeAspecto('quadratura', 'en-US')).toBe('Square')
+  })
+
+  it('devolve vazio para entrada vazia, e devolve o texto quando não conhece', () => {
+    expect(rotuloDeAspecto('')).toBe('')
+    expect(rotuloDeAspecto(null)).toBe('')
+    expect(rotuloDeAspecto(undefined)).toBe('')
+    // Melhor mostrar o que veio do que um rótulo inventado.
+    expect(rotuloDeAspecto('paralelo')).toBe('paralelo')
   })
 })

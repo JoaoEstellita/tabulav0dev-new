@@ -139,6 +139,22 @@ function normalizeAspectToken(value: string): string {
   return normalized
 }
 
+/**
+ * O nome do aspecto como se escreve, no idioma do app.
+ *
+ * ⚠️ O motor grava o token SEM acento (`oposicao`, `quincuncio`) e, em alguns
+ * caminhos, em inglês (`square`, `trine`). Qualquer tela que mostre o token cru
+ * escreve errado em pt-BR. A tabela acentuada já existia aqui, só era privada —
+ * exportar daqui evita uma quarta cópia dos mesmos nove rótulos no projeto.
+ */
+export function rotuloDeAspecto(value: unknown, language: AppLanguage = 'pt-BR'): string {
+  const bruto = normalizeTextToken(value)
+  if (!bruto) return ''
+  const token = normalizeAspectToken(bruto)
+  const dic = ASPECT_LABELS_BY_LANGUAGE[language] || ASPECT_LABELS_BY_LANGUAGE['pt-BR']
+  return dic[token] || ASPECT_LABELS_BY_LANGUAGE['pt-BR'][token] || bruto
+}
+
 export function toRomanHouse(value: unknown): string | null {
   const n = extractHouseNumber(value)
   if (!n) return null
