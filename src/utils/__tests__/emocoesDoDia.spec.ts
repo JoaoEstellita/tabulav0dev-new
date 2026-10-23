@@ -10,6 +10,9 @@ import {
   K_CURVA,
   forcaNormalizada,
   contribuicoesPorEmocao,
+  selecionarTransitos,
+  COTA_LENTOS,
+  COTA_RAPIDOS,
   type ChaveEmocao,
 } from '../emocoesDoDia'
 
@@ -446,6 +449,115 @@ describe('clima emocional do dia', () => {
       const estresse = r.find((e) => e.chave === 'estresse')!
       expect(estresse.porque[0].planeta).toBe('Mars')
       expect(estresse.porque[0].alvo).toBe('Moon')
+    })
+  })
+
+  /**
+   * ⚠️ A COTA DE ENTRADA — o teste mais importante deste arquivo.
+   *
+   * O projeto tem duas listas de trânsito do dia com TAMANHOS diferentes:
+   * `transitosRicos` vem do backend limitado a 8/dia, e `personalTodayRich` vem
+   * do motor local sem teto nenhum. A calibração inteira foi feita contra a de
+   * 8. Alimentar o cálculo com a lista completa não dá erro — só infla toda soma
+   * e satura a curva, e aí os seis anéis mostram 90 e poucos todo dia.
+   *
+   * Medido contra a base multiplicada: uma lista 3× maior leva a mediana de 38
+   * para 77, com 34% dos anéis acima de 90.
+   */
+  describe('a cota de entrada', () => {
+    const muitos = (n: number) => {
+      const planetas = ['Saturn', 'Pluto', 'Uranus', 'Neptune', 'Jupiter', 'Mars', 'Venus', 'Sun', 'Mercury', 'Moon']
+      const aspectos = ['quadratura', 'trigono', 'oposicao', 'sextil', 'conjuncao']
+      return Array.from({ length: n }, (_, i) => ({
+        t: planetas[i % planetas.length],
+        a: aspectos[i % aspectos.length],
+        n: planetas[(i + 3) % planetas.length],
+        orb: (i % 5) * 0.8,
+        strength: 1 - (i % 10) * 0.05,
+      }))
+    }
+
+    it('a lista fica do tamanho da cota, não do tamanho da entrada', () => {
+      for (const n of [10, 25, 60]) {
+        expect(selecionarTransitos(muitos(n)), `entrada de ${n}`)
+          .toHaveLength(COTA_LENTOS + COTA_RAPIDOS)
+      }
+    })
+
+    /**
+     * ⚠️ ESTE é o teste que reproduz o bug ao vivo.
+     *
+     * Não adianta cobrar que nenhum anel passe de 90 — um dia de verdade muito
+     * carregado PODE passar, e deve. O que não pode é o número subir só porque
+     * a lista veio maior. Aqui a base real de cada usuário recebe 50 trânsitos
+     * fracos de enfeite, que é o que acontece quando o app passa a lista
+     * completa em vez do top-8: sem a cota, a mediana vai de 41 para a casa dos
+     * 90 e seis anéis quase cheios aparecem todo dia, sem erro nenhum.
+     */
+    it('encher a lista de trânsitos fracos NÃO infla o resultado', () => {
+      const ruido = Array.from({ length: 50 }, (_, i) => ({
+        t: 'Venus', a: 'sextil', n: 'Jupiter', orb: 7.9, strength: 0.02 + i * 0.0001,
+      }))
+      const limpos: number[] = []
+      const sujos: number[] = []
+      for (const u of fixtures as any[]) {
+        for (const e of emocoesDoDia(u.transitos)!) if (e.pesa) limpos.push(e.valor)
+        for (const e of emocoesDoDia([...u.transitos, ...ruido])!) if (e.pesa) sujos.push(e.valor)
+      }
+      const med = (a: number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)]
+      expect(med(sujos), `mediana limpa ${med(limpos)} · com ruído ${med(sujos)}`)
+        .toBe(med(limpos))
+      expect(Math.max(...sujos)).toBe(Math.max(...limpos))
+    })
+
+    it('num dia sintético extremo o número sobe, mas sem estourar', () => {
+      // 60 trânsitos todos no orbe exato e na força máxima — mais extremo que
+      // qualquer dia da base real. A cota corta em 8; o resto é o céu mesmo.
+      const r = emocoesDoDia(muitos(60))!
+      for (const e of r) expect(e.valor, e.chave).toBeLessThanOrEqual(100)
+      expect(r.some((e) => e.valor === 0), 'nem tudo acende nem no extremo').toBe(true)
+    })
+
+    it('entra o mais forte de cada velocidade, não os oito primeiros', () => {
+      const fraco = { t: 'Saturn', a: 'quadratura', n: 'Sun', orb: 7, strength: 0.1 }
+      const forte = { t: 'Saturn', a: 'quadratura', n: 'Moon', orb: 0.1, strength: 1 }
+      const sel = selecionarTransitos([fraco, fraco, fraco, fraco, fraco, fraco, forte])
+      expect(sel).toContain(forte)
+    })
+
+    it('garante vaga para trânsito RÁPIDO mesmo num dia cheio de lentos', () => {
+      const lentos = Array.from({ length: 20 }, () => ({ t: 'Pluto', a: 'quadratura', n: 'Sun', orb: 0.2, strength: 1 }))
+      const rapido = { t: 'Venus', a: 'trigono', n: 'Venus', orb: 4, strength: 0.4 }
+      const sel = selecionarTransitos([...lentos, rapido])
+      expect(sel, 'o rápido perderia no peso, mas tem vaga própria').toContain(rapido)
+    })
+
+    it('sem rápido nenhum, o lento ocupa as vagas que sobram', () => {
+      const lentos = Array.from({ length: 20 }, (_, i) => ({ t: 'Saturn', a: 'quadratura', n: 'Sun', orb: i * 0.3, strength: 1 }))
+      expect(selecionarTransitos(lentos)).toHaveLength(COTA_LENTOS + COTA_RAPIDOS)
+    })
+
+    /**
+     * ⚠️ `personalTodayRich` não traz o campo `lento` — só `transitosRicos` traz.
+     * Sem deduzir pelo nome do planeta, TODO trânsito do motor local cairia como
+     * rápido, e a cota de lentos ficaria vazia justamente no caminho que o app
+     * usa de verdade.
+     */
+    it('deduz o planeta lento pelo nome quando o campo não vem', () => {
+      const semCampo = [
+        ...Array.from({ length: 8 }, () => ({ transitPlanet: 'Venus', type: 'trigono', natalPlanet: 'Sun', strength: 90 })),
+        { transitPlanet: 'Pluto', type: 'quadratura', natalPlanet: 'Sun', strength: 10 },
+      ]
+      const sel = selecionarTransitos(semCampo)
+      expect(sel.some((t) => t.transitPlanet === 'Pluto'), 'Plutão é lento e tem vaga própria').toBe(true)
+    })
+
+    it('a base de calibração passa inteira pela cota, sem mudar nada', () => {
+      // A base JÁ é o top-8 do backend: a cota tem de ser um no-op nela, senão
+      // a calibração mediria uma lista e a tela mostraria outra.
+      for (const u of fixtures as any[]) {
+        expect(selecionarTransitos(u.transitos), u.uid).toHaveLength(u.transitos.length)
+      }
     })
   })
 

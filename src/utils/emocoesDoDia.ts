@@ -66,6 +66,8 @@ export type TransitoParaEmocao = {
   orb?: number
   /** Peso do trânsito — 0–1 numa forma, 0–100 na outra. */
   strength?: number
+  /** Planeta lento. Só `transitosRicos` traz; no outro caminho é deduzido. */
+  lento?: boolean
 }
 
 /** O planeta, o aspecto e o alvo, venham eles de qual forma vierem. */
@@ -276,6 +278,76 @@ export function pesoDoOrbe(orb: unknown): number {
 }
 
 /**
+ * Planetas LENTOS — a mesma lista do backend (`SLOW_PLANETS` em
+ * `backend/lib/status/status-engine.js`). Mantida aqui porque
+ * `personalTodayRich` NÃO traz o campo `lento`, só `transitosRicos` traz.
+ */
+const LENTOS = new Set(['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'chiron'])
+
+/**
+ * ⚠️ A COTA. Sem ela este cálculo não significa nada.
+ *
+ * O projeto tem duas listas de trânsito do dia, e elas têm TAMANHOS diferentes:
+ *
+ *   `transitosRicos`     backend, LIMITADO a 5 lentos + 3 rápidos  → 8/dia
+ *   `personalTodayRich`  motor local, lista COMPLETA, sem teto      → 25 ou mais
+ *
+ * A soma cresce com o tamanho da lista e a curva satura. A calibração foi feita
+ * contra a lista de 8; medido contra a mesma base multiplicada, uma lista 3×
+ * maior levaria a mediana de 38 para 77, com 34% dos anéis acima de 90. Seis
+ * anéis quase cheios, todo dia, para todo mundo — e nada disso daria erro.
+ *
+ * A saída é aplicar aqui a MESMA seleção que o backend já faz, para que o
+ * número não dependa de qual caminho carregou o dia. A cota também é o que
+ * garante trânsito RÁPIDO todo dia: sem ela os lentos ocupam a lista inteira e
+ * os anéis ancorados em Saturno e Urano ficam parados por semanas.
+ *
+ * ⚠️ MUDAR ESTES NÚMEROS EXIGE RECALIBRAR `K_CURVA`. Eles são o tamanho da
+ * entrada, e o K é função dele. Por isso estão aqui em cima, com nome, e não
+ * enfiados como literal no meio da função.
+ */
+export const COTA_LENTOS = 5
+export const COTA_RAPIDOS = 3
+
+/** Quanto um trânsito pesa na disputa por vaga. */
+function relevancia(t: TransitoParaEmocao): number {
+  return forcaNormalizada(t?.strength) * pesoDoOrbe(t?.orb)
+}
+
+/**
+ * Os trânsitos que entram na conta: os mais fortes de cada velocidade.
+ *
+ * Quando um dos lados não enche a própria cota — um dia com poucos rápidos, por
+ * exemplo — o outro aproveita as vagas, igual ao backend. O total é sempre o
+ * mesmo, que é o ponto.
+ */
+export function selecionarTransitos(
+  transitos: ReadonlyArray<TransitoParaEmocao>,
+): TransitoParaEmocao[] {
+  const lista = [...(transitos || [])].sort((a, b) => relevancia(b) - relevancia(a))
+  const lentos: TransitoParaEmocao[] = []
+  const rapidos: TransitoParaEmocao[] = []
+  for (const t of lista) {
+    // `lento` quando o backend manda; pelo nome do planeta quando não manda.
+    const ehLento = t?.lento ?? LENTOS.has(norm(t?.t ?? t?.transitPlanet))
+    if (ehLento) lentos.push(t)
+    else rapidos.push(t)
+  }
+  const escolhidos = [
+    ...lentos.slice(0, COTA_LENTOS),
+    ...rapidos.slice(0, COTA_RAPIDOS),
+  ]
+  if (escolhidos.length < COTA_LENTOS + COTA_RAPIDOS) {
+    const dentro = new Set(escolhidos)
+    for (const t of lista) {
+      if (escolhidos.length >= COTA_LENTOS + COTA_RAPIDOS) break
+      if (!dentro.has(t)) { escolhidos.push(t); dentro.add(t) }
+    }
+  }
+  return escolhidos
+}
+
+/**
  * A soma bruta de cada emoção, antes de virar 0–100.
  *
  * Exportada para o teste poder olhar o meio do caminho — e para a calibração
@@ -365,9 +437,14 @@ export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Recor
  * dia de fato carregado. Acima disso o número começa a soar alarme todo dia, e
  * alarme que toca sempre deixa de ser alarme.
  *
- * ⚠️ O K DEPENDE DE QUANTOS ANÉIS EXISTEM. Com oito emoções o mesmo dia
- * repartia os pesos em mais casas e cada número caía; com seis, cada anel
- * recebe mais e o K certo é outro. Mudou a lista, remede.
+ * ⚠️ O K DEPENDE DE DUAS COISAS, e as duas mudam sem avisar:
+ *
+ *   1. QUANTOS ANÉIS existem — com oito emoções o mesmo dia repartia os pesos
+ *      em mais casas e cada número caía.
+ *   2. QUANTOS TRÂNSITOS entram — ver `COTA_LENTOS` / `COTA_RAPIDOS`. Dobrar a
+ *      cota praticamente dobra toda soma.
+ *
+ * Mudou qualquer um dos dois, remede. Este K vale para 6 anéis e cota 5+3.
  *
  * Faixa efetiva com 0.55, nos dados reais:
  *
@@ -412,7 +489,8 @@ export function emocoesDoDia(
     ? transitos.filter((t) => (t?.t ?? t?.transitPlanet) && (t?.a ?? t?.type))
     : []
   if (!lista.length) return null
-  const porEmocao = contribuicoesPorEmocao(lista)
+  // ⚠️ A cota entra AQUI, antes de qualquer conta. Ver `selecionarTransitos`.
+  const porEmocao = contribuicoesPorEmocao(selecionarTransitos(lista))
   return EMOCOES.map((chave) => ({
     chave,
     valor: paraEscala(porEmocao[chave].reduce((acc, c) => acc + c.valor, 0)),
