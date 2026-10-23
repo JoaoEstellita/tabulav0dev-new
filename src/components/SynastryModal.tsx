@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useMemo, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { getSynastry, type SynastryResult } from '../services/DiscoveryService'
 import SynastryWheel from './SynastryWheel'
+import { synastryScore } from '../astro/synastryReading'
+import { affinityBand, affinityLabel } from '../theme/lenses'
 import { resolvePlanetInSignText } from '../utils/natalInterpretation'
 
 // Camada de signos (o "tempero"): planeta pessoal → signo pela longitude.
@@ -130,6 +132,23 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
     return typeof m?.longitude === 'number' ? m.longitude : null
   }
 
+  /**
+   * ⚠️ A MESMA conta da lista de grupos, pela MESMA função.
+   *
+   * O percentual já aparecia no card de cada membro ("Afinidade altíssima ·
+   * 95%") e sumia ao abrir a leitura completa — a tela mais detalhada era a
+   * única sem o número que resume tudo, e não havia como saber se o 95% ainda
+   * valia para o que estava na frente.
+   *
+   * Recalcular aqui com outra regra faria a mesma dupla ter dois percentuais
+   * no mesmo app. `synastryScore` é a fonte única; `data.aspects` já vem de
+   * `computeSynastryAspects`, que é o tipo que ela consome.
+   */
+  const score = useMemo(
+    () => (data?.aspects?.length ? synastryScore(data.aspects as any) : null),
+    [data?.aspects],
+  )
+
   const wheelAspects = (data?.aspects || []).map((a) => ({ mine: a.mine, theirs: a.theirs, labelPt: a.aspect, orb: a.orb }))
   const gridAspects = (data?.aspects || []).map((a) => ({ planet1: CAP[a.mine] || a.mine, planet2: CAP[a.theirs] || a.theirs, type: a.aspect, orb: a.orb }))
   const toGrid = (pos?: { planetEn: string; longitude: number }[]) => (pos || []).map((p) => ({ name: CAP[p.planetEn] || p.planetEn, longitude: p.longitude }))
@@ -141,6 +160,21 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
           <Text style={s.title} numberOfLines={1}>{tl('Sinastria', 'Synastry', 'Sinastria', 'Sinastria')}{name ? ` · ${name}` : ''}</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={26} color={C.dim} /></TouchableOpacity>
         </View>
+        {/* ⚠️ Fica FORA do ScrollView, colado ao título: é o resumo da tela
+            inteira, e rolar para ver o número que resume o resto é o avesso de
+            um resumo. Só aparece quando há aspecto — sem eles `synastryScore`
+            devolveria os 50% de reserva, que leem como medição e não são. */}
+        {score ? (
+          <View style={s.afinidade}>
+            <Text style={s.afinidadeTexto}>
+              {`${affinityLabel(affinityBand(score.pct), language)} · ${score.pct}%`}
+            </Text>
+            <Text style={s.afinidadeMeta}>
+              {`${score.harmonics} ${tl('harmônicos', 'harmonic', 'armonicos', 'armonici')} · ${score.tensions} ${tl('tensos', 'tense', 'tensos', 'tesi')}`}
+            </Text>
+          </View>
+        ) : null}
+
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
           {loading ? <ActivityIndicator color={C.gold} style={{ marginTop: 30 }} /> : !data ? (
             <Text style={s.empty}>{tl('Não consegui carregar a sinastria.', 'Could not load synastry.', 'No pude cargar la sinastria.', 'Non ho caricato la sinastria.')}</Text>
@@ -225,6 +259,16 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg, paddingTop: 52 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 },
   title: { color: C.tx, fontSize: 20, fontWeight: '900', flex: 1, marginRight: 12 },
+  afinidade: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 10,
+  },
+  afinidadeTexto: { color: C.gold, fontSize: 16, fontWeight: '800', flexShrink: 1 },
+  afinidadeMeta: { color: C.dim, fontSize: 14 },
   sect: { color: C.dim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, marginTop: 4 },
   scoreBox: { alignItems: 'center', marginBottom: 16 },
   scorePct: { color: C.magenta, fontSize: 40, fontWeight: '900' },

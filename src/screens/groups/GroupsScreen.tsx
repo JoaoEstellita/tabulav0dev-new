@@ -1847,19 +1847,19 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
   /**
    * Os eixos da roda de um membro.
    *
-   * A SOMBRA do movimento sai de `areaTransits[area]`, que o grupo já entrega
-   * por membro com `durationClass` — o mesmo dado que a Home usa, pelo mesmo
-   * caminho. Sem ele a roda desenha igual, só sem a sombra.
+   * A SOMBRA do movimento sai de `lifeAreas[area].activeTransits` — e NÃO de
+   * `areaTransits`, que o backend manda sempre vazio de propósito. Ver o
+   * cabeçalho de `transitosDoMembro`. Sem o dado a roda desenha igual, só sem
+   * a sombra.
    */
   const buildMemberEixos = (member: GroupMember): EixoDaRoda[] => {
-    const areaTransits = (member as any)?.areaTransits || null
     return buildMemberAreaEntries(member).map((entry) => ({
       chave: entry.key,
       rotulo: entry.label,
       // `percentage` já vem 0–100 ou null, e o null segue COMO null: a roda
       // pinta "sem dado" em cinza em vez de fingir zero, que sairia vermelho.
       valor: typeof entry.percentage === "number" ? entry.percentage : null,
-      movimento: movimentoDaArea(transitosDaArea(areaTransits, entry.key) as any),
+      movimento: movimentoDaArea(transitosDaArea(member as any, entry.key) as any),
     }))
   }
 
@@ -2489,15 +2489,15 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                         foto, áreas e sinastria, e no tamanho da Home empurrariam
                         os outros membros para fora da tela.
 
-                        ⚠️ `transitosDoMembro` DEDUPLICA. O grupo entrega os
-                        trânsitos agrupados por área e o mesmo trânsito aparece
-                        em várias — Saturno em quadratura com o Sol conta em
-                        carreira, saúde e família. Concatenar sem deduplicar
-                        faria esse trânsito pesar três vezes e os números sairiam
-                        inflados, sem erro nenhum para denunciar. */}
+                        ⚠️ `transitosDoMembro` faz DUAS coisas que não dá para
+                        pular: lê de `lifeAreas[area].activeTransits` (o campo
+                        `areaTransits` chega sempre vazio, por decisão do
+                        backend) e DEDUPLICA — o mesmo trânsito aparece em
+                        várias áreas, e sem deduplicar ele pesaria uma vez por
+                        área, inflando os números sem erro nenhum. */}
                     {hasStatus ? (
                       <ClimaEmocional
-                        transitos={transitosDoMembro((member as any)?.areaTransits) as any}
+                        transitos={transitosDoMembro(member as any) as any}
                         idioma={language}
                         compacto
                       />
