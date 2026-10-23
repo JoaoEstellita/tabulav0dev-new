@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, useWindowDimensio
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { translatePlanet } from '../utils/astro/pt'
 import { rotuloDeAspecto } from '../utils/transitPresentation'
+import { Ionicons } from '@expo/vector-icons'
+import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { GLOSSARIO_EMOCOES, indiceIdioma } from '../data/emocoesGlossario'
-import { emocoesDoDia, type TransitoParaEmocao, type ChaveEmocao, type EmocaoDoDia } from '../utils/emocoesDoDia'
+import { emocoesDoDia, type TransitoParaEmocao, type ChaveEmocao, type EmocaoDoDia, type Contribuicao } from '../utils/emocoesDoDia'
 
 /**
  * A TENDÊNCIA EMOCIONAL do dia, em seis anéis.
@@ -73,6 +75,7 @@ const TRILHO = '#232B3D'
 export default function ClimaEmocional({ transitos, idioma }: Props) {
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
+  const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
 
   const l = String(idioma || 'pt-BR')
   const tl = (pt: string, en: string, es: string, it: string) =>
@@ -177,7 +180,30 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
         )}
       </Text>
 
-      <DetalheDaEmocao emocao={aberta} aoFechar={() => setAberta(null)} tl={tl} idioma={l} />
+      <DetalheDaEmocao
+        emocao={aberta}
+        aoFechar={() => setAberta(null)}
+        aoLerAspecto={setLeitura}
+        tl={tl}
+        idioma={l}
+      />
+
+      {/* ⚠️ A leitura do aspecto é um modal IRMÃO, não aninhado dentro do
+          detalhe da emoção. Modal dentro de modal no React Native é fonte
+          conhecida de tela presa — o de dentro fecha e o de fora some junto,
+          ou o toque para no lugar errado. Irmãos, cada um fecha sozinho e o
+          detalhe continua aberto por baixo, que é para onde a pessoa volta. */}
+      <Modal visible={!!leitura} transparent animationType="fade" onRequestClose={() => setLeitura(null)}>
+        <Pressable style={s.fundo} onPress={() => setLeitura(null)}>
+          <Pressable style={s.caixa} onPress={() => {}}>
+            <Text style={s.leituraTitulo}>{leitura?.titulo}</Text>
+            <ScrollView style={{ maxHeight: 360 }}>
+              <Text style={s.leituraCorpo}>{leitura?.corpo}</Text>
+            </ScrollView>
+            <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   )
 }
@@ -190,14 +216,37 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
  * do Céu" dá. E, como as contribuições saem da MESMA função que calcula o
  * total, a explicação nunca pode divergir do número.
  */
+/**
+ * A leitura de UM trânsito, montada na hora a partir do par.
+ *
+ * ⚠️ Usa `buildUnifiedTransitNarrative`, a MESMA função que a grade de
+ * aspectos chama. Resolver o texto por outro caminho faria o mesmo trânsito
+ * ser descrito de dois jeitos no mesmo app, dependendo de onde se toca.
+ *
+ * Devolve `null` quando não há texto — e aí o livrinho nem aparece, em vez de
+ * abrir uma caixa vazia.
+ */
+function leituraDoAspecto(c: Contribuicao, idioma: string) {
+  if (!c?.planeta || !c?.aspecto || !c?.alvo) return null
+  const narrativa = buildUnifiedTransitNarrative(
+    { transitPlanet: c.planeta, natalPlanet: c.alvo, type: c.aspecto, aspectName: c.aspecto } as any,
+    null,
+    idioma,
+  )
+  const corpo = String(narrativa?.modalBody || narrativa?.shortText || '').trim()
+  return corpo || null
+}
+
 function DetalheDaEmocao({
   emocao,
   aoFechar,
+  aoLerAspecto,
   tl,
   idioma,
 }: {
   emocao: EmocaoDoDia | null
   aoFechar: () => void
+  aoLerAspecto: (leitura: { titulo: string; corpo: string }) => void
   tl: (pt: string, en: string, es: string, it: string) => string
   idioma: string
 }) {
@@ -219,9 +268,9 @@ function DetalheDaEmocao({
   const aliviam = emocao.porque.filter((c) => c.valor < 0)
   const total = emocao.porque.reduce((a, c) => a + Math.abs(c.valor), 0) || 1
 
-  const linha = (c: typeof emocao.porque[number], k: number) => (
-    <View key={`${c.planeta}-${c.aspecto}-${c.alvo}-${k}`} style={s.linha}>
-      <View style={[s.barra, { width: `${Math.min(100, (Math.abs(c.valor) / total) * 100)}%`, backgroundColor: escuro }]} />
+  const linha = (c: typeof emocao.porque[number], k: number) => {
+    const leitura = leituraDoAspecto(c, idioma)
+    const texto = (
       <Text style={s.linhaTexto}>
         {/* ⚠️ O aspecto PASSA pelo rótulo: o motor grava `quincuncio`,
             `oposicao` — sem acento — e às vezes em inglês. */}
@@ -229,8 +278,35 @@ function DetalheDaEmocao({
         <Text style={s.linhaAspecto}>{rotuloDeAspecto(c.aspecto, idioma as any).toLowerCase()}</Text>{' '}
         {translatePlanet(c.alvo, idioma as any)}
       </Text>
-    </View>
-  )
+    )
+    return (
+      <View key={`${c.planeta}-${c.aspecto}-${c.alvo}-${k}`} style={s.linha}>
+        <View style={[s.barra, { width: `${Math.min(100, (Math.abs(c.valor) / total) * 100)}%`, backgroundColor: escuro }]} />
+        {/* ⚠️ O livro só aparece quando HÁ leitura por trás. Um ícone que
+            promete e não abre nada é pior do que ícone nenhum — e aqui dá para
+            saber antes, porque o texto é resolvido na hora de desenhar.
+
+            É o mesmo livro da grade de aspectos: um ícone que significa a
+            mesma coisa em dois lugares ensina. */}
+        {leitura ? (
+          <Pressable
+            onPress={() => aoLerAspecto({ titulo:
+              `${translatePlanet(c.planeta, idioma as any)} ${rotuloDeAspecto(c.aspecto, idioma as any).toLowerCase()} ${translatePlanet(c.alvo, idioma as any)}`,
+              corpo: leitura })}
+            accessibilityRole="button"
+            accessibilityLabel={tl('Ler este aspecto', 'Read this aspect', 'Leer este aspecto', 'Leggi questo aspetto')}
+            hitSlop={8}
+            style={({ pressed }) => [s.linhaBotao, pressed && { opacity: 0.55 }]}
+          >
+            {texto}
+            <Ionicons name="book-outline" size={14} color={escuro} style={s.livro} />
+          </Pressable>
+        ) : (
+          texto
+        )}
+      </View>
+    )
+  }
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={aoFechar}>
@@ -328,6 +404,12 @@ const s = StyleSheet.create({
   barra: { position: 'absolute', left: 0, top: 2, bottom: 2, borderRadius: 4, opacity: 0.16 },
   linhaTexto: { fontSize: 12, color: '#E8ECF5', paddingHorizontal: 8 },
   linhaAspecto: { color: TINTA },
+  // O texto ocupa o que sobra e o livro fica na ponta direita, sempre na mesma
+  // coluna — alinhado, ele vira uma affordance; desalinhado, vira enfeite.
+  linhaBotao: { flexDirection: 'row', alignItems: 'center' },
+  livro: { marginLeft: 'auto', paddingRight: 6 },
+  leituraTitulo: { fontSize: 16, fontWeight: '800', color: '#E8ECF5', marginBottom: 10 },
+  leituraCorpo: { fontSize: 14, color: '#C7D2E8', lineHeight: 21 },
   vazio: { fontSize: 12, color: TINTA, paddingVertical: 10 },
   aviso: { fontSize: 10, color: '#5c6477', marginTop: 12, lineHeight: 14 },
   fechar: { fontSize: 10, color: '#5c6477', textAlign: 'center', marginTop: 8 },

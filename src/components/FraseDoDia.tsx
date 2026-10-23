@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { areaLabelsForTransit } from '../utils/transitLifeAreas'
@@ -335,7 +336,14 @@ export default function FraseDoDia({ transitos }: Props) {
               tocáveis, outras não, sem nada na tela explicando a diferença.
               Sem catálogo o modal mostra o aspecto e a janela, que é menos,
               mas é coerente. */}
-          <Text style={[s.chevron, { color: CORES[f.natureza] }]}>›</Text>
+          {/* ⚠️ LIVRINHO e não seta. A seta diz "tem mais adiante", que é o
+              que uma navegação faz; aqui o toque abre uma LEITURA, e o livro é
+              o ícone que o app já usa para isso — o mesmo da grade de
+              aspectos. Um ícone que significa a mesma coisa em dois lugares
+              ensina; dois ícones para a mesma coisa confundem. */}
+          <View style={s.livro}>
+            <Ionicons name="book-outline" size={15} color={CORES[f.natureza]} />
+          </View>
         </View>
         {/* ⚠️ Uma linha por trânsito, cada uma com a SUA janela.
             A frase cita até dois, e a janela era uma só — a do mais forte.
@@ -538,13 +546,13 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
   },
   fraseTexto: { flex: 1 },
-  // Discreto de proposito: sinaliza que ha mais, sem disputar atencao com o
-  // texto. Quem nao quiser aprofundar nao precisa notar.
-  chevron: {
-    color: '#5f6b84',
-    fontSize: 22,
-    lineHeight: 25,
+  // Discreto de proposito: sinaliza que ha leitura por tras, sem disputar
+  // atencao com o texto. Quem nao quiser aprofundar nao precisa notar.
+  // O `paddingTop` alinha o livro com a PRIMEIRA linha do texto, que e onde o
+  // olho esta — sem ele o icone flutua no topo da caixa.
+  livro: {
     marginLeft: 8,
+    paddingTop: 2,
   },
   fraseUltima: {
     marginBottom: 20,

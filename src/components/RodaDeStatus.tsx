@@ -41,11 +41,6 @@ type Props = {
   eixos: EixoDaRoda[]
   /** Abre a leitura daquela área. Sem isto, a roda é só enfeite. */
   aoTocarEixo?: (chave: string) => void
-  /**
-   * Só para a legenda da sombra. Os RÓTULOS dos eixos já chegam traduzidos de
-   * fora — a roda não traduz nome de área, e não deve passar a traduzir.
-   */
-  idioma?: string
 }
 
 // ⚠️ As MESMAS cores dos cards de área. Uma terceira régua de cor na mesma tela
@@ -124,11 +119,8 @@ const FOLGA_ROTULO = 6
  */
 const MARGEM_VERTICAL = 38
 
-export default function RodaDeStatus({ eixos, aoTocarEixo, idioma }: Props) {
+export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
   const { width } = useWindowDimensions()
-  const l = String(idioma || 'pt-BR')
-  const tl = (pt: string, en: string, es: string, it: string) =>
-    l.startsWith('en') ? en : l.startsWith('es') ? es : l.startsWith('it') ? it : pt
 
   // ⚠️ QUEM LIMITA O TAMANHO DA RODA É A LARGURA DOS CHIPS, não a tela.
   //
@@ -431,25 +423,6 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, idioma }: Props) {
           )
         })}
       </View>
-
-      {/* ⚠️ A LEGENDA DA SOMBRA. Uma forma dentro da outra não se explica
-          sozinha — sem esta linha, o desenho tem uma informação a mais e
-          nenhuma pista do que ela significa, que é pior do que não tê-la.
-
-          Só aparece quando há sombra para explicar. */}
-      {geo.temSombra ? (
-        <View style={s.legenda}>
-          <View style={s.amostra} />
-          <Text style={s.legendaTexto}>
-            {tl(
-              'a parte destacada é o que se move hoje',
-              'the highlighted part is what moves today',
-              'la parte destacada es lo que se mueve hoy',
-              'la parte evidenziata e cio che si muove oggi',
-            )}
-          </Text>
-        </View>
-      ) : null}
     </View>
   )
 }
@@ -462,25 +435,6 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 4,
   },
-  legenda: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    marginTop: 10,
-  },
-  // Um quadradinho com o mesmo preenchimento e o mesmo tracejado da sombra:
-  // a amostra tem de ser a coisa, não uma aproximação dela.
-  amostra: {
-    width: 13,
-    height: 13,
-    borderRadius: 3,
-    backgroundColor: 'rgba(196,181,253,0.34)',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: MOVIMENTO,
-  },
-  legendaTexto: { fontSize: 14, color: TINTA },
   chip: {
     alignItems: 'center',
     justifyContent: 'center',
