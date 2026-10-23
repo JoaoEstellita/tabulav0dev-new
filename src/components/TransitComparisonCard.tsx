@@ -15,8 +15,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
 import ReadingOpenIcon from './ReadingOpenIcon'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
-import { resolveNatalPlanetInHouseText, resolveNatalRulerInHouseText, resolvePlanetInSignText, isMinorAspect } from '../utils/natalInterpretation'
-import { useAspectosMenores } from '../hooks/useAspectosMenores'
+import { resolveNatalPlanetInHouseText, resolveNatalRulerInHouseText, resolvePlanetInSignText } from '../utils/natalInterpretation'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -187,7 +186,6 @@ const TransitComparisonCard = React.memo(function TransitComparisonCard({
   const { width } = useWindowDimensions()
   const isNarrow = width < 900
   const { personal, statusPersonal } = useTransits(null)
-  const { mostrarMenores } = useAspectosMenores()
   const { language, t } = useAppLanguage()
   const tr = React.useCallback((key: string, fallback: string, vars?: Record<string, string | number>) => {
     const value = t(key, vars as any)
@@ -218,12 +216,11 @@ const TransitComparisonCard = React.memo(function TransitComparisonCard({
       // Mesmo controle da grade e do "Seu dia": com os menores desligados eles
       // somem das três listas juntas, senão o usuário desliga num lugar e
       // continua vendo nos outros dois.
-      if (!mostrarMenores && isMinorAspect(String((item as any)?.type || ''))) continue
       if (!map[item.transitPlanet]) map[item.transitPlanet] = []
       ;(map[item.transitPlanet] as any[]).push(item)
     }
     return map
-  }, [personal, mostrarMenores])
+  }, [personal])
   
   // Converter graus para 0-30 por signo
   const formatDegreeInSign = (longitude: number): string => {

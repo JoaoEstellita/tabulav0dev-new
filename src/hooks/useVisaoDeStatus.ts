@@ -27,7 +27,7 @@ const CHAVE = '@tabula_estelar:visao_status'
 
 export type VisaoDeStatus = 'roda' | 'fichas'
 
-// Estado compartilhado em memória, igual ao de `useAspectosMenores`: mais de um
+// Estado compartilhado em memória, igual ao de `useGradeRetraida`: mais de um
 // ponto da tela pode ler isto e todos têm de reagir juntos sem reler o disco.
 let visaoAtual: VisaoDeStatus = 'fichas'
 let carregado = false

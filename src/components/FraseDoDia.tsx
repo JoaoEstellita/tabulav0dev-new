@@ -7,8 +7,6 @@ import { aspectNature } from '../utils/astro/pt'
 import { buildTransitTitle } from '../utils/transitPresentation'
 import TextoComGlossario from './TextoComGlossario'
 import { sintetizarODia } from '../utils/sinteseDoDia'
-import { useAspectosMenores } from '../hooks/useAspectosMenores'
-import { isMinorAspect } from '../utils/natalInterpretation'
 import { janelaEmPalavras, type IdiomaLeitura } from '../utils/leituraDoDia'
 import ReadingDetailModal from './ReadingDetailModal'
 
@@ -61,7 +59,6 @@ const forca = (t: TransitoRico) => (typeof t.strength === 'number' ? t.strength 
 
 export default function FraseDoDia({ transitos }: Props) {
   const { language } = useAppLanguage()
-  const { mostrarMenores } = useAspectosMenores()
   const [aberto, setAberto] = useState(false)
   // Qual frase está com a leitura completa aberta (índice), ou null.
   const [fraseAberta, setFraseAberta] = useState<number | null>(null)
@@ -75,7 +72,9 @@ export default function FraseDoDia({ transitos }: Props) {
     // um céu que a pessoa não está vendo.
     const lista = (transitos || [])
       .filter((t) => t?.transitPlanet && t?.natalPlanet && t?.type)
-      .filter((t) => mostrarMenores || !isMinorAspect(String(t.type || '')))
+      // ⚠️ Os menores entram SEMPRE: eles são reais e o motor os trata como
+      // tensos. Havia um filtro aqui ligado ao controle da grade; o controle
+      // saiu e o filtro foi junto.
     if (!lista.length) return null
 
     const ordenados = [...lista].sort((a, b) => forca(b) - forca(a))
@@ -222,7 +221,7 @@ export default function FraseDoDia({ transitos }: Props) {
     )
 
     return { aviso, detalhes, frases, leiturasDasFrases, contagem, total: ordenados.length }
-  }, [transitos, language, mostrarMenores])
+  }, [transitos, language])
 
   if (!leitura) return null
 

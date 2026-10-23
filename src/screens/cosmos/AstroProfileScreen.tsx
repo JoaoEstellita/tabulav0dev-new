@@ -18,7 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import TextoComGlossario from '../../components/TextoComGlossario'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText, isMinorAspect } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { natalMoonPhase } from '../../astro/moonPhase'
@@ -32,7 +32,6 @@ import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
 import StarLoader from '../../components/StarLoader'
-import { useAspectosMenores } from '../../hooks/useAspectosMenores'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -237,7 +236,6 @@ type ProfileContentProps = {
 export function AstroProfileContent({ transitData, loading, registerAnchor, chartMeta, interpMode = 'natal' }: ProfileContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
-  const { mostrarMenores } = useAspectosMenores()
 
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [birthInfo, setBirthInfo] = useState<{ date?: string; time?: string }>({})
@@ -283,10 +281,8 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     for (const planet of PLANET_ORDER) {
       const mine = list
         .filter(a => a.planet1 === planet || a.planet2 === planet)
-        // Aspectos menores escondidos a pedido. O filtro é aqui, no dado, e não
-        // na renderização: assim um planeta que só tem menores não imprime o
-        // título "Aspectos natais" sobre uma lista vazia.
-        .filter(a => mostrarMenores || !isMinorAspect(String(a.type)))
+        // ⚠️ Os menores entram SEMPRE. Havia um filtro aqui, ligado ao controle
+        // no rodapé da grade; o controle saiu a pedido e o filtro foi junto.
         .sort((a, b) => (a.orb ?? 99) - (b.orb ?? 99))
       const entries: { label: string; text: string | null; orb: number | null }[] = []
       for (const a of mine) {
@@ -307,7 +303,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
       if (entries.length) out[planet] = entries
     }
     return out
-  }, [ct?.aspectsNatalToNatal, language, interpMode, mostrarMenores])
+  }, [ct?.aspectsNatalToNatal, language, interpMode])
 
   const elemental = ct?.chartSummary?.elemental?.natal
   const modality = ct?.chartSummary?.modality?.natal
@@ -361,7 +357,6 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     const detected = detectAspects(angles, planetsInput, aspectsConfig as any)
     const out: { key: string; label: string; text: string }[] = []
     for (const d of detected) {
-      if (!mostrarMenores && isMinorAspect(String(d.type))) continue
       const body = resolveNamedPointAspectText(d.planet1, d.type, d.planet2, language)
       if (!body) continue // sem composer para o par → pula
       const ptLabel = d.planet1 === 'Ascendant'
@@ -372,7 +367,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
       out.push({ key: `${d.planet1}-${d.planet2}-${d.type}`, label: `${ptLabel} ${aspLabel} ${translatePlanetPT(d.planet2)}`, text: body })
     }
     return out
-  }, [interpMode, natalAsc, natalMc, natalPlanets, language, mostrarMenores])
+  }, [interpMode, natalAsc, natalMc, natalPlanets, language])
 
   // Eixos completos: DSC (oposto ao ASC) e IC (oposto ao MC). Um mapa completo traz
   // os quatro ângulos; o catálogo signo-na-casa já cobre as casas 7 e 4.
@@ -616,12 +611,11 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
             </Text>
           </View>
         ) : null}
-        {/* ⚠️ O controle de aspectos menores SAIU daqui: virou o rodapé do card
-            da grade (`ControleAspectosMenores`). Solto entre o filtro de
-            planetas e as leituras, ele lia como ajuste global do app em vez de
-            controle daquela grade — e ficava longe de metade do que governa.
-            O estado é o mesmo (`useAspectosMenores`), então mexer na grade
-            muda estas interpretações junto. */}
+        {/* ⚠️ NÃO EXISTE MAIS controle de aspectos menores — eles entram sempre.
+            Ele já morou aqui, depois virou o rodapé do card da grade, e saiu de
+            vez a pedido: os menores são reais, têm interpretação curada e o
+            motor os trata como tensos desde `b96acf8`. Esconder era devolver
+            uma leitura incompleta por decisão nossa. */}
 
         {/* Visão Geral — síntese do mapa (temperamento + ênfases). Abre a leitura. Só no natal. */}
         {interpMode === 'natal' && chartOverview ? (

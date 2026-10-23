@@ -24,10 +24,7 @@ import TextoComGlossario from '../../components/TextoComGlossario'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import AspectGrid from '../../components/AspectGrid'
-import { useAspectosMenores } from '../../hooks/useAspectosMenores'
-import ControleMenores from '../../components/ControleAspectosMenores'
 import { useGradeRetraida } from '../../hooks/useGradeRetraida'
-import { isMinorAspect } from '../../utils/natalInterpretation'
 import { aspectBetween } from '../../utils/nodeAspects'
 import { translatePlanet, translateSignName } from '../../utils/astro/pt'
 import { getPlanetMeaning } from '../../data/planetMeaning'
@@ -316,7 +313,6 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const { aberta: gradeAberta, alternar: alternarGrade } = useGradeRetraida()
   const { user } = useAuth()
   const { language } = useAppLanguage()
-  const { mostrarMenores, alternar: alternarMenores } = useAspectosMenores()
   // Modal de interpretação do aspecto clicado na grade — abre no lugar, sem rolar.
   const [aspectModal, setAspectModal] = useState<{ title: string; subtitle: string; body: string } | null>(null)
   const openNatalAspectModal = React.useCallback((a: { planet1: string; planet2: string; type: string }) => {
@@ -491,8 +487,13 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
    * controle é de leitura, não de cálculo: o aspecto existe, só não está
    * listado.
    */
-  const menoresFora = <T extends { type?: string }>(list: T[]) =>
-    mostrarMenores ? list : list.filter((a) => !isMinorAspect(String(a?.type || '')))
+  // ⚠️ OS ASPECTOS MENORES ESTÃO SEMPRE LIGADOS, a pedido.
+  //
+  // Existia um controle no rodapé da grade para escondê-los, com a ideia de
+  // que num planeta com oito aspectos os três que pesam ficavam enterrados.
+  // Saiu: eles são reais, têm interpretação curada e o motor os trata como
+  // tensos desde `b96acf8` — esconder era devolver uma leitura incompleta por
+  // decisão nossa. A grade mostra tudo.
 
 
   // Aspectos com nódulos na BI-RODA: trânsito→nódulo-natal + nódulo-trânsito→natal.
@@ -532,12 +533,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
    */
   const foraDaGrade = useMemo(() => {
     if (!showTransits) return [] as string[]
-    const comAspecto = new Set(menoresFora(tnAspectsWithNodes).map((a: any) => String(a?.planet1 || '')))
+    const comAspecto = new Set(tnAspectsWithNodes.map((a: any) => String(a?.planet1 || '')))
     return transitGridPoints
       .map((p) => p.name)
       .filter((nome) => !comAspecto.has(nome))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showTransits, tnAspectsWithNodes, transitGridPoints, mostrarMenores])
+  }, [showTransits, tnAspectsWithNodes, transitGridPoints])
 
   // Dimensões do SVG. Na bi-roda o natal encolhe (scale) p/ abrir o anel externo.
   // NITIDEZ: tudo que define o desenho cai em pixel inteiro.
@@ -1205,7 +1206,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 cross
                 rowPlanets={transitGridPoints}
                 colPlanets={natalGridPoints}
-                aspects={menoresFora(tnAspectsWithNodes)}
+                aspects={tnAspectsWithNodes}
                 onSelectCell={openTransitAspectModal}
                 onSelectPlanet={setPlanetaDaGrade}
               />
@@ -1214,30 +1215,20 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   ela, vira informação: hoje ele não toca o mapa. A redação muda
                   com o filtro — com os menores ocultos seria FALSO dizer "sem
                   aspecto", porque ele tem; só não tem dos maiores. */}
+              {/* ⚠️ Sem esta linha, o planeta ausente parece defeito do app.
+                  Com ela, vira informação: hoje ele não toca o mapa. Agora é
+                  sempre "sem aspecto" e não "sem aspecto maior", porque a grade
+                  não esconde mais nada — a frase não precisa mais se defender
+                  de um filtro que deixou de existir. */}
               {!gradeAberta ? null : foraDaGrade.length ? (
                 <Text style={styles.aspectGridHint}>
-                  {mostrarMenores
-                    ? tl(
-                        `Sem aspecto hoje: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
-                        `No aspect today: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
-                        `Sin aspecto hoy: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
-                        `Senza aspetti oggi: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
-                      )
-                    : tl(
-                        `Sem aspecto maior hoje: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Ligue os aspectos menores para ver os deles.`,
-                        `No major aspect today: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Turn on minor aspects to see theirs.`,
-                        `Sin aspecto mayor hoy: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Activa los aspectos menores para ver los suyos.`,
-                        `Senza aspetti maggiori oggi: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}. Attiva gli aspetti minori per vedere i loro.`,
-                      )}
+                  {tl(
+                    `Sem aspecto hoje: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                    `No aspect today: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                    `Sin aspecto hoy: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                    `Senza aspetti oggi: ${foraDaGrade.map((n) => translatePlanet(n, language)).join(', ')}.`,
+                  )}
                 </Text>
-              ) : null}
-              {gradeAberta ? (
-                <ControleMenores
-                  mostrar={mostrarMenores}
-                  alternar={alternarMenores}
-                  quantos={tnAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
-                  language={language}
-                />
               ) : null}
             </View>
           ) : null
@@ -1274,15 +1265,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             )}
             {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
             {gradeAberta ? (
-              <AspectGrid planets={natalGridPoints} aspects={menoresFora(natalAspectsWithNodes)} onSelectAspect={openNatalAspectModal} />
-            ) : null}
-            {gradeAberta ? (
-              <ControleMenores
-                mostrar={mostrarMenores}
-                alternar={alternarMenores}
-                quantos={natalAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
-                language={language}
-              />
+              <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} onSelectAspect={openNatalAspectModal} />
             ) : null}
           </View>
         ) : null}
