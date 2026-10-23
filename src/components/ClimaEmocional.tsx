@@ -34,30 +34,26 @@ type Props = {
  * novo. Desânimo é o cinza-azulado de propósito: é o anel apagado.
  */
 const COR: Record<ChaveEmocao, [string, string]> = {
-  ansiedade: ['#F59E0B', '#FBBF24'],
-  irritacao: ['#EF4444', '#FB7185'],
-  pressao:   ['#A855F7', '#C084FC'],
-  confusao:  ['#6366F1', '#818CF8'],
-  desanimo:  ['#64748B', '#94A3B8'],
-  calma:     ['#14B8A6', '#2DD4BF'],
+  alegria:   ['#EC4899', '#F472B6'],
   animo:     ['#22C55E', '#4ADE80'],
-  afeto:     ['#EC4899', '#F472B6'],
+  calma:     ['#0EA5E9', '#38BDF8'],
+  ansiedade: ['#F59E0B', '#FBBF24'],
+  estresse:  ['#EF4444', '#FB7185'],
+  desanimo:  ['#64748B', '#94A3B8'],
 }
 
 /**
- * ⚠️ Rótulo CURTO em todos os idiomas: a célula tem ~87px com quatro por linha,
- * o que cabe ~14 caracteres em 10px. "Low mood" em vez de "Discouragement" não
+ * ⚠️ Rótulo CURTO em todos os idiomas: a célula tem ~117px com três por linha,
+ * o que cabe ~18 caracteres em 10px. "Low mood" em vez de "Discouragement" não
  * é preguiça de tradução — é o que caberia sem reticências.
  */
 const ROTULO: Record<ChaveEmocao, [string, string, string, string]> = {
-  ansiedade: ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
-  irritacao: ['Irritação', 'Irritation', 'Irritacion', 'Irritazione'],
-  pressao:   ['Pressão', 'Pressure', 'Presion', 'Pressione'],
-  confusao:  ['Confusão', 'Confusion', 'Confusion', 'Confusione'],
-  desanimo:  ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
-  calma:     ['Calma', 'Calm', 'Calma', 'Calma'],
+  alegria:   ['Alegria', 'Joy', 'Alegria', 'Gioia'],
   animo:     ['Ânimo', 'Drive', 'Animo', 'Slancio'],
-  afeto:     ['Afeto', 'Affection', 'Afecto', 'Affetto'],
+  calma:     ['Calma', 'Calm', 'Calma', 'Calma'],
+  ansiedade: ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
+  estresse:  ['Estresse', 'Stress', 'Estres', 'Stress'],
+  desanimo:  ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
 }
 
 const TINTA = '#8892a4'
@@ -77,16 +73,17 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
   if (!emocoes) return null
 
-  // ⚠️ QUATRO por linha, e os anéis menores por consequência. A Home já carrega
-  // a frase do dia, a roda de status e a roda natal; anéis grandes no meio
-  // disso empurravam o mapa para longe do alcance do polegar. Oito em 4×2
-  // ocupam a mesma altura que seis em 3×2 ocupavam.
+  // ⚠️ Três por linha, duas linhas: as boas em cima, as difíceis embaixo.
   //
-  // A área de toque NÃO encolheu com o anel: o Pressable ocupa a célula inteira
-  // (~87×76), bem acima dos 44pt mínimos.
-  const porLinha = 4
-  const celula = Math.min(380, width - 32) / porLinha
-  const tamanho = Math.max(44, Math.min(58, celula - 24))
+  // `largura` existe por causa de um bug real: a grade usa flex-wrap, que
+  // quebra na largura do CONTAINER, não no número de colunas. Sem travar a
+  // largura em `porLinha * celula`, numa tela mais larga cabiam cinco por
+  // linha e a simetria 3+3 — que é metade do que a seção comunica — virava
+  // 5+1. Era visível em tablet e no PWA, e não dava erro nenhum.
+  const porLinha = 3
+  const largura = Math.min(360, width - 32)
+  const celula = largura / porLinha
+  const tamanho = Math.max(56, Math.min(72, celula - 32))
   const traco = Math.max(5, Math.round(tamanho * 0.11))
   const raio = (tamanho - traco) / 2
   const perimetro = 2 * Math.PI * raio
@@ -97,7 +94,7 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
         {tl('Tendência emocional hoje', 'Emotional tendency today', 'Tendencia emocional hoy', 'Tendenza emotiva oggi')}
       </Text>
 
-      <View style={s.grade}>
+      <View style={[s.grade, { width: largura }]}>
         {emocoes.map((e) => {
           const [escuro, claro] = COR[e.chave]
           const preenchido = (Math.max(0, Math.min(100, e.valor)) / 100) * perimetro
@@ -261,7 +258,9 @@ const s = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
-  grade: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  // ⚠️ `alignSelf: center` + largura fixa vinda do componente: é o que garante
+  // três por linha. Sem isso o wrap segue a largura da tela.
+  grade: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'center' },
   item: { alignItems: 'center', marginBottom: 10 },
   centro: { alignItems: 'center', justifyContent: 'center' },
   valor: { color: '#F2F5FA', fontWeight: '800' },
