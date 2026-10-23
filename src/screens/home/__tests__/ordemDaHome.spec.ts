@@ -10,17 +10,23 @@ import { join } from 'node:path'
  * estética — é o roteiro da leitura:
  *
  *   "Seu dia"  → a resposta, para quem abre o app de manhã e não quer mais nada
+ *   roda natal → o céu que produziu a resposta
+ *   grade      → o mesmo céu em tabela (sai dentro do componente da roda)
  *   status     → onde isso pega na vida, em roda OU em fichas (alternável)
- *   clima      → que tom o dia tende a ter
- *   roda natal → de onde a resposta saiu
- *   grade      → o detalhe técnico (sai dentro do componente da roda natal)
- *   o resto    → fita de planetas, card de trânsitos, céu coletivo
+ *   emoções    → que tom o dia tende a ter
+ *   filtro     → a porta para o detalhe planeta a planeta
+ *   o resto    → card de trânsitos, céu coletivo
  *
- * ⚠️ O STATUS SUBIU, e junto com ele as fichas. Antes a roda de status ficava
- * em cima e as fichas lá embaixo — os MESMOS oito números em dois pontos da
- * mesma tela, com a pessoa rolando duas vezes pela mesma informação. Agora as
- * duas visões dividem um bloco só, com uma seta para alternar, e o bloco fica
- * onde a roda já estava: resumo antes de detalhe.
+ * Do que ACONTECE para o que SIGNIFICA: o céu primeiro, a vida depois.
+ *
+ * ⚠️ RODA E GRADE SÃO CONTÍGUAS. O filtro morava entre as duas (no slot
+ * `entreRodaEGrade`, porque a grade vive dentro do componente da roda) e saiu
+ * a pedido: ali ele separava duas visões da mesma coisa. Agora fica depois das
+ * emoções, onde a leitura já fechou.
+ *
+ * ⚠️ As duas visões do status dividem um bloco só. Antes a roda ficava em cima
+ * e as fichas lá embaixo — os MESMOS oito números em dois pontos da tela, com
+ * a pessoa rolando duas vezes pela mesma informação.
  *
  * Nada disso quebra se mudar de lugar: a tela continua montando, os testes de
  * render continuam passando, e só a leitura fica pior.
@@ -33,24 +39,37 @@ const RODA = readFileSync(join(raiz, 'screens', 'cosmos', 'NatalChartWheelScreen
 const pos = (t: string) => HOME.indexOf(t)
 
 describe('ordem dos blocos da Home', () => {
-  it('é "Seu dia", status, clima, roda natal, e então o resto', () => {
+  it('é "Seu dia", roda, grade, status, emoções, filtro, resto', () => {
     const frase = pos('<FraseDoDia')
+    const natal = pos('<NatalChartWheelContent')
     const status = pos('<RodaDeStatus')
     const fichas = pos('<AreaCardItem')
-    const clima = pos('<ClimaEmocional')
-    const natal = pos('<NatalChartWheelContent')
+    const emocoes = pos('<ClimaEmocional')
+    const filtro = pos('<PlanetQuickNav')
     const banners = pos('<NotificationOptInBanner')
     const coletiva = pos('<HomeCollectiveGrid />')
 
-    for (const [nome, v] of Object.entries({ frase, status, fichas, clima, natal, banners, coletiva })) {
+    for (const [nome, v] of Object.entries({ frase, natal, status, fichas, emocoes, filtro, banners, coletiva })) {
       expect(v, `bloco ${nome} não encontrado na Home`).toBeGreaterThan(-1)
     }
 
-    expect(frase, '"Seu dia" vem ANTES do status').toBeLessThan(status)
-    expect(clima, 'o clima vem depois do status').toBeGreaterThan(status)
-    expect(natal, 'a roda natal vem depois do clima').toBeGreaterThan(clima)
-    expect(natal, 'e antes dos banners').toBeLessThan(banners)
+    expect(frase, '"Seu dia" vem ANTES da roda natal').toBeLessThan(natal)
+    expect(status, 'o status vem depois da roda e da grade').toBeGreaterThan(natal)
+    expect(emocoes, 'as emoções vêm depois do status').toBeGreaterThan(status)
+    expect(filtro, 'o filtro vem depois das emoções').toBeGreaterThan(emocoes)
+    expect(filtro, 'e antes dos banners').toBeLessThan(banners)
     expect(banners, 'o céu coletivo fecha a página').toBeLessThan(coletiva)
+  })
+
+  /**
+   * ⚠️ NADA ENTRE A RODA E A GRADE.
+   *
+   * O filtro morava ali — era o único jeito de colocá-lo entre as duas, já que
+   * a grade vive dentro do componente da roda. Saiu a pedido: separava duas
+   * visões da mesma coisa. Se o slot voltar a ser preenchido, isto reprova.
+   */
+  it('a roda e a grade ficam contíguas, sem o filtro no meio', () => {
+    expect(HOME, 'o filtro voltou para dentro da roda').not.toMatch(/entreRodaEGrade=\{/)
   })
 
   /**

@@ -26,6 +26,7 @@ import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyE
 import AspectGrid from '../../components/AspectGrid'
 import { useAspectosMenores } from '../../hooks/useAspectosMenores'
 import ControleMenores from '../../components/ControleAspectosMenores'
+import { useGradeRetraida } from '../../hooks/useGradeRetraida'
 import { isMinorAspect } from '../../utils/natalInterpretation'
 import { aspectBetween } from '../../utils/nodeAspects'
 import { translatePlanet, translateSignName } from '../../utils/astro/pt'
@@ -309,6 +310,10 @@ type ChartContentProps = {
  * disparar o cálculo astrológico três vezes.
  */
 export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect, onOpenTransits, mostrarGrade = true, entreRodaEGrade }: ChartContentProps) {
+  // ⚠️ A grade é a parte mais densa do app — uma tabela de até cem símbolos.
+  // Quem lê, lê; quem não lê rolava por cima dela toda vez. Recolher mantém o
+  // cabeçalho, então ela some sem deixar buraco e volta do mesmo lugar.
+  const { aberta: gradeAberta, alternar: alternarGrade } = useGradeRetraida()
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { mostrarMenores, alternar: alternarMenores } = useAspectosMenores()
@@ -1158,9 +1163,24 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           transitPlanets.length >= 1 && natalPlanets.length >= 1 && tnAspectsWithNodes.length > 0 ? (
             <View style={styles.aspectGridWrap}>
               <View style={{ alignSelf: 'stretch', height: 30, justifyContent: 'center', marginBottom: 6 }}>
-                <Text style={[styles.aspectGridTitle, { textAlign: 'center', marginBottom: 0, paddingHorizontal: 46 }]}>
-                  {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
-                </Text>
+                {/* ⚠️ O TÍTULO INTEIRO é o alvo de recolher, não só a setinha:
+                    um chevron de 14px sozinho fica bem abaixo dos 44pt e
+                    ninguém o encontra. O chevron é o SINAL; o alvo é a linha. */}
+                <TouchableOpacity
+                  onPress={alternarGrade}
+                  activeOpacity={0.6}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: gradeAberta }}
+                  accessibilityLabel={gradeAberta
+                    ? tl('Recolher a grade', 'Collapse the grid', 'Contraer la rejilla', 'Comprimi la griglia')
+                    : tl('Abrir a grade', 'Open the grid', 'Abrir la rejilla', 'Apri la griglia')}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 46 }}
+                >
+                  <Text style={[styles.aspectGridTitle, { textAlign: 'center', marginBottom: 0 }]}>
+                    {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
+                  </Text>
+                  <Ionicons name={gradeAberta ? 'chevron-up' : 'chevron-down'} size={14} color="#8892a4" />
+                </TouchableOpacity>
                 {/* idem: a tabela cruza dois conjuntos de planetas e isso não é
                     óbvio para ninguém de fora. */}
                 {onOpenTransits ? (
@@ -1170,6 +1190,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   </TouchableOpacity>
                 ) : null}
               </View>
+              {!gradeAberta ? null : (
               <Text style={styles.aspectGridHint}>
                 {tl(
                   'Linhas são os planetas de hoje; colunas, os do seu nascimento. Cada símbolo é um encontro entre os dois — toque para ler.',
@@ -1178,6 +1199,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   'Le righe sono i pianeti di oggi; le colonne, quelli della tua nascita. Ogni simbolo e un incontro tra i due — tocca per leggere.',
                 )}
               </Text>
+              )}
+              {!gradeAberta ? null : (
               <AspectGrid
                 cross
                 rowPlanets={transitGridPoints}
@@ -1186,11 +1209,12 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 onSelectCell={openTransitAspectModal}
                 onSelectPlanet={setPlanetaDaGrade}
               />
+              )}
               {/* ⚠️ Sem esta linha, o planeta ausente parece defeito do app. Com
                   ela, vira informação: hoje ele não toca o mapa. A redação muda
                   com o filtro — com os menores ocultos seria FALSO dizer "sem
                   aspecto", porque ele tem; só não tem dos maiores. */}
-              {foraDaGrade.length ? (
+              {!gradeAberta ? null : foraDaGrade.length ? (
                 <Text style={styles.aspectGridHint}>
                   {mostrarMenores
                     ? tl(
@@ -1207,22 +1231,38 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                       )}
                 </Text>
               ) : null}
-              <ControleMenores
-                mostrar={mostrarMenores}
-                alternar={alternarMenores}
-                quantos={tnAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
-                language={language}
-              />
+              {gradeAberta ? (
+                <ControleMenores
+                  mostrar={mostrarMenores}
+                  alternar={alternarMenores}
+                  quantos={tnAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
+                  language={language}
+                />
+              ) : null}
             </View>
           ) : null
         ) : natalPlanets.length >= 2 && natalAspectsWithNodes.length > 0 ? (
           <View style={styles.aspectGridWrap}>
-            <Text style={styles.aspectGridTitle}>
-              {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
-            </Text>
+            {/* Mesmo alvo da grade de trânsito: a linha do título recolhe. */}
+            <TouchableOpacity
+              onPress={alternarGrade}
+              activeOpacity={0.6}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: gradeAberta }}
+              accessibilityLabel={gradeAberta
+                ? tl('Recolher a grade', 'Collapse the grid', 'Contraer la rejilla', 'Comprimi la griglia')
+                : tl('Abrir a grade', 'Open the grid', 'Abrir la rejilla', 'Apri la griglia')}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            >
+              <Text style={[styles.aspectGridTitle, { marginBottom: 0 }]}>
+                {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
+              </Text>
+              <Ionicons name={gradeAberta ? 'chevron-up' : 'chevron-down'} size={14} color="#8892a4" />
+            </TouchableOpacity>
             {/* Sem esta linha a grade é uma tabela de 100 símbolos sem legenda — o
                 ponto mais hostil do app para quem não estuda astrologia. Diz o que é
                 e que dá para tocar, antes de a pessoa decidir que não é para ela. */}
+            {!gradeAberta ? null : (
             <Text style={styles.aspectGridHint}>
               {tl(
                 'Cada símbolo é uma conversa entre dois planetas do seu mapa. Toque em um para ler o que significa.',
@@ -1231,14 +1271,19 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                 'Ogni simbolo e una conversazione tra due pianeti del tuo tema. Toccane uno per leggere cosa significa.',
               )}
             </Text>
+            )}
             {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
-            <AspectGrid planets={natalGridPoints} aspects={menoresFora(natalAspectsWithNodes)} onSelectAspect={openNatalAspectModal} />
-            <ControleMenores
-              mostrar={mostrarMenores}
-              alternar={alternarMenores}
-              quantos={natalAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
-              language={language}
-            />
+            {gradeAberta ? (
+              <AspectGrid planets={natalGridPoints} aspects={menoresFora(natalAspectsWithNodes)} onSelectAspect={openNatalAspectModal} />
+            ) : null}
+            {gradeAberta ? (
+              <ControleMenores
+                mostrar={mostrarMenores}
+                alternar={alternarMenores}
+                quantos={natalAspectsWithNodes.filter((a: any) => isMinorAspect(String(a?.type || ''))).length}
+                language={language}
+              />
+            ) : null}
           </View>
         ) : null}
 

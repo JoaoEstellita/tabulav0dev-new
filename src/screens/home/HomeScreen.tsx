@@ -662,16 +662,45 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* ⚠️ A RODA DE STATUS vem logo depois de "O seu dia" e ANTES da roda
-            natal — e sem moldura, assentando direto no fundo do app.
+        {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
+        {transitData && (
+          <View {...aWheel}>
+          <AnimatedMount>
+            <View style={styles.section}>
+              {wheelReady ? (
+                <NatalChartWheelContent
+                  // ⚠️ SEM `entreRodaEGrade`: o filtro saiu de entre a roda e a
+                  // grade e virou bloco próprio, lá embaixo. A roda e a grade
+                  // voltam a ser contíguas, que é como se lê um mapa — o
+                  // desenho e a mesma informação em tabela, sem nada no meio.
+                  transitData={transitData}
+                  loading={loading}
+                  showLegend={false}
+                  showTransits
+                  onSelectTransitAspect={handleSelectTransitAspect}
+                  onSelectNatalAspect={handleSelectNatalAspect}
+                  onOpenTransits={() => navigation.navigate('PersonalTransits')}
+                />
+              ) : (
+                // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
+                // interações, pra não travar a abertura da Home. Não pula o layout.
+                <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
+              )}
+            </View>
+          </AnimatedMount>
+          </View>
+        )}
 
-            A ordem de leitura fica: a frase diz o que muda hoje, a roda mostra
-            o retrato do dia inteiro de uma olhada, e só então vem o céu (roda
-            natal, grade) e o detalhe por área. Do resumo ao detalhe, sem a
-            pessoa precisar percorrer oito fichas antes de ver o conjunto.
+        {/* ⚠️ O STATUS vem DEPOIS da roda natal e da grade, e sem moldura,
+            assentando direto no fundo do app.
+
+            A ordem de leitura fica: a frase diz o que muda hoje, a roda e a
+            grade mostram o céu que produziu isso, o status diz onde aquilo
+            pega na vida e as emoções dizem que tom o dia tende a ter. Do que
+            acontece para o que significa.
 
             ⚠️ São DUAS rodas na mesma tela, e isso é deliberado: esta é a sua
-            VIDA em oito áreas; a de baixo é o CÉU. Não são a mesma coisa em
+            VIDA em oito áreas; a de cima é o CÉU. Não são a mesma coisa em
             escalas diferentes — por isso esta não tem moldura e aquela tem.
 
             Só aparece com dado — um octógono vazio pareceria defeito. */}
@@ -691,23 +720,38 @@ export default function HomeScreen() {
                     ? tl('O seu retrato hoje', 'Your portrait today', 'Tu retrato hoy', 'Il tuo ritratto oggi')
                     : tl('As suas areas hoje', 'Your areas today', 'Tus areas hoy', 'Le tue aree oggi')}
                 </Text>
+                {/* ⚠️ O botão leva TEXTO, não só ícone.
+                    A primeira versão eram dois ícones cinza de 15px, e ninguém
+                    descobriria que há outra visão ali — ícone sozinho não diz o
+                    que faz nem que existe algo do outro lado. Com a palavra do
+                    destino ("Fichas" / "Roda") ele anuncia para onde vai, e a
+                    borda o faz parecer o botão que é. */}
                 <Pressable
                   onPress={alternarVisao}
                   accessibilityRole="button"
+                  accessibilityState={{ selected: visaoDeStatus === 'fichas' }}
                   accessibilityLabel={
                     visaoDeStatus === 'roda'
                       ? tl('Ver em fichas', 'See as cards', 'Ver en fichas', 'Vedi a schede')
                       : tl('Ver na roda', 'See as wheel', 'Ver en rueda', 'Vedi a ruota')
                   }
-                  hitSlop={12}
-                  style={({ pressed }) => [styles.statusSeta, { opacity: pressed ? 0.5 : 1 }]}
+                  hitSlop={10}
+                  style={({ pressed }) => [
+                    styles.statusSeta,
+                    pressed && { backgroundColor: 'rgba(155,180,232,0.18)', borderColor: '#9BB4E8' },
+                  ]}
                 >
                   <Ionicons
-                    name={visaoDeStatus === 'roda' ? 'grid-outline' : 'radio-button-on-outline'}
-                    size={15}
-                    color="#8892a4"
+                    name={visaoDeStatus === 'roda' ? 'grid-outline' : 'pie-chart-outline'}
+                    size={14}
+                    color="#C7D2E8"
                   />
-                  <Ionicons name="chevron-forward" size={15} color="#8892a4" />
+                  <Text style={styles.statusSetaTexto}>
+                    {visaoDeStatus === 'roda'
+                      ? tl('Fichas', 'Cards', 'Fichas', 'Schede')
+                      : tl('Roda', 'Wheel', 'Rueda', 'Ruota')}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={13} color="#C7D2E8" />
                 </Pressable>
               </View>
 
@@ -731,9 +775,9 @@ export default function HomeScreen() {
           </AnimatedMount>
         ) : null}
 
-        {/* ⚠️ O CLIMA EMOCIONAL vem logo depois da roda, e é o MESMO céu em
-            outra pergunta: a roda diz onde o dia pega na vida; estes anéis
-            dizem que tom ele tende a ter.
+        {/* ⚠️ AS EMOÇÕES vêm depois do status: é o MESMO céu em outra
+            pergunta. O status diz onde o dia pega na vida; estes anéis dizem
+            que tom ele tende a ter.
 
             ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado
             nenhum sobre o estado emocional real da pessoa. São derivados dos
@@ -742,7 +786,7 @@ export default function HomeScreen() {
             afirmar o que o dado não sustenta.
 
             `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
-            a frase lá em cima e o clima aqui nunca discordam. */}
+            a frase lá em cima e as emoções aqui nunca discordam. */}
         <AnimatedMount>
           <ClimaEmocional
             transitos={transitData?.dailyOverview?.personalTodayRich as any}
@@ -750,37 +794,21 @@ export default function HomeScreen() {
           />
         </AnimatedMount>
 
-        {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
-        {transitData && (
-          <View {...aWheel}>
+        {/* ⚠️ O FILTRO DE PLANETAS, agora como bloco próprio.
+            Ele morava dentro do componente da roda, no slot `entreRodaEGrade`,
+            porque a grade de aspectos mora lá dentro e era o único jeito de
+            colocá-lo entre as duas. Saiu de lá a pedido: entre a roda e a
+            grade ele separava duas visões da mesma coisa.
+
+            Fica depois das emoções, onde a leitura já fechou e quem quiser
+            descer para o detalhe planeta a planeta tem por onde entrar. */}
+        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+        transitData!.currentTransits!.planetComparisons.length > 0 &&
+        transitData?.currentTransits?.chartSummary ? (
           <AnimatedMount>
-            <View style={styles.section}>
-              {wheelReady ? (
-                <NatalChartWheelContent
-                  entreRodaEGrade={
-                    Array.isArray(transitData?.currentTransits?.planetComparisons) &&
-                    transitData!.currentTransits!.planetComparisons.length > 0 &&
-                    transitData?.currentTransits?.chartSummary
-                      ? <PlanetQuickNav showCosmosEntry={false} />
-                      : null
-                  }
-                  transitData={transitData}
-                  loading={loading}
-                  showLegend={false}
-                  showTransits
-                  onSelectTransitAspect={handleSelectTransitAspect}
-                  onSelectNatalAspect={handleSelectNatalAspect}
-                  onOpenTransits={() => navigation.navigate('PersonalTransits')}
-                />
-              ) : (
-                // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
-                // interações, pra não travar a abertura da Home. Não pula o layout.
-                <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
-              )}
-            </View>
+            <PlanetQuickNav showCosmosEntry={false} />
           </AnimatedMount>
-          </View>
-        )}
+        ) : null}
 
         {/* ⚠️ O status e a roda ficam FORA do bloco da roda natal.
             Uma versão anterior os inseriu DENTRO dele — compilava e renderizava,
@@ -1206,15 +1234,26 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     color: '#8892a4',
   },
-  // ⚠️ O alvo é a linha inteira do ícone mais a seta, com hitSlop de 12 por
-  // volta: dois ícones de 15px sozinhos dariam uma área de toque bem abaixo
-  // dos 44pt mínimos.
+  // ⚠️ Borda e fundo para o botão PARECER botão. Sem eles era texto cinza
+  // solto ao lado do título, indistinguível de rótulo. O hitSlop de 10 por
+  // volta leva a área de toque acima dos 44pt mesmo com o chip sendo baixo.
   statusSeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2C3651',
+    backgroundColor: 'rgba(18,22,44,0.72)',
+  },
+  // 14 e não 12: o piso de legibilidade do projeto (theme/tipografia) trata
+  // 12px como texto miúdo, e o rótulo de um botão é para ser lido.
+  statusSetaTexto: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#C7D2E8',
   },
   lifeAreaItem: {
     width: '50%',
