@@ -56,11 +56,11 @@ describe('clima emocional do dia', () => {
     it('Saturno em aspecto duro lidera o DESÂNIMO', () => {
       expect(pico([T('Saturn', 'quadratura', 'Moon')])).toBe('desanimo')
     })
-    it('Vênus em aspecto macio lidera a ALEGRIA', () => {
-      expect(pico([T('Venus', 'trigono', 'Venus')])).toBe('alegria')
+    it('Vênus em aspecto macio lidera o AFETO', () => {
+      expect(pico([T('Venus', 'trigono', 'Venus')])).toBe('afeto')
     })
-    it('Júpiter em aspecto macio lidera o ÂNIMO', () => {
-      expect(pico([T('Jupiter', 'trigono', 'Jupiter')])).toBe('animo')
+    it('Júpiter em aspecto macio lidera o ENTUSIASMO', () => {
+      expect(pico([T('Jupiter', 'trigono', 'Jupiter')])).toBe('entusiasmo')
     })
     it('Saturno em aspecto macio lidera a CALMA', () => {
       expect(pico([T('Saturn', 'trigono', 'Sun')])).toBe('calma')
@@ -75,7 +75,7 @@ describe('clima emocional do dia', () => {
      */
     it('duro só alimenta as difíceis; macio só alimenta as boas', () => {
       const duro = somasBrutas([T('Saturn', 'quadratura', 'Moon')])
-      expect(duro.alegria + duro.animo + duro.calma).toBe(0)
+      expect(duro.afeto + duro.entusiasmo + duro.calma).toBe(0)
       const macio = somasBrutas([T('Saturn', 'trigono', 'Moon')])
       expect(macio.ansiedade + macio.estresse + macio.desanimo).toBe(0)
     })
@@ -107,10 +107,10 @@ describe('clima emocional do dia', () => {
   it('conjunção de Saturno PESA; conjunção de Vênus ALIVIA', () => {
     const saturno = somasBrutas([T('Saturn', 'conjuncao', 'Moon')])
     expect(saturno.desanimo).toBeGreaterThan(0)
-    expect(saturno.alegria).toBe(0)
+    expect(saturno.afeto).toBe(0)
 
     const venus = somasBrutas([T('Venus', 'conjuncao', 'Venus')])
-    expect(venus.alegria).toBeGreaterThan(0)
+    expect(venus.afeto).toBeGreaterThan(0)
     expect(venus.desanimo).toBe(0)
   })
 
@@ -218,6 +218,10 @@ describe('clima emocional do dia', () => {
    *
    * Na primeira versão de seis: alegria×otimismo r=+0,81, stress×raiva r=+0,81,
    * ansiedade×stress r=+0,75. Numa de oito, +0,64. Nesta, +0,52.
+   *
+   * ⚠️ Afeto e entusiasmo já se chamaram alegria e ânimo e foram renomeados por
+   * soarem iguais — mas medem r=-0,11, nenhuma relação. Nome parecido não é o
+   * mesmo problema que fonte parecida, e só o segundo este teste pega.
    */
   it('nenhum par de emoções é redundante nos dados reais', () => {
     const porEmocao: Record<string, number[]> = {}
@@ -265,6 +269,30 @@ describe('clima emocional do dia', () => {
     expect(r.filter((e) => !e.pesa)).toHaveLength(3)
     // E os bons vêm primeiro: é onde o olho cai.
     expect(r.slice(0, 3).every((e) => !e.pesa)).toBe(true)
+  })
+
+  /**
+   * ⚠️ AS COLUNAS SÃO PARES DE OPOSTOS, e isso depende da ORDEM.
+   *
+   * Com três por linha, os índices 0-3, 1-4 e 2-5 caem um em cima do outro:
+   *
+   *     afeto      entusiasmo   calma
+   *     estresse   desânimo     ansiedade
+   *
+   * Vênus↔Marte, Júpiter↔Saturno, sossego↔sobressalto. É o que faz a grade ser
+   * lida como três eixos em vez de seis números soltos. Reordenar a lista não
+   * quebra nada — a tela continua funcionando e só para de significar isso.
+   */
+  it('cada coluna é um par de opostos', () => {
+    expect([...EMOCOES]).toEqual([
+      'afeto', 'entusiasmo', 'calma',
+      'estresse', 'desanimo', 'ansiedade',
+    ])
+    // O de cima e o de baixo de cada coluna estão em lados contrários.
+    for (let i = 0; i < 3; i++) {
+      expect(EMOCAO_PESA[EMOCOES[i]], EMOCOES[i]).toBe(false)
+      expect(EMOCAO_PESA[EMOCOES[i + 3]], EMOCOES[i + 3]).toBe(true)
+    }
   })
 
   /**
@@ -331,13 +359,13 @@ describe('clima emocional do dia', () => {
     it('Saturno em aspecto macio acende a CALMA, não o ânimo', () => {
       const s = somasBrutas([T('Saturn', 'trigono', 'Sun')])
       expect(s.calma).toBeGreaterThan(0)
-      expect(s.animo).toBe(0)
-      expect(s.alegria).toBe(0)
+      expect(s.entusiasmo).toBe(0)
+      expect(s.afeto).toBe(0)
     })
 
     it('o ânimo usa a faixa inteira nos dados reais, sem piso', () => {
       const vals = (fixtures as any[]).map(
-        (u) => emocoesDoDia(u.transitos)!.find((e) => e.chave === 'animo')!.valor,
+        (u) => emocoesDoDia(u.transitos)!.find((e) => e.chave === 'entusiasmo')!.valor,
       )
       expect(Math.min(...vals), `min de ânimo: ${Math.min(...vals)}`).toBeLessThan(25)
       expect(Math.max(...vals)).toBeGreaterThan(70)
@@ -348,8 +376,8 @@ describe('clima emocional do dia', () => {
       const v = (k: string) => r.find((e) => e.chave === k)!.valor
       expect(v('ansiedade')).toBe(0)
       expect(v('desanimo')).toBe(0)
-      expect(v('animo')).toBe(0)
-      expect(v('alegria')).toBe(0)
+      expect(v('entusiasmo')).toBe(0)
+      expect(v('afeto')).toBe(0)
       expect(v('calma')).toBeGreaterThan(0)
     })
 

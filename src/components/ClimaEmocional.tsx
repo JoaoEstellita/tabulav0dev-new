@@ -28,18 +28,22 @@ type Props = {
  * alta ela está — "Afeto 20" continua sendo afeto. Pintar pelo valor faria
  * afeto baixo ficar vermelho, dizendo o contrário do rótulo.
  *
+ * ⚠️ A COR NÃO MARCA A COLUNA. As colunas são pares de opostos (afeto/estresse,
+ * entusiasmo/desânimo, calma/ansiedade), mas dar a mesma cor aos dois de uma
+ * coluna faria o anel de cima e o de baixo parecerem a mesma medida.
+ *
  * ⚠️ Oito matizes DISTINTOS, um por anel, e não dois grupos (quente = tensão,
  * frio = alívio). Com cinco tons de vermelho lado a lado, nenhum deles
  * identifica mais nada — o olho só vê "vermelho" e precisa ler o rótulo de
  * novo. Desânimo é o cinza-azulado de propósito: é o anel apagado.
  */
 const COR: Record<ChaveEmocao, [string, string]> = {
-  alegria:   ['#EC4899', '#F472B6'],
-  animo:     ['#22C55E', '#4ADE80'],
-  calma:     ['#0EA5E9', '#38BDF8'],
-  ansiedade: ['#F59E0B', '#FBBF24'],
-  estresse:  ['#EF4444', '#FB7185'],
-  desanimo:  ['#64748B', '#94A3B8'],
+  afeto:      ['#EC4899', '#F472B6'],
+  entusiasmo: ['#22C55E', '#4ADE80'],
+  calma:      ['#0EA5E9', '#38BDF8'],
+  estresse:   ['#EF4444', '#FB7185'],
+  desanimo:   ['#64748B', '#94A3B8'],
+  ansiedade:  ['#F59E0B', '#FBBF24'],
 }
 
 /**
@@ -48,12 +52,12 @@ const COR: Record<ChaveEmocao, [string, string]> = {
  * é preguiça de tradução — é o que caberia sem reticências.
  */
 const ROTULO: Record<ChaveEmocao, [string, string, string, string]> = {
-  alegria:   ['Alegria', 'Joy', 'Alegria', 'Gioia'],
-  animo:     ['Ânimo', 'Drive', 'Animo', 'Slancio'],
-  calma:     ['Calma', 'Calm', 'Calma', 'Calma'],
-  ansiedade: ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
-  estresse:  ['Estresse', 'Stress', 'Estres', 'Stress'],
-  desanimo:  ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
+  afeto:      ['Afeto', 'Affection', 'Afecto', 'Affetto'],
+  entusiasmo: ['Entusiasmo', 'Enthusiasm', 'Entusiasmo', 'Entusiasmo'],
+  calma:      ['Calma', 'Calm', 'Calma', 'Calma'],
+  estresse:   ['Estresse', 'Stress', 'Estres', 'Stress'],
+  desanimo:   ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
+  ansiedade:  ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
 }
 
 const TINTA = '#8892a4'
@@ -74,6 +78,10 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
   if (!emocoes) return null
 
   // ⚠️ Três por linha, duas linhas: as boas em cima, as difíceis embaixo.
+  //
+  // ⚠️ `porLinha` é 3 porque a ORDEM das emoções depende disso: com três por
+  // linha cada coluna vira um par de opostos (ver EMOCOES em emocoesDoDia).
+  // Mudar para 2 ou 4 não quebra nada — só desfaz o pareamento em silêncio.
   //
   // `largura` existe por causa de um bug real: a grade usa flex-wrap, que
   // quebra na largura do CONTAINER, não no número de colunas. Sem travar a
