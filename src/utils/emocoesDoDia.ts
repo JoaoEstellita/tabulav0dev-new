@@ -342,6 +342,15 @@ const LENTOS = new Set(['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'chir
 export const COTA_LENTOS = 6
 export const COTA_RAPIDOS = 6
 
+/**
+ * Quantos trânsitos de cada natureza (duro e macio) a seleção garante.
+ *
+ * Dois, não três: é piso de segurança, não cota. Nos 21 usuários reais a
+ * seleção por velocidade já traz de 2 a 8 macios, então ele nunca dispara —
+ * existe para o dia em que a ordenação puxa tudo para um lado só.
+ */
+export const PISO_POR_NATUREZA = 2
+
 /** Quanto um trânsito pesa na disputa por vaga. */
 function relevancia(t: TransitoParaEmocao): number {
   return forcaNormalizada(t?.strength) * pesoDoOrbe(t?.orb)
@@ -357,28 +366,71 @@ function relevancia(t: TransitoParaEmocao): number {
 export function selecionarTransitos(
   transitos: ReadonlyArray<TransitoParaEmocao>,
 ): TransitoParaEmocao[] {
+  const TETO = COTA_LENTOS + COTA_RAPIDOS
   const lista = [...(transitos || [])].sort((a, b) => relevancia(b) - relevancia(a))
-  const lentos: TransitoParaEmocao[] = []
-  const rapidos: TransitoParaEmocao[] = []
-  for (const t of lista) {
-    // `lento` quando o backend manda; pelo nome do planeta quando não manda.
-    const ehLento = t?.lento ?? LENTOS.has(norm(t?.t ?? t?.transitPlanet))
-    if (ehLento) lentos.push(t)
-    else rapidos.push(t)
+
+  const ehLento = (t: TransitoParaEmocao) =>
+    t?.lento ?? LENTOS.has(norm(t?.t ?? t?.transitPlanet))
+
+  /** 'd' duro, 'm' macio, null para aspecto que o cálculo ignora. */
+  const natureza = (t: TransitoParaEmocao): 'd' | 'm' | null => {
+    const a = norm(t?.a ?? t?.type)
+    if (DUROS.has(a)) return 'd'
+    if (MACIOS.has(a)) return 'm'
+    if (a === 'conjuncao') return CONJUNCAO_PESADA.has(norm(t?.t ?? t?.transitPlanet)) ? 'd' : 'm'
+    return null
   }
+
+  // Passo 1: a cota do backend, por VELOCIDADE. É a seleção principal.
   const escolhidos = [
-    ...lentos.slice(0, COTA_LENTOS),
-    ...rapidos.slice(0, COTA_RAPIDOS),
+    ...lista.filter(ehLento).slice(0, COTA_LENTOS),
+    ...lista.filter((t) => !ehLento(t)).slice(0, COTA_RAPIDOS),
   ]
-  if (escolhidos.length < COTA_LENTOS + COTA_RAPIDOS) {
+  if (escolhidos.length < TETO) {
     const dentro = new Set(escolhidos)
     for (const t of lista) {
-      if (escolhidos.length >= COTA_LENTOS + COTA_RAPIDOS) break
+      if (escolhidos.length >= TETO) break
       if (!dentro.has(t)) { escolhidos.push(t); dentro.add(t) }
+    }
+  }
+
+  // Passo 2: o PISO POR NATUREZA, que só age quando é violado.
+  //
+  // ⚠️ Por que existe: no caminho do app o motor embute o tipo do aspecto na
+  // própria `strength` (conjunção 1.0, oposição 0.9, trígono 0.7, sextil 0.5)
+  // e NÃO manda orbe — então ordenar por relevância ali é quase ordenar por
+  // tipo, e oposição ganha de todo macio exceto um trígono exato. Numa lista
+  // grande isso escolhe duro atrás de duro, e os quatro anéis bons ficam sem
+  // material enquanto o céu tem trígonos de sobra.
+  //
+  // ⚠️ Por que é PISO e não cota fixa: reservar vagas de verdade fazia trânsito
+  // FRACO da categoria reservada deslocar trânsito forte da outra, e aí
+  // acrescentar ruído à lista mudava a leitura — medido, a mediana caía de 41
+  // para 37. O piso troca só o necessário, e nos 21 usuários reais ele nunca
+  // dispara: a seleção por velocidade já traz no mínimo 2 de cada.
+  const dentro = new Set(escolhidos)
+  for (const alvo of ['m', 'd'] as const) {
+    let tem = escolhidos.filter((t) => natureza(t) === alvo).length
+    if (tem >= PISO_POR_NATUREZA) continue
+    const candidatos = lista.filter((t) => !dentro.has(t) && natureza(t) === alvo)
+    for (const novo of candidatos) {
+      if (tem >= PISO_POR_NATUREZA) break
+      // Sai o MAIS FRACO do lado abundante, nunca um da categoria em falta.
+      let piorIdx = -1
+      for (let i = 0; i < escolhidos.length; i++) {
+        if (natureza(escolhidos[i]) === alvo) continue
+        if (piorIdx < 0 || relevancia(escolhidos[i]) < relevancia(escolhidos[piorIdx])) piorIdx = i
+      }
+      if (piorIdx < 0) break
+      dentro.delete(escolhidos[piorIdx])
+      escolhidos[piorIdx] = novo
+      dentro.add(novo)
+      tem++
     }
   }
   return escolhidos
 }
+
 
 /**
  * A soma bruta de cada emoção, antes de virar 0–100.

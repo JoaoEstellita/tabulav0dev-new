@@ -4,6 +4,7 @@ import Svg, { Polygon, Line, Circle, Defs, RadialGradient, LinearGradient, Stop 
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import {
   poligonoDosValores,
+  poligonoDaSombra,
   anelDeReferencia,
   pontoNoEixo,
   rotuloDoEixo,
@@ -59,7 +60,11 @@ const TINTA = '#8892a4'
 const TINTA_FORTE = '#F2F5FA'
 const ACENTO = '#9BB4E8'
 
-const FONTE_ROTULO = 10
+// ⚠️ 12, não 10. Em 10 o nome da área ficava miúdo demais para ler de relance
+// num celular — era a queixa. Subir a fonte encolhe o raio disponível (o chip
+// cresce e `melhorGiro` tem menos espaço), e isso é aceitável: o número e o
+// nome precisam ser legíveis antes de a silhueta ser grande.
+const FONTE_ROTULO = 12
 /**
  * ⚠️ Medida APROXIMADA do texto, porque em React Native não dá para medir antes
  * de renderizar. O fator 0.55 da largura por caractere é conservador para a
@@ -126,6 +131,8 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
     if (!total || raio <= 0) return null
     return {
       valores: paraPoints(poligonoDosValores(eixos, raio, centro, giro)),
+      sombra: paraPoints(poligonoDaSombra(eixos, raio, centro, giro)),
+      temSombra: eixos.some((e) => e.movimento !== null && e.movimento !== undefined),
       borda: paraPoints(anelDeReferencia(1, total, raio, centro, giro)),
       teias: [0.25, 0.5, 0.75].map((f) => paraPoints(anelDeReferencia(f, total, raio, centro, giro))),
       critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro, giro)),
@@ -212,6 +219,21 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
               O traço vai em DUAS camadas — uma larga e quase transparente por
               baixo faz as vezes de brilho, que o SVG do React Native não tem
               como sombra. */}
+          {/* ⚠️ A SOMBRA DO MOVIMENTO, desenhada ANTES do polígono principal
+              para ficar por baixo dele.
+
+              Ela mostra quanto de cada nota vem de trânsito que passa rápido —
+              a fatia que muda em dias, não em meses. Duas áreas com a mesma
+              nota podem ter situações opostas: uma acaba na sexta, a outra está
+              ali há dois anos, e antes disto as duas apareciam idênticas.
+
+              Sem traço: a sombra é MANCHA, não contorno. Contorno competiria
+              com o polígono principal e o olho leria dois gráficos; preenchida
+              e sem borda, ela lê como profundidade. */}
+          {geo.temSombra ? (
+            <Polygon points={geo.sombra} fill={ACENTO} fillOpacity={0.22} stroke="none" />
+          ) : null}
+
           <Polygon
             points={geo.valores}
             fill="none"
@@ -282,7 +304,9 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
           // completa de cada área ficava escondida atrás de um toque que ninguém
           // adivinha. A borda leva a COR DA FAIXA, então o chip também repete o
           // status sem gastar mais espaço.
-          const caixa = { position: 'absolute' as const, top: r.y - 19, ...prende }
+          // ⚠️ O deslocamento acompanha a altura do chip: com a fonte maior o
+          // chip cresceu, e manter -19 o deixaria desalinhado do ponto no eixo.
+          const caixa = { position: 'absolute' as const, top: r.y - 22, ...prende }
           const estilo = (pressed: boolean) => [
             s.chip,
             {
@@ -356,6 +380,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 13 },
-  valor: { fontSize: 15, fontWeight: '800', lineHeight: 18 },
+  rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 15 },
+  valor: { fontSize: 18, fontWeight: '800', lineHeight: 21 },
 })

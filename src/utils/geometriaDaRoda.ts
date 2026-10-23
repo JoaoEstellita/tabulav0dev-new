@@ -12,6 +12,14 @@ export type EixoDaRoda = {
   chave: string
   rotulo: string
   valor: number | null
+  /**
+   * De 0 a 100: quanto do peso desta área vem de trânsito que passa rápido.
+   *
+   * Vira a SOMBRA dentro do polígono — a fatia da nota que está em jogo hoje.
+   * `null` ou ausente simplesmente não desenha sombra naquele eixo; a roda
+   * funciona igual sem isto, que é como ela nasceu.
+   */
+  movimento?: number | null
 }
 
 export type Ponto = { x: number; y: number }
@@ -104,6 +112,29 @@ export function pontoNoEixo(
 }
 
 /** Os vértices do polígono dos valores, na ordem dos eixos. */
+/**
+ * O polígono da SOMBRA: em cada eixo, a parte do valor que está em movimento.
+ *
+ * ⚠️ Fica sempre DENTRO do polígono principal, nunca fora. O desenho cheio é a
+ * nota; a sombra é a fatia dela que se mexe; o vão entre as duas é o que está
+ * assentado. Desenhar a sombra no valor bruto do movimento colocaria duas
+ * escalas diferentes no mesmo lugar — o jeito clássico de um gráfico mentir
+ * sem querer.
+ *
+ * Eixo sem movimento conhecido cai no próprio valor, e ali a sombra encosta na
+ * borda — melhor do que colapsar para o centro e sugerir "nada se move".
+ */
+export function poligonoDaSombra(eixos: EixoDaRoda[], raio: number, centro: Ponto, giro = 0): Ponto[] {
+  return eixos.map((e, i) => {
+    const m = e.movimento
+    const fracaoMovel =
+      m === null || m === undefined || !Number.isFinite(Number(m))
+        ? 1
+        : Math.max(0, Math.min(100, Number(m))) / 100
+    return pontoNoEixo(i, eixos.length, fracaoDoValor(e.valor) * fracaoMovel, raio, centro, giro)
+  })
+}
+
 export function poligonoDosValores(eixos: EixoDaRoda[], raio: number, centro: Ponto, giro = 0): Ponto[] {
   return eixos.map((e, i) => pontoNoEixo(i, eixos.length, fracaoDoValor(e.valor), raio, centro, giro))
 }

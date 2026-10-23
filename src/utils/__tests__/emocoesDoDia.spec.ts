@@ -13,6 +13,7 @@ import {
   selecionarTransitos,
   COTA_LENTOS,
   COTA_RAPIDOS,
+  PISO_POR_NATUREZA,
   type ChaveEmocao,
 } from '../emocoesDoDia'
 
@@ -632,6 +633,46 @@ describe('clima emocional do dia', () => {
      * mostraria outra — que foi exatamente o estado anterior, com o backend
      * mandando 8 e o app alimentando o cálculo com a lista inteira.
      */
+    /**
+     * ⚠️ O PISO POR NATUREZA, e por que ele não é uma cota.
+     *
+     * No caminho do app o motor embute o tipo do aspecto na própria `strength`
+     * (conjunção 1.0, oposição 0.9, trígono 0.7, sextil 0.5) e não manda orbe.
+     * Ordenar por relevância ali é quase ordenar por tipo: oposição ganha de
+     * todo macio exceto um trígono exato. Numa lista grande a seleção enche de
+     * duro e os quatro anéis bons ficam sem material — com o céu cheio de
+     * trígonos.
+     *
+     * Reservar vagas FIXAS resolvia isso e criava coisa pior: trânsito fraco da
+     * categoria reservada deslocava trânsito forte da outra, e acrescentar
+     * ruído à lista mudava a leitura (medido: mediana caía de 41 para 37). O
+     * piso troca só o necessário.
+     */
+    it('garante o mínimo de macios mesmo numa lista só de duros fortes', () => {
+      const durosFortes = Array.from({ length: 30 }, (_, i) => ({
+        t: ['Saturn', 'Pluto', 'Mars', 'Uranus'][i % 4],
+        a: i % 2 ? 'oposicao' : 'quadratura',
+        n: 'Sun', orb: 0.1, strength: 1,
+      }))
+      const macioFraco = { t: 'Venus', a: 'sextil', n: 'Venus', orb: 7.5, strength: 0.2 }
+      const sel = selecionarTransitos([...durosFortes, macioFraco, { ...macioFraco, n: 'Moon' }])
+      const macios = sel.filter((t) => /sextil|trigono|semissextil/.test(String(t.a)))
+      expect(macios.length, 'o macio perderia no peso, mas o piso o segura')
+        .toBeGreaterThanOrEqual(PISO_POR_NATUREZA)
+      expect(sel).toHaveLength(COTA_LENTOS + COTA_RAPIDOS)
+    })
+
+    it('o piso NÃO dispara quando a lista já é equilibrada', () => {
+      // Nos 21 usuários reais a seleção por velocidade já traz macios de sobra,
+      // então o piso tem de ser invisível — senão ele estaria trocando
+      // trânsito forte por fraco todo dia.
+      for (const u of fixtures as any[]) {
+        const sel = selecionarTransitos(u.transitos)
+        const macios = sel.filter((t: any) => /sextil|trigono|semissextil|conjuncao/.test(String(t.a)))
+        expect(macios.length, `${u.uid}`).toBeGreaterThanOrEqual(PISO_POR_NATUREZA)
+      }
+    })
+
     it('a base de calibração passa inteira pela cota, sem perder trânsito', () => {
       expect(COTA_LENTOS + COTA_RAPIDOS).toBe(12)
       for (const u of fixtures as any[]) {

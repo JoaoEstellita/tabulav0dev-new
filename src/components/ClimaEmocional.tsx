@@ -50,8 +50,8 @@ const COR: Record<ChaveEmocao, [string, string]> = {
 }
 
 /**
- * ⚠️ Rótulo CURTO em todos os idiomas: com QUATRO por linha a célula cai para
- * ~87px, o que cabe ~13 caracteres em 10px. "Drive" em vez de "Enthusiasm" e
+ * ⚠️ Rótulo CURTO em todos os idiomas: com QUATRO por linha a célula fica em
+ * ~89px, o que cabe ~11 caracteres em 12px. "Drive" em vez de "Enthusiasm" e
  * "Low mood" em vez de "Discouragement" não são preguiça de tradução — são o
  * que cabe sem reticências. "Sensível" em vez de "Sensibilidade" pela mesma
  * razão: o rótulo é o apelido do anel, o nome inteiro está no detalhe.
@@ -99,9 +99,13 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
   // linha e a simetria 3+3 — que é metade do que a seção comunica — virava
   // 5+1. Era visível em tablet e no PWA, e não dava erro nenhum.
   const porLinha = 4
-  const largura = Math.min(372, width - 28)
+  const largura = Math.min(380, width - 24)
   const celula = largura / porLinha
-  const tamanho = Math.max(46, Math.min(60, celula - 26))
+  // ⚠️ O anel ficou MAIOR (era 46–60) porque a letra do rótulo subiu de 10 para
+  // 12: em 10 o nome não se lia de relance num celular. Com a fonte maior o
+  // rótulo precisa de mais largura, e um anel pequeno demais ao lado de um
+  // texto legível fica desequilibrado.
+  const tamanho = Math.max(52, Math.min(66, celula - 22))
   const traco = Math.max(5, Math.round(tamanho * 0.11))
   const raio = (tamanho - traco) / 2
   const perimetro = 2 * Math.PI * raio
@@ -279,7 +283,7 @@ function DetalheDaEmocao({
 const s = StyleSheet.create({
   bloco: { paddingVertical: 8, marginBottom: 4 },
   titulo: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
@@ -293,8 +297,11 @@ const s = StyleSheet.create({
   item: { alignItems: 'center', marginBottom: 10 },
   centro: { alignItems: 'center', justifyContent: 'center' },
   valor: { color: '#F2F5FA', fontWeight: '800' },
-  rotulo: { fontSize: 10, color: TINTA, marginTop: 4, textAlign: 'center' },
-  nota: { fontSize: 10, color: '#5c6477', textAlign: 'center', marginTop: 0 },
+  // ⚠️ 12 e não 10: em 10 o nome da tendência ficava miúdo demais para ler de
+  // relance. O rótulo é metade da informação — o número sem a palavra não diz
+  // nada —, então ele não pode ser o primeiro a encolher.
+  rotulo: { fontSize: 12, color: TINTA, marginTop: 5, textAlign: 'center' },
+  nota: { fontSize: 11, color: '#5c6477', textAlign: 'center', marginTop: 2 },
 
   fundo: { flex: 1, backgroundColor: 'rgba(5,7,18,0.82)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   caixa: { width: '100%', maxWidth: 380, backgroundColor: '#13162B', borderRadius: 16, borderWidth: 1, borderColor: '#242B40', padding: 16 },

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   RefreshControl,
   Alert,
   Platform,
@@ -23,6 +24,9 @@ import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER, getLifeAreaLabelI18n } from '../../constants/lifeAreas'
 import RodaDeStatus from '../../components/RodaDeStatus'
+import { useVisaoDeStatus } from '../../hooks/useVisaoDeStatus'
+import { movimentoDaArea } from '../../utils/movimentoDaArea'
+import { mergeAreaTransits } from '../../utils/transitsByArea'
 import ClimaEmocional from '../../components/ClimaEmocional'
 import type { EixoDaRoda } from '../../utils/geometriaDaRoda'
 import FraseDoDia from '../../components/FraseDoDia'
@@ -224,6 +228,7 @@ export default function HomeScreen() {
   ]), [language]) // eslint-disable-line react-hooks/exhaustive-deps
   const { openTour: openHomeTour } = useTabTour('tour_seen_home_v4', 'Home', buildHomeTour)
   const { width } = useWindowDimensions()
+  const { visao: visaoDeStatus, alternar: alternarVisao } = useVisaoDeStatus()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
@@ -492,8 +497,15 @@ export default function HomeScreen() {
       // roda pinta "sem dado" em cinza em vez de fingir zero, que sairia
       // vermelho de critico.
       valor: typeof (normalizedArea as any)?.percentage === 'number' ? (normalizedArea as any).percentage : null,
+      // ⚠️ A SOMBRA da roda. Quanto do peso desta area vem de transito que
+      // passa rapido — a fatia da nota que muda em dias e nao em meses. Duas
+      // areas com a mesma nota podem ser situacoes opostas: uma acaba sexta, a
+      // outra esta ali ha dois anos, e sem isto as duas apareciam identicas.
+      movimento: movimentoDaArea(
+        mergeAreaTransits(name, transitData?.currentTransits as any, backendCurrentTransits as any) as any,
+      ),
     }))
-  }, [memoizedAreas, language])
+  }, [memoizedAreas, language, transitData?.currentTransits, backendCurrentTransits])
 
   const abrirAreaDaRoda = React.useCallback((chave: string) => {
     const alvo = memoizedAreas.find((a) => a.name === chave)
@@ -665,7 +677,57 @@ export default function HomeScreen() {
             Só aparece com dado — um octógono vazio pareceria defeito. */}
         {eixosDaRoda.length >= 3 ? (
           <AnimatedMount>
-            <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
+            <View {...aAreas}>
+              {/* ⚠️ UM ESPACO, DUAS VISOES. A roda e as fichas mostram os MESMOS
+                  oito numeros e viviam em lugares diferentes da mesma tela — a
+                  mesma informacao ocupando dois espacos e rolando duas vezes.
+
+                  A seta nao e decoracao: sem um alvo visivel, ninguem descobre
+                  que ha outra visao. Fica na linha do titulo, que e onde o olho
+                  ja passa antes de ler o conteudo. */}
+              <View style={styles.statusCabecalho}>
+                <Text style={styles.statusTitulo}>
+                  {visaoDeStatus === 'roda'
+                    ? tl('O seu retrato hoje', 'Your portrait today', 'Tu retrato hoy', 'Il tuo ritratto oggi')
+                    : tl('As suas areas hoje', 'Your areas today', 'Tus areas hoy', 'Le tue aree oggi')}
+                </Text>
+                <Pressable
+                  onPress={alternarVisao}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    visaoDeStatus === 'roda'
+                      ? tl('Ver em fichas', 'See as cards', 'Ver en fichas', 'Vedi a schede')
+                      : tl('Ver na roda', 'See as wheel', 'Ver en rueda', 'Vedi a ruota')
+                  }
+                  hitSlop={12}
+                  style={({ pressed }) => [styles.statusSeta, { opacity: pressed ? 0.5 : 1 }]}
+                >
+                  <Ionicons
+                    name={visaoDeStatus === 'roda' ? 'grid-outline' : 'radio-button-on-outline'}
+                    size={15}
+                    color="#8892a4"
+                  />
+                  <Ionicons name="chevron-forward" size={15} color="#8892a4" />
+                </Pressable>
+              </View>
+
+              {visaoDeStatus === 'roda' ? (
+                <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
+              ) : lifeAreasForDisplay ? (
+                <View style={styles.lifeAreasGrid}>
+                  {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
+                    <AreaCardItem
+                      key={name}
+                      name={name}
+                      area={normalizedArea}
+                      factors={allLifeAreaFactors[name]}
+                      transitCount={transitCount}
+                      onPress={handleAreaPress}
+                    />
+                  ))}
+                </View>
+              ) : null}
+            </View>
           </AnimatedMount>
         ) : null}
 
@@ -733,26 +795,9 @@ export default function HomeScreen() {
             onde isso pega na vida — é o fecho dessa leitura. Com os cards
             de planeta no meio, a pessoa saltava do céu para o detalhe de
             cada planeta e só então voltava para "e daí, na minha vida?". */}
-        {lifeAreasForDisplay && (
-          <View {...aAreas}>
-          <AnimatedMount>
-            <View style={styles.section}>
-              <View style={styles.lifeAreasGrid}>
-                {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
-                    <AreaCardItem
-                      key={name}
-                      name={name}
-                      area={normalizedArea}
-                      factors={allLifeAreaFactors[name]}
-                      transitCount={transitCount}
-                      onPress={handleAreaPress}
-                    />
-                  ))}
-              </View>
-            </View>
-          </AnimatedMount>
-          </View>
-        )}
+        {/* ⚠️ As fichas NAO ficam mais aqui — subiram para o bloco alternavel,
+            junto da roda. Repetir os mesmos oito numeros em dois pontos da
+            mesma tela fazia a pessoa rolar duas vezes pela mesma informacao. */}
 
         {/* ⚠️ O filtro NÃO fica mais aqui: ele é passado para dentro da roda,
             em `entreRodaEGrade`. A grade de aspectos mora no mesmo componente
@@ -1145,6 +1190,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 4,
+  },
+  // A linha que dá título ao bloco de status e carrega a seta de alternância.
+  statusCabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    marginBottom: 10,
+  },
+  statusTitulo: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.1,
+    color: '#8892a4',
+  },
+  // ⚠️ O alvo é a linha inteira do ícone mais a seta, com hitSlop de 12 por
+  // volta: dois ícones de 15px sozinhos dariam uma área de toque bem abaixo
+  // dos 44pt mínimos.
+  statusSeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
   },
   lifeAreaItem: {
     width: '50%',

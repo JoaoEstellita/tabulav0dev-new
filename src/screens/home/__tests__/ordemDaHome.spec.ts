@@ -10,10 +10,17 @@ import { join } from 'node:path'
  * estética — é o roteiro da leitura:
  *
  *   "Seu dia"  → a resposta, para quem abre o app de manhã e não quer mais nada
- *   roda       → de onde a resposta saiu
- *   grade      → o detalhe técnico (sai dentro do componente da roda)
- *   status     → onde isso pega na vida
+ *   status     → onde isso pega na vida, em roda OU em fichas (alternável)
+ *   clima      → que tom o dia tende a ter
+ *   roda natal → de onde a resposta saiu
+ *   grade      → o detalhe técnico (sai dentro do componente da roda natal)
  *   o resto    → fita de planetas, card de trânsitos, céu coletivo
+ *
+ * ⚠️ O STATUS SUBIU, e junto com ele as fichas. Antes a roda de status ficava
+ * em cima e as fichas lá embaixo — os MESMOS oito números em dois pontos da
+ * mesma tela, com a pessoa rolando duas vezes pela mesma informação. Agora as
+ * duas visões dividem um bloco só, com uma seta para alternar, e o bloco fica
+ * onde a roda já estava: resumo antes de detalhe.
  *
  * Nada disso quebra se mudar de lugar: a tela continua montando, os testes de
  * render continuam passando, e só a leitura fica pior.
@@ -26,21 +33,39 @@ const RODA = readFileSync(join(raiz, 'screens', 'cosmos', 'NatalChartWheelScreen
 const pos = (t: string) => HOME.indexOf(t)
 
 describe('ordem dos blocos da Home', () => {
-  it('é "Seu dia", roda, status, e então o resto', () => {
+  it('é "Seu dia", status, clima, roda natal, e então o resto', () => {
     const frase = pos('<FraseDoDia')
-    const roda = pos('<NatalChartWheelContent')
-    const status = pos('<AreaCardItem')
+    const status = pos('<RodaDeStatus')
+    const fichas = pos('<AreaCardItem')
+    const clima = pos('<ClimaEmocional')
+    const natal = pos('<NatalChartWheelContent')
     const banners = pos('<NotificationOptInBanner')
     const coletiva = pos('<HomeCollectiveGrid />')
 
-    for (const [nome, v] of Object.entries({ frase, roda, status, banners, coletiva })) {
+    for (const [nome, v] of Object.entries({ frase, status, fichas, clima, natal, banners, coletiva })) {
       expect(v, `bloco ${nome} não encontrado na Home`).toBeGreaterThan(-1)
     }
 
-    expect(frase, '"Seu dia" vem ANTES da roda').toBeLessThan(roda)
-    expect(status, 'o status vem DEPOIS da roda — a grade sai dentro dela').toBeGreaterThan(roda)
-    expect(status, 'e antes dos banners e do resto').toBeLessThan(banners)
+    expect(frase, '"Seu dia" vem ANTES do status').toBeLessThan(status)
+    expect(clima, 'o clima vem depois do status').toBeGreaterThan(status)
+    expect(natal, 'a roda natal vem depois do clima').toBeGreaterThan(clima)
+    expect(natal, 'e antes dos banners').toBeLessThan(banners)
     expect(banners, 'o céu coletivo fecha a página').toBeLessThan(coletiva)
+  })
+
+  /**
+   * ⚠️ AS DUAS VISÕES DO STATUS TÊM DE DIVIDIR UM BLOCO SÓ.
+   *
+   * Elas mostram os mesmos oito números. Separadas, a pessoa rola duas vezes
+   * pela mesma informação — foi o estado anterior. Se as fichas voltarem a
+   * aparecer longe da roda, isto reprova.
+   */
+  it('roda e fichas moram no mesmo bloco, alternáveis', () => {
+    const roda = pos('<RodaDeStatus')
+    const fichas = pos('<AreaCardItem')
+    expect(Math.abs(fichas - roda), 'roda e fichas se separaram na tela').toBeLessThan(1500)
+    expect(HOME, 'sem o hook, não há como alternar').toContain('useVisaoDeStatus')
+    expect(HOME).toContain("visaoDeStatus === 'roda'")
   })
 
   it('a grade continua morando dentro da roda', () => {
