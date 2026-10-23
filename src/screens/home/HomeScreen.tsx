@@ -670,7 +670,7 @@ export default function HomeScreen() {
         ) : null}
 
         {/* ⚠️ O CLIMA EMOCIONAL vem logo depois da roda, e é o MESMO céu em
-            outra pergunta: a roda diz onde o dia pega na vida; estes seis anéis
+            outra pergunta: a roda diz onde o dia pega na vida; estes anéis
             dizem que tom ele tende a ter.
 
             ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado

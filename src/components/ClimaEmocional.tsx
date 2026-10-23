@@ -25,25 +25,39 @@ type Props = {
  * Cor por emoção, e não por faixa de valor.
  *
  * ⚠️ Diferente da roda de status, aqui a cor identifica QUAL emoção é, não quão
- * alta ela está — "Alegria 20" continua sendo alegria. Pintar pelo valor faria
- * alegria baixa ficar vermelha, dizendo o contrário do rótulo.
+ * alta ela está — "Afeto 20" continua sendo afeto. Pintar pelo valor faria
+ * afeto baixo ficar vermelho, dizendo o contrário do rótulo.
+ *
+ * ⚠️ Oito matizes DISTINTOS, um por anel, e não dois grupos (quente = tensão,
+ * frio = alívio). Com cinco tons de vermelho lado a lado, nenhum deles
+ * identifica mais nada — o olho só vê "vermelho" e precisa ler o rótulo de
+ * novo. Desânimo é o cinza-azulado de propósito: é o anel apagado.
  */
 const COR: Record<ChaveEmocao, [string, string]> = {
   ansiedade: ['#F59E0B', '#FBBF24'],
-  stress:    ['#EF4444', '#F87171'],
-  raiva:     ['#DC2626', '#F87171'],
-  alegria:   ['#10B981', '#34D399'],
-  tristeza:  ['#6366F1', '#818CF8'],
-  otimismo:  ['#06B6D4', '#22D3EE'],
+  irritacao: ['#EF4444', '#FB7185'],
+  pressao:   ['#A855F7', '#C084FC'],
+  confusao:  ['#6366F1', '#818CF8'],
+  desanimo:  ['#64748B', '#94A3B8'],
+  calma:     ['#14B8A6', '#2DD4BF'],
+  animo:     ['#22C55E', '#4ADE80'],
+  afeto:     ['#EC4899', '#F472B6'],
 }
 
+/**
+ * ⚠️ Rótulo CURTO em todos os idiomas: a célula tem ~87px com quatro por linha,
+ * o que cabe ~14 caracteres em 10px. "Low mood" em vez de "Discouragement" não
+ * é preguiça de tradução — é o que caberia sem reticências.
+ */
 const ROTULO: Record<ChaveEmocao, [string, string, string, string]> = {
   ansiedade: ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
-  stress:    ['Estresse', 'Stress', 'Estres', 'Stress'],
-  raiva:     ['Raiva', 'Anger', 'Ira', 'Rabbia'],
-  alegria:   ['Alegria', 'Joy', 'Alegria', 'Gioia'],
-  tristeza:  ['Tristeza', 'Sadness', 'Tristeza', 'Tristezza'],
-  otimismo:  ['Otimismo', 'Optimism', 'Optimismo', 'Ottimismo'],
+  irritacao: ['Irritação', 'Irritation', 'Irritacion', 'Irritazione'],
+  pressao:   ['Pressão', 'Pressure', 'Presion', 'Pressione'],
+  confusao:  ['Confusão', 'Confusion', 'Confusion', 'Confusione'],
+  desanimo:  ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
+  calma:     ['Calma', 'Calm', 'Calma', 'Calma'],
+  animo:     ['Ânimo', 'Drive', 'Animo', 'Slancio'],
+  afeto:     ['Afeto', 'Affection', 'Afecto', 'Affetto'],
 }
 
 const TINTA = '#8892a4'
@@ -63,12 +77,16 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
   if (!emocoes) return null
 
-  // ⚠️ Três por linha e MENORES do que na primeira versão. A Home já carrega a
-  // frase do dia, a roda de status e a roda natal; seis anéis grandes no meio
-  // disso empurravam o mapa para longe do alcance do polegar.
-  const porLinha = 3
-  const celula = Math.min(360, width - 40) / porLinha
-  const tamanho = Math.max(52, Math.min(66, celula - 26))
+  // ⚠️ QUATRO por linha, e os anéis menores por consequência. A Home já carrega
+  // a frase do dia, a roda de status e a roda natal; anéis grandes no meio
+  // disso empurravam o mapa para longe do alcance do polegar. Oito em 4×2
+  // ocupam a mesma altura que seis em 3×2 ocupavam.
+  //
+  // A área de toque NÃO encolheu com o anel: o Pressable ocupa a célula inteira
+  // (~87×76), bem acima dos 44pt mínimos.
+  const porLinha = 4
+  const celula = Math.min(380, width - 32) / porLinha
+  const tamanho = Math.max(44, Math.min(58, celula - 24))
   const traco = Math.max(5, Math.round(tamanho * 0.11))
   const raio = (tamanho - traco) / 2
   const perimetro = 2 * Math.PI * raio
@@ -160,8 +178,9 @@ function DetalheDaEmocao({
   const [escuro] = COR[emocao.chave]
   const nome = tl(...ROTULO[emocao.chave])
 
-  // Aliviam (negativo) e pesam (positivo) são listas diferentes: misturadas,
-  // um "-0,3" no meio de positivos lê como erro.
+  // ⚠️ O filtro por `> 0` fica, mesmo sem nenhum peso negativo na tabela hoje:
+  // o alívio virou anel próprio (Calma), mas se algum peso voltar a ser
+  // negativo, uma linha com "-0,3" no meio de positivos leria como erro.
   const pesam = emocao.porque.filter((c) => c.valor > 0)
   const aliviam = emocao.porque.filter((c) => c.valor < 0)
   const total = emocao.porque.reduce((a, c) => a + Math.abs(c.valor), 0) || 1
@@ -246,7 +265,7 @@ const s = StyleSheet.create({
   item: { alignItems: 'center', marginBottom: 10 },
   centro: { alignItems: 'center', justifyContent: 'center' },
   valor: { color: '#F2F5FA', fontWeight: '800' },
-  rotulo: { fontSize: 10, color: TINTA, marginTop: 4 },
+  rotulo: { fontSize: 10, color: TINTA, marginTop: 4, textAlign: 'center' },
   nota: { fontSize: 10, color: '#5c6477', textAlign: 'center', marginTop: 0 },
 
   fundo: { flex: 1, backgroundColor: 'rgba(5,7,18,0.82)', alignItems: 'center', justifyContent: 'center', padding: 24 },
