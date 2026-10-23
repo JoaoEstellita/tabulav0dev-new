@@ -804,7 +804,7 @@ export default function HomeScreen() {
                 </View>
 
                 {visaoDeStatus === 'roda' ? (
-                  <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
+                  <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} idioma={language} />
                 ) : lifeAreasForDisplay ? (
                   <View style={styles.lifeAreasGrid}>
                     {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (

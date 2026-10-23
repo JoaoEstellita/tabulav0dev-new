@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { movimentoDaArea, mobilidade, valorDaSombra } from '../movimentoDaArea'
 
 const T = (durationClass?: 'curto' | 'medio' | 'longo', strength = 1, transitPlanet = 'Saturn') =>
@@ -96,5 +98,50 @@ describe('o raio da sombra na roda', () => {
     expect(valorDaSombra(null, 50)).toBeNull()
     expect(valorDaSombra(60, null)).toBeNull()
     expect(valorDaSombra(null, null)).toBeNull()
+  })
+})
+
+/**
+ * ⚠️ A SOMBRA PRECISA SER DESENHADA DEPOIS DO PREENCHIMENTO.
+ *
+ * Ela nasceu invisível: eu a desenhei ANTES do polígono principal para ficar
+ * "por baixo", mas o principal tem `fill`, e esse preenchimento pintava por
+ * cima dela. O gráfico ficou com uma informação a mais e nenhum pixel para
+ * mostrá-la — sem erro, sem aviso, sem nada que denunciasse.
+ *
+ * Este teste lê a ordem no fonte porque é exatamente ali que o defeito mora:
+ * em SVG, quem vem depois ganha. Não dá para pegar isso num teste de valor.
+ */
+describe('a ordem de desenho da roda', () => {
+  const RODA = readFileSync(
+    join(__dirname, '..', '..', 'components', 'RodaDeStatus.tsx'),
+    'utf-8',
+  )
+
+  it('a sombra vem depois do preenchimento e antes do contorno', () => {
+    const preenchimento = RODA.indexOf('fill="url(#area)"')
+    const sombra = RODA.indexOf('points={geo.sombra}')
+    const contorno = RODA.lastIndexOf('points={geo.valores}')
+
+    for (const [nome, v] of Object.entries({ preenchimento, sombra, contorno })) {
+      expect(v, `não achei ${nome} no fonte da roda`).toBeGreaterThan(-1)
+    }
+    expect(sombra, 'a sombra voltou para trás do preenchimento e sumiu').toBeGreaterThan(preenchimento)
+    expect(contorno, 'o contorno tem de fechar o desenho por cima').toBeGreaterThan(sombra)
+  })
+
+  it('a sombra tem cor própria, não o azul do polígono com opacidade', () => {
+    // Mesmo matiz, uma forma dentro da outra, lê como uma só — era o segundo
+    // motivo de não dar para distinguir.
+    expect(RODA).toMatch(/const MOVIMENTO = '#[0-9A-Fa-f]{6}'/)
+    expect(RODA, 'a sombra voltou a usar a cor do polígono').not.toMatch(
+      /points=\{geo\.sombra\}\s+fill=\{ACENTO\}/,
+    )
+  })
+
+  it('o preenchimento do polígono não traz mais traço junto', () => {
+    // Se voltar a trazer, o contorno aparece ANTES da sombra e ela fica com
+    // uma linha sólida cruzando por cima.
+    expect(RODA).toContain('<Polygon points={geo.valores} fill="url(#area)" stroke="none" />')
   })
 })

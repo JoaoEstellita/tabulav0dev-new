@@ -41,6 +41,11 @@ type Props = {
   eixos: EixoDaRoda[]
   /** Abre a leitura daquela área. Sem isto, a roda é só enfeite. */
   aoTocarEixo?: (chave: string) => void
+  /**
+   * Só para a legenda da sombra. Os RÓTULOS dos eixos já chegam traduzidos de
+   * fora — a roda não traduz nome de área, e não deve passar a traduzir.
+   */
+  idioma?: string
 }
 
 // ⚠️ As MESMAS cores dos cards de área. Uma terceira régua de cor na mesma tela
@@ -59,6 +64,16 @@ const TRILHO = '#232B3D'
 const TINTA = '#8892a4'
 const TINTA_FORTE = '#F2F5FA'
 const ACENTO = '#9BB4E8'
+/**
+ * A cor da SOMBRA DO MOVIMENTO.
+ *
+ * ⚠️ Precisa ser outro matiz, não o azul do polígono com opacidade — duas
+ * formas da mesma cor, uma dentro da outra, leem como uma só. E não pode ser
+ * vermelho, âmbar nem verde: esses três já significam faixa de status nos
+ * chips, e repeti-los aqui faria a sombra parecer um julgamento da área.
+ * Violeta está livre no desenho inteiro.
+ */
+const MOVIMENTO = '#C4B5FD'
 
 // ⚠️ 12, não 10. Em 10 o nome da área ficava miúdo demais para ler de relance
 // num celular — era a queixa. Subir a fonte encolhe o raio disponível (o chip
@@ -98,13 +113,35 @@ const PADDING_CHIP = 6
 const medirRotulo = (texto: string) => texto.length * FONTE_ROTULO * 0.62 + 2 + PADDING_CHIP * 2
 const FOLGA_ROTULO = 6
 
-export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
-  const { width } = useWindowDimensions()
+/**
+ * Quanto sobra acima e abaixo do polígono, para o chip do eixo do topo e o do
+ * eixo da base caberem inteiros.
+ *
+ * A conta: o chip do eixo do topo tem o topo em `centro.y − raio − FOLGA − 22`
+ * (22 é meia altura do chip), então a margem precisa ser ao menos 28. Fica 38,
+ * com dez pixels de respiro — mais que isso é o vão que esta conta existe para
+ * eliminar.
+ */
+const MARGEM_VERTICAL = 38
 
-  // O teto evita que num tablet a roda vire pôster; o piso evita que num
-  // aparelho estreito ela encolha até o polígono virar um ponto.
-  const lado = Math.min(360, Math.max(270, width - 40))
-  const centro = { x: lado / 2, y: lado / 2 }
+export default function RodaDeStatus({ eixos, aoTocarEixo, idioma }: Props) {
+  const { width } = useWindowDimensions()
+  const l = String(idioma || 'pt-BR')
+  const tl = (pt: string, en: string, es: string, it: string) =>
+    l.startsWith('en') ? en : l.startsWith('es') ? es : l.startsWith('it') ? it : pt
+
+  // ⚠️ QUEM LIMITA O TAMANHO DA RODA É A LARGURA DOS CHIPS, não a tela.
+  //
+  // O raio sai de `melhorGiro`, que só aceita um raio se o chip de cada eixo
+  // couber entre o ponto dele e a borda. Num eixo lateral isso vira
+  // `raio ≤ lado/2 − largura_do_chip`: com "Comunicação" em 12px (~96px de
+  // chip) e `lado` travado em 360, o raio ficava em 86 e sobrava meia tela
+  // vazia em volta de um octógono pequeno.
+  //
+  // Cada pixel de largura vira quase um pixel de raio, então o teto subiu e a
+  // margem lateral caiu. O teto continua existindo para a roda não virar
+  // pôster num tablet.
+  const lado = Math.max(280, Math.min(width - 20, 460))
   const total = eixos.length
 
   const limiares = {
@@ -127,6 +164,20 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
     [eixos, lado],
   )
 
+  /**
+   * ⚠️ A CAIXA NÃO É QUADRADA, e é isso que tira o vão de cima e de baixo.
+   *
+   * `melhorGiro` raciocina num quadrado de `lado` porque o aperto é
+   * horizontal — chip lateral precisa de largura. Na vertical o chip custa só
+   * a própria altura, que é umas duas vezes menor. Mantendo a caixa quadrada,
+   * tudo que a largura ganhava virava espaço morto em cima e embaixo.
+   *
+   * A geometria horizontal continua intacta (`centro.x` segue `lado / 2`, que
+   * é o que a busca assumiu); só a altura encolhe para o que de fato se usa.
+   */
+  const altura = Math.round(2 * (raio + MARGEM_VERTICAL))
+  const centro = { x: lado / 2, y: altura / 2 }
+
   const geo = useMemo(() => {
     if (!total || raio <= 0) return null
     return {
@@ -146,8 +197,8 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
 
   return (
     <View style={s.bloco}>
-      <View style={{ width: lado, height: lado, alignSelf: 'center' }}>
-        <Svg width={lado} height={lado}>
+      <View style={{ width: lado, height: altura, alignSelf: 'center' }}>
+        <Svg width={lado} height={altura}>
           <Defs>
             {/* Brilho suave no miolo: dá profundidade sem desenhar nada por
                 cima dos dados. */}
@@ -219,21 +270,8 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
               O traço vai em DUAS camadas — uma larga e quase transparente por
               baixo faz as vezes de brilho, que o SVG do React Native não tem
               como sombra. */}
-          {/* ⚠️ A SOMBRA DO MOVIMENTO, desenhada ANTES do polígono principal
-              para ficar por baixo dele.
-
-              Ela mostra quanto de cada nota vem de trânsito que passa rápido —
-              a fatia que muda em dias, não em meses. Duas áreas com a mesma
-              nota podem ter situações opostas: uma acaba na sexta, a outra está
-              ali há dois anos, e antes disto as duas apareciam idênticas.
-
-              Sem traço: a sombra é MANCHA, não contorno. Contorno competiria
-              com o polígono principal e o olho leria dois gráficos; preenchida
-              e sem borda, ela lê como profundidade. */}
-          {geo.temSombra ? (
-            <Polygon points={geo.sombra} fill={ACENTO} fillOpacity={0.22} stroke="none" />
-          ) : null}
-
+          {/* Brilho do polígono: um traço largo e quase transparente por baixo
+              faz as vezes de sombra, que o SVG do React Native não tem. */}
           <Polygon
             points={geo.valores}
             fill="none"
@@ -242,9 +280,43 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
             strokeOpacity={0.14}
             strokeLinejoin="round"
           />
+          {/* O preenchimento do polígono, SEM traço — o contorno vem por
+              último, depois da sombra, para fechar o desenho por cima. */}
+          <Polygon points={geo.valores} fill="url(#area)" stroke="none" />
+
+          {/* ⚠️ A SOMBRA DO MOVIMENTO vem DEPOIS do preenchimento.
+              Antes vinha antes, e por isso nunca apareceu: o `fill` do
+              polígono principal pintava por cima dela. Ficava um gráfico com
+              uma informação invisível, sem erro nenhum para denunciar.
+
+              Ela mostra quanto de cada nota vem de trânsito que passa rápido —
+              a fatia que muda em dias, não em meses. Duas áreas com a mesma
+              nota podem ser situações opostas: uma acaba na sexta, a outra está
+              ali há dois anos.
+
+              ⚠️ Cor PRÓPRIA e contorno tracejado. Pintada no mesmo azul do
+              polígono, só com opacidade, ela some contra o preenchimento —
+              era o segundo motivo de não dar para distinguir. O tracejado
+              separa as duas formas sem competir com o contorno sólido. */}
+          {geo.temSombra ? (
+            <>
+              <Polygon points={geo.sombra} fill={MOVIMENTO} fillOpacity={0.34} stroke="none" />
+              <Polygon
+                points={geo.sombra}
+                fill="none"
+                stroke={MOVIMENTO}
+                strokeWidth={1.5}
+                strokeOpacity={0.9}
+                strokeDasharray="4 3"
+                strokeLinejoin="round"
+              />
+            </>
+          ) : null}
+
+          {/* O contorno do polígono principal fecha por cima de tudo. */}
           <Polygon
             points={geo.valores}
-            fill="url(#area)"
+            fill="none"
             stroke={ACENTO}
             strokeWidth={2.5}
             strokeLinejoin="round"
@@ -360,6 +432,24 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
         })}
       </View>
 
+      {/* ⚠️ A LEGENDA DA SOMBRA. Uma forma dentro da outra não se explica
+          sozinha — sem esta linha, o desenho tem uma informação a mais e
+          nenhuma pista do que ela significa, que é pior do que não tê-la.
+
+          Só aparece quando há sombra para explicar. */}
+      {geo.temSombra ? (
+        <View style={s.legenda}>
+          <View style={s.amostra} />
+          <Text style={s.legendaTexto}>
+            {tl(
+              'a parte destacada é o que se move hoje',
+              'the highlighted part is what moves today',
+              'la parte destacada es lo que se mueve hoy',
+              'la parte evidenziata e cio che si muove oggi',
+            )}
+          </Text>
+        </View>
+      ) : null}
     </View>
   )
 }
@@ -372,6 +462,25 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 4,
   },
+  legenda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 10,
+  },
+  // Um quadradinho com o mesmo preenchimento e o mesmo tracejado da sombra:
+  // a amostra tem de ser a coisa, não uma aproximação dela.
+  amostra: {
+    width: 13,
+    height: 13,
+    borderRadius: 3,
+    backgroundColor: 'rgba(196,181,253,0.34)',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: MOVIMENTO,
+  },
+  legendaTexto: { fontSize: 14, color: TINTA },
   chip: {
     alignItems: 'center',
     justifyContent: 'center',
