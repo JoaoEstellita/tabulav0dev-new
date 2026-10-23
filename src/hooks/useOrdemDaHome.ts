@@ -4,9 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 /**
  * A ORDEM DOS BLOCOS DA HOME, escolhida por quem usa.
  *
- * A ordem padrão é um roteiro de leitura — "Seu dia" responde, o céu mostra de
- * onde a resposta saiu, o status diz onde aquilo pega na vida e as emoções
- * dizem que tom o dia tende a ter. Do que acontece para o que significa.
+ * A ordem padrão é um roteiro de leitura — "Seu dia" responde, as emoções dão
+ * o tom em palavras que qualquer um entende, as áreas dizem onde aquilo pega
+ * na vida e o céu fecha mostrando de onde tudo saiu. Do imediato para o
+ * técnico.
  *
  * Mas esse roteiro é UMA leitura, não A leitura: quem abre o app para saber do
  * humor quer as emoções primeiro; quem estuda o mapa quer o céu. A ordem foi
@@ -32,8 +33,20 @@ const CHAVE = '@tabula_estelar:ordem_home'
 
 export type BlocoDaHome = 'ceu' | 'status' | 'emocoes'
 
-/** A ordem de fábrica: o céu primeiro, depois onde ele pega, depois o tom. */
-export const ORDEM_PADRAO: readonly BlocoDaHome[] = ['ceu', 'status', 'emocoes'] as const
+/**
+ * A ordem de fábrica: do mais imediato para o mais técnico.
+ *
+ * Emoções primeiro porque é o que se lê sem saber nada de astrologia — oito
+ * palavras do dia a dia com um número do lado. Depois as áreas, que dizem onde
+ * aquilo pega. Por último o céu, que é a explicação de tudo e a parte mais
+ * densa da tela.
+ *
+ * ⚠️ É o INVERSO do roteiro que esta Home teve por meses — céu, status,
+ * emoções: do mecanismo para o significado. A troca foi deliberada: a ordem
+ * antiga pedia que a pessoa atravessasse uma roda natal e uma grade de cem
+ * símbolos antes de chegar na parte que ela entende de graça.
+ */
+export const ORDEM_PADRAO: readonly BlocoDaHome[] = ['emocoes', 'status', 'ceu'] as const
 
 const VALIDOS = new Set<string>(ORDEM_PADRAO)
 

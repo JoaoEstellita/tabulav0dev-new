@@ -112,10 +112,13 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
 
   return (
     <View style={s.bloco}>
-      <Text style={s.titulo}>
-        {tl('Tendência emocional hoje', 'Emotional tendency today', 'Tendencia emocional hoy', 'Tendenza emotiva oggi')}
-      </Text>
+      {/* ⚠️ SEM TÍTULO, a pedido — a Home acumulou cabeçalho demais e os oito
+          rótulos já dizem o que cada anel é.
 
+          A palavra "tendência" não se perdeu junto: ela desceu para a linha de
+          baixo. Era ela que enquadrava os números como leitura do CÉU e não
+          medida da pessoa, e sem nenhum enquadramento oito números de dois
+          dígitos ao lado de "Ansiedade" e "Estresse" leem como diagnóstico. */}
       <View style={[s.grade, { width: largura }]}>
         {emocoes.map((e) => {
           const [escuro, claro] = COR[e.chave]
@@ -166,7 +169,12 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
       </View>
 
       <Text style={s.nota}>
-        {tl('Toque para ver de onde vem', 'Tap to see where it comes from', 'Toca para ver de donde viene', 'Tocca per vedere da dove viene')}
+        {tl(
+          'Tendência do dia · toque para ver de onde vem',
+          "The day's tendency · tap to see where it comes from",
+          'Tendencia del dia · toca para ver de donde viene',
+          'Tendenza del giorno · tocca per vedere da dove viene',
+        )}
       </Text>
 
       <DetalheDaEmocao emocao={aberta} aoFechar={() => setAberta(null)} tl={tl} idioma={l} />
@@ -281,16 +289,9 @@ function DetalheDaEmocao({
 }
 
 const s = StyleSheet.create({
-  bloco: { paddingVertical: 8, marginBottom: 4 },
-  titulo: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    color: TINTA,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
+  // Sem o título, o respiro de cima vem daqui — senão os anéis encostam no
+  // bloco anterior.
+  bloco: { paddingVertical: 12, marginBottom: 4 },
   // ⚠️ `alignSelf: center` + largura fixa vinda do componente: é o que garante
   // três por linha. Sem isso o wrap segue a largura da tela.
   grade: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'center' },

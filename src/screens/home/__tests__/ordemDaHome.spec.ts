@@ -10,14 +10,17 @@ import { join } from 'node:path'
  * estética — é o roteiro da leitura:
  *
  *   "Seu dia"  → a resposta, para quem abre o app de manhã e não quer mais nada
- *   roda natal → o céu que produziu a resposta
- *   grade      → o mesmo céu em tabela (sai dentro do componente da roda)
+ *   emoções    → que tom o dia tende a ter, em palavras que qualquer um entende
  *   status     → onde isso pega na vida, em roda OU em fichas (alternável)
- *   emoções    → que tom o dia tende a ter
+ *   roda natal → o céu que produziu tudo isso
+ *   grade      → o mesmo céu em tabela (sai dentro do componente da roda)
  *   filtro     → a porta para o detalhe planeta a planeta
  *   o resto    → card de trânsitos, céu coletivo
  *
- * Do que ACONTECE para o que SIGNIFICA: o céu primeiro, a vida depois.
+ * Do MAIS IMEDIATO para o mais técnico. É o inverso do roteiro que esta Home
+ * teve por meses (céu primeiro, do mecanismo para o significado): a ordem
+ * antiga pedia que a pessoa atravessasse uma roda natal e uma grade de cem
+ * símbolos antes de chegar na parte que ela entende de graça.
  *
  * ⚠️ RODA E GRADE SÃO CONTÍGUAS. O filtro morava entre as duas (no slot
  * `entreRodaEGrade`, porque a grade vive dentro do componente da roda) e saiu
@@ -50,7 +53,7 @@ const RODA = readFileSync(join(raiz, 'screens', 'cosmos', 'NatalChartWheelScreen
 const pos = (t: string) => HOME.indexOf(t)
 
 describe('ordem dos blocos da Home', () => {
-  it('é "Seu dia", roda, grade, status, emoções, filtro, resto', () => {
+  it('é "Seu dia", emoções, status, roda, grade, filtro, resto', () => {
     const frase = pos('<FraseDoDia')
     const natal = pos('<NatalChartWheelContent')
     const status = pos('<RodaDeStatus')
@@ -64,10 +67,10 @@ describe('ordem dos blocos da Home', () => {
       expect(v, `bloco ${nome} não encontrado na Home`).toBeGreaterThan(-1)
     }
 
-    expect(frase, '"Seu dia" vem ANTES da roda natal').toBeLessThan(natal)
-    expect(status, 'o status vem depois da roda e da grade').toBeGreaterThan(natal)
-    expect(emocoes, 'as emoções vêm depois do status').toBeGreaterThan(status)
-    expect(filtro, 'o filtro vem depois das emoções').toBeGreaterThan(emocoes)
+    expect(frase, '"Seu dia" vem ANTES de tudo').toBeLessThan(emocoes)
+    expect(status, 'o status vem depois das emoções').toBeGreaterThan(emocoes)
+    expect(natal, 'a roda natal e a grade fecham a leitura').toBeGreaterThan(status)
+    expect(filtro, 'o filtro vem depois do céu').toBeGreaterThan(natal)
     expect(filtro, 'e antes dos banners').toBeLessThan(banners)
     expect(banners, 'o céu coletivo fecha a página').toBeLessThan(coletiva)
   })
@@ -109,7 +112,7 @@ describe('ordem dos blocos da Home', () => {
   it('os três blocos são renderizados pela ordem escolhida', () => {
     expect(HOME, 'sem o hook não há ordem para seguir').toContain('useOrdemDaHome')
     expect(HOME, 'os blocos voltaram a ser JSX fixo').toContain('ordemDaHome.map')
-    expect(HOME).toContain("bloco === 'ceu'")
+    expect(HOME).toContain("bloco === 'emocoes'")
     expect(HOME).toContain("bloco === 'status'")
     expect(HOME, 'falta o botão que abre o organizador').toContain('<OrganizarHome')
   })

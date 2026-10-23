@@ -699,10 +699,11 @@ export default function HomeScreen() {
             Antes estavam escritos em sequência fixa aqui; agora saem de
             `useOrdemDaHome`, e quem usa o app decide a sequência num toque.
 
-            A ordem padrão continua sendo o roteiro de leitura — céu, status,
-            emoções: do que acontece para o que significa. Mas esse roteiro é
-            UMA leitura e não A leitura; quem abre o app para saber do humor
-            quer as emoções primeiro.
+            A ordem padrão é emoções, áreas e céu: do mais imediato para o
+            mais técnico. As emoções se leem sem saber nada de astrologia, as
+            áreas dizem onde aquilo pega e o céu explica de onde tudo saiu.
+            Mas isso é UMA leitura e não A leitura — quem estuda o mapa quer o
+            céu primeiro, e agora troca num toque.
 
             ⚠️ "O seu dia" e o filtro de planetas NÃO entram na reordenação.
             O primeiro é a única parte que responde sozinha a quem abre o app
@@ -717,36 +718,26 @@ export default function HomeScreen() {
             juntas como "o céu", que é como elas se leem de qualquer forma. */}
         {ordemDaHome.map((bloco) => (
           <React.Fragment key={bloco}>
-            {bloco === 'ceu' ? (
+            {bloco === 'emocoes' ? (
               <>
-          {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
-          {transitData && (
-            <View {...aWheel}>
-            <AnimatedMount>
-              <View style={styles.section}>
-                {wheelReady ? (
-                  <NatalChartWheelContent
-                    // ⚠️ SEM `entreRodaEGrade`: o filtro saiu de entre a roda e a
-                    // grade e virou bloco próprio, lá embaixo. A roda e a grade
-                    // voltam a ser contíguas, que é como se lê um mapa — o
-                    // desenho e a mesma informação em tabela, sem nada no meio.
-                    transitData={transitData}
-                    loading={loading}
-                    showLegend={false}
-                    showTransits
-                    onSelectTransitAspect={handleSelectTransitAspect}
-                    onSelectNatalAspect={handleSelectNatalAspect}
-                    onOpenTransits={() => navigation.navigate('PersonalTransits')}
-                  />
-                ) : (
-                  // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
-                  // interações, pra não travar a abertura da Home. Não pula o layout.
-                  <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
-                )}
-              </View>
-            </AnimatedMount>
-            </View>
-          )}
+          {/* ⚠️ AS EMOÇÕES vêm depois do status: é o MESMO céu em outra
+              pergunta. O status diz onde o dia pega na vida; estes anéis dizem
+              que tom ele tende a ter.
+
+              ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado
+              nenhum sobre o estado emocional real da pessoa. São derivados dos
+              trânsitos, e o componente carrega a linha que diz isso. Se um dia
+              alguém remover aquela linha por achá-la ruído, os números passam a
+              afirmar o que o dado não sustenta.
+
+              `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
+              a frase lá em cima e as emoções aqui nunca discordam. */}
+          <AnimatedMount>
+            <ClimaEmocional
+              transitos={transitData?.dailyOverview?.personalTodayRich as any}
+              idioma={language}
+            />
+          </AnimatedMount>
               </>
             ) : bloco === 'status' ? (
               <>
@@ -773,12 +764,10 @@ export default function HomeScreen() {
                     A seta nao e decoracao: sem um alvo visivel, ninguem descobre
                     que ha outra visao. Fica na linha do titulo, que e onde o olho
                     ja passa antes de ler o conteudo. */}
+                {/* ⚠️ SEM TÍTULO, a pedido — a Home acumulou cabeçalho demais.
+                    A linha fica, porque o botão de alternar mora nela; ele é o
+                    único jeito de descobrir que há outra visão. */}
                 <View style={styles.statusCabecalho}>
-                  <Text style={styles.statusTitulo}>
-                    {visaoDeStatus === 'roda'
-                      ? tl('O seu retrato hoje', 'Your portrait today', 'Tu retrato hoy', 'Il tuo ritratto oggi')
-                      : tl('As suas areas hoje', 'Your areas today', 'Tus areas hoy', 'Le tue aree oggi')}
-                  </Text>
                   {/* ⚠️ O botão leva TEXTO, não só ícone.
                       A primeira versão eram dois ícones cinza de 15px, e ninguém
                       descobriria que há outra visão ali — ícone sozinho não diz o
@@ -836,24 +825,34 @@ export default function HomeScreen() {
               </>
             ) : (
               <>
-          {/* ⚠️ AS EMOÇÕES vêm depois do status: é o MESMO céu em outra
-              pergunta. O status diz onde o dia pega na vida; estes anéis dizem
-              que tom ele tende a ter.
-
-              ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado
-              nenhum sobre o estado emocional real da pessoa. São derivados dos
-              trânsitos, e o componente carrega a linha que diz isso. Se um dia
-              alguém remover aquela linha por achá-la ruído, os números passam a
-              afirmar o que o dado não sustenta.
-
-              `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
-              a frase lá em cima e as emoções aqui nunca discordam. */}
-          <AnimatedMount>
-            <ClimaEmocional
-              transitos={transitData?.dailyOverview?.personalTodayRich as any}
-              idioma={language}
-            />
-          </AnimatedMount>
+          {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
+          {transitData && (
+            <View {...aWheel}>
+            <AnimatedMount>
+              <View style={styles.section}>
+                {wheelReady ? (
+                  <NatalChartWheelContent
+                    // ⚠️ SEM `entreRodaEGrade`: o filtro saiu de entre a roda e a
+                    // grade e virou bloco próprio, lá embaixo. A roda e a grade
+                    // voltam a ser contíguas, que é como se lê um mapa — o
+                    // desenho e a mesma informação em tabela, sem nada no meio.
+                    transitData={transitData}
+                    loading={loading}
+                    showLegend={false}
+                    showTransits
+                    onSelectTransitAspect={handleSelectTransitAspect}
+                    onSelectNatalAspect={handleSelectNatalAspect}
+                    onOpenTransits={() => navigation.navigate('PersonalTransits')}
+                  />
+                ) : (
+                  // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
+                  // interações, pra não travar a abertura da Home. Não pula o layout.
+                  <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
+                )}
+              </View>
+            </AnimatedMount>
+            </View>
+          )}
               </>
             )}
           </React.Fragment>
@@ -1286,19 +1285,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   // A linha que dá título ao bloco de status e carrega a seta de alternância.
+  // Sem o título a linha carrega só o botão, então ele vai para a direita —
+  // mesma borda do "Organizar", que fica logo acima.
   statusCabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 14,
     marginBottom: 10,
-  },
-  statusTitulo: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.1,
-    color: '#8892a4',
   },
   // ⚠️ Borda e fundo para o botão PARECER botão. Sem eles era texto cinza
   // solto ao lado do título, indistinguível de rótulo. O hitSlop de 10 por

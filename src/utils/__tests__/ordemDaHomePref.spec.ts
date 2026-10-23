@@ -2,8 +2,17 @@ import { describe, it, expect } from 'vitest'
 import { normalizarOrdem, moverNaOrdem, ORDEM_PADRAO, type BlocoDaHome } from '../../hooks/useOrdemDaHome'
 
 describe('a ordem escolhida dos blocos da Home', () => {
-  it('a ordem de fábrica é o roteiro de leitura: céu, status, emoções', () => {
-    expect([...ORDEM_PADRAO]).toEqual(['ceu', 'status', 'emocoes'])
+  /**
+   * ⚠️ O padrão é do MAIS IMEDIATO para o mais técnico, e isso é o inverso do
+   * que esta Home teve por meses.
+   *
+   * As emoções se leem sem saber nada de astrologia — oito palavras do dia a
+   * dia com um número do lado. A ordem antiga (céu primeiro) pedia que a pessoa
+   * atravessasse uma roda natal e uma grade de cem símbolos antes de chegar na
+   * parte que ela entende de graça.
+   */
+  it('a ordem de fábrica vai do imediato ao técnico: emoções, áreas, céu', () => {
+    expect([...ORDEM_PADRAO]).toEqual(['emocoes', 'status', 'ceu'])
   })
 
   describe('mover um bloco', () => {
@@ -50,13 +59,17 @@ describe('a ordem escolhida dos blocos da Home', () => {
      * projeto várias vezes.
      */
     it('completa com os blocos que faltam, no fim', () => {
-      expect(normalizarOrdem(['emocoes'])).toEqual(['emocoes', 'ceu', 'status'])
+      // O que falta entra na ordem do padrão, preservando o que a pessoa já
+      // tinha escolhido na frente.
+      expect(normalizarOrdem(['ceu'])).toEqual(['ceu', 'emocoes', 'status'])
+      expect(normalizarOrdem(['status'])).toEqual(['status', 'emocoes', 'ceu'])
       expect(normalizarOrdem([])).toEqual([...ORDEM_PADRAO])
     })
 
     it('descarta nome desconhecido e repetição', () => {
       expect(normalizarOrdem(['emocoes', 'emocoes', 'xpto', 'ceu']))
         .toEqual(['emocoes', 'ceu', 'status'])
+      expect(normalizarOrdem(['status', 'status'])).toEqual(['status', 'emocoes', 'ceu'])
     })
 
     it('lixo total cai no padrão — a Home nunca fica vazia', () => {
