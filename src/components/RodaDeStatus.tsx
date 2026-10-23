@@ -41,6 +41,17 @@ type Props = {
   eixos: EixoDaRoda[]
   /** Abre a leitura daquela área. Sem isto, a roda é só enfeite. */
   aoTocarEixo?: (chave: string) => void
+  /**
+   * Teto de largura, em pixels. Serve para a MESMA roda caber em contextos
+   * diferentes: na Home ela é o assunto da tela e usa a largura toda; dentro
+   * do card de um membro do grupo, ela divide espaço com nome, foto, sinastria
+   * e as áreas dos outros, e um pôster ali empurra todo o resto para baixo.
+   *
+   * ⚠️ Mexe no RAIO, não numa escala: o raio sai de uma busca que depende da
+   * largura disponível (ver `melhorGiro`), então encolher a caixa recalcula os
+   * rótulos em vez de espremer um desenho pronto e deixar o texto ilegível.
+   */
+  larguraMaxima?: number
 }
 
 // ⚠️ As MESMAS cores dos cards de área. Uma terceira régua de cor na mesma tela
@@ -119,7 +130,7 @@ const FOLGA_ROTULO = 6
  */
 const MARGEM_VERTICAL = 38
 
-export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
+export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Props) {
   const { width } = useWindowDimensions()
 
   // ⚠️ QUEM LIMITA O TAMANHO DA RODA É A LARGURA DOS CHIPS, não a tela.
@@ -133,7 +144,7 @@ export default function RodaDeStatus({ eixos, aoTocarEixo }: Props) {
   // Cada pixel de largura vira quase um pixel de raio, então o teto subiu e a
   // margem lateral caiu. O teto continua existindo para a roda não virar
   // pôster num tablet.
-  const lado = Math.max(280, Math.min(width - 20, 460))
+  const lado = Math.max(240, Math.min(width - 20, larguraMaxima ?? 460))
   const total = eixos.length
 
   const limiares = {

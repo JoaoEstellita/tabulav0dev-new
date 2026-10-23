@@ -13,54 +13,81 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  * olhada (onde a silhueta afunda é o que pede atenção) e as fichas dão o
  * DETALHE de cada área, com contagem de trânsitos e texto.
  *
- * Padrão são as FICHAS: elas trazem o nome da área, a nota e a contagem de
- * trânsitos em texto, e isso se lê sem precisar aprender a ler a figura. A roda
- * é mais densa e mais bonita, mas pede um segundo de decodificação que nem
- * todo mundo quer dar ao abrir o app. Quem prefere a roda troca uma vez e a
- * escolha fica guardada.
+ * O padrão depende de ONDE: fichas na Home, roda no grupo. O porquê de cada
+ * um está em `PADRAO`, logo abaixo. Quem prefere o contrário troca uma vez,
+ * em cada tela, e as duas escolhas ficam guardadas separadas.
  *
  * Guardado só no aparelho (AsyncStorage): é preferência de leitura, não dado de
  * conta — não justifica uma escrita no Firestore a cada toque.
  */
 
-const CHAVE = '@tabula_estelar:visao_status'
-
 export type VisaoDeStatus = 'roda' | 'fichas'
 
-// Estado compartilhado em memória, igual ao de `useGradeRetraida`: mais de um
-// ponto da tela pode ler isto e todos têm de reagir juntos sem reler o disco.
-let visaoAtual: VisaoDeStatus = 'fichas'
-let carregado = false
-const ouvintes = new Set<(v: VisaoDeStatus) => void>()
+/**
+ * ⚠️ A PREFERÊNCIA É POR ESCOPO, e os padrões são DIFERENTES de propósito.
+ *
+ * Na Home as fichas vêm primeiro: a pessoa abre o app para saber do próprio
+ * dia, e a ficha diz nome, nota e contagem sem pedir que ela aprenda a ler uma
+ * figura.
+ *
+ * No grupo a RODA vem primeiro, e pelo motivo oposto: ali são várias pessoas
+ * na mesma tela, e o que se quer é comparar silhuetas de relance. Oito fichas
+ * por membro viram uma parede de números.
+ *
+ * Um estado só para os dois escopos faria trocar no grupo mudar a Home — duas
+ * telas com necessidades contrárias brigando pela mesma chave.
+ */
+export type EscopoDaVisao = 'home' | 'grupo'
 
-function publicar(nova: VisaoDeStatus) {
-  visaoAtual = nova
-  ouvintes.forEach((fn) => fn(nova))
+const CHAVE: Record<EscopoDaVisao, string> = {
+  home: '@tabula_estelar:visao_status',
+  grupo: '@tabula_estelar:visao_status_grupo',
 }
 
-export function useVisaoDeStatus() {
-  const [visao, setVisao] = useState<VisaoDeStatus>(visaoAtual)
+const PADRAO: Record<EscopoDaVisao, VisaoDeStatus> = {
+  home: 'fichas',
+  grupo: 'roda',
+}
+
+// Estado compartilhado em memória POR ESCOPO, igual ao de `useGradeRetraida`:
+// mais de um ponto da tela pode ler isto e todos têm de reagir juntos sem
+// reler o disco.
+const visaoAtual: Record<EscopoDaVisao, VisaoDeStatus> = { ...PADRAO }
+const carregado: Record<EscopoDaVisao, boolean> = { home: false, grupo: false }
+const ouvintes: Record<EscopoDaVisao, Set<(v: VisaoDeStatus) => void>> = {
+  home: new Set(),
+  grupo: new Set(),
+}
+
+function publicar(escopo: EscopoDaVisao, nova: VisaoDeStatus) {
+  visaoAtual[escopo] = nova
+  ouvintes[escopo].forEach((fn) => fn(nova))
+}
+
+export function useVisaoDeStatus(escopo: EscopoDaVisao = 'home') {
+  const [visao, setVisao] = useState<VisaoDeStatus>(visaoAtual[escopo])
 
   useEffect(() => {
-    ouvintes.add(setVisao)
-    if (!carregado) {
-      AsyncStorage.getItem(CHAVE)
+    ouvintes[escopo].add(setVisao)
+    setVisao(visaoAtual[escopo])
+    if (!carregado[escopo]) {
+      AsyncStorage.getItem(CHAVE[escopo])
         .then((v) => {
-          carregado = true
+          carregado[escopo] = true
           // ⚠️ Só aceita os dois valores conhecidos. Uma chave corrompida ou de
-          // uma versão futura não pode deixar a Home sem nenhuma das visões.
-          if (v === 'roda' || v === 'fichas') publicar(v)
+          // uma versão futura não pode deixar a tela sem nenhuma das visões.
+          if (v === 'roda' || v === 'fichas') publicar(escopo, v)
         })
-        .catch(() => { carregado = true })
+        .catch(() => { carregado[escopo] = true })
     }
-    return () => { ouvintes.delete(setVisao) }
-  }, [])
+    return () => { ouvintes[escopo].delete(setVisao) }
+  }, [escopo])
 
   const alternar = useCallback(() => {
-    const nova: VisaoDeStatus = visaoAtual === 'roda' ? 'fichas' : 'roda'
-    publicar(nova)
-    AsyncStorage.setItem(CHAVE, nova).catch(() => {})
-  }, [])
+    const nova: VisaoDeStatus = visaoAtual[escopo] === 'roda' ? 'fichas' : 'roda'
+    publicar(escopo, nova)
+    AsyncStorage.setItem(CHAVE[escopo], nova).catch(() => {})
+  }, [escopo])
 
   return { visao, alternar }
 }

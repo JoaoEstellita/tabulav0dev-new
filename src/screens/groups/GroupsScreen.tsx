@@ -38,6 +38,12 @@ import GroupNotificationSettings from "../../components/GroupNotificationSetting
 import TransitInsightCard from "../../components/TransitInsightCard"
 import InviteService from "../../services/InviteService"
 import Avatar from "../../components/Avatar"
+import RodaDeStatus from "../../components/RodaDeStatus"
+import ClimaEmocional from "../../components/ClimaEmocional"
+import { useVisaoDeStatus } from "../../hooks/useVisaoDeStatus"
+import { movimentoDaArea } from "../../utils/movimentoDaArea"
+import { transitosDoMembro, transitosDaArea } from "../../utils/transitosDoMembro"
+import type { EixoDaRoda } from "../../utils/geometriaDaRoda"
 import ExpiryBanner from "../../components/ExpiryBanner"
 import StarLoader from "../../components/StarLoader"
 import { db } from "../../config/firebase"
@@ -1838,6 +1844,25 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
       }>
   }
 
+  /**
+   * Os eixos da roda de um membro.
+   *
+   * A SOMBRA do movimento sai de `areaTransits[area]`, que o grupo já entrega
+   * por membro com `durationClass` — o mesmo dado que a Home usa, pelo mesmo
+   * caminho. Sem ele a roda desenha igual, só sem a sombra.
+   */
+  const buildMemberEixos = (member: GroupMember): EixoDaRoda[] => {
+    const areaTransits = (member as any)?.areaTransits || null
+    return buildMemberAreaEntries(member).map((entry) => ({
+      chave: entry.key,
+      rotulo: entry.label,
+      // `percentage` já vem 0–100 ou null, e o null segue COMO null: a roda
+      // pinta "sem dado" em cinza em vez de fingir zero, que sairia vermelho.
+      valor: typeof entry.percentage === "number" ? entry.percentage : null,
+      movimento: movimentoDaArea(transitosDaArea(areaTransits, entry.key) as any),
+    }))
+  }
+
   const getMemberAreaDetail = (member: GroupMember, key: string) => {
     const lifeAreas = resolveMemberLifeAreas(member)
     return (lifeAreas as any)?.[key]
@@ -2014,6 +2039,12 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
   })
 
   const otherMembers = sortedMembers.filter((member) => member.userId !== user?.uid)
+  // ⚠️ Escopo 'grupo': preferência SEPARADA da Home, e o padrão é a RODA.
+  // Aqui são várias pessoas na mesma tela e o que se quer é comparar
+  // silhuetas de relance; oito fichas por membro viram uma parede de números.
+  // Na Home vale o contrário, e por isso as duas chaves não se misturam.
+  const { visao: visaoDoGrupo, alternar: alternarVisaoDoGrupo } = useVisaoDeStatus('grupo')
+
   const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
   // Summary must reflect the whole group state (including current user when status is visible).
   const summaryMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
@@ -2330,7 +2361,52 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                       ) : null}
                     </View>
 
+                    {/* ⚠️ RODA OU FICHAS, com o MESMO dado — e a roda é o padrão
+                        no grupo. Ver `useVisaoDeStatus('grupo')` acima.
+
+                        O botão fica no card do membro e não no topo da aba
+                        porque a escolha é de leitura e vale para todos: tocar
+                        em qualquer um troca todos, que é o esperado quando o
+                        que se quer é comparar. */}
                     {hasStatus && entries.length > 0 ? (
+                      <View style={styles.memberVisaoLinha}>
+                        <TouchableOpacity
+                          onPress={alternarVisaoDoGrupo}
+                          activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={visaoDoGrupo === 'roda'
+                            ? tr('groups.view.cards', 'Ver em fichas')
+                            : tr('groups.view.wheel', 'Ver na roda')}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          style={styles.memberVisaoBtn}
+                        >
+                          <Ionicons
+                            name={visaoDoGrupo === 'roda' ? 'grid-outline' : 'pie-chart-outline'}
+                            size={13}
+                            color="#C7D2E8"
+                          />
+                          <Text style={styles.memberVisaoTexto}>
+                            {visaoDoGrupo === 'roda'
+                              ? tr('groups.view.cardsShort', 'Fichas')
+                              : tr('groups.view.wheelShort', 'Roda')}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
+
+                    {hasStatus && entries.length > 0 && visaoDoGrupo === 'roda' ? (
+                      <RodaDeStatus
+                        eixos={buildMemberEixos(member)}
+                        larguraMaxima={320}
+                        aoTocarEixo={(chave) => {
+                          setSelectedMemberArea({ member, key: chave })
+                          setShowMemberAreaCalc(false)
+                          setShowMemberAreaModal(true)
+                        }}
+                      />
+                    ) : null}
+
+                    {hasStatus && entries.length > 0 && visaoDoGrupo === 'fichas' ? (
                       <View style={styles.memberStatusGridCompact}>
                         {entries.map((entry) => {
                           const percentage =
@@ -2406,9 +2482,30 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                           )
                         })}
                       </View>
-                    ) : (
+                    ) : null}
+
+                    {/* ⚠️ AS EMOÇÕES DO MEMBRO, logo abaixo do status.
+                        Em modo compacto: aqui elas dividem o card com nome,
+                        foto, áreas e sinastria, e no tamanho da Home empurrariam
+                        os outros membros para fora da tela.
+
+                        ⚠️ `transitosDoMembro` DEDUPLICA. O grupo entrega os
+                        trânsitos agrupados por área e o mesmo trânsito aparece
+                        em várias — Saturno em quadratura com o Sol conta em
+                        carreira, saúde e família. Concatenar sem deduplicar
+                        faria esse trânsito pesar três vezes e os números sairiam
+                        inflados, sem erro nenhum para denunciar. */}
+                    {hasStatus ? (
+                      <ClimaEmocional
+                        transitos={transitosDoMembro((member as any)?.areaTransits) as any}
+                        idioma={language}
+                        compacto
+                      />
+                    ) : null}
+
+                    {!hasStatus || entries.length === 0 ? (
                       <Text style={styles.memberDetailEmpty}>{tr('groups.label.privateStatusGroup', 'Status privado para este grupo.')}</Text>
-                    )}
+                    ) : null}
                   </View>
                 )
               })}
@@ -3873,6 +3970,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 2,
   },
+  // A linha do botão de alternar: discreta e à direita, igual à da Home.
+  memberVisaoLinha: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
+  memberVisaoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: '#2C3651',
+    backgroundColor: 'rgba(18,22,44,0.72)',
+  },
+  memberVisaoTexto: { fontSize: 14, fontWeight: '600', color: '#C7D2E8' },
   memberStatusGridCompact: {
     flexDirection: "row",
     flexWrap: "wrap",

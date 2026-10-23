@@ -22,6 +22,16 @@ import { emocoesDoDia, type TransitoParaEmocao, type ChaveEmocao, type EmocaoDoD
 type Props = {
   transitos: ReadonlyArray<TransitoParaEmocao> | null | undefined
   idioma?: string
+  /**
+   * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
+   * card de um membro do grupo, por exemplo, onde eles dividem espaço com
+   * nome, foto, áreas e sinastria.
+   *
+   * Encolhe o anel e esconde a linha de rodapé. O rótulo e o número ficam:
+   * são a informação, e abaixo de 12px o nome deixa de ser legível, que é a
+   * queixa que trouxe a fonte para 12 em primeiro lugar.
+   */
+  compacto?: boolean
 }
 
 /**
@@ -72,7 +82,7 @@ const ROTULO: Record<ChaveEmocao, [string, string, string, string]> = {
 const TINTA = '#8892a4'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, idioma }: Props) {
+export default function ClimaEmocional({ transitos, idioma, compacto }: Props) {
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
   const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
@@ -102,19 +112,21 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
   // linha e a simetria 3+3 — que é metade do que a seção comunica — virava
   // 5+1. Era visível em tablet e no PWA, e não dava erro nenhum.
   const porLinha = 4
-  const largura = Math.min(380, width - 24)
+  const largura = Math.min(compacto ? 300 : 380, width - 24)
   const celula = largura / porLinha
   // ⚠️ O anel ficou MAIOR (era 46–60) porque a letra do rótulo subiu de 10 para
   // 12: em 10 o nome não se lia de relance num celular. Com a fonte maior o
   // rótulo precisa de mais largura, e um anel pequeno demais ao lado de um
   // texto legível fica desequilibrado.
-  const tamanho = Math.max(52, Math.min(66, celula - 22))
+  const tamanho = compacto
+    ? Math.max(38, Math.min(46, celula - 24))
+    : Math.max(52, Math.min(66, celula - 22))
   const traco = Math.max(5, Math.round(tamanho * 0.11))
   const raio = (tamanho - traco) / 2
   const perimetro = 2 * Math.PI * raio
 
   return (
-    <View style={s.bloco}>
+    <View style={compacto ? s.blocoCompacto : s.bloco}>
       {/* ⚠️ SEM TÍTULO, a pedido — a Home acumulou cabeçalho demais e os oito
           rótulos já dizem o que cada anel é.
 
@@ -132,7 +144,11 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
               onPress={() => setAberta(e)}
               accessibilityRole="button"
               accessibilityLabel={`${tl(...ROTULO[e.chave])}: ${e.valor}`}
-              style={({ pressed }) => [s.item, { width: celula, opacity: pressed ? 0.6 : 1 }]}
+              style={({ pressed }) => [
+                s.item,
+                { width: celula, opacity: pressed ? 0.6 : 1 },
+                compacto && { marginBottom: 6 },
+              ]}
             >
               <View style={{ width: tamanho, height: tamanho }}>
                 <Svg width={tamanho} height={tamanho}>
@@ -165,12 +181,13 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
                   <Text style={[s.valor, { fontSize: Math.round(tamanho * 0.3) }]}>{e.valor}</Text>
                 </View>
               </View>
-              <Text style={s.rotulo} numberOfLines={1}>{tl(...ROTULO[e.chave])}</Text>
+              <Text style={compacto ? s.rotuloCompacto : s.rotulo} numberOfLines={1}>{tl(...ROTULO[e.chave])}</Text>
             </Pressable>
           )
         })}
       </View>
 
+      {compacto ? null : (
       <Text style={s.nota}>
         {tl(
           'Tendência do dia · toque para ver de onde vem',
@@ -179,6 +196,7 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
           'Tendenza del giorno · tocca per vedere da dove viene',
         )}
       </Text>
+      )}
 
       <DetalheDaEmocao
         emocao={aberta}
@@ -368,6 +386,7 @@ const s = StyleSheet.create({
   // Sem o título, o respiro de cima vem daqui — senão os anéis encostam no
   // bloco anterior.
   bloco: { paddingVertical: 12, marginBottom: 4 },
+  blocoCompacto: { paddingVertical: 4, marginBottom: 0 },
   // ⚠️ `alignSelf: center` + largura fixa vinda do componente: é o que garante
   // três por linha. Sem isso o wrap segue a largura da tela.
   grade: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'center' },
@@ -378,6 +397,9 @@ const s = StyleSheet.create({
   // relance. O rótulo é metade da informação — o número sem a palavra não diz
   // nada —, então ele não pode ser o primeiro a encolher.
   rotulo: { fontSize: 12, color: TINTA, marginTop: 5, textAlign: 'center' },
+  // No compacto o anel encolhe mas o rótulo NÃO: abaixo de 12px o nome deixa
+  // de ser legível, e é o nome que diz o que o número significa.
+  rotuloCompacto: { fontSize: 12, color: TINTA, marginTop: 3, textAlign: 'center' },
   nota: { fontSize: 11, color: '#5c6477', textAlign: 'center', marginTop: 2 },
 
   fundo: { flex: 1, backgroundColor: 'rgba(5,7,18,0.82)', alignItems: 'center', justifyContent: 'center', padding: 24 },
