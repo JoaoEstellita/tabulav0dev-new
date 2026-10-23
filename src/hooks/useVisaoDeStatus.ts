@@ -13,8 +13,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  * olhada (onde a silhueta afunda é o que pede atenção) e as fichas dão o
  * DETALHE de cada área, com contagem de trânsitos e texto.
  *
- * Padrão é a RODA: é o resumo, e resumo vem antes do detalhe. Quem prefere as
- * fichas troca uma vez e a escolha fica guardada.
+ * Padrão são as FICHAS: elas trazem o nome da área, a nota e a contagem de
+ * trânsitos em texto, e isso se lê sem precisar aprender a ler a figura. A roda
+ * é mais densa e mais bonita, mas pede um segundo de decodificação que nem
+ * todo mundo quer dar ao abrir o app. Quem prefere a roda troca uma vez e a
+ * escolha fica guardada.
  *
  * Guardado só no aparelho (AsyncStorage): é preferência de leitura, não dado de
  * conta — não justifica uma escrita no Firestore a cada toque.
@@ -26,7 +29,7 @@ export type VisaoDeStatus = 'roda' | 'fichas'
 
 // Estado compartilhado em memória, igual ao de `useAspectosMenores`: mais de um
 // ponto da tela pode ler isto e todos têm de reagir juntos sem reler o disco.
-let visaoAtual: VisaoDeStatus = 'roda'
+let visaoAtual: VisaoDeStatus = 'fichas'
 let carregado = false
 const ouvintes = new Set<(v: VisaoDeStatus) => void>()
 

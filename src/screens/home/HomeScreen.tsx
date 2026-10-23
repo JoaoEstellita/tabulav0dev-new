@@ -25,6 +25,8 @@ import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER, getLifeAreaLabelI18n } from '../../constants/lifeAreas'
 import RodaDeStatus from '../../components/RodaDeStatus'
 import { useVisaoDeStatus } from '../../hooks/useVisaoDeStatus'
+import { useOrdemDaHome } from '../../hooks/useOrdemDaHome'
+import OrganizarHome from '../../components/OrganizarHome'
 import { movimentoDaArea } from '../../utils/movimentoDaArea'
 import { mergeAreaTransits } from '../../utils/transitsByArea'
 import ClimaEmocional from '../../components/ClimaEmocional'
@@ -229,6 +231,8 @@ export default function HomeScreen() {
   const { openTour: openHomeTour } = useTabTour('tour_seen_home_v4', 'Home', buildHomeTour)
   const { width } = useWindowDimensions()
   const { visao: visaoDeStatus, alternar: alternarVisao } = useVisaoDeStatus()
+  const { ordem: ordemDaHome, mover: moverBloco, restaurar: restaurarOrdem } = useOrdemDaHome()
+  const [organizandoHome, setOrganizandoHome] = React.useState(false)
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
@@ -650,11 +654,10 @@ export default function HomeScreen() {
           onTentarNovamente={() => refreshData(true)}
         />
 
-        {/* A ORDEM DE LEITURA da Home: "Seu dia", roda, grade, status.
-            A frase vem primeiro porque e a unica parte que responde sozinha a
-            pergunta de quem abre o app de manha. O desenho mostra de onde ela
-            saiu, a grade abre o detalhe e o status fecha dizendo onde isso pega
-            na vida. */}
+        {/* A ORDEM DE LEITURA da Home: "Seu dia" e, abaixo, os três blocos na
+            sequência que a pessoa escolher. A frase vem primeiro e FORA da
+            reordenação porque é a única parte que responde sozinha a quem abre
+            o app de manhã — tirar do topo piora a tela para todo mundo. */}
         <View {...aToday}>
           <FraseDoDia
             transitos={transitData?.dailyOverview?.personalTodayRich}
@@ -662,137 +665,200 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
-        {transitData && (
-          <View {...aWheel}>
-          <AnimatedMount>
-            <View style={styles.section}>
-              {wheelReady ? (
-                <NatalChartWheelContent
-                  // ⚠️ SEM `entreRodaEGrade`: o filtro saiu de entre a roda e a
-                  // grade e virou bloco próprio, lá embaixo. A roda e a grade
-                  // voltam a ser contíguas, que é como se lê um mapa — o
-                  // desenho e a mesma informação em tabela, sem nada no meio.
-                  transitData={transitData}
-                  loading={loading}
-                  showLegend={false}
-                  showTransits
-                  onSelectTransitAspect={handleSelectTransitAspect}
-                  onSelectNatalAspect={handleSelectNatalAspect}
-                  onOpenTransits={() => navigation.navigate('PersonalTransits')}
-                />
-              ) : (
-                // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
-                // interações, pra não travar a abertura da Home. Não pula o layout.
-                <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
-              )}
-            </View>
-          </AnimatedMount>
-          </View>
-        )}
+        {/* ⚠️ O botão fica DEPOIS da frase e antes dos blocos — exatamente onde
+            a parte reordenável começa. No cabeçalho ele seria confundido com
+            configuração do app inteiro; aqui o alcance dele é visível. */}
+        <View style={styles.organizarLinha}>
+          <Pressable
+            onPress={() => setOrganizandoHome(true)}
+            accessibilityRole="button"
+            accessibilityLabel={tl('Organizar a tela', 'Arrange the screen', 'Organizar la pantalla', 'Organizza lo schermo')}
+            hitSlop={10}
+            style={({ pressed }) => [
+              styles.organizarBtn,
+              pressed && { backgroundColor: 'rgba(155,180,232,0.18)', borderColor: '#9BB4E8' },
+            ]}
+          >
+            <Ionicons name="swap-vertical" size={14} color="#C7D2E8" />
+            <Text style={styles.organizarTexto}>
+              {tl('Organizar', 'Arrange', 'Organizar', 'Organizza')}
+            </Text>
+          </Pressable>
+        </View>
 
-        {/* ⚠️ O STATUS vem DEPOIS da roda natal e da grade, e sem moldura,
-            assentando direto no fundo do app.
+        <OrganizarHome
+          visivel={organizandoHome}
+          ordem={ordemDaHome}
+          aoMover={moverBloco}
+          aoRestaurar={restaurarOrdem}
+          aoFechar={() => setOrganizandoHome(false)}
+          idioma={language}
+        />
 
-            A ordem de leitura fica: a frase diz o que muda hoje, a roda e a
-            grade mostram o céu que produziu isso, o status diz onde aquilo
-            pega na vida e as emoções dizem que tom o dia tende a ter. Do que
-            acontece para o que significa.
+        {/* ⚠️ OS TRÊS BLOCOS SÃO RENDERIZADOS PELA ORDEM ESCOLHIDA.
+            Antes estavam escritos em sequência fixa aqui; agora saem de
+            `useOrdemDaHome`, e quem usa o app decide a sequência num toque.
 
-            ⚠️ São DUAS rodas na mesma tela, e isso é deliberado: esta é a sua
-            VIDA em oito áreas; a de cima é o CÉU. Não são a mesma coisa em
-            escalas diferentes — por isso esta não tem moldura e aquela tem.
+            A ordem padrão continua sendo o roteiro de leitura — céu, status,
+            emoções: do que acontece para o que significa. Mas esse roteiro é
+            UMA leitura e não A leitura; quem abre o app para saber do humor
+            quer as emoções primeiro.
 
-            Só aparece com dado — um octógono vazio pareceria defeito. */}
-        {eixosDaRoda.length >= 3 ? (
-          <AnimatedMount>
-            <View {...aAreas}>
-              {/* ⚠️ UM ESPACO, DUAS VISOES. A roda e as fichas mostram os MESMOS
-                  oito numeros e viviam em lugares diferentes da mesma tela — a
-                  mesma informacao ocupando dois espacos e rolando duas vezes.
+            ⚠️ "O seu dia" e o filtro de planetas NÃO entram na reordenação.
+            O primeiro é a única parte que responde sozinha a quem abre o app
+            de manhã — tirar do topo piora a tela para todo mundo. O segundo é
+            uma porta para outra tela, não uma leitura, e fecha a sequência.
 
-                  A seta nao e decoracao: sem um alvo visivel, ninguem descobre
-                  que ha outra visao. Fica na linha do titulo, que e onde o olho
-                  ja passa antes de ler o conteudo. */}
-              <View style={styles.statusCabecalho}>
-                <Text style={styles.statusTitulo}>
-                  {visaoDeStatus === 'roda'
-                    ? tl('O seu retrato hoje', 'Your portrait today', 'Tu retrato hoy', 'Il tuo ritratto oggi')
-                    : tl('As suas areas hoje', 'Your areas today', 'Tus areas hoy', 'Le tue aree oggi')}
-                </Text>
-                {/* ⚠️ O botão leva TEXTO, não só ícone.
-                    A primeira versão eram dois ícones cinza de 15px, e ninguém
-                    descobriria que há outra visão ali — ícone sozinho não diz o
-                    que faz nem que existe algo do outro lado. Com a palavra do
-                    destino ("Fichas" / "Roda") ele anuncia para onde vai, e a
-                    borda o faz parecer o botão que é. */}
-                <Pressable
-                  onPress={alternarVisao}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: visaoDeStatus === 'fichas' }}
-                  accessibilityLabel={
-                    visaoDeStatus === 'roda'
-                      ? tl('Ver em fichas', 'See as cards', 'Ver en fichas', 'Vedi a schede')
-                      : tl('Ver na roda', 'See as wheel', 'Ver en rueda', 'Vedi a ruota')
-                  }
-                  hitSlop={10}
-                  style={({ pressed }) => [
-                    styles.statusSeta,
-                    pressed && { backgroundColor: 'rgba(155,180,232,0.18)', borderColor: '#9BB4E8' },
-                  ]}
-                >
-                  <Ionicons
-                    name={visaoDeStatus === 'roda' ? 'grid-outline' : 'pie-chart-outline'}
-                    size={14}
-                    color="#C7D2E8"
+            ⚠️ A GRADE não é um bloco separado: ela mora dentro de
+            `NatalChartWheelContent`, logo abaixo do círculo. Separar as duas
+            exigiria extrair a grade com todo o estado local dela — a mesma
+            mudança que já falhou três vezes neste projeto, sempre do mesmo
+            jeito: compila, renderiza e move a coisa errada. Roda e grade andam
+            juntas como "o céu", que é como elas se leem de qualquer forma. */}
+        {ordemDaHome.map((bloco) => (
+          <React.Fragment key={bloco}>
+            {bloco === 'ceu' ? (
+              <>
+          {/* Céu de hoje: roda natal + trânsitos (a grade vem dentro) */}
+          {transitData && (
+            <View {...aWheel}>
+            <AnimatedMount>
+              <View style={styles.section}>
+                {wheelReady ? (
+                  <NatalChartWheelContent
+                    // ⚠️ SEM `entreRodaEGrade`: o filtro saiu de entre a roda e a
+                    // grade e virou bloco próprio, lá embaixo. A roda e a grade
+                    // voltam a ser contíguas, que é como se lê um mapa — o
+                    // desenho e a mesma informação em tabela, sem nada no meio.
+                    transitData={transitData}
+                    loading={loading}
+                    showLegend={false}
+                    showTransits
+                    onSelectTransitAspect={handleSelectTransitAspect}
+                    onSelectNatalAspect={handleSelectNatalAspect}
+                    onOpenTransits={() => navigation.navigate('PersonalTransits')}
                   />
-                  <Text style={styles.statusSetaTexto}>
-                    {visaoDeStatus === 'roda'
-                      ? tl('Fichas', 'Cards', 'Fichas', 'Schede')
-                      : tl('Roda', 'Wheel', 'Rueda', 'Ruota')}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={13} color="#C7D2E8" />
-                </Pressable>
+                ) : (
+                  // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
+                  // interações, pra não travar a abertura da Home. Não pula o layout.
+                  <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
+                )}
               </View>
-
-              {visaoDeStatus === 'roda' ? (
-                <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
-              ) : lifeAreasForDisplay ? (
-                <View style={styles.lifeAreasGrid}>
-                  {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
-                    <AreaCardItem
-                      key={name}
-                      name={name}
-                      area={normalizedArea}
-                      factors={allLifeAreaFactors[name]}
-                      transitCount={transitCount}
-                      onPress={handleAreaPress}
-                    />
-                  ))}
-                </View>
-              ) : null}
+            </AnimatedMount>
             </View>
+          )}
+              </>
+            ) : bloco === 'status' ? (
+              <>
+          {/* ⚠️ O STATUS vem DEPOIS da roda natal e da grade, e sem moldura,
+              assentando direto no fundo do app.
+
+              A ordem de leitura fica: a frase diz o que muda hoje, a roda e a
+              grade mostram o céu que produziu isso, o status diz onde aquilo
+              pega na vida e as emoções dizem que tom o dia tende a ter. Do que
+              acontece para o que significa.
+
+              ⚠️ São DUAS rodas na mesma tela, e isso é deliberado: esta é a sua
+              VIDA em oito áreas; a de cima é o CÉU. Não são a mesma coisa em
+              escalas diferentes — por isso esta não tem moldura e aquela tem.
+
+              Só aparece com dado — um octógono vazio pareceria defeito. */}
+          {eixosDaRoda.length >= 3 ? (
+            <AnimatedMount>
+              <View {...aAreas}>
+                {/* ⚠️ UM ESPACO, DUAS VISOES. A roda e as fichas mostram os MESMOS
+                    oito numeros e viviam em lugares diferentes da mesma tela — a
+                    mesma informacao ocupando dois espacos e rolando duas vezes.
+
+                    A seta nao e decoracao: sem um alvo visivel, ninguem descobre
+                    que ha outra visao. Fica na linha do titulo, que e onde o olho
+                    ja passa antes de ler o conteudo. */}
+                <View style={styles.statusCabecalho}>
+                  <Text style={styles.statusTitulo}>
+                    {visaoDeStatus === 'roda'
+                      ? tl('O seu retrato hoje', 'Your portrait today', 'Tu retrato hoy', 'Il tuo ritratto oggi')
+                      : tl('As suas areas hoje', 'Your areas today', 'Tus areas hoy', 'Le tue aree oggi')}
+                  </Text>
+                  {/* ⚠️ O botão leva TEXTO, não só ícone.
+                      A primeira versão eram dois ícones cinza de 15px, e ninguém
+                      descobriria que há outra visão ali — ícone sozinho não diz o
+                      que faz nem que existe algo do outro lado. Com a palavra do
+                      destino ("Fichas" / "Roda") ele anuncia para onde vai, e a
+                      borda o faz parecer o botão que é. */}
+                  <Pressable
+                    onPress={alternarVisao}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: visaoDeStatus === 'fichas' }}
+                    accessibilityLabel={
+                      visaoDeStatus === 'roda'
+                        ? tl('Ver em fichas', 'See as cards', 'Ver en fichas', 'Vedi a schede')
+                        : tl('Ver na roda', 'See as wheel', 'Ver en rueda', 'Vedi a ruota')
+                    }
+                    hitSlop={10}
+                    style={({ pressed }) => [
+                      styles.statusSeta,
+                      pressed && { backgroundColor: 'rgba(155,180,232,0.18)', borderColor: '#9BB4E8' },
+                    ]}
+                  >
+                    <Ionicons
+                      name={visaoDeStatus === 'roda' ? 'grid-outline' : 'pie-chart-outline'}
+                      size={14}
+                      color="#C7D2E8"
+                    />
+                    <Text style={styles.statusSetaTexto}>
+                      {visaoDeStatus === 'roda'
+                        ? tl('Fichas', 'Cards', 'Fichas', 'Schede')
+                        : tl('Roda', 'Wheel', 'Rueda', 'Ruota')}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={13} color="#C7D2E8" />
+                  </Pressable>
+                </View>
+
+                {visaoDeStatus === 'roda' ? (
+                  <RodaDeStatus eixos={eixosDaRoda} aoTocarEixo={abrirAreaDaRoda} />
+                ) : lifeAreasForDisplay ? (
+                  <View style={styles.lifeAreasGrid}>
+                    {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
+                      <AreaCardItem
+                        key={name}
+                        name={name}
+                        area={normalizedArea}
+                        factors={allLifeAreaFactors[name]}
+                        transitCount={transitCount}
+                        onPress={handleAreaPress}
+                      />
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            </AnimatedMount>
+          ) : null}
+              </>
+            ) : (
+              <>
+          {/* ⚠️ AS EMOÇÕES vêm depois do status: é o MESMO céu em outra
+              pergunta. O status diz onde o dia pega na vida; estes anéis dizem
+              que tom ele tende a ter.
+
+              ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado
+              nenhum sobre o estado emocional real da pessoa. São derivados dos
+              trânsitos, e o componente carrega a linha que diz isso. Se um dia
+              alguém remover aquela linha por achá-la ruído, os números passam a
+              afirmar o que o dado não sustenta.
+
+              `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
+              a frase lá em cima e as emoções aqui nunca discordam. */}
+          <AnimatedMount>
+            <ClimaEmocional
+              transitos={transitData?.dailyOverview?.personalTodayRich as any}
+              idioma={language}
+            />
           </AnimatedMount>
-        ) : null}
+              </>
+            )}
+          </React.Fragment>
+        ))}
 
-        {/* ⚠️ AS EMOÇÕES vêm depois do status: é o MESMO céu em outra
-            pergunta. O status diz onde o dia pega na vida; estes anéis dizem
-            que tom ele tende a ter.
-
-            ⚠️ Os números NÃO medem a emoção de ninguém — o app não tem dado
-            nenhum sobre o estado emocional real da pessoa. São derivados dos
-            trânsitos, e o componente carrega a linha que diz isso. Se um dia
-            alguém remover aquela linha por achá-la ruído, os números passam a
-            afirmar o que o dado não sustenta.
-
-            `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
-            a frase lá em cima e as emoções aqui nunca discordam. */}
-        <AnimatedMount>
-          <ClimaEmocional
-            transitos={transitData?.dailyOverview?.personalTodayRich as any}
-            idioma={language}
-          />
-        </AnimatedMount>
 
         {/* ⚠️ O FILTRO DE PLANETAS, agora como bloco próprio.
             Ele morava dentro do componente da roda, no slot `entreRodaEGrade`,
@@ -1255,6 +1321,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#C7D2E8',
   },
+  // Alinhado à direita: é um controle discreto, não um título. À esquerda
+  // competiria com o começo de cada bloco pela atenção.
+  organizarLinha: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 14, marginBottom: 6 },
+  organizarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2C3651',
+    backgroundColor: 'rgba(18,22,44,0.72)',
+  },
+  organizarTexto: { fontSize: 14, fontWeight: '600', color: '#C7D2E8' },
   lifeAreaItem: {
     width: '50%',
   },

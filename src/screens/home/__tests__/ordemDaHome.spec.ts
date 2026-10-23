@@ -28,6 +28,17 @@ import { join } from 'node:path'
  * e as fichas lá embaixo — os MESMOS oito números em dois pontos da tela, com
  * a pessoa rolando duas vezes pela mesma informação.
  *
+ * ⚠️ O QUE ESTE ARQUIVO MEDE MUDOU, e vale ler antes de confiar nele.
+ *
+ * Três dos blocos — céu, status e emoções — não estão mais escritos em
+ * sequência fixa: saem de `useOrdemDaHome` e a pessoa escolhe a ordem no app.
+ * O que estas checagens garantem é a ordem PADRÃO, a que vale para quem nunca
+ * mexeu, lendo a posição no fonte. A ordem de render de quem já escolheu outra
+ * é problema do hook, e está coberta em `utils/__tests__/ordemDaHomePref`.
+ *
+ * Continua valendo a pena: o padrão é o que a esmagadora maioria vê, e foi
+ * justamente ele que escorregou três vezes.
+ *
  * Nada disso quebra se mudar de lugar: a tela continua montando, os testes de
  * render continuam passando, e só a leitura fica pior.
  */
@@ -85,6 +96,35 @@ describe('ordem dos blocos da Home', () => {
     expect(Math.abs(fichas - roda), 'roda e fichas se separaram na tela').toBeLessThan(1500)
     expect(HOME, 'sem o hook, não há como alternar').toContain('useVisaoDeStatus')
     expect(HOME).toContain("visaoDeStatus === 'roda'")
+  })
+
+  /**
+   * ⚠️ OS BLOCOS TÊM DE SAIR DA ORDEM ESCOLHIDA, não de JSX em sequência.
+   *
+   * Se alguém reescrever os três de volta como blocos literais, a tela continua
+   * funcionando perfeitamente e o botão "Organizar" passa a não fazer nada —
+   * falha silenciosa clássica: o controle existe, responde ao toque, grava a
+   * preferência e não muda coisa alguma.
+   */
+  it('os três blocos são renderizados pela ordem escolhida', () => {
+    expect(HOME, 'sem o hook não há ordem para seguir').toContain('useOrdemDaHome')
+    expect(HOME, 'os blocos voltaram a ser JSX fixo').toContain('ordemDaHome.map')
+    expect(HOME).toContain("bloco === 'ceu'")
+    expect(HOME).toContain("bloco === 'status'")
+    expect(HOME, 'falta o botão que abre o organizador').toContain('<OrganizarHome')
+  })
+
+  /**
+   * ⚠️ "O seu dia" FICA FORA da reordenação.
+   *
+   * É a única parte que responde sozinha a quem abre o app de manhã e não quer
+   * mais nada. Tirar do topo é a única reordenação que piora a tela para todo
+   * mundo, inclusive para quem pediu para reordenar.
+   */
+  it('"O seu dia" não entra na reordenação', () => {
+    const frase = pos('<FraseDoDia')
+    const mapa = pos('ordemDaHome.map')
+    expect(frase, 'a frase caiu dentro do bloco reordenável').toBeLessThan(mapa)
   })
 
   it('a grade continua morando dentro da roda', () => {
