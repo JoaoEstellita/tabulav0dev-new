@@ -99,9 +99,11 @@ export type ChaveEmocao =
   | 'afeto'
   | 'entusiasmo'
   | 'calma'
+  | 'sensibilidade'
   | 'estresse'
   | 'desanimo'
   | 'ansiedade'
+  | 'pressao'
 
 /**
  * A ordem em que os anéis aparecem: TRÊS BONS EM CIMA, três difíceis embaixo.
@@ -111,29 +113,29 @@ export type ChaveEmocao =
  * ruim antes mesmo de calcular qualquer coisa — o desenho vira o veredicto.
  * Três de cada lado deixa o resultado falar.
  *
- * ⚠️ A ORDEM TAMBÉM É O DESENHO: com três por linha, os índices 0-3, 1-4 e 2-5
- * caem um em cima do outro e cada COLUNA vira um par de opostos:
+ * ⚠️ A ORDEM TAMBÉM É O DESENHO: com quatro por linha, os índices 0-4, 1-5,
+ * 2-6 e 3-7 caem um em cima do outro e cada COLUNA vira um par de opostos:
  *
- *     afeto       entusiasmo    calma
- *     estresse    desânimo      ansiedade
- *      Vênus↔Marte  Júpiter↔Saturno  sossego↔sobressalto
+ *     afeto       entusiasmo    calma        sensibilidade
+ *     estresse    desânimo      ansiedade    pressão
+ *      Vênus↔Marte  Júpiter↔Saturno  chão↔sobressalto  sentir↔apertar
  *
  * Vênus/Marte e Júpiter/Saturno são os dois pares clássicos da tradição. Lida
- * em coluna, a grade dá três eixos em vez de seis números soltos — que era a
+ * em coluna, a grade dá quatro eixos em vez de oito números soltos — que era a
  * queixa de não dar para ter noção geral do dia.
  *
  * Mexer nesta ordem (ou em `porLinha` no componente) desfaz o pareamento sem
  * quebrar nada: a tela continua funcionando e só para de significar isso.
  */
 export const EMOCOES: readonly ChaveEmocao[] = [
-  'afeto', 'entusiasmo', 'calma',
-  'estresse', 'desanimo', 'ansiedade',
+  'afeto', 'entusiasmo', 'calma', 'sensibilidade',
+  'estresse', 'desanimo', 'ansiedade', 'pressao',
 ] as const
 
-/** As três que pesam e as três que aliviam — usado no texto do detalhe. */
+/** As quatro que pesam e as quatro que aliviam — usado no texto do detalhe. */
 export const EMOCAO_PESA: Record<ChaveEmocao, boolean> = {
-  afeto: false, entusiasmo: false, calma: false,
-  estresse: true, desanimo: true, ansiedade: true,
+  afeto: false, entusiasmo: false, calma: false, sensibilidade: false,
+  estresse: true, desanimo: true, ansiedade: true, pressao: true,
 }
 
 const norm = (v: unknown) =>
@@ -167,13 +169,14 @@ const CONJUNCAO_PESADA = new Set(['saturn', 'pluto', 'mars', 'neptune', 'uranus'
  * nem calma. Cada uma tem um planeta dominante (peso 1.0) e nenhum planeta é
  * dominante em duas:
  *
- *     Urano    → ansiedade   (sobressalto, chão que se move)
- *     Marte    → estresse    (atrito, pavio curto, cobrança)
+ *     Marte    → estresse    (atrito, pavio curto)
  *     Saturno  → desânimo    (peso, cansaço, porta fechada)
+ *     Urano    → ansiedade   (sobressalto, chão que se move)
+ *     Plutão   → pressão     (aperto que não dá para desviar)
  *
- * Os outros sete se distribuem entre as três pelo que a tradição associa a
- * cada um: Mercúrio com a mente acelerada, Plutão com a pressão que não dá
- * para desviar, Netuno com a névoa que desanima, Vênus com o desgosto.
+ * Os outros seis se distribuem entre os quatro pelo que a tradição associa a
+ * cada um: Mercúrio com a mente acelerada, Netuno com a névoa que desanima,
+ * Vênus com o desgosto, o Sol com a exposição que cansa.
  *
  * ⚠️ OS PESOS CRUZADOS SÃO POUCOS DE PROPÓSITO. Uma versão com mais deles
  * criou piso: cada anel recebia alguma coisa de quase todo planeta e nenhum
@@ -189,28 +192,34 @@ const CONJUNCAO_PESADA = new Set(['saturn', 'pluto', 'mars', 'neptune', 'uranus'
  * Fica porque não custa nada e porque como ALVO ela é das mais importantes.
  */
 const PESO_DURO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
-  uranus:  { ansiedade: 1.0 },
-  mercury: { ansiedade: 0.85 },
   mars:    { estresse: 1.0 },
-  pluto:   { estresse: 0.90, ansiedade: 0.30 },
   sun:     { estresse: 0.50 },
   jupiter: { estresse: 0.25 },
-  saturn:  { desanimo: 1.0, estresse: 0.30 },
-  neptune: { desanimo: 0.85, ansiedade: 0.30 },
+  saturn:  { desanimo: 1.0, pressao: 0.30 },
+  neptune: { desanimo: 0.85 },
   venus:   { desanimo: 0.60 },
-  moon:    { desanimo: 0.50, ansiedade: 0.40 },
+  uranus:  { ansiedade: 1.0 },
+  mercury: { ansiedade: 0.85 },
+  moon:    { ansiedade: 0.40, desanimo: 0.45 },
+  // ⚠️ Plutão NÃO alimenta o estresse, e isso foi medido. Com ele dando 0.30
+  // ao estresse, estresse×pressão ficava em r=+0,51 — os dois anéis subiam
+  // juntos e o de baixo não acrescentava nada. Tirando, o pior par do conjunto
+  // cai para +0,43 e deixa de ser este. Marte é o atrito; Plutão é o aperto.
+  pluto:   { pressao: 1.0 },
 }
 
 /**
  * Afinidade quando o aspecto ALIVIA. Mesma regra: um dominante por emoção.
  *
- *     Vênus    → afeto        (prazer, carinho, gosto pelas coisas)
- *     Júpiter  → entusiasmo   (impulso, vontade, horizonte aberto)
- *     Saturno  → calma        (estrutura que segura, chão firme)
+ *     Vênus    → afeto          (prazer, carinho, gosto pelas coisas)
+ *     Júpiter  → entusiasmo     (impulso, vontade, horizonte aberto)
+ *     Saturno  → calma          (estrutura que segura, chão firme)
+ *     Lua      → sensibilidade  (pele fina, o que se capta sem ser dito)
  *
- * As três cobrem o espaço do que é bom sem se repetir: o afeto é RECEPTIVO (o
- * que faz bem), o entusiasmo é ATIVO (o que põe para fora), a calma é o
- * sossego. Quem já teve um dia produtivo e seco sabe que não são a mesma coisa.
+ * As quatro cobrem o espaço do que é bom sem se repetir: o afeto é RECEPTIVO
+ * (o que faz bem), o entusiasmo é ATIVO (o que põe para fora), a calma é o
+ * sossego e a sensibilidade é a abertura. Quem já teve um dia produtivo e seco
+ * sabe que não são a mesma coisa.
  *
  * ⚠️ As duas primeiras já se chamaram "alegria" e "ânimo", e foram trocadas
  * por serem palavras parecidas demais em português para coisas que o cálculo
@@ -232,15 +241,24 @@ const PESO_DURO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
  */
 const PESO_MACIO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
   venus:   { afeto: 1.0 },
-  moon:    { afeto: 0.70, calma: 0.30 },
-  jupiter: { entusiasmo: 1.0 },
   sun:     { entusiasmo: 0.80, afeto: 0.25 },
+  jupiter: { entusiasmo: 1.0 },
   mars:    { entusiasmo: 0.50 },
   uranus:  { entusiasmo: 0.40 },
   saturn:  { calma: 1.0 },
-  neptune: { calma: 0.70 },
   pluto:   { calma: 0.50 },
   mercury: { calma: 0.35 },
+  // ⚠️ A LUA é a dona da sensibilidade, não Netuno — correção do João, e ele
+  // está certo: a Lua É o planeta do humor na tradição. Eu tinha posto Netuno
+  // ali por falta de dado, que é torcer a astrologia para caber num artefato.
+  //
+  // Netuno fica como segundo quase-dominante (0.90) por um motivo prático: a
+  // Lua aparece em só 4 de 21 contas mesmo depois de dobrar a cota de rápidos,
+  // porque os aspectos dela duram horas. Sem Netuno sustentando, o anel ficaria
+  // apagado na maioria dos dias. Com os dois, zera em 4 de 21 — e quando a Lua
+  // está lá, é ela que lidera.
+  moon:    { sensibilidade: 1.0, afeto: 0.40 },
+  neptune: { sensibilidade: 0.90 },
 }
 
 /**
@@ -250,16 +268,24 @@ const PESO_MACIO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
  * sobre Júpiter. Sem isto, o alvo não contaria — e o alvo é metade do aspecto.
  */
 const AMPLIFICA_ALVO: Record<string, Partial<Record<ChaveEmocao, number>>> = {
-  moon:      { desanimo: 1.30, ansiedade: 1.25, afeto: 1.30 },
-  mercury:   { ansiedade: 1.35 },
-  mars:      { estresse: 1.30 },
-  venus:     { afeto: 1.30, desanimo: 1.15 },
-  sun:       { entusiasmo: 1.15, estresse: 1.15 },
-  saturn:    { desanimo: 1.20, calma: 1.15 },
-  jupiter:   { entusiasmo: 1.30 },
-  neptune:   { desanimo: 1.15 },
-  ascendant: { ansiedade: 1.20, entusiasmo: 1.10 },
-  midheaven: { estresse: 1.25 },
+  moon:    { sensibilidade: 1.35, desanimo: 1.20, ansiedade: 1.25, afeto: 1.25 },
+  mercury: { ansiedade: 1.35 },
+  mars:    { estresse: 1.30 },
+  venus:   { afeto: 1.30, desanimo: 1.15 },
+  sun:     { entusiasmo: 1.15, estresse: 1.15 },
+  saturn:  { desanimo: 1.20, calma: 1.15 },
+  jupiter: { entusiasmo: 1.30 },
+  neptune: { sensibilidade: 1.20 },
+  // ⚠️ AS CHAVES DOS ÂNGULOS SÃO `asc` / `mc` / `dsc` / `ic`.
+  //
+  // Estavam escritas `ascendant` e `midheaven`, que é como NINGUÉM grava: o
+  // motor usa a forma curta. As duas entradas nunca dispararam, e `dsc` e `ic`
+  // não tinham entrada nenhuma — 52 dos 168 trânsitos da base antiga, 31%,
+  // passavam sem amplificação. Não dava erro; só não acontecia.
+  asc:     { ansiedade: 1.20, afeto: 1.10 },
+  mc:      { pressao: 1.25, estresse: 1.15 },
+  dsc:     { afeto: 1.25, estresse: 1.15 },
+  ic:      { desanimo: 1.20, calma: 1.20 },
 }
 
 /**
@@ -302,12 +328,19 @@ const LENTOS = new Set(['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'chir
  * garante trânsito RÁPIDO todo dia: sem ela os lentos ocupam a lista inteira e
  * os anéis ancorados em Saturno e Urano ficam parados por semanas.
  *
+ * ⚠️ A REPARTIÇÃO 6+6 NÃO É SIMETRIA DECORATIVA. Com 5+3, medido em 21 contas
+ * reais, as três vagas rápidas eram disputadas assim: Vênus 38%, Sol 25%,
+ * Marte 17%, Mercúrio 11%, Lua 8%. Vênus e Marte consumiam mais da metade, e
+ * em aspecto macio sobrava Mercúrio em 1 conta e a Lua em 3 — ou seja, o
+ * planeta do humor era cortado antes de qualquer conta. Depois de 6+6: Sol
+ * 26%, Marte 23%, Vênus 22%, Mercúrio 19%, Lua 10%, e nenhum anel fica mudo.
+ *
  * ⚠️ MUDAR ESTES NÚMEROS EXIGE RECALIBRAR `K_CURVA`. Eles são o tamanho da
  * entrada, e o K é função dele. Por isso estão aqui em cima, com nome, e não
  * enfiados como literal no meio da função.
  */
-export const COTA_LENTOS = 5
-export const COTA_RAPIDOS = 3
+export const COTA_LENTOS = 6
+export const COTA_RAPIDOS = 6
 
 /** Quanto um trânsito pesa na disputa por vaga. */
 function relevancia(t: TransitoParaEmocao): number {
@@ -375,8 +408,8 @@ export function contribuicoesPorEmocao(
   transitos: ReadonlyArray<TransitoParaEmocao>,
 ): Record<ChaveEmocao, Contribuicao[]> {
   const out: Record<ChaveEmocao, Contribuicao[]> = {
-    afeto: [], entusiasmo: [], calma: [],
-    estresse: [], desanimo: [], ansiedade: [],
+    afeto: [], entusiasmo: [], calma: [], sensibilidade: [],
+    estresse: [], desanimo: [], ansiedade: [], pressao: [],
   }
   for (const t of transitos || []) {
     const { planeta, aspecto, alvo } = lerTransito(t)
@@ -411,8 +444,8 @@ export function contribuicoesPorEmocao(
 export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Record<ChaveEmocao, number> {
   const porEmocao = contribuicoesPorEmocao(transitos)
   const soma: Record<ChaveEmocao, number> = {
-    afeto: 0, entusiasmo: 0, calma: 0,
-    estresse: 0, desanimo: 0, ansiedade: 0,
+    afeto: 0, entusiasmo: 0, calma: 0, sensibilidade: 0,
+    estresse: 0, desanimo: 0, ansiedade: 0, pressao: 0,
   }
   for (const chave of EMOCOES) {
     soma[chave] = porEmocao[chave].reduce((acc, c) => acc + c.valor, 0)
@@ -428,14 +461,17 @@ export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Recor
  * zero. A saída é uma curva que satura — cresce rápido no começo e encosta nos
  * 100 sem nunca estourar.
  *
- * MEDIDO contra 21 usuários reais (168 trânsitos). Mediana das três que PESAM:
+ * MEDIDO contra 21 usuários reais, 252 trânsitos, já com a cota 6+6 e os oito
+ * anéis. O K é buscado para colocar a mediana das que PESAM em 41, que é o
+ * patamar de leitura calibrado desde a primeira versão: o dia comum pouco
+ * abaixo da metade, com faixa de sobra para o dia de fato carregado.
  *
- *     K = 0.35  →  29        K = 0.55  →  41
- *     K = 0.45  →  35
+ *     6 anéis, cota 6+6   →  K = 0.32
+ *     8 anéis, cota 6+6   →  K = 0.45   ← este
+ *     8 anéis, cota 5+3   →  K = 0.70
  *
- * Escolhido 0.55: o dia comum fica pouco abaixo da metade e sobra faixa para o
- * dia de fato carregado. Acima disso o número começa a soar alarme todo dia, e
- * alarme que toca sempre deixa de ser alarme.
+ * Note que MAIS anéis pedem K MAIOR e mais trânsitos pedem K MENOR, e os dois
+ * efeitos brigam. Nunca mexa num sem remedir.
  *
  * ⚠️ O K DEPENDE DE DUAS COISAS, e as duas mudam sem avisar:
  *
@@ -446,21 +482,33 @@ export function somasBrutas(transitos: ReadonlyArray<TransitoParaEmocao>): Recor
  *
  * Mudou qualquer um dos dois, remede. Este K vale para 6 anéis e cota 5+3.
  *
- * Faixa efetiva com 0.55, nos dados reais:
+ * Faixa efetiva com 0.45, nos dados reais:
  *
- *     afeto    0–72   entusiasmo 0–89  calma    0–76
- *     ansiedade 0–83  estresse 0–79   desânimo 0–80
+ *     afeto          0–59      estresse   0–78
+ *     entusiasmo    14–61      desânimo   0–85
+ *     calma          0–72      ansiedade  0–89
+ *     sensibilidade  0–67      pressão    0–63
  *
- * ⚠️ TODOS OS SEIS CHEGAM A ZERO em algum dia real, e isso é o que separa esta
- * versão das anteriores: um anel que nunca desce não informa nada. Os mais
- * quietos são desânimo (8 de 21 dias em zero) e calma (7), o que é o esperado.
+ * ⚠️ SETE DOS OITO CHEGAM A ZERO. A exceção é o entusiasmo, com piso em 14 —
+ * ele é alimentado por Júpiter, Sol, Marte e Urano macios, e a união dos
+ * quatro cobre as 21 contas. Um comentário anterior meu afirmava que os oito
+ * zeravam; a medição desmentiu.
+ *
+ * Piso de 14 não é o defeito que já aconteceu aqui: o otimismo da primeira
+ * versão tinha piso em 41, que o olho lê como "média". 14 lê como "quase
+ * nada", que é justamente o que um dia sem Júpiter e sem Sol deve mostrar.
+ * O limite para vigiar é ~25 — daí para cima o anel vira enfeite.
+ *
+ * ⚠️ As que PESAM alcançam mais alto que as que aliviam (89 contra 72), e isso
+ * é do céu, não da tabela: os pesos somam quase o mesmo dos dois lados. Dia
+ * carregado tem mais aspecto duro simultâneo do que dia bom tem macio.
  *
  * ⚠️ Duas correções minhas ficam aqui de propósito. Uma versão deste comentário
  * dizia "mediana perto de 45" com K=0.55, o que a medição desmentiu; e a
  * primeira tabela de pesos macios criava um PISO de 41. Se a base mudar,
  * refazer a medição em vez de confiar nestes números.
  */
-export const K_CURVA = 0.55
+export const K_CURVA = 0.45
 
 /** A soma bruta vira 0–100 por uma curva que satura. */
 export function paraEscala(soma: number): number {
@@ -477,7 +525,7 @@ export type EmocaoDoDia = {
 }
 
 /**
- * As seis tendências do dia, de 0 a 100.
+ * As oito tendências do dia, de 0 a 100.
  *
  * Sem trânsito nenhum devolve `null` — e isso importa: zerar tudo diria "hoje
  * você não sente nada", quando o certo é "hoje não sabemos".

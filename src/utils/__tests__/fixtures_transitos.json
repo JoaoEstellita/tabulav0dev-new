@@ -1,2674 +1,3978 @@
 [
- {
-  "uid": "0CVyWEWT",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "Neptune",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor",
-     "comunicacao"
-    ],
-    "lento": true,
-    "dias": 133
-   },
-   {
-    "t": "Pluto",
-    "a": "quadratura",
-    "n": "Jupiter",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 32
-   },
-   {
-    "t": "Neptune",
-    "a": "quadratura",
-    "n": "Moon",
-    "orb": 1.9,
-    "applying": true,
-    "strength": 1,
-    "house": 5,
-    "areas": [
-     "amor",
-     "financas"
-    ],
-    "lento": true,
-    "dias": 1
-   },
-   {
-    "t": "Neptune",
-    "a": "semissextil",
-    "n": "Jupiter",
-    "orb": 0,
-    "applying": false,
-    "strength": 1,
-    "house": 5,
-    "areas": [
-     "amor",
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 9
-   },
-   {
-    "t": "Saturn",
-    "a": "semissextil",
-    "n": "Sun",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 5,
-    "areas": [
-     "amor",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 6
-   },
-   {
-    "t": "Venus",
-    "a": "quadratura",
-    "n": "Neptune",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.95,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 12
-   },
-   {
-    "t": "Mars",
-    "a": "quincuncio",
-    "n": "Sun",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 0.84,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 18
-   },
-   {
-    "t": "Moon",
-    "a": "trigono",
-    "n": "MC",
-    "orb": 1.7,
-    "applying": false,
-    "strength": 0.73,
-    "house": 1,
-    "areas": [
-     "saude",
-     "carreira",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 2
-   }
-  ]
- },
- {
-  "uid": "3rjxDwbk",
-  "transitos": [
-   {
-    "t": "Saturn",
-    "a": "quincuncio",
-    "n": "ASC",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 93
-   },
-   {
-    "t": "Saturn",
-    "a": "semissextil",
-    "n": "DSC",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor"
-    ],
-    "lento": true,
-    "dias": 56
-   },
-   {
-    "t": "Pluto",
-    "a": "semissextil",
-    "n": "Uranus",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.96,
-    "house": 5,
-    "areas": [
-     "amor",
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 100
-   },
-   {
-    "t": "Sun",
-    "a": "trigono",
-    "n": "Saturn",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.95,
-    "house": 2,
-    "areas": [
-     "financas",
-     "carreira",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 21
-   },
-   {
-    "t": "Mars",
-    "a": "trigono",
-    "n": "IC",
-    "orb": 0.9,
-    "applying": true,
-    "strength": 0.91,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 20
-   },
-   {
-    "t": "Saturn",
-    "a": "sextil",
-    "n": "Sun",
-    "orb": 2,
-    "applying": true,
-    "strength": 0.9,
-    "house": 7,
-    "areas": [
-     "amor",
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": true,
-    "dias": 12
-   },
-   {
-    "t": "Jupiter",
-    "a": "oposicao",
-    "n": "Mars",
-    "orb": 1.7,
-    "applying": true,
-    "strength": 0.9,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "carreira"
-    ],
-    "lento": true,
-    "dias": 32
-   },
-   {
-    "t": "Moon",
-    "a": "conjuncao",
-    "n": "DSC",
-    "orb": 0.7,
-    "applying": false,
-    "strength": 0.83,
-    "house": 7,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 2
-   }
-  ]
- },
- {
-  "uid": "6RP1YmPa",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "oposicao",
-    "n": "Pluto",
-    "orb": 1.2,
-    "applying": true,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 167
-   },
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "Uranus",
-    "orb": 0.5,
-    "applying": true,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 261
-   },
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 9
-   },
-   {
-    "t": "Mars",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 0.92,
-    "house": 1,
-    "areas": [
-     "saude",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 20
-   },
-   {
-    "t": "Venus",
-    "a": "quadratura",
-    "n": "Uranus",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 0.85,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 12
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "Pluto",
-    "orb": 1.5,
-    "applying": false,
-    "strength": 0.83,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 139
-   },
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "Uranus",
-    "orb": 1.7,
-    "applying": false,
-    "strength": 0.83,
-    "house": 7,
-    "areas": [
-     "amor"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Moon",
-    "a": "sextil",
-    "n": "Sun",
-    "orb": 1.6,
-    "applying": true,
-    "strength": 0.73,
-    "house": 5,
-    "areas": [
-     "amor",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 1
-   }
-  ]
- },
- {
-  "uid": "AasGfYpU",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Mars",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao"
-    ],
-    "lento": true,
-    "dias": 14
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "ASC",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 5,
-    "areas": [
-     "amor",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 80
-   },
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "Mercury",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 17
-   },
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 1.5,
-    "applying": false,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 17
-   },
-   {
-    "t": "Jupiter",
-    "a": "sextil",
-    "n": "DSC",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 5,
-    "areas": [
-     "amor"
-    ],
-    "lento": true,
-    "dias": 50
-   },
-   {
-    "t": "Sun",
-    "a": "conjuncao",
-    "n": "DSC",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 20
-   },
-   {
-    "t": "Sun",
-    "a": "oposicao",
-    "n": "ASC",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 20
-   },
-   {
-    "t": "Sun",
-    "a": "quadratura",
-    "n": "IC",
-    "orb": 0.9,
-    "applying": true,
-    "strength": 0.97,
-    "house": 7,
-    "areas": [
-     "amor",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 16
-   }
-  ]
- },
- {
-  "uid": "BTcPHJ6e",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Jupiter",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 44
-   },
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "MC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "IC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 1.5,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 22
-   },
-   {
-    "t": "Sun",
-    "a": "oposicao",
-    "n": "Venus",
-    "orb": 0.1,
-    "applying": true,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "espiritualidade"
-    ],
-    "lento": false,
-    "dias": 81
-   },
-   {
-    "t": "Venus",
-    "a": "quincuncio",
-    "n": "Jupiter",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 0.95,
-    "house": 7,
-    "areas": [
-     "amor",
-     "financas"
-    ],
-    "lento": false,
-    "dias": 12
-   },
-   {
-    "t": "Venus",
-    "a": "sextil",
-    "n": "Uranus",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.89,
-    "house": 7,
-    "areas": [
-     "amor",
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 8
-   }
-  ]
- },
- {
-  "uid": "EYLBKg9p",
-  "transitos": [
-   {
-    "t": "Neptune",
-    "a": "quadratura",
-    "n": "ASC",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 235
-   },
-   {
-    "t": "Neptune",
-    "a": "quadratura",
-    "n": "DSC",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 235
-   },
-   {
-    "t": "Pluto",
-    "a": "quadratura",
-    "n": "Moon",
-    "orb": 0.5,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 1
-   },
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 1.1,
-    "applying": false,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 18
-   },
-   {
-    "t": "Saturn",
-    "a": "quincuncio",
-    "n": "Uranus",
-    "orb": 0.5,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia"
-    ],
-    "lento": true,
-    "dias": 31
-   },
-   {
-    "t": "Venus",
-    "a": "trigono",
-    "n": "Jupiter",
-    "orb": 0.5,
-    "applying": true,
-    "strength": 0.97,
-    "house": 11,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 23
-   },
-   {
-    "t": "Sun",
-    "a": "semissextil",
-    "n": "Mercury",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.94,
-    "house": 11,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 9
-   },
-   {
-    "t": "Mercury",
-    "a": "semiquadratura",
-    "n": "ASC",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.9,
-    "house": 11,
-    "areas": [
-     "saude"
-    ],
-    "lento": false,
-    "dias": 5
-   }
-  ]
- },
- {
-  "uid": "ImzYlM8o",
-  "transitos": [
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "Uranus",
-    "orb": 0,
-    "applying": false,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 100
-   },
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "Mars",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 18
-   },
-   {
-    "t": "Uranus",
-    "a": "quincuncio",
-    "n": "Sun",
-    "orb": 0.3,
-    "applying": false,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 8
-   },
-   {
-    "t": "Uranus",
-    "a": "quincuncio",
-    "n": "Jupiter",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 22
-   },
-   {
-    "t": "Uranus",
-    "a": "sesquiquadratura",
-    "n": "ASC",
-    "orb": 0.1,
-    "applying": true,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 73
-   },
-   {
-    "t": "Venus",
-    "a": "sextil",
-    "n": "Sun",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 0.85,
-    "house": 11,
-    "areas": [
-     "saude"
-    ],
-    "lento": false,
-    "dias": 8
-   },
-   {
-    "t": "Venus",
-    "a": "semissextil",
-    "n": "Mars",
-    "orb": 0.5,
-    "applying": true,
-    "strength": 0.82,
-    "house": 11,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 4
-   },
-   {
-    "t": "Moon",
-    "a": "semissextil",
-    "n": "Moon",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 0.79,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 36
-   }
-  ]
- },
- {
-  "uid": "LDlywj2I",
-  "transitos": [
-   {
-    "t": "Neptune",
-    "a": "conjuncao",
-    "n": "Sun",
-    "orb": 1.6,
-    "applying": true,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 20
-   },
-   {
-    "t": "Saturn",
-    "a": "oposicao",
-    "n": "Moon",
-    "orb": 0.7,
-    "applying": false,
-    "strength": 1,
-    "house": 11,
-    "areas": [
-     "amor"
-    ],
-    "lento": true,
-    "dias": 2
-   },
-   {
-    "t": "Neptune",
-    "a": "conjuncao",
-    "n": "Mars",
-    "orb": 1,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 12
-   },
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "Jupiter",
-    "orb": 0.9,
-    "applying": true,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 79
-   },
-   {
-    "t": "Pluto",
-    "a": "sextil",
-    "n": "Mars",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 1,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "carreira"
-    ],
-    "lento": true,
-    "dias": 5
-   },
-   {
-    "t": "Sun",
-    "a": "conjuncao",
-    "n": "Pluto",
-    "orb": 1.5,
-    "applying": true,
-    "strength": 0.84,
-    "house": 5,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 20
-   },
-   {
-    "t": "Mars",
-    "a": "sesquiquadratura",
-    "n": "Neptune",
-    "orb": 0,
-    "applying": false,
-    "strength": 0.8,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 4
-   },
-   {
-    "t": "Venus",
-    "a": "trigono",
-    "n": "Mercury",
-    "orb": 1.7,
-    "applying": true,
-    "strength": 0.75,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 7
-   }
-  ]
- },
- {
-  "uid": "Pl1dqEQv",
-  "transitos": [
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Mercury",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 1,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "financas"
-    ],
-    "lento": true,
-    "dias": 8
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Uranus",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 0.99,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 44
-   },
-   {
-    "t": "Uranus",
-    "a": "quincuncio",
-    "n": "Neptune",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 0.99,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 200
-   },
-   {
-    "t": "Uranus",
-    "a": "quincuncio",
-    "n": "Pluto",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 0.95,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "financas"
-    ],
-    "lento": true,
-    "dias": 200
-   },
-   {
-    "t": "Sun",
-    "a": "oposicao",
-    "n": "Mercury",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 0.95,
-    "house": 2,
-    "areas": [
-     "financas",
-     "transformacao"
-    ],
-    "lento": false,
-    "dias": 29
-   },
-   {
-    "t": "Venus",
-    "a": "sextil",
-    "n": "Neptune",
-    "orb": 0,
-    "applying": false,
-    "strength": 0.86,
-    "house": 2,
-    "areas": [
-     "financas",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 9
-   },
-   {
-    "t": "Venus",
-    "a": "conjuncao",
-    "n": "Pluto",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 0.83,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": false,
-    "dias": 22
-   },
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Venus",
-    "orb": 2,
-    "applying": false,
-    "strength": 0.8,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": true,
-    "dias": 8
-   }
-  ]
- },
- {
-  "uid": "TpBI4wau",
-  "transitos": [
-   {
-    "t": "Neptune",
-    "a": "conjuncao",
-    "n": "Moon",
-    "orb": 0.8,
-    "applying": false,
-    "strength": 1,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 1
-   },
-   {
-    "t": "Saturn",
-    "a": "conjuncao",
-    "n": "Mars",
-    "orb": 1.4,
-    "applying": true,
-    "strength": 1,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 14
-   },
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "MC",
-    "orb": 0.5,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas",
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 287
-   },
-   {
-    "t": "Pluto",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia",
-     "financas"
-    ],
-    "lento": true,
-    "dias": 7
-   },
-   {
-    "t": "Saturn",
-    "a": "sextil",
-    "n": "Saturn",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "carreira"
-    ],
-    "lento": true,
-    "dias": 62
-   },
-   {
-    "t": "Venus",
-    "a": "conjuncao",
-    "n": "DSC",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 29
-   },
-   {
-    "t": "Venus",
-    "a": "oposicao",
-    "n": "ASC",
-    "orb": 0.7,
-    "applying": true,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 29
-   },
-   {
-    "t": "Venus",
-    "a": "quadratura",
-    "n": "MC",
-    "orb": 0.3,
-    "applying": false,
-    "strength": 0.88,
-    "house": 7,
-    "areas": [
-     "amor",
-     "carreira",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 19
-   }
-  ]
- },
- {
-  "uid": "TsKQVRKM",
-  "transitos": [
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 0,
-    "applying": false,
-    "strength": 1,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "espiritualidade"
-    ],
-    "lento": true,
-    "dias": 17
-   },
-   {
-    "t": "Saturn",
-    "a": "quadratura",
-    "n": "Mars",
-    "orb": 0,
-    "applying": false,
-    "strength": 1,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "ASC",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 147
-   },
-   {
-    "t": "Uranus",
-    "a": "trigono",
-    "n": "Saturn",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia",
-     "financas"
-    ],
-    "lento": true,
-    "dias": 68
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "Mercury",
-    "orb": 1,
-    "applying": true,
-    "strength": 1,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "espiritualidade"
-    ],
-    "lento": true,
-    "dias": 4
-   },
-   {
-    "t": "Mars",
-    "a": "conjuncao",
-    "n": "Sun",
-    "orb": 2.6,
-    "applying": true,
-    "strength": 0.76,
-    "house": 1,
-    "areas": [
-     "saude",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": false,
-    "dias": 47
-   },
-   {
-    "t": "Mercury",
-    "a": "semiquadratura",
-    "n": "Saturn",
-    "orb": 0.5,
-    "applying": true,
-    "strength": 0.73,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "financas"
-    ],
-    "lento": false,
-    "dias": 14
-   },
-   {
-    "t": "Venus",
-    "a": "quadratura",
-    "n": "Mercury",
-    "orb": 1.6,
-    "applying": true,
-    "strength": 0.7,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": false,
-    "dias": 4
-   }
-  ]
- },
- {
-  "uid": "WeyFOKy3",
-  "transitos": [
-   {
-    "t": "Jupiter",
-    "a": "quadratura",
-    "n": "Saturn",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 39
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "DSC",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 80
-   },
-   {
-    "t": "Neptune",
-    "a": "quadratura",
-    "n": "Neptune",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 11,
-    "areas": [
-     "financas",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 300
-   },
-   {
-    "t": "Jupiter",
-    "a": "sextil",
-    "n": "ASC",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 50
-   },
-   {
-    "t": "Neptune",
-    "a": "quincuncio",
-    "n": "Pluto",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 1,
-    "house": 11,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 200
-   },
-   {
-    "t": "Sun",
-    "a": "trigono",
-    "n": "ASC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 0.87,
-    "house": 5,
-    "areas": [
-     "amor",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 18
-   },
-   {
-    "t": "Sun",
-    "a": "sextil",
-    "n": "DSC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 0.87,
-    "house": 5,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 12
-   },
-   {
-    "t": "Sun",
-    "a": "semissextil",
-    "n": "Saturn",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 0.86,
-    "house": 5,
-    "areas": [
-     "amor",
-     "carreira",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 6
-   }
-  ]
- },
- {
-  "uid": "XRrdLOXf",
-  "transitos": [
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "MC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Jupiter",
-    "orb": 0.3,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 44
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "IC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 1.1,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "IC",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 335
-   },
-   {
-    "t": "Mars",
-    "a": "quincuncio",
-    "n": "Saturn",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 0.99,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 13
-   },
-   {
-    "t": "Mercury",
-    "a": "quincuncio",
-    "n": "Sun",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 0.93,
-    "house": 7,
-    "areas": [
-     "amor",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": false,
-    "dias": 10
-   },
-   {
-    "t": "Venus",
-    "a": "conjuncao",
-    "n": "DSC",
-    "orb": 0.3,
-    "applying": false,
-    "strength": 0.91,
-    "house": 7,
-    "areas": [
-     "amor"
-    ],
-    "lento": false,
-    "dias": 23
-   }
-  ]
- },
- {
-  "uid": "eOcT9U3m",
-  "transitos": [
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "ASC",
-    "orb": 0.7,
-    "applying": false,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "DSC",
-    "orb": 0.7,
-    "applying": false,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "DSC",
-    "orb": 0.1,
-    "applying": true,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 313
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Jupiter",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 1,
-    "house": 7,
-    "areas": [
-     "amor",
-     "comunicacao"
-    ],
-    "lento": true,
-    "dias": 196
-   },
-   {
-    "t": "Neptune",
-    "a": "sextil",
-    "n": "ASC",
-    "orb": 0.1,
-    "applying": true,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 156
-   },
-   {
-    "t": "Mercury",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 1.1,
-    "applying": true,
-    "strength": 0.87,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia",
-     "financas"
-    ],
-    "lento": false,
-    "dias": 88
-   },
-   {
-    "t": "Mars",
-    "a": "quincuncio",
-    "n": "Mercury",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 0.86,
-    "house": 7,
-    "areas": [
-     "amor",
-     "financas"
-    ],
-    "lento": false,
-    "dias": 5
-   },
-   {
-    "t": "Sun",
-    "a": "conjuncao",
-    "n": "MC",
-    "orb": 2.6,
-    "applying": true,
-    "strength": 0.81,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "carreira"
-    ],
-    "lento": false,
-    "dias": 20
-   }
-  ]
- },
- {
-  "uid": "gUGE1Wq8",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Jupiter",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 44
-   },
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "MC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "IC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 1.5,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 22
-   },
-   {
-    "t": "Sun",
-    "a": "oposicao",
-    "n": "Venus",
-    "orb": 0.1,
-    "applying": true,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "espiritualidade"
-    ],
-    "lento": false,
-    "dias": 81
-   },
-   {
-    "t": "Venus",
-    "a": "quincuncio",
-    "n": "Jupiter",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 0.95,
-    "house": 7,
-    "areas": [
-     "amor",
-     "financas"
-    ],
-    "lento": false,
-    "dias": 12
-   },
-   {
-    "t": "Venus",
-    "a": "sextil",
-    "n": "Uranus",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.89,
-    "house": 7,
-    "areas": [
-     "amor",
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 8
-   }
-  ]
- },
- {
-  "uid": "gdRXHrfx",
-  "transitos": [
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "MC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Jupiter",
-    "orb": 0.3,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 44
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "IC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 1.1,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "IC",
-    "orb": 0.6,
-    "applying": false,
-    "strength": 1,
-    "house": 11,
-    "areas": [
-     "familia"
-    ],
-    "lento": true,
-    "dias": 335
-   },
-   {
-    "t": "Mars",
-    "a": "quincuncio",
-    "n": "Saturn",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 0.99,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 13
-   },
-   {
-    "t": "Mercury",
-    "a": "quincuncio",
-    "n": "Sun",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 0.93,
-    "house": 7,
-    "areas": [
-     "amor",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": false,
-    "dias": 10
-   },
-   {
-    "t": "Venus",
-    "a": "conjuncao",
-    "n": "DSC",
-    "orb": 0.3,
-    "applying": false,
-    "strength": 0.91,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 23
-   }
-  ]
- },
- {
-  "uid": "hoJSaqkH",
-  "transitos": [
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "DSC",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 141
-   },
-   {
-    "t": "Saturn",
-    "a": "sextil",
-    "n": "ASC",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 1,
-    "house": 3,
-    "areas": [
-     "comunicacao",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 88
-   },
-   {
-    "t": "Mars",
-    "a": "conjuncao",
-    "n": "DSC",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 22
-   },
-   {
-    "t": "Mars",
-    "a": "oposicao",
-    "n": "ASC",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 1,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 22
-   },
-   {
-    "t": "Uranus",
-    "a": "sextil",
-    "n": "Mars",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 0.96,
-    "house": 4,
-    "areas": [
-     "familia",
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "Mars",
-    "orb": 1.6,
-    "applying": false,
-    "strength": 0.87,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "carreira"
-    ],
-    "lento": true,
-    "dias": 28
-   },
-   {
-    "t": "Venus",
-    "a": "trigono",
-    "n": "Jupiter",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 0.84,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 29
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "Mars",
-    "orb": 2.2,
-    "applying": false,
-    "strength": 0.58,
-    "house": 2,
-    "areas": [
-     "financas",
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 21
-   }
-  ]
- },
- {
-  "uid": "uRRR5pZn",
-  "transitos": [
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "Neptune",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 275
-   },
-   {
-    "t": "Saturn",
-    "a": "quadratura",
-    "n": "Sun",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 15
-   },
-   {
-    "t": "Neptune",
-    "a": "quadratura",
-    "n": "Mercury",
-    "orb": 0.5,
-    "applying": true,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 4
-   },
-   {
-    "t": "Neptune",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.8,
-    "applying": true,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas",
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 6
-   },
-   {
-    "t": "Saturn",
-    "a": "semissextil",
-    "n": "Saturn",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas",
-     "comunicacao"
-    ],
-    "lento": true,
-    "dias": 69
-   },
-   {
-    "t": "Moon",
-    "a": "conjuncao",
-    "n": "Venus",
-    "orb": 1.4,
-    "applying": true,
-    "strength": 0.85,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 2
-   },
-   {
-    "t": "Mercury",
-    "a": "conjuncao",
-    "n": "Moon",
-    "orb": 1.3,
-    "applying": false,
-    "strength": 0.7,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 2
-   },
-   {
-    "t": "Mars",
-    "a": "quadratura",
-    "n": "Saturn",
-    "orb": 1.3,
-    "applying": true,
-    "strength": 0.68,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 14
-   }
-  ]
- },
- {
-  "uid": "ukR5fpta",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "ASC",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude"
-    ],
-    "lento": true,
-    "dias": 363
-   },
-   {
-    "t": "Uranus",
-    "a": "oposicao",
-    "n": "DSC",
-    "orb": 0.4,
-    "applying": false,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude",
-     "amor"
-    ],
-    "lento": true,
-    "dias": 363
-   },
-   {
-    "t": "Uranus",
-    "a": "quadratura",
-    "n": "Mercury",
-    "orb": 0.4,
-    "applying": true,
-    "strength": 1,
-    "house": 1,
-    "areas": [
-     "saude",
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 6
-   },
-   {
-    "t": "Venus",
-    "a": "semiquadratura",
-    "n": "Saturn",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 0.97,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 8
-   },
-   {
-    "t": "Saturn",
-    "a": "quincuncio",
-    "n": "Pluto",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 0.96,
-    "house": 11,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 62
-   },
-   {
-    "t": "Venus",
-    "a": "quincuncio",
-    "n": "ASC",
-    "orb": 0,
-    "applying": false,
-    "strength": 0.94,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": false,
-    "dias": 16
-   },
-   {
-    "t": "Venus",
-    "a": "semissextil",
-    "n": "DSC",
-    "orb": 0,
-    "applying": false,
-    "strength": 0.94,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "amor"
-    ],
-    "lento": false,
-    "dias": 10
-   },
-   {
-    "t": "Saturn",
-    "a": "quincuncio",
-    "n": "IC",
-    "orb": 1.1,
-    "applying": false,
-    "strength": 0.92,
-    "house": 11,
-    "areas": [
-     "familia"
-    ],
-    "lento": true,
-    "dias": 88
-   }
-  ]
- },
- {
-  "uid": "y1pH2kCh",
-  "transitos": [
-   {
-    "t": "Jupiter",
-    "a": "quincuncio",
-    "n": "Neptune",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 0.99,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 32
-   },
-   {
-    "t": "Pluto",
-    "a": "semiquadratura",
-    "n": "Saturn",
-    "orb": 0.3,
-    "applying": true,
-    "strength": 0.95,
-    "house": 12,
-    "areas": [
-     "espiritualidade",
-     "transformacao",
-     "saude"
-    ],
-    "lento": true,
-    "dias": 52
-   },
-   {
-    "t": "Sun",
-    "a": "semissextil",
-    "n": "Pluto",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 0.83,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "espiritualidade"
-    ],
-    "lento": false,
-    "dias": 6
-   },
-   {
-    "t": "Saturn",
-    "a": "trigono",
-    "n": "Mars",
-    "orb": 2.1,
-    "applying": true,
-    "strength": 0.82,
-    "house": 2,
-    "areas": [
-     "financas",
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 13
-   },
-   {
-    "t": "Mercury",
-    "a": "quadratura",
-    "n": "Moon",
-    "orb": 1.8,
-    "applying": true,
-    "strength": 0.77,
-    "house": 9,
-    "areas": [
-     "espiritualidade",
-     "comunicacao",
-     "transformacao"
-    ],
-    "lento": false,
-    "dias": 1
-   },
-   {
-    "t": "Jupiter",
-    "a": "oposicao",
-    "n": "Moon",
-    "orb": 4.1,
-    "applying": true,
-    "strength": 0.75,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "espiritualidade"
-    ],
-    "lento": true,
-    "dias": 1
-   },
-   {
-    "t": "Jupiter",
-    "a": "sextil",
-    "n": "Mercury",
-    "orb": 1.1,
-    "applying": false,
-    "strength": 0.75,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "financas"
-    ],
-    "lento": true,
-    "dias": 5
-   },
-   {
-    "t": "Sun",
-    "a": "trigono",
-    "n": "IC",
-    "orb": 2.1,
-    "applying": false,
-    "strength": 0.68,
-    "house": 8,
-    "areas": [
-     "financas",
-     "transformacao",
-     "familia"
-    ],
-    "lento": false,
-    "dias": 18
-   }
-  ]
- },
- {
-  "uid": "ydvZeOwp",
-  "transitos": [
-   {
-    "t": "Uranus",
-    "a": "conjuncao",
-    "n": "Jupiter",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 1,
-    "house": 2,
-    "areas": [
-     "financas"
-    ],
-    "lento": true,
-    "dias": 44
-   },
-   {
-    "t": "Pluto",
-    "a": "conjuncao",
-    "n": "MC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Pluto",
-    "a": "oposicao",
-    "n": "IC",
-    "orb": 0.2,
-    "applying": false,
-    "strength": 1,
-    "house": 10,
-    "areas": [
-     "carreira",
-     "familia"
-    ],
-    "lento": true,
-    "dias": 500
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Venus",
-    "orb": 0.2,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 11
-   },
-   {
-    "t": "Jupiter",
-    "a": "trigono",
-    "n": "Sun",
-    "orb": 1.6,
-    "applying": true,
-    "strength": 1,
-    "house": 4,
-    "areas": [
-     "familia",
-     "espiritualidade",
-     "transformacao"
-    ],
-    "lento": true,
-    "dias": 22
-   },
-   {
-    "t": "Sun",
-    "a": "oposicao",
-    "n": "Venus",
-    "orb": 0.6,
-    "applying": true,
-    "strength": 0.97,
-    "house": 6,
-    "areas": [
-     "carreira",
-     "saude",
-     "espiritualidade"
-    ],
-    "lento": false,
-    "dias": 81
-   },
-   {
-    "t": "Venus",
-    "a": "quincuncio",
-    "n": "Jupiter",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 0.83,
-    "house": 7,
-    "areas": [
-     "amor",
-     "financas"
-    ],
-    "lento": false,
-    "dias": 11
-   },
-   {
-    "t": "Venus",
-    "a": "sextil",
-    "n": "Uranus",
-    "orb": 0.1,
-    "applying": false,
-    "strength": 0.82,
-    "house": 7,
-    "areas": [
-     "amor",
-     "espiritualidade",
-     "comunicacao"
-    ],
-    "lento": false,
-    "dias": 8
-   }
-  ]
- }
+  {
+    "uid": "0CVyWEWT",
+    "geradoEm": "2026-10-23T03:06:04.751Z",
+    "transitos": [
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "Neptune",
+        "orb": 0.4,
+        "applying": false,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 124
+      },
+      {
+        "t": "Pluto",
+        "a": "quadratura",
+        "n": "Jupiter",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 32
+      },
+      {
+        "t": "Neptune",
+        "a": "quadratura",
+        "n": "Moon",
+        "orb": 1.7,
+        "applying": true,
+        "strength": 1,
+        "house": 5,
+        "areas": [
+          "amor",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 1
+      },
+      {
+        "t": "Saturn",
+        "a": "semissextil",
+        "n": "Sun",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 5,
+        "areas": [
+          "amor",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 6
+      },
+      {
+        "t": "Sun",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 8
+      },
+      {
+        "t": "Mars",
+        "a": "oposicao",
+        "n": "IC",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 0.98,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Mars",
+        "a": "conjuncao",
+        "n": "MC",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 0.98,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "carreira"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Neptune",
+        "a": "semissextil",
+        "n": "Jupiter",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.98,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 9
+      },
+      {
+        "t": "Sun",
+        "a": "semissextil",
+        "n": "ASC",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.96,
+        "house": 11,
+        "areas": [
+          "saude"
+        ],
+        "lento": false,
+        "dias": 6
+      },
+      {
+        "t": "Mars",
+        "a": "oposicao",
+        "n": "Venus",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 0.89,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 17
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "Mars",
+        "orb": 1.1,
+        "applying": true,
+        "strength": 0.82,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 48
+      },
+      {
+        "t": "Saturn",
+        "a": "conjuncao",
+        "n": "Mars",
+        "orb": 3,
+        "applying": false,
+        "strength": 0.65,
+        "house": 5,
+        "areas": [
+          "amor"
+        ],
+        "lento": true,
+        "dias": 15
+      }
+    ]
+  },
+  {
+    "uid": "3rjxDwbk",
+    "geradoEm": "2026-10-23T03:06:08.753Z",
+    "transitos": [
+      {
+        "t": "Saturn",
+        "a": "quincuncio",
+        "n": "ASC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 94
+      },
+      {
+        "t": "Saturn",
+        "a": "semissextil",
+        "n": "DSC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": true,
+        "dias": 56
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.5,
+        "applying": true,
+        "strength": 0.98,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Pluto",
+        "a": "semissextil",
+        "n": "Uranus",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.96,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 100
+      },
+      {
+        "t": "Mars",
+        "a": "sextil",
+        "n": "MC",
+        "orb": 0.5,
+        "applying": true,
+        "strength": 0.92,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "carreira"
+        ],
+        "lento": false,
+        "dias": 13
+      },
+      {
+        "t": "Saturn",
+        "a": "sextil",
+        "n": "Sun",
+        "orb": 2,
+        "applying": true,
+        "strength": 0.91,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 12
+      },
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Sun",
+        "orb": 2.9,
+        "applying": false,
+        "strength": 0.89,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 20
+      },
+      {
+        "t": "Mercury",
+        "a": "quadratura",
+        "n": "Mars",
+        "orb": 0.4,
+        "applying": false,
+        "strength": 0.88,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 19
+      },
+      {
+        "t": "Jupiter",
+        "a": "oposicao",
+        "n": "Mars",
+        "orb": 1.8,
+        "applying": true,
+        "strength": 0.88,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "carreira"
+        ],
+        "lento": true,
+        "dias": 32
+      },
+      {
+        "t": "Mercury",
+        "a": "oposicao",
+        "n": "Moon",
+        "orb": 0.9,
+        "applying": false,
+        "strength": 0.85,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "espiritualidade"
+        ],
+        "lento": false,
+        "dias": 2
+      },
+      {
+        "t": "Mars",
+        "a": "semiquadratura",
+        "n": "Saturn",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.84,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "carreira"
+        ],
+        "lento": false,
+        "dias": 10
+      },
+      {
+        "t": "Sun",
+        "a": "sesquiquadratura",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.81,
+        "house": 2,
+        "areas": [
+          "financas",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 4
+      }
+    ]
+  },
+  {
+    "uid": "6RP1YmPa",
+    "geradoEm": "2026-10-23T03:06:12.317Z",
+    "transitos": [
+      {
+        "t": "Uranus",
+        "a": "oposicao",
+        "n": "Pluto",
+        "orb": 1,
+        "applying": true,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 155
+      },
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "Uranus",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 228
+      },
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 9
+      },
+      {
+        "t": "Sun",
+        "a": "quadratura",
+        "n": "ASC",
+        "orb": 0.8,
+        "applying": true,
+        "strength": 0.98,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 16
+      },
+      {
+        "t": "Sun",
+        "a": "quadratura",
+        "n": "DSC",
+        "orb": 0.8,
+        "applying": true,
+        "strength": 0.98,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 16
+      },
+      {
+        "t": "Jupiter",
+        "a": "sextil",
+        "n": "Sun",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.97,
+        "house": 1,
+        "areas": [
+          "saude",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 14
+      },
+      {
+        "t": "Venus",
+        "a": "quadratura",
+        "n": "ASC",
+        "orb": 0.9,
+        "applying": true,
+        "strength": 0.94,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 15
+      },
+      {
+        "t": "Venus",
+        "a": "quadratura",
+        "n": "DSC",
+        "orb": 0.9,
+        "applying": true,
+        "strength": 0.94,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 15
+      },
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "Uranus",
+        "orb": 1.7,
+        "applying": true,
+        "strength": 0.9,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "Mars",
+        "orb": 1.1,
+        "applying": true,
+        "strength": 0.79,
+        "house": 1,
+        "areas": [
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 54
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "MC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 0.78,
+        "house": 1,
+        "areas": [
+          "saude",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 15
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "Pluto",
+        "orb": 1.7,
+        "applying": false,
+        "strength": 0.77,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 143
+      }
+    ]
+  },
+  {
+    "uid": "AasGfYpU",
+    "geradoEm": "2026-10-23T03:06:15.725Z",
+    "transitos": [
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Mars",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 14
+      },
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "Mercury",
+        "orb": 0,
+        "applying": false,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 17
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "ASC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 1,
+        "house": 5,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 89
+      },
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "Sun",
+        "orb": 2.1,
+        "applying": false,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 17
+      },
+      {
+        "t": "Jupiter",
+        "a": "sextil",
+        "n": "DSC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 1,
+        "house": 5,
+        "areas": [
+          "amor"
+        ],
+        "lento": true,
+        "dias": 56
+      },
+      {
+        "t": "Jupiter",
+        "a": "quincuncio",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 56
+      },
+      {
+        "t": "Mercury",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 2,
+        "applying": true,
+        "strength": 0.84,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 144
+      },
+      {
+        "t": "Mercury",
+        "a": "conjuncao",
+        "n": "Pluto",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.83,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 119
+      },
+      {
+        "t": "Mars",
+        "a": "conjuncao",
+        "n": "Sun",
+        "orb": 2.1,
+        "applying": true,
+        "strength": 0.82,
+        "house": 5,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 47
+      },
+      {
+        "t": "Moon",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 2.3,
+        "applying": true,
+        "strength": 0.81,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Mars",
+        "a": "oposicao",
+        "n": "Saturn",
+        "orb": 1.3,
+        "applying": true,
+        "strength": 0.81,
+        "house": 5,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Moon",
+        "a": "trigono",
+        "n": "Pluto",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 0.8,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 1
+      }
+    ]
+  },
+  {
+    "uid": "BTcPHJ6e",
+    "geradoEm": "2026-10-23T03:06:18.976Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Jupiter",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 43
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 1.2,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 11
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 338
+      },
+      {
+        "t": "Neptune",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 169
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 9
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Pluto",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.9,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 11
+      },
+      {
+        "t": "Venus",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Venus",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 20
+      }
+    ]
+  },
+  {
+    "uid": "EYLBKg9p",
+    "geradoEm": "2026-10-23T03:06:22.566Z",
+    "transitos": [
+      {
+        "t": "Neptune",
+        "a": "quadratura",
+        "n": "ASC",
+        "orb": 0.1,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 254
+      },
+      {
+        "t": "Neptune",
+        "a": "quadratura",
+        "n": "DSC",
+        "orb": 0.1,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 254
+      },
+      {
+        "t": "Pluto",
+        "a": "quadratura",
+        "n": "Moon",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 1
+      },
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "Sun",
+        "orb": 1.4,
+        "applying": false,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 18
+      },
+      {
+        "t": "Saturn",
+        "a": "quincuncio",
+        "n": "Uranus",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia"
+        ],
+        "lento": true,
+        "dias": 32
+      },
+      {
+        "t": "Neptune",
+        "a": "semissextil",
+        "n": "Moon",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 0
+      },
+      {
+        "t": "Venus",
+        "a": "semiquadratura",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.85,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 7
+      },
+      {
+        "t": "Venus",
+        "a": "sesquiquadratura",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.85,
+        "house": 11,
+        "areas": [
+          "familia"
+        ],
+        "lento": false,
+        "dias": 7
+      },
+      {
+        "t": "Venus",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 0.83,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.8,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 18
+      },
+      {
+        "t": "Venus",
+        "a": "oposicao",
+        "n": "Moon",
+        "orb": 1.1,
+        "applying": false,
+        "strength": 0.76,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 2
+      },
+      {
+        "t": "Mercury",
+        "a": "sextil",
+        "n": "Mercury",
+        "orb": 0.9,
+        "applying": false,
+        "strength": 0.76,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 5
+      }
+    ]
+  },
+  {
+    "uid": "ImzYlM8o",
+    "geradoEm": "2026-10-23T03:06:25.775Z",
+    "transitos": [
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "Mars",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 17
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "Uranus",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 103
+      },
+      {
+        "t": "Uranus",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 8
+      },
+      {
+        "t": "Uranus",
+        "a": "quincuncio",
+        "n": "Jupiter",
+        "orb": 0.4,
+        "applying": false,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 22
+      },
+      {
+        "t": "Uranus",
+        "a": "sesquiquadratura",
+        "n": "ASC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 62
+      },
+      {
+        "t": "Uranus",
+        "a": "semiquadratura",
+        "n": "DSC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 62
+      },
+      {
+        "t": "Mercury",
+        "a": "semissextil",
+        "n": "Saturn",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.97,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 141
+      },
+      {
+        "t": "Mercury",
+        "a": "semiquadratura",
+        "n": "Sun",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.94,
+        "house": 11,
+        "areas": [
+          "saude"
+        ],
+        "lento": false,
+        "dias": 4
+      },
+      {
+        "t": "Mercury",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 0.9,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 144
+      },
+      {
+        "t": "Moon",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 0.84,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Mercury",
+        "a": "sextil",
+        "n": "ASC",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 0.82,
+        "house": 11,
+        "areas": [
+          "saude"
+        ],
+        "lento": false,
+        "dias": 90
+      },
+      {
+        "t": "Moon",
+        "a": "sextil",
+        "n": "ASC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 0.81,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 1
+      }
+    ]
+  },
+  {
+    "uid": "LDlywj2I",
+    "geradoEm": "2026-10-23T03:06:29.209Z",
+    "transitos": [
+      {
+        "t": "Neptune",
+        "a": "conjuncao",
+        "n": "Sun",
+        "orb": 1.4,
+        "applying": true,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 20
+      },
+      {
+        "t": "Saturn",
+        "a": "oposicao",
+        "n": "Moon",
+        "orb": 1.3,
+        "applying": false,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": true,
+        "dias": 2
+      },
+      {
+        "t": "Jupiter",
+        "a": "sextil",
+        "n": "Pluto",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 24
+      },
+      {
+        "t": "Mercury",
+        "a": "semiquadratura",
+        "n": "Jupiter",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 19
+      },
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "Jupiter",
+        "orb": 1.1,
+        "applying": true,
+        "strength": 0.98,
+        "house": 1,
+        "areas": [
+          "saude",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 83
+      },
+      {
+        "t": "Neptune",
+        "a": "conjuncao",
+        "n": "Mars",
+        "orb": 1.2,
+        "applying": false,
+        "strength": 0.96,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 13
+      },
+      {
+        "t": "Pluto",
+        "a": "sextil",
+        "n": "Mars",
+        "orb": 0.4,
+        "applying": false,
+        "strength": 0.96,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "carreira"
+        ],
+        "lento": true,
+        "dias": 5
+      },
+      {
+        "t": "Venus",
+        "a": "trigono",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.91,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Venus",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.5,
+        "applying": true,
+        "strength": 0.91,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 5
+      },
+      {
+        "t": "Sun",
+        "a": "semissextil",
+        "n": "Uranus",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.91,
+        "house": 5,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 6
+      },
+      {
+        "t": "Venus",
+        "a": "sextil",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.9,
+        "house": 5,
+        "areas": [
+          "amor",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 13
+      },
+      {
+        "t": "Sun",
+        "a": "quincuncio",
+        "n": "ASC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.87,
+        "house": 5,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 8
+      }
+    ]
+  },
+  {
+    "uid": "Pl1dqEQv",
+    "geradoEm": "2026-10-23T03:06:32.625Z",
+    "transitos": [
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Mercury",
+        "orb": 1.5,
+        "applying": true,
+        "strength": 0.95,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 8
+      },
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "Saturn",
+        "orb": 1.7,
+        "applying": true,
+        "strength": 0.92,
+        "house": 7,
+        "areas": [
+          "amor",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 533
+      },
+      {
+        "t": "Neptune",
+        "a": "semissextil",
+        "n": "Moon",
+        "orb": 0.9,
+        "applying": false,
+        "strength": 0.87,
+        "house": 7,
+        "areas": [
+          "amor",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 0
+      },
+      {
+        "t": "Venus",
+        "a": "trigono",
+        "n": "Moon",
+        "orb": 0,
+        "applying": false,
+        "strength": 0.86,
+        "house": 2,
+        "areas": [
+          "financas",
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Uranus",
+        "a": "quincuncio",
+        "n": "Neptune",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 200
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 0.81,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Sun",
+        "orb": 2,
+        "applying": true,
+        "strength": 0.77,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 36
+      },
+      {
+        "t": "Moon",
+        "a": "sesquiquadratura",
+        "n": "Pluto",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.76,
+        "house": 7,
+        "areas": [
+          "amor",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 0
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Mercury",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.76,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "financas",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 5
+      },
+      {
+        "t": "Mars",
+        "a": "sextil",
+        "n": "MC",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 0.76,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "carreira"
+        ],
+        "lento": false,
+        "dias": 13
+      },
+      {
+        "t": "Uranus",
+        "a": "quincuncio",
+        "n": "Pluto",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 0.74,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 200
+      },
+      {
+        "t": "Uranus",
+        "a": "quadratura",
+        "n": "Moon",
+        "orb": 3.6,
+        "applying": true,
+        "strength": 0.74,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "carreira"
+        ],
+        "lento": true,
+        "dias": 1
+      }
+    ]
+  },
+  {
+    "uid": "TpBI4wau",
+    "geradoEm": "2026-10-23T03:06:36.196Z",
+    "transitos": [
+      {
+        "t": "Saturn",
+        "a": "conjuncao",
+        "n": "Mars",
+        "orb": 0.9,
+        "applying": true,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 14
+      },
+      {
+        "t": "Neptune",
+        "a": "conjuncao",
+        "n": "Moon",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 1
+      },
+      {
+        "t": "Pluto",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 7
+      },
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "MC",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas",
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 248
+      },
+      {
+        "t": "Uranus",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 124
+      },
+      {
+        "t": "Uranus",
+        "a": "semissextil",
+        "n": "ASC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 62
+      },
+      {
+        "t": "Moon",
+        "a": "semiquadratura",
+        "n": "MC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.87,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 0
+      },
+      {
+        "t": "Moon",
+        "a": "sesquiquadratura",
+        "n": "IC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.87,
+        "house": 11,
+        "areas": [
+          "familia"
+        ],
+        "lento": false,
+        "dias": 0
+      },
+      {
+        "t": "Venus",
+        "a": "quincuncio",
+        "n": "Moon",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.81,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Sun",
+        "orb": 3.5,
+        "applying": true,
+        "strength": 0.58,
+        "house": 4,
+        "areas": [
+          "familia",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 36
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 5,
+        "applying": true,
+        "strength": 0.55,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 5,
+        "applying": true,
+        "strength": 0.55,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      }
+    ]
+  },
+  {
+    "uid": "TsKQVRKM",
+    "geradoEm": "2026-10-23T03:06:39.646Z",
+    "transitos": [
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "Sun",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "espiritualidade"
+        ],
+        "lento": true,
+        "dias": 18
+      },
+      {
+        "t": "Saturn",
+        "a": "quadratura",
+        "n": "Mars",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 11
+      },
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "ASC",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 1,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 151
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "Mercury",
+        "orb": 0.9,
+        "applying": true,
+        "strength": 1,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "espiritualidade"
+        ],
+        "lento": true,
+        "dias": 4
+      },
+      {
+        "t": "Uranus",
+        "a": "trigono",
+        "n": "Saturn",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 67
+      },
+      {
+        "t": "Saturn",
+        "a": "sextil",
+        "n": "DSC",
+        "orb": 0.8,
+        "applying": false,
+        "strength": 1,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 94
+      },
+      {
+        "t": "Mercury",
+        "a": "semiquadratura",
+        "n": "Saturn",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 200
+      },
+      {
+        "t": "Venus",
+        "a": "quadratura",
+        "n": "Mercury",
+        "orb": 0,
+        "applying": false,
+        "strength": 0.85,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 3
+      },
+      {
+        "t": "Mercury",
+        "a": "semiquadratura",
+        "n": "Jupiter",
+        "orb": 0.4,
+        "applying": false,
+        "strength": 0.72,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 54
+      },
+      {
+        "t": "Sun",
+        "a": "quadratura",
+        "n": "Mercury",
+        "orb": 1.6,
+        "applying": false,
+        "strength": 0.65,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 15
+      },
+      {
+        "t": "Moon",
+        "a": "quadratura",
+        "n": "Neptune",
+        "orb": 1.7,
+        "applying": false,
+        "strength": 0.64,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Mars",
+        "a": "conjuncao",
+        "n": "Sun",
+        "orb": 4,
+        "applying": true,
+        "strength": 0.62,
+        "house": 1,
+        "areas": [
+          "saude",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 47
+      }
+    ]
+  },
+  {
+    "uid": "WeyFOKy3",
+    "geradoEm": "2026-10-23T03:06:42.976Z",
+    "transitos": [
+      {
+        "t": "Neptune",
+        "a": "quadratura",
+        "n": "Neptune",
+        "orb": 0,
+        "applying": true,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "financas",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 300
+      },
+      {
+        "t": "Neptune",
+        "a": "quincuncio",
+        "n": "Pluto",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 200
+      },
+      {
+        "t": "Moon",
+        "a": "trigono",
+        "n": "Moon",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.99,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 49
+      },
+      {
+        "t": "Sun",
+        "a": "quincuncio",
+        "n": "MC",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.99,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 8
+      },
+      {
+        "t": "Mercury",
+        "a": "trigono",
+        "n": "Moon",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.96,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "financas"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Sun",
+        "a": "semissextil",
+        "n": "IC",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.96,
+        "house": 5,
+        "areas": [
+          "amor",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 6
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "ASC",
+        "orb": 1,
+        "applying": true,
+        "strength": 0.94,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 90
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 1.3,
+        "applying": false,
+        "strength": 0.9,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 89
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Venus",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 0.88,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 17
+      },
+      {
+        "t": "Jupiter",
+        "a": "quadratura",
+        "n": "Saturn",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.85,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 42
+      },
+      {
+        "t": "Pluto",
+        "a": "quadratura",
+        "n": "Pluto",
+        "orb": 1,
+        "applying": false,
+        "strength": 0.82,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "carreira"
+        ],
+        "lento": true,
+        "dias": 300
+      },
+      {
+        "t": "Neptune",
+        "a": "quadratura",
+        "n": "Sun",
+        "orb": 3.3,
+        "applying": true,
+        "strength": 0.79,
+        "house": 11,
+        "areas": [
+          "saude"
+        ],
+        "lento": true,
+        "dias": 16
+      }
+    ]
+  },
+  {
+    "uid": "XRrdLOXf",
+    "geradoEm": "2026-10-23T03:06:46.290Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Jupiter",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 43
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 1.2,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 11
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 338
+      },
+      {
+        "t": "Neptune",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 169
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 9
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Pluto",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.9,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 11
+      },
+      {
+        "t": "Venus",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Venus",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 20
+      }
+    ]
+  },
+  {
+    "uid": "eOcT9U3m",
+    "geradoEm": "2026-10-23T03:06:49.754Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 338
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 1.4,
+        "applying": true,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 89
+      },
+      {
+        "t": "Neptune",
+        "a": "sextil",
+        "n": "ASC",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 169
+      },
+      {
+        "t": "Saturn",
+        "a": "semissextil",
+        "n": "Mercury",
+        "orb": 0.5,
+        "applying": true,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 2
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "Venus",
+        "orb": 1.2,
+        "applying": true,
+        "strength": 0.92,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 137
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Jupiter",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 0.8,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 59
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "Moon",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.8,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 2
+      },
+      {
+        "t": "Venus",
+        "a": "quadratura",
+        "n": "ASC",
+        "orb": 1,
+        "applying": false,
+        "strength": 0.74,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 15
+      },
+      {
+        "t": "Venus",
+        "a": "quadratura",
+        "n": "DSC",
+        "orb": 1,
+        "applying": false,
+        "strength": 0.74,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 15
+      },
+      {
+        "t": "Sun",
+        "a": "quadratura",
+        "n": "ASC",
+        "orb": 2.7,
+        "applying": true,
+        "strength": 0.73,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 16
+      }
+    ]
+  },
+  {
+    "uid": "gUGE1Wq8",
+    "geradoEm": "2026-10-23T03:06:53.065Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Jupiter",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 43
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 1.2,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 11
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 338
+      },
+      {
+        "t": "Neptune",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 169
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 9
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Pluto",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.9,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 11
+      },
+      {
+        "t": "Venus",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Venus",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 20
+      }
+    ]
+  },
+  {
+    "uid": "gdRXHrfx",
+    "geradoEm": "2026-10-23T03:06:56.722Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Jupiter",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 43
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 1.2,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 11
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "familia"
+        ],
+        "lento": true,
+        "dias": 338
+      },
+      {
+        "t": "Neptune",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "amor"
+        ],
+        "lento": true,
+        "dias": 169
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 9
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Pluto",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.9,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 11
+      },
+      {
+        "t": "Venus",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Venus",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 20
+      }
+    ]
+  },
+  {
+    "uid": "hoJSaqkH",
+    "geradoEm": "2026-10-23T03:07:00.150Z",
+    "transitos": [
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 151
+      },
+      {
+        "t": "Saturn",
+        "a": "sextil",
+        "n": "ASC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 3,
+        "areas": [
+          "comunicacao",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 94
+      },
+      {
+        "t": "Uranus",
+        "a": "sextil",
+        "n": "Mars",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 10
+      },
+      {
+        "t": "Mercury",
+        "a": "sesquiquadratura",
+        "n": "Jupiter",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.89,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 30
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "Mars",
+        "orb": 1.6,
+        "applying": false,
+        "strength": 0.82,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "carreira"
+        ],
+        "lento": true,
+        "dias": 29
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "Neptune",
+        "orb": 0.7,
+        "applying": true,
+        "strength": 0.81,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 16
+      },
+      {
+        "t": "Sun",
+        "a": "semiquadratura",
+        "n": "Neptune",
+        "orb": 0,
+        "applying": false,
+        "strength": 0.8,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 4
+      },
+      {
+        "t": "Sun",
+        "a": "sextil",
+        "n": "Saturn",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.78,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 13
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Sun",
+        "orb": 1,
+        "applying": false,
+        "strength": 0.74,
+        "house": 7,
+        "areas": [
+          "amor",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 34
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "Venus",
+        "orb": 2.9,
+        "applying": true,
+        "strength": 0.73,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 78
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "Mars",
+        "orb": 2.4,
+        "applying": false,
+        "strength": 0.52,
+        "house": 2,
+        "areas": [
+          "financas",
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 21
+      },
+      {
+        "t": "Neptune",
+        "a": "oposicao",
+        "n": "Moon",
+        "orb": 6.7,
+        "applying": true,
+        "strength": 0.45,
+        "house": 2,
+        "areas": [
+          "financas",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 1
+      }
+    ]
+  },
+  {
+    "uid": "uRRR5pZn",
+    "geradoEm": "2026-10-23T03:07:03.551Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "Neptune",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 312
+      },
+      {
+        "t": "Neptune",
+        "a": "quadratura",
+        "n": "Mercury",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 4
+      },
+      {
+        "t": "Saturn",
+        "a": "quadratura",
+        "n": "Sun",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 15
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas",
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 6
+      },
+      {
+        "t": "Saturn",
+        "a": "semissextil",
+        "n": "Saturn",
+        "orb": 0.5,
+        "applying": false,
+        "strength": 0.94,
+        "house": 2,
+        "areas": [
+          "financas",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 77
+      },
+      {
+        "t": "Mars",
+        "a": "oposicao",
+        "n": "Uranus",
+        "orb": 0.8,
+        "applying": true,
+        "strength": 0.88,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "espiritualidade"
+        ],
+        "lento": false,
+        "dias": 21
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Jupiter",
+        "orb": 2.1,
+        "applying": true,
+        "strength": 0.84,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 128
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Moon",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 0.78,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "espiritualidade"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Venus",
+        "a": "semissextil",
+        "n": "Venus",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 0.75,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "carreira"
+        ],
+        "lento": false,
+        "dias": 3
+      },
+      {
+        "t": "Venus",
+        "a": "sextil",
+        "n": "Mercury",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 0.72,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 4
+      },
+      {
+        "t": "Sun",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 2.2,
+        "applying": false,
+        "strength": 0.68,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 18
+      },
+      {
+        "t": "Sun",
+        "a": "trigono",
+        "n": "Mars",
+        "orb": 1.7,
+        "applying": false,
+        "strength": 0.66,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "espiritualidade"
+        ],
+        "lento": false,
+        "dias": 82
+      }
+    ]
+  },
+  {
+    "uid": "ukR5fpta",
+    "geradoEm": "2026-10-23T03:07:06.858Z",
+    "transitos": [
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude"
+        ],
+        "lento": true,
+        "dias": 310
+      },
+      {
+        "t": "Uranus",
+        "a": "oposicao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 310
+      },
+      {
+        "t": "Uranus",
+        "a": "quadratura",
+        "n": "Mercury",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 1,
+        "house": 1,
+        "areas": [
+          "saude",
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 6
+      },
+      {
+        "t": "Saturn",
+        "a": "quincuncio",
+        "n": "Pluto",
+        "orb": 0,
+        "applying": false,
+        "strength": 1,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 67
+      },
+      {
+        "t": "Sun",
+        "a": "quincuncio",
+        "n": "Jupiter",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 0.98,
+        "house": 5,
+        "areas": [
+          "amor",
+          "carreira",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 11
+      },
+      {
+        "t": "Sun",
+        "a": "quadratura",
+        "n": "Venus",
+        "orb": 0.6,
+        "applying": true,
+        "strength": 0.97,
+        "house": 5,
+        "areas": [
+          "amor",
+          "financas",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 92
+      },
+      {
+        "t": "Moon",
+        "a": "quadratura",
+        "n": "Saturn",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.79,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Mercury",
+        "a": "semissextil",
+        "n": "Saturn",
+        "orb": 0.4,
+        "applying": false,
+        "strength": 0.74,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 98
+      },
+      {
+        "t": "Neptune",
+        "a": "conjuncao",
+        "n": "Jupiter",
+        "orb": 2.3,
+        "applying": true,
+        "strength": 0.73,
+        "house": 11,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 38
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "Moon",
+        "orb": 1,
+        "applying": false,
+        "strength": 0.72,
+        "house": 3,
+        "areas": [
+          "comunicacao"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Venus",
+        "a": "quincuncio",
+        "n": "Jupiter",
+        "orb": 1.4,
+        "applying": true,
+        "strength": 0.7,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 9
+      },
+      {
+        "t": "Saturn",
+        "a": "quincuncio",
+        "n": "IC",
+        "orb": 1.6,
+        "applying": false,
+        "strength": 0.69,
+        "house": 11,
+        "areas": [
+          "familia"
+        ],
+        "lento": true,
+        "dias": 94
+      }
+    ]
+  },
+  {
+    "uid": "y1pH2kCh",
+    "geradoEm": "2026-10-23T03:07:10.088Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "semiquadratura",
+        "n": "Saturn",
+        "orb": 0.3,
+        "applying": true,
+        "strength": 0.95,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 52
+      },
+      {
+        "t": "Jupiter",
+        "a": "quincuncio",
+        "n": "Neptune",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 0.94,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": true,
+        "dias": 32
+      },
+      {
+        "t": "Venus",
+        "a": "semiquadratura",
+        "n": "Jupiter",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.88,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "carreira"
+        ],
+        "lento": false,
+        "dias": 5
+      },
+      {
+        "t": "Mercury",
+        "a": "quadratura",
+        "n": "Moon",
+        "orb": 1.9,
+        "applying": true,
+        "strength": 0.86,
+        "house": 9,
+        "areas": [
+          "espiritualidade",
+          "comunicacao",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Saturn",
+        "a": "trigono",
+        "n": "Mars",
+        "orb": 2,
+        "applying": true,
+        "strength": 0.84,
+        "house": 2,
+        "areas": [
+          "financas",
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 13
+      },
+      {
+        "t": "Sun",
+        "a": "semissextil",
+        "n": "Pluto",
+        "orb": 0.1,
+        "applying": false,
+        "strength": 0.82,
+        "house": 8,
+        "areas": [
+          "financas",
+          "transformacao",
+          "espiritualidade"
+        ],
+        "lento": false,
+        "dias": 6
+      },
+      {
+        "t": "Jupiter",
+        "a": "sextil",
+        "n": "Mercury",
+        "orb": 1,
+        "applying": false,
+        "strength": 0.77,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "financas"
+        ],
+        "lento": true,
+        "dias": 5
+      },
+      {
+        "t": "Jupiter",
+        "a": "oposicao",
+        "n": "Moon",
+        "orb": 4.2,
+        "applying": true,
+        "strength": 0.73,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "espiritualidade"
+        ],
+        "lento": true,
+        "dias": 1
+      },
+      {
+        "t": "Saturn",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 2,
+        "applying": true,
+        "strength": 0.66,
+        "house": 2,
+        "areas": [
+          "financas",
+          "espiritualidade",
+          "comunicacao"
+        ],
+        "lento": true,
+        "dias": 7
+      },
+      {
+        "t": "Mars",
+        "a": "trigono",
+        "n": "Jupiter",
+        "orb": 1.9,
+        "applying": true,
+        "strength": 0.66,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "familia"
+        ],
+        "lento": false,
+        "dias": 33
+      },
+      {
+        "t": "Moon",
+        "a": "sextil",
+        "n": "Neptune",
+        "orb": 2.3,
+        "applying": true,
+        "strength": 0.64,
+        "house": 1,
+        "areas": [
+          "saude"
+        ],
+        "lento": false,
+        "dias": 1
+      },
+      {
+        "t": "Moon",
+        "a": "conjuncao",
+        "n": "Saturn",
+        "orb": 2.3,
+        "applying": false,
+        "strength": 0.62,
+        "house": 1,
+        "areas": [
+          "saude"
+        ],
+        "lento": false,
+        "dias": 1
+      }
+    ]
+  },
+  {
+    "uid": "ydvZeOwp",
+    "geradoEm": "2026-10-23T03:07:14.019Z",
+    "transitos": [
+      {
+        "t": "Pluto",
+        "a": "conjuncao",
+        "n": "MC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Uranus",
+        "a": "conjuncao",
+        "n": "Jupiter",
+        "orb": 0.3,
+        "applying": false,
+        "strength": 1,
+        "house": 2,
+        "areas": [
+          "financas"
+        ],
+        "lento": true,
+        "dias": 43
+      },
+      {
+        "t": "Pluto",
+        "a": "oposicao",
+        "n": "IC",
+        "orb": 0.2,
+        "applying": false,
+        "strength": 1,
+        "house": 10,
+        "areas": [
+          "carreira",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 500
+      },
+      {
+        "t": "Jupiter",
+        "a": "trigono",
+        "n": "Venus",
+        "orb": 1.2,
+        "applying": true,
+        "strength": 1,
+        "house": 4,
+        "areas": [
+          "familia",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": true,
+        "dias": 11
+      },
+      {
+        "t": "Neptune",
+        "a": "trigono",
+        "n": "IC",
+        "orb": 0.6,
+        "applying": false,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "familia"
+        ],
+        "lento": true,
+        "dias": 338
+      },
+      {
+        "t": "Neptune",
+        "a": "quincuncio",
+        "n": "DSC",
+        "orb": 0.2,
+        "applying": true,
+        "strength": 1,
+        "house": 12,
+        "areas": [
+          "espiritualidade",
+          "transformacao",
+          "amor"
+        ],
+        "lento": true,
+        "dias": 169
+      },
+      {
+        "t": "Mercury",
+        "a": "quincuncio",
+        "n": "Sun",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 1,
+        "house": 7,
+        "areas": [
+          "amor",
+          "espiritualidade",
+          "transformacao"
+        ],
+        "lento": false,
+        "dias": 9
+      },
+      {
+        "t": "Mars",
+        "a": "quadratura",
+        "n": "Pluto",
+        "orb": 0.4,
+        "applying": true,
+        "strength": 0.9,
+        "house": 4,
+        "areas": [
+          "familia",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 11
+      },
+      {
+        "t": "Venus",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Venus",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 0.7,
+        "applying": false,
+        "strength": 0.84,
+        "house": 7,
+        "areas": [
+          "amor",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 23
+      },
+      {
+        "t": "Sun",
+        "a": "conjuncao",
+        "n": "DSC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude",
+          "amor"
+        ],
+        "lento": false,
+        "dias": 20
+      },
+      {
+        "t": "Sun",
+        "a": "oposicao",
+        "n": "ASC",
+        "orb": 2.4,
+        "applying": true,
+        "strength": 0.83,
+        "house": 6,
+        "areas": [
+          "carreira",
+          "saude"
+        ],
+        "lento": false,
+        "dias": 20
+      }
+    ]
+  }
 ]

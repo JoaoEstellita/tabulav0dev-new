@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, useWindowDimensio
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { translatePlanet } from '../utils/astro/pt'
 import { rotuloDeAspecto } from '../utils/transitPresentation'
+import { GLOSSARIO_EMOCOES, indiceIdioma } from '../data/emocoesGlossario'
 import { emocoesDoDia, type TransitoParaEmocao, type ChaveEmocao, type EmocaoDoDia } from '../utils/emocoesDoDia'
 
 /**
@@ -38,26 +39,32 @@ type Props = {
  * novo. Desânimo é o cinza-azulado de propósito: é o anel apagado.
  */
 const COR: Record<ChaveEmocao, [string, string]> = {
-  afeto:      ['#EC4899', '#F472B6'],
-  entusiasmo: ['#22C55E', '#4ADE80'],
-  calma:      ['#0EA5E9', '#38BDF8'],
-  estresse:   ['#EF4444', '#FB7185'],
-  desanimo:   ['#64748B', '#94A3B8'],
-  ansiedade:  ['#F59E0B', '#FBBF24'],
+  afeto:         ['#EC4899', '#F472B6'],
+  entusiasmo:    ['#22C55E', '#4ADE80'],
+  calma:         ['#0EA5E9', '#38BDF8'],
+  sensibilidade: ['#A78BFA', '#C4B5FD'],
+  estresse:      ['#EF4444', '#FB7185'],
+  desanimo:      ['#64748B', '#94A3B8'],
+  ansiedade:     ['#F59E0B', '#FBBF24'],
+  pressao:       ['#9333EA', '#A855F7'],
 }
 
 /**
- * ⚠️ Rótulo CURTO em todos os idiomas: a célula tem ~117px com três por linha,
- * o que cabe ~18 caracteres em 10px. "Low mood" em vez de "Discouragement" não
- * é preguiça de tradução — é o que caberia sem reticências.
+ * ⚠️ Rótulo CURTO em todos os idiomas: com QUATRO por linha a célula cai para
+ * ~87px, o que cabe ~13 caracteres em 10px. "Drive" em vez de "Enthusiasm" e
+ * "Low mood" em vez de "Discouragement" não são preguiça de tradução — são o
+ * que cabe sem reticências. "Sensível" em vez de "Sensibilidade" pela mesma
+ * razão: o rótulo é o apelido do anel, o nome inteiro está no detalhe.
  */
 const ROTULO: Record<ChaveEmocao, [string, string, string, string]> = {
-  afeto:      ['Afeto', 'Affection', 'Afecto', 'Affetto'],
-  entusiasmo: ['Entusiasmo', 'Enthusiasm', 'Entusiasmo', 'Entusiasmo'],
-  calma:      ['Calma', 'Calm', 'Calma', 'Calma'],
-  estresse:   ['Estresse', 'Stress', 'Estres', 'Stress'],
-  desanimo:   ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
-  ansiedade:  ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
+  afeto:         ['Afeto', 'Affection', 'Afecto', 'Affetto'],
+  entusiasmo:    ['Entusiasmo', 'Drive', 'Entusiasmo', 'Slancio'],
+  calma:         ['Calma', 'Calm', 'Calma', 'Calma'],
+  sensibilidade: ['Sensível', 'Sensitive', 'Sensible', 'Sensibile'],
+  estresse:      ['Estresse', 'Stress', 'Estres', 'Stress'],
+  desanimo:      ['Desânimo', 'Low mood', 'Desanimo', 'Sconforto'],
+  ansiedade:     ['Ansiedade', 'Anxiety', 'Ansiedad', 'Ansia'],
+  pressao:       ['Pressão', 'Pressure', 'Presion', 'Pressione'],
 }
 
 const TINTA = '#8892a4'
@@ -77,21 +84,24 @@ export default function ClimaEmocional({ transitos, idioma }: Props) {
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
   if (!emocoes) return null
 
-  // ⚠️ Três por linha, duas linhas: as boas em cima, as difíceis embaixo.
+  // ⚠️ Quatro por linha, duas linhas: as boas em cima, as difíceis embaixo.
   //
-  // ⚠️ `porLinha` é 3 porque a ORDEM das emoções depende disso: com três por
+  // ⚠️ `porLinha` é 4 porque a ORDEM das emoções depende disso: com quatro por
   // linha cada coluna vira um par de opostos (ver EMOCOES em emocoesDoDia).
-  // Mudar para 2 ou 4 não quebra nada — só desfaz o pareamento em silêncio.
+  // Mudar para 3 ou 5 não quebra nada — só desfaz o pareamento em silêncio.
+  //
+  // E 4 é o teto do telefone: a 5 colunas o anel cai para 48px e a 6 para 36px,
+  // onde o número dentro dele deixa de ser legível.
   //
   // `largura` existe por causa de um bug real: a grade usa flex-wrap, que
   // quebra na largura do CONTAINER, não no número de colunas. Sem travar a
   // largura em `porLinha * celula`, numa tela mais larga cabiam cinco por
   // linha e a simetria 3+3 — que é metade do que a seção comunica — virava
   // 5+1. Era visível em tablet e no PWA, e não dava erro nenhum.
-  const porLinha = 3
-  const largura = Math.min(360, width - 32)
+  const porLinha = 4
+  const largura = Math.min(372, width - 28)
   const celula = largura / porLinha
-  const tamanho = Math.max(56, Math.min(72, celula - 32))
+  const tamanho = Math.max(46, Math.min(60, celula - 26))
   const traco = Math.max(5, Math.round(tamanho * 0.11))
   const raio = (tamanho - traco) / 2
   const perimetro = 2 * Math.PI * raio
@@ -182,6 +192,13 @@ function DetalheDaEmocao({
   if (!emocao) return null
   const [escuro] = COR[emocao.chave]
   const nome = tl(...ROTULO[emocao.chave])
+  // ⚠️ A EXPLICAÇÃO ANTES DA CONTA. "Ansiedade 73" sozinho é um oráculo: a
+  // pessoa não sabe se é muito, se é dela, nem o que fazer. A definição diz o
+  // que a palavra mede aqui, a leitura diz o que fazer com alto e com baixo, e
+  // a fonte ensina quais planetas movem o anel — inclusive nos dias em que
+  // nenhum deles aparece na lista logo abaixo.
+  const verbete = GLOSSARIO_EMOCOES[emocao.chave]
+  const i = indiceIdioma(idioma)
 
   // ⚠️ O filtro por `> 0` fica, mesmo sem nenhum peso negativo na tabela hoje:
   // o alívio virou anel próprio (Calma), mas se algum peso voltar a ser
@@ -212,7 +229,11 @@ function DetalheDaEmocao({
             <Text style={[s.caixaValor, { color: escuro }]}>{emocao.valor}</Text>
           </View>
 
-          <ScrollView style={{ maxHeight: 320 }}>
+          <ScrollView style={{ maxHeight: 380 }}>
+            <Text style={s.definicao}>{verbete.definicao[i]}</Text>
+            <Text style={s.leitura}>{verbete.leitura[i]}</Text>
+            <Text style={s.fonte}>{verbete.fonte[i]}</Text>
+
             {pesam.length ? (
               <>
                 <Text style={s.secao}>
@@ -280,7 +301,20 @@ const s = StyleSheet.create({
   cabecalho: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 },
   caixaTitulo: { fontSize: 16, fontWeight: '800' },
   caixaValor: { fontSize: 22, fontWeight: '800' },
-  secao: { fontSize: 10, color: TINTA, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 4 },
+  definicao: { fontSize: 13, color: '#E8ECF5', lineHeight: 19 },
+  leitura: { fontSize: 12.5, color: TINTA, lineHeight: 18, marginTop: 8 },
+  // A fonte fica em caixa alta e miúda: é referência, não leitura corrida.
+  fonte: {
+    fontSize: 9.5,
+    color: '#5c6477',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#242B40',
+  },
+  secao: { fontSize: 10, color: TINTA, textTransform: 'uppercase', letterSpacing: 1, marginTop: 10, marginBottom: 4 },
   linha: { paddingVertical: 5, justifyContent: 'center' },
   // A barra fica ATRÁS do texto: ela dá o peso relativo sem roubar uma coluna.
   barra: { position: 'absolute', left: 0, top: 2, bottom: 2, borderRadius: 4, opacity: 0.16 },

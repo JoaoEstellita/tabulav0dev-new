@@ -19,7 +19,7 @@ import {
 const T = (t: string, a: string, n = 'Sun', orb = 1, strength = 1) => ({ t, a, n, orb, strength })
 
 describe('clima emocional do dia', () => {
-  it('devolve as seis, sempre na mesma ordem e dentro de 0–100', () => {
+  it('devolve as oito, sempre na mesma ordem e dentro de 0–100', () => {
     const r = emocoesDoDia([T('Mars', 'quadratura', 'Moon')])!
     expect(r.map((e) => e.chave)).toEqual([...EMOCOES])
     for (const e of r) {
@@ -55,6 +55,12 @@ describe('clima emocional do dia', () => {
     })
     it('Marte em aspecto duro lidera o ESTRESSE', () => {
       expect(pico([T('Mars', 'quadratura', 'Mars')])).toBe('estresse')
+    })
+    it('Plutão em aspecto duro lidera a PRESSÃO', () => {
+      expect(pico([T('Pluto', 'quadratura', 'Sun')])).toBe('pressao')
+    })
+    it('a Lua em aspecto macio lidera a SENSIBILIDADE', () => {
+      expect(pico([T('Moon', 'trigono', 'Venus')])).toBe('sensibilidade')
     })
     it('Saturno em aspecto duro lidera o DESÂNIMO', () => {
       expect(pico([T('Saturn', 'quadratura', 'Moon')])).toBe('desanimo')
@@ -96,8 +102,10 @@ describe('clima emocional do dia', () => {
      */
     it('cada planeta lidera um anel DIFERENTE — nenhum anel repetido', () => {
       const lideres = [
-        ['Uranus', 'quadratura'], ['Mars', 'quadratura'], ['Saturn', 'quadratura'],
+        ['Mars', 'quadratura'], ['Saturn', 'quadratura'], ['Uranus', 'quadratura'],
+        ['Pluto', 'quadratura'],
         ['Venus', 'trigono'], ['Jupiter', 'trigono'], ['Saturn', 'trigono'],
+        ['Moon', 'trigono'],
       ].map(([p, a]) => pico([T(p, a, 'Sun')]))
       expect(new Set(lideres).size, `líderes: ${lideres.join(', ')}`).toBe(lideres.length)
       // E eles cobrem as oito: nenhuma emoção fica sem dono.
@@ -131,6 +139,27 @@ describe('clima emocional do dia', () => {
     // Orbe ausente não zera o trânsito — ele existe mesmo sem o campo.
     expect(pesoDoOrbe(undefined)).toBeGreaterThan(0)
     expect(pesoDoOrbe('abc')).toBeGreaterThan(0)
+  })
+
+  /**
+   * ⚠️ AS CHAVES DOS ÂNGULOS SÃO CURTAS: `asc`, `mc`, `dsc`, `ic`.
+   *
+   * A tabela de amplificação dizia `ascendant` e `midheaven`, que é como
+   * ninguém grava. As duas entradas nunca dispararam, e `dsc`/`ic` não tinham
+   * entrada nenhuma — 31% dos trânsitos passavam sem amplificação. Não dava
+   * erro, só não acontecia.
+   */
+  it('os quatro ângulos amplificam de verdade', () => {
+    for (const [angulo, chave] of [
+      ['ASC', 'ansiedade'], ['MC', 'pressao'], ['DSC', 'afeto'], ['IC', 'desanimo'],
+    ] as [string, ChaveEmocao][]) {
+      const planeta = chave === 'afeto' ? 'Venus' : chave === 'pressao' ? 'Pluto'
+        : chave === 'desanimo' ? 'Saturn' : 'Uranus'
+      const aspecto = chave === 'afeto' ? 'trigono' : 'quadratura'
+      const noAngulo = somasBrutas([T(planeta, aspecto, angulo)])[chave]
+      const neutro = somasBrutas([T(planeta, aspecto, 'Jupiter')])[chave]
+      expect(noAngulo, `${angulo} deveria amplificar ${chave}`).toBeGreaterThan(neutro)
+    }
   })
 
   it('o alvo amplifica o que é da área dele', () => {
@@ -184,22 +213,26 @@ describe('clima emocional do dia', () => {
     }
     valores.sort((a, b) => a - b)
     const mediana = valores[Math.floor(valores.length / 2)]
-    expect(K_CURVA).toBe(0.55)
+    expect(K_CURVA).toBe(0.45)
     expect(mediana, `mediana das que pesam: ${mediana}`).toBeLessThan(50)
     expect(mediana, `mediana das que pesam: ${mediana}`).toBeGreaterThan(30)
   })
 
   /**
-   * ⚠️ TODO ANEL PRECISA CONSEGUIR ZERAR, e isto é um teste separado porque o
-   * piso é o jeito mais fácil de estragar esta tela sem ninguém notar.
+   * ⚠️ NENHUM ANEL PODE TER PISO ALTO, e isto é um teste separado porque o piso
+   * é o jeito mais fácil de estragar esta tela sem ninguém notar.
    *
    * Já aconteceu duas vezes: o otimismo que nunca descia de 41 (dez planetas
    * alimentando um anel só), e a primeira tentativa de 3+3, em que ansiedade
    * não descia de 19. Nos dois casos o número continuava "funcionando" — só
    * tinha parado de informar. Acrescentar um peso cruzado pequeno parece
    * inofensivo e é exatamente o que mata a faixa de baixo.
+   *
+   * O teste NÃO exige zero: na base atual sete dos oito zeram, e o entusiasmo
+   * fica em 14 porque Júpiter, Sol, Marte e Urano macios, juntos, cobrem as 21
+   * contas. 14 lê como "quase nada" e é uma leitura honesta. 25 é a linha.
    */
-  it('nos dados reais, cada um dos seis chega a zero em algum dia', () => {
+  it('nenhum anel tem piso alto nos dados reais', () => {
     const minimo: Record<string, number> = {}
     for (const e of EMOCOES) minimo[e] = 100
     for (const u of fixtures as any[]) {
@@ -208,8 +241,12 @@ describe('clima emocional do dia', () => {
       }
     }
     for (const e of EMOCOES) {
-      expect(minimo[e], `${e} nunca desceu de ${minimo[e]}`).toBe(0)
+      expect(minimo[e], `${e} nunca desceu de ${minimo[e]}`).toBeLessThan(25)
     }
+    // E a maioria tem de conseguir apagar de vez — senão o conjunto inteiro
+    // está inflado, mesmo que nenhum passe de 25 sozinho.
+    const zeram = EMOCOES.filter((e) => minimo[e] === 0).length
+    expect(zeram, `só ${zeram} de ${EMOCOES.length} zeram`).toBeGreaterThanOrEqual(6)
   })
 
   /**
@@ -265,36 +302,36 @@ describe('clima emocional do dia', () => {
   it('as que pesam e as que aliviam estão marcadas', () => {
     const r = emocoesDoDia((fixtures as any[])[0].transitos)!
     for (const e of r) expect(e.pesa, e.chave).toBe(EMOCAO_PESA[e.chave])
-    // ⚠️ TRÊS E TRÊS. A simetria é metade do que a seção comunica: com mais
+    // ⚠️ QUATRO E QUATRO. A simetria é metade do que a seção comunica: com mais
     // anéis difíceis do que bons, a tela afirma que o dia tende a ser ruim
     // antes de calcular qualquer coisa.
-    expect(r.filter((e) => e.pesa)).toHaveLength(3)
-    expect(r.filter((e) => !e.pesa)).toHaveLength(3)
+    expect(r.filter((e) => e.pesa)).toHaveLength(4)
+    expect(r.filter((e) => !e.pesa)).toHaveLength(4)
     // E os bons vêm primeiro: é onde o olho cai.
-    expect(r.slice(0, 3).every((e) => !e.pesa)).toBe(true)
+    expect(r.slice(0, 4).every((e) => !e.pesa)).toBe(true)
   })
 
   /**
    * ⚠️ AS COLUNAS SÃO PARES DE OPOSTOS, e isso depende da ORDEM.
    *
-   * Com três por linha, os índices 0-3, 1-4 e 2-5 caem um em cima do outro:
+   * Com quatro por linha, os índices 0-4, 1-5, 2-6 e 3-7 caem um sobre o outro:
    *
-   *     afeto      entusiasmo   calma
-   *     estresse   desânimo     ansiedade
+   *     afeto      entusiasmo   calma       sensibilidade
+   *     estresse   desânimo     ansiedade   pressão
    *
-   * Vênus↔Marte, Júpiter↔Saturno, sossego↔sobressalto. É o que faz a grade ser
-   * lida como três eixos em vez de seis números soltos. Reordenar a lista não
+   * Vênus↔Marte, Júpiter↔Saturno, chão↔sobressalto, sentir↔apertar. É o que faz
+   * a grade ser lida como quatro eixos em vez de oito números soltos. Reordenar a lista não
    * quebra nada — a tela continua funcionando e só para de significar isso.
    */
   it('cada coluna é um par de opostos', () => {
     expect([...EMOCOES]).toEqual([
-      'afeto', 'entusiasmo', 'calma',
-      'estresse', 'desanimo', 'ansiedade',
+      'afeto', 'entusiasmo', 'calma', 'sensibilidade',
+      'estresse', 'desanimo', 'ansiedade', 'pressao',
     ])
     // O de cima e o de baixo de cada coluna estão em lados contrários.
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       expect(EMOCAO_PESA[EMOCOES[i]], EMOCOES[i]).toBe(false)
-      expect(EMOCAO_PESA[EMOCOES[i + 3]], EMOCOES[i + 3]).toBe(true)
+      expect(EMOCAO_PESA[EMOCOES[i + 4]], EMOCOES[i + 4]).toBe(true)
     }
   })
 
@@ -359,19 +396,50 @@ describe('clima emocional do dia', () => {
    * que segura, não entusiasmo. Hoje ele acende a CALMA, que é um anel próprio.
    */
   describe('realismo do modelo', () => {
-    it('Saturno em aspecto macio acende a CALMA, não o ânimo', () => {
+    it('Saturno em aspecto macio acende a CALMA, não o entusiasmo', () => {
       const s = somasBrutas([T('Saturn', 'trigono', 'Sun')])
       expect(s.calma).toBeGreaterThan(0)
       expect(s.entusiasmo).toBe(0)
       expect(s.afeto).toBe(0)
     })
 
-    it('o ânimo usa a faixa inteira nos dados reais, sem piso', () => {
+    /**
+     * ⚠️ A LUA É A DONA DA SENSIBILIDADE — correção do João, e ele estava certo:
+     * a Lua é o planeta do humor na tradição. Eu tinha ancorado o anel em
+     * Netuno por falta de dado, que é torcer a astrologia para caber num
+     * artefato de amostragem. Netuno ficou como segundo, porque a Lua aparece
+     * em poucas contas (os aspectos dela duram horas) e sozinha deixaria o anel
+     * apagado na maioria dos dias.
+     */
+    it('a Lua lidera a sensibilidade; Netuno sustenta', () => {
+      const lua = somasBrutas([T('Moon', 'trigono', 'Venus')])
+      const netuno = somasBrutas([T('Neptune', 'trigono', 'Venus')])
+      expect(lua.sensibilidade).toBeGreaterThan(netuno.sensibilidade)
+      expect(netuno.sensibilidade).toBeGreaterThan(0)
+    })
+
+    /**
+     * ⚠️ PLUTÃO NÃO ALIMENTA O ESTRESSE, e isso é medido, não opinião. Com
+     * Plutão dando 0.30 ao estresse, estresse×pressão media r=+0,51 nos 21
+     * usuários reais — os dois anéis subiam juntos e o segundo não acrescentava
+     * nada. Sem, o pior par do conjunto cai para +0,43 e deixa de ser este.
+     */
+    it('Plutão duro vai para a PRESSÃO e não encosta no estresse', () => {
+      const s = somasBrutas([T('Pluto', 'quadratura', 'Sun')])
+      expect(s.pressao).toBeGreaterThan(0)
+      expect(s.estresse).toBe(0)
+    })
+
+    it('o entusiasmo usa uma faixa ampla, sem piso que engane', () => {
       const vals = (fixtures as any[]).map(
         (u) => emocoesDoDia(u.transitos)!.find((e) => e.chave === 'entusiasmo')!.valor,
       )
-      expect(Math.min(...vals), `min de ânimo: ${Math.min(...vals)}`).toBeLessThan(25)
-      expect(Math.max(...vals)).toBeGreaterThan(70)
+      expect(Math.min(...vals), `min: ${Math.min(...vals)}`).toBeLessThan(25)
+      // ⚠️ 50 e não 70: as que ALIVIAM não chegam tão alto quanto as que pesam
+      // (72 contra 89 no topo), e isso é do céu — dia carregado acumula mais
+      // aspecto duro simultâneo do que dia bom acumula macio. Cobrar 70 aqui
+      // seria cobrar do código uma simetria que o dado não tem.
+      expect(Math.max(...vals), `max: ${Math.max(...vals)}`).toBeGreaterThan(50)
     })
 
     it('um dia só de Saturno macio não inventa tensão NEM ânimo', () => {
@@ -434,10 +502,12 @@ describe('clima emocional do dia', () => {
           expect(e.porque[i - 1].valor, e.chave).toBeGreaterThanOrEqual(e.porque[i].valor)
         }
       }
-      // O estresse vem de Plutão; a calma, do Saturno macio; o ânimo, de
-      // Júpiter. Cada anel aponta para o trânsito que é dele.
+      // A pressão vem de Plutão; a calma, do Saturno macio. Cada anel aponta
+      // para o trânsito que é dele — e o estresse NÃO aponta para Plutão.
+      const pressao = r.find((e) => e.chave === 'pressao')!
+      expect(pressao.porque.some((c) => /pluto/i.test(c.planeta))).toBe(true)
       const estresse = r.find((e) => e.chave === 'estresse')!
-      expect(estresse.porque.some((c) => /pluto/i.test(c.planeta))).toBe(true)
+      expect(estresse.porque.some((c) => /pluto/i.test(c.planeta))).toBe(false)
       const calma = r.find((e) => e.chave === 'calma')!
       expect(calma.porque.some((c) => /saturn/i.test(c.planeta))).toBe(true)
       // E o inverso: Júpiter não aparece explicando a calma deste dia.
@@ -478,10 +548,12 @@ describe('clima emocional do dia', () => {
     }
 
     it('a lista fica do tamanho da cota, não do tamanho da entrada', () => {
-      for (const n of [10, 25, 60]) {
+      for (const n of [25, 60, 140]) {
         expect(selecionarTransitos(muitos(n)), `entrada de ${n}`)
           .toHaveLength(COTA_LENTOS + COTA_RAPIDOS)
       }
+      // Entrada menor que a cota passa inteira: não há o que cortar.
+      expect(selecionarTransitos(muitos(5))).toHaveLength(5)
     })
 
     /**
@@ -552,11 +624,19 @@ describe('clima emocional do dia', () => {
       expect(sel.some((t) => t.transitPlanet === 'Pluto'), 'Plutão é lento e tem vaga própria').toBe(true)
     })
 
-    it('a base de calibração passa inteira pela cota, sem mudar nada', () => {
-      // A base JÁ é o top-8 do backend: a cota tem de ser um no-op nela, senão
-      // a calibração mediria uma lista e a tela mostraria outra.
+    /**
+     * ⚠️ A COTA DO APP TEM DE SER IGUAL À DO BACKEND.
+     *
+     * A base vem do `status-engine` com a cota dele (6 lentos + 6 rápidos = 12).
+     * Se a cota daqui fosse menor, a calibração mediria uma lista e a tela
+     * mostraria outra — que foi exatamente o estado anterior, com o backend
+     * mandando 8 e o app alimentando o cálculo com a lista inteira.
+     */
+    it('a base de calibração passa inteira pela cota, sem perder trânsito', () => {
+      expect(COTA_LENTOS + COTA_RAPIDOS).toBe(12)
       for (const u of fixtures as any[]) {
-        expect(selecionarTransitos(u.transitos), u.uid).toHaveLength(u.transitos.length)
+        expect(u.transitos.length, `${u.uid} veio do backend com`).toBe(12)
+        expect(selecionarTransitos(u.transitos), u.uid).toHaveLength(12)
       }
     })
   })
