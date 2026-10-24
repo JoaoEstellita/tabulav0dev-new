@@ -415,7 +415,7 @@ export default function FraseDoDia({ transitos }: Props) {
   ].filter(Boolean)
 
   return (
-    <View style={s.caixa}>
+    <View style={[s.caixa, !aberto && s.caixaFechada]}>
       {/* A contagem ao LADO do rótulo, não numa linha própria: ela é a
           legenda do dia, não um parágrafo. Assim o box fechado fecha em três
           ou quatro linhas.
@@ -437,7 +437,7 @@ export default function FraseDoDia({ transitos }: Props) {
           palavras curtas resolvem, e a cor dá a leitura rápida por cima. */}
       <Pressable
         onPress={alternar}
-        style={s.cabecalho}
+        style={[s.cabecalho, aberto && s.cabecalhoAberto]}
         accessibilityRole="button"
         accessibilityLabel={aberto
           ? tl('Fechar o seu dia', 'Close your day', 'Cerrar tu dia', 'Chiudi la tua giornata')
@@ -544,6 +544,16 @@ const s = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#FFD700',
   },
+  // ⚠️ FECHADA, a caixa aperta: os 14 de padding foram calculados para um card
+  // com frase, origens e período dentro. Com uma linha só, eles viram vão — e a
+  // altura da tarja passava a ser mais respiro do que conteúdo.
+  //
+  // `marginBottom: 0` no cabeçalho pelo mesmo motivo: ele separava a tarja do
+  // que vinha abaixo, e fechado não vem nada abaixo.
+  caixaFechada: {
+    paddingVertical: 9,
+    marginBottom: 10,
+  },
   // A origem é referência, não leitura — mas precisa se distinguir de DUAS
   // coisas ao mesmo tempo: do texto do efeito (quase branco) e dos rótulos de
   // seção.
@@ -608,8 +618,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    marginBottom: 10,
   },
+  // Só quando há conteúdo abaixo. Ver `caixaFechada`.
+  cabecalhoAberto: { marginBottom: 10 },
   balanco: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1 },
   // ⚠️ A PALAVRA FICA junto do número. Cor sozinha não é canal acessível — sob
   // protanopia o vermelho e o verde encostam — e "25 · 11" sem rótulo exige
@@ -638,12 +649,14 @@ const s = StyleSheet.create({
     marginBottom: 10,
     marginTop: 4,
   },
+  // ⚠️ Sem `marginBottom`: ele existia de quando o rótulo era título de um
+  // bloco com texto embaixo. Na tarja, o rótulo divide a linha com o balanço e
+  // o botão, e a margem só desalinhava os três verticalmente.
   rotulo: {
     color: '#8d94a8',
     fontSize: 11,
     letterSpacing: 1.1,
     textTransform: 'uppercase',
-    marginBottom: 6,
   },
   // ⚠️ HIERARQUIA: o EFEITO é 17 e a origem astrológica é 14 (o piso de
   // legibilidade do projeto). A frase é o que a pessoa veio ler; o aspecto é a
