@@ -401,3 +401,33 @@ describe('o texto que sai, palavra por palavra', () => {
     expect((r as any).blocos).toBeUndefined()
   })
 })
+
+/**
+ * ⚠️ `origens` E `chaves` TÊM DE TER O MESMO ÍNDICE.
+ *
+ * A tela "O seu dia" troca a palavra do aspecto por um glifo, e para isso ela
+ * monta a linha das PARTES — lê `f.chaves[k]` para descobrir qual aspecto a
+ * origem `f.origens[k]` cita, porque `origens[k].texto` já vem composto em
+ * prosa e recortar "em quincúncio com o seu" de quatro idiomas erraria calado.
+ *
+ * Os dois saem do mesmo `citados.map(...)` na síntese, então hoje batem. Se
+ * alguém filtrar um dos dois — ou reordenar só um —, a linha passa a mostrar o
+ * glifo de um aspecto e o nome de outro. Não quebra nada: só fica errado.
+ */
+describe('origens e chaves andam juntas', () => {
+  it('toda frase tem uma chave por origem, na mesma ordem', () => {
+    // Usa o céu real do projeto: é a mesma entrada dos outros testes deste
+    // arquivo, então uma quebra aqui não pode ser culpa de uma fixture minha.
+    const r = sintetizarODia(CEU_REAL as any, 'pt-BR')
+    expect(r?.frases?.length, 'a síntese não produziu frase nenhuma').toBeGreaterThan(0)
+    for (const f of r!.frases) {
+      expect(f.chaves, 'frase sem chaves').toHaveLength(f.origens.length)
+      // E cada chave tem de ter as TRÊS partes que a tela usa.
+      for (const c of f.chaves) {
+        const partes = String(c).split('|')
+        expect(partes, `chave malformada: ${c}`).toHaveLength(3)
+        expect(partes.every(Boolean), `chave com parte vazia: ${c}`).toBe(true)
+      }
+    }
+  })
+})

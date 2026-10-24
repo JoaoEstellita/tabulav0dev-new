@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { aspectSymbol, aspectTone } from '../astro/aspectSymbols'
+import { translatePlanet } from '../utils/astro/pt'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { areaLabelsForTransit } from '../utils/transitLifeAreas'
@@ -299,12 +301,12 @@ export default function FraseDoDia({ transitos }: Props) {
   }
 
   /**
-   * A frase que o card mostra FECHADO.
+   * As frases de cada grupo, na ordem em que a lista aberta as mostra.
    *
-   * ⚠️ Tem de ser a MESMA que abre a lista. Ela era `frases[0]`, que vem na
-   * ordem da síntese (por fase), enquanto a lista aberta reordena por mais
-   * recente — então abrir o card trocava a frase do topo, e a leitura parecia
-   * saltar sem motivo. Fechado é a capa da lista, não outra escolha.
+   * ⚠️ Já existiu uma "capa" aqui — a frase que o card mostrava fechado — e ela
+   * tinha de ser a MESMA que abre a lista, senão abrir o card trocava a frase
+   * do topo e a leitura parecia saltar. A capa saiu: fechado virou uma tarja
+   * de uma linha, sem frase nenhuma.
    */
   const frasesDoGrupo = (chave: typeof GRUPOS[number]['chave']) => {
     const doGrupo = leitura.frases
@@ -314,10 +316,6 @@ export default function FraseDoDia({ transitos }: Props) {
     // nada útil — todos começaram há meses e a ordem por peso serve melhor.
     return chave === 'ativos' ? doGrupo.sort(maisRecentePrimeiro) : doGrupo
   }
-
-  // Sem nenhum trânsito rápido, a capa é o primeiro lento — o card nunca fica
-  // sem capa só porque o dia é só pano de fundo.
-  const capa = frasesDoGrupo('ativos')[0]?.f || frasesDoGrupo('lentos')[0]?.f || leitura.frases[0]
 
   /**
    * Uma leitura do dia: efeito em destaque, origem discreta, e a leitura
@@ -345,19 +343,54 @@ export default function FraseDoDia({ transitos }: Props) {
             <Ionicons name="book-outline" size={15} color={CORES[f.natureza]} />
           </View>
         </View>
-        {/* ⚠️ Uma linha por trânsito, cada uma com a SUA janela.
+        {/* ⚠️ O ASPECTO VIRA GLIFO e a linha é COMPOSTA, não extraída.
+            Ela dizia "Marte em quincúncio com o seu Saturno" — vinte e tantos
+            caracteres para uma relação que cabe num símbolo. Com oito grupos na
+            tela, isso era metade do texto.
+
+            A linha é montada das PARTES (`f.chaves[k]`), não recortada de
+            `o.texto`: tentar tirar "em quincúncio com o seu" da prosa pronta
+            exigiria casar texto em quatro idiomas, com artigo variável e
+            concordância de gênero — e erraria calado no primeiro caso novo.
+
+            Os PLANETAS seguem por nome: o glifo deles é consagrado entre quem
+            estuda, não entre quem está começando, e trocar os três de uma vez
+            viraria criptograma. O glifo do aspecto é o que mais encurta e o que
+            menos custa — ele já aparece na grade, com legenda, então é símbolo
+            que o app ensina em outro lugar.
+
+            Sem chave, a prosa original continua valendo: a linha some de
+            formato, não de conteúdo.
+
+            ⚠️ Uma linha por trânsito, cada uma com a SUA janela.
             A frase cita até dois, e a janela era uma só — a do mais forte.
             "Mercúrio em conjunção e a Lua em conjunção com o seu Plutão ·
             10/10 a 16/10" não diz de quem é o período, e os dois têm janelas
             diferentes: a Lua passa em dois dias, Mercúrio leva uma semana.
             Um período solto embaixo de dois trânsitos parece valer para os
             dois — pior que não ter. */}
-        {f.origens.length ? f.origens.map((o, k) => (
-          <Text key={`o-${k}`} style={s.fonte}>
-            {o.texto}
-            {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
-          </Text>
-        )) : (f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null)}
+        {f.origens.length ? f.origens.map((o, k) => {
+            // ⚠️ `origens` e `chaves` saem ambos de `citados` na síntese, então
+            // têm o MESMO índice. É disso que o glifo depende.
+            const partes = String(f.chaves?.[k] || '').split('|')
+            const temPartes = partes.length === 3 && partes.every(Boolean)
+            const glifo = temPartes ? aspectSymbol(partes[1]) : ''
+            const cor = temPartes ? aspectTone(partes[1]) : undefined
+            return (
+              <Text key={`o-${k}`} style={s.fonte} numberOfLines={2}>
+                {glifo ? (
+                  <>
+                    <Text style={[s.glifo, cor ? { color: cor } : null]}>{glifo}</Text>
+                    {`  ${translatePlanet(partes[0], language as any)} `}
+                    <Text style={s.alvo}>{translatePlanet(partes[2], language as any)}</Text>
+                  </>
+                ) : (
+                  o.texto
+                )}
+                {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
+              </Text>
+            )
+          }) : (f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null)}
       </>
     )
     return (
@@ -392,53 +425,49 @@ export default function FraseDoDia({ transitos }: Props) {
           sair dela — e quem terminou de ler lá embaixo tem o botão de baixo.
           O "Ver mais" de abrir fica no rodapé do box fechado, junto do que ele
           revela. */}
+      {/* ⚠️ FECHADO É UMA TARJA, não uma leitura pela metade.
+          Antes o box fechado trazia a primeira frase, as origens dela e o
+          período — quatro a cinco linhas de astrologia antes de qualquer
+          decisão de ler ou não. Agora fecha em UMA linha: o rótulo, o balanço
+          do dia e a porta.
+
+          ⚠️ O número leva COR, mas a palavra fica. Cor sozinha não é canal de
+          informação acessível — sob protanopia o vermelho e o verde encostam —
+          e "25 · 11" sem rótulo exige que a pessoa adivinhe qual é qual. Duas
+          palavras curtas resolvem, e a cor dá a leitura rápida por cima. */}
       <Pressable
-        onPress={aberto ? alternar : undefined}
+        onPress={alternar}
         style={s.cabecalho}
-        accessibilityRole={aberto ? 'button' : undefined}
+        accessibilityRole="button"
+        accessibilityLabel={aberto
+          ? tl('Fechar o seu dia', 'Close your day', 'Cerrar tu dia', 'Chiudi la tua giornata')
+          : tl('Abrir o seu dia', 'Open your day', 'Abrir tu dia', 'Apri la tua giornata')}
       >
         <Text style={s.rotulo}>{tl('O seu dia', 'Your day', 'Tu dia', 'La tua giornata')}</Text>
-        {aberto ? (
-          <Text style={s.verMais}>
-            {tl('Mostrar menos', 'Show less', 'Mostrar menos', 'Mostra meno')} ▴
-          </Text>
-        ) : tensos || faceis ? (
-          <Text style={s.contagem} numberOfLines={1}>
-            {[
-              tensos ? tl(`${tensos} pedem atenção`, `${tensos} ask for care`, `${tensos} piden cuidado`, `${tensos} chiedono cura`) : '',
-              faceis ? tl(`${faceis} favorecem`, `${faceis} favour`, `${faceis} favorecen`, `${faceis} favoriscono`) : '',
-            ].filter(Boolean).join('  ·  ')}
-          </Text>
-        ) : null}
-      </Pressable>
 
-      {/* FECHADO: o panorama, não a leitura.
-          Mostrava a primeira frase e mais nada — leitura pela metade, sem
-          dizer que havia outras onze nem de que tipo. O panorama dá a forma
-          do dia numa olhada; o detalhe fica a um toque.
-          Nada aqui é clicável: é resumo, não leitura. */}
-      {/* FECHADO: o trânsito do topo, completo — efeito, origem e período.
-          A contagem acima já deu a forma do dia; aqui vai o que ela resume.
-          O box inteiro abre: um alvo do tamanho de duas palavras no canto erra
-          fácil, e o resto do card parecia inerte sem motivo. */}
-      {!aberto && capa ? (
-        <Pressable onPress={alternar} accessibilityRole="button">
-          <Text style={s.panoramaDestaque} numberOfLines={2}>{capa.efeito}</Text>
-          {/* ⚠️ Mostrava só a PRIMEIRA origem. A frase cita até dois trânsitos,
-              e esconder um deles fechado fazia a linha entregar menos do que o
-              texto promete — "Mercúrio em conjunção com o seu Plutão" sozinho
-              não explica por que a frase fala de concentração de força. */}
-          {capa.origens.map((o, k) => (
-            <Text key={`p-${k}`} style={s.fonte} numberOfLines={1}>
-              {o.texto}
-              {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
-            </Text>
-          ))}
-          <View style={s.verMaisLinha}>
-            <Text style={s.verMais}>{tl('Ver mais', 'See more', 'Ver mas', 'Vedi altro')} ▾</Text>
+        {tensos || faceis ? (
+          <View style={s.balanco}>
+            {tensos ? (
+              <Text style={s.balancoItem} numberOfLines={1}>
+                <Text style={s.balancoTenso}>{tensos}</Text>
+                {` ${tl('atenção', 'to watch', 'atencion', 'attenzione')}`}
+              </Text>
+            ) : null}
+            {faceis ? (
+              <Text style={s.balancoItem} numberOfLines={1}>
+                <Text style={s.balancoFacil}>{faceis}</Text>
+                {` ${tl('a favor', 'in favour', 'a favor', 'a favore')}`}
+              </Text>
+            ) : null}
           </View>
-        </Pressable>
-      ) : null}
+        ) : null}
+
+        <Text style={s.verMais}>
+          {aberto
+            ? `${tl('Menos', 'Less', 'Menos', 'Meno')} ▴`
+            : `${tl('Ver mais', 'See more', 'Ver mas', 'Vedi altro')} ▾`}
+        </Text>
+      </Pressable>
 
       {aberto ? (
         <View style={s.detalhe}>
@@ -530,11 +559,14 @@ const s = StyleSheet.create({
   // O azul frio separa por MATIZ, não por brilho: continua discreto ao lado do
   // efeito e deixa de competir com o cinza neutro do rótulo. Segue em 14px,
   // que é o piso de legibilidade do app — o recuo vem da cor, não do tamanho.
+  // 14 é o PISO de legibilidade do projeto (ver theme/tipografia) — não dá
+  // para descer mais, e nem é preciso: a diferença para os 17 do efeito já
+  // estabelece a hierarquia.
   fonte: {
     color: '#7f9ac4',
     fontSize: 14,
-    lineHeight: 19,
-    marginTop: 3,
+    lineHeight: 20,
+    marginTop: 4,
   },
   fraseExtra: {
     marginTop: 14,
@@ -559,27 +591,41 @@ const s = StyleSheet.create({
   },
   // A casa, as áreas e a janela: o contexto, abaixo da origem. Mesmo tom da
   // origem, um pouco mais apagado — é a camada menos urgente das três.
+  // O ALVO em tom mais claro: a linha é "quem chega → quem recebe", e marcar o
+  // segundo evita que os dois nomes virem uma lista de dois planetas soltos.
+  alvo: { color: '#aebbd4' },
   contexto: {
     color: '#6d7589',
     fontSize: 14,
     lineHeight: 19,
     marginTop: 2,
   },
+  // A tarja fechada: rótulo à esquerda, balanço no meio, porta à direita.
+  // `gap` para o balanço não encostar nas pontas quando um dos lados está
+  // vazio (dia só tenso ou só fácil).
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
     marginBottom: 10,
   },
+  balanco: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1 },
+  // ⚠️ A PALAVRA FICA junto do número. Cor sozinha não é canal acessível — sob
+  // protanopia o vermelho e o verde encostam — e "25 · 11" sem rótulo exige
+  // adivinhar qual é qual. A cor dá a leitura rápida; a palavra garante a
+  // leitura certa.
+  balancoItem: { color: '#9aa3b8', fontSize: 14 },
+  balancoTenso: { color: '#F87171', fontSize: 17, fontWeight: '800' },
+  balancoFacil: { color: '#34D399', fontSize: 17, fontWeight: '800' },
+  // O glifo um pouco maior que o texto: ele é o começo da linha e o que o olho
+  // pega primeiro ao varrer a lista.
+  glifo: { fontSize: 16, fontWeight: '700' },
   // Discreto: é um controle, não uma chamada. O dourado do card já é usado
   // pelo que importa (o título do aspecto no modal).
   verMais: { color: '#8d94a8', fontSize: 14, fontWeight: '600' },
   // A contagem divide a linha do rótulo: mesma altura, mesmo tom.
-  contagem: { color: '#9aa3b8', fontSize: 14, flexShrink: 1, textAlign: 'right' },
-  verMaisLinha: { alignItems: 'flex-end', marginTop: 8 },
   fechar: { alignItems: 'center', paddingVertical: 10, marginTop: 2 },
-  panoramaLinha: { color: '#9aa3b8', fontSize: 14, lineHeight: 20 },
-  panoramaDestaque: { color: '#edf0f6', fontSize: 16, lineHeight: 24 },
   grupo: {
     marginBottom: 6,
   },
@@ -599,7 +645,11 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 6,
   },
-  texto: { color: '#edf0f6', fontSize: 16, lineHeight: 25 },
+  // ⚠️ HIERARQUIA: o EFEITO é 17 e a origem astrológica é 14 (o piso de
+  // legibilidade do projeto). A frase é o que a pessoa veio ler; o aspecto é a
+  // nota de rodapé que prova de onde ela saiu. Com os dois no mesmo tamanho, a
+  // lista virava oito parágrafos iguais e nada se destacava.
+  texto: { color: '#edf0f6', fontSize: 17, lineHeight: 26 },
 
   detalhe: { marginTop: 14 },
   bloco: { marginBottom: 14 },
