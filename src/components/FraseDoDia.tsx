@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { aspectSymbol, aspectTone } from '../astro/aspectSymbols'
+import { aspectSymbol, polaridadeDoAspecto } from '../astro/aspectSymbols'
 import { translatePlanet } from '../utils/astro/pt'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
@@ -338,9 +338,17 @@ export default function FraseDoDia({ transitos }: Props) {
               que uma navegação faz; aqui o toque abre uma LEITURA, e o livro é
               o ícone que o app já usa para isso — o mesmo da grade de
               aspectos. Um ícone que significa a mesma coisa em dois lugares
-              ensina; dois ícones para a mesma coisa confundem. */}
+              ensina; dois ícones para a mesma coisa confundem.
+
+              ⚠️ E ELE É NEUTRO. Levava a cor da natureza da frase, e aí o mesmo
+              ícone dizia duas coisas: "tem leitura aqui" e "o dia é difícil".
+              Sendo o elemento colorido mais saliente da linha, ele sequestrava
+              a leitura — e como a maioria das frases é tensa, quase todo livro
+              saía vermelho e a sensação era de um dia só ruim, mesmo com doze
+              trânsitos a favor. A direção agora mora no chip do aspecto, que é
+              onde a informação de fato está. */}
           <View style={s.livro}>
-            <Ionicons name="book-outline" size={15} color={CORES[f.natureza]} />
+            <Ionicons name="book-outline" size={15} color="#7f8aa3" />
           </View>
         </View>
         {/* ⚠️ O ASPECTO VIRA GLIFO e a linha é COMPOSTA, não extraída.
@@ -375,20 +383,36 @@ export default function FraseDoDia({ transitos }: Props) {
             const partes = String(f.chaves?.[k] || '').split('|')
             const temPartes = partes.length === 3 && partes.every(Boolean)
             const glifo = temPartes ? aspectSymbol(partes[1]) : ''
-            const cor = temPartes ? aspectTone(partes[1]) : undefined
+            const pol = temPartes ? polaridadeDoAspecto(partes[1], partes[0]) : 'neutro'
+            if (!glifo) {
+              return (
+                <Text key={`o-${k}`} style={s.fonte} numberOfLines={2}>
+                  {o.texto}
+                  {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
+                </Text>
+              )
+            }
             return (
-              <Text key={`o-${k}`} style={s.fonte} numberOfLines={2}>
-                {glifo ? (
-                  <>
-                    <Text style={[s.glifo, cor ? { color: cor } : null]}>{glifo}</Text>
-                    {`  ${translatePlanet(partes[0], language as any)} `}
-                    <Text style={s.alvo}>{translatePlanet(partes[2], language as any)}</Text>
-                  </>
-                ) : (
-                  o.texto
-                )}
-                {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
-              </Text>
+              <View key={`o-${k}`} style={s.origemLinha}>
+                {/* ⚠️ O CHIP é o que diz a DIREÇÃO do aspecto.
+                    Antes a polaridade vivia na cor do glifo, num símbolo de
+                    16px — e quem não estuda astrologia não lê △ como "bom" nem
+                    □ como "difícil", então a única pista era um matiz sutil
+                    num caractere pequeno. Fundo cheio resolve de longe.
+
+                    O glifo FICA: ele diz QUAL aspecto é, que o chip não diz. Um
+                    carrega a identidade, o outro a direção. */}
+                <View style={[s.chipAspecto, pol === 'bom' ? s.chipBom : pol === 'dificil' ? s.chipDificil : s.chipNeutro]}>
+                  <Text style={[s.glifo, pol === 'bom' ? s.glifoBom : pol === 'dificil' ? s.glifoDificil : s.glifoNeutro]}>
+                    {glifo}
+                  </Text>
+                </View>
+                <Text style={[s.fonte, s.origemTexto]} numberOfLines={2}>
+                  {`${translatePlanet(partes[0], language as any)} `}
+                  <Text style={s.alvo}>{translatePlanet(partes[2], language as any)}</Text>
+                  {o.quando ? <Text style={s.contexto}>{`  ·  ${o.quando}`}</Text> : null}
+                </Text>
+              </View>
             )
           }) : (f.fonte ? <Text style={s.fonte}>{f.fonte}</Text> : null)}
       </>
@@ -631,7 +655,29 @@ const s = StyleSheet.create({
   balancoFacil: { color: '#34D399', fontSize: 17, fontWeight: '800' },
   // O glifo um pouco maior que o texto: ele é o começo da linha e o que o olho
   // pega primeiro ao varrer a lista.
-  glifo: { fontSize: 16, fontWeight: '700' },
+  glifo: { fontSize: 15, fontWeight: '700', lineHeight: 18 },
+  origemLinha: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 4 },
+  origemTexto: { flex: 1, marginTop: 0 },
+  // ⚠️ Chip, e não só cor no glifo: fundo cheio lê de longe, matiz num
+  // caractere de 15px não. Quadrado com canto arredondado — círculo brigaria
+  // com os anéis das tendências logo acima.
+  chipAspecto: {
+    width: 24,
+    height: 22,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 9,
+    borderWidth: 1,
+  },
+  // Fundo translúcido e borda viva: sobre o fundo dourado-escuro do card, um
+  // fundo opaco viraria um bloco; a borda é o que define a forma.
+  chipBom: { backgroundColor: 'rgba(74,222,128,0.16)', borderColor: 'rgba(74,222,128,0.55)' },
+  chipDificil: { backgroundColor: 'rgba(242,84,75,0.16)', borderColor: 'rgba(242,84,75,0.55)' },
+  chipNeutro: { backgroundColor: 'rgba(127,154,196,0.14)', borderColor: 'rgba(127,154,196,0.45)' },
+  glifoBom: { color: '#4ade80' },
+  glifoDificil: { color: '#f2544b' },
+  glifoNeutro: { color: '#9bb4e8' },
   // Discreto: é um controle, não uma chamada. O dourado do card já é usado
   // pelo que importa (o título do aspecto no modal).
   verMais: { color: '#8d94a8', fontSize: 14, fontWeight: '600' },

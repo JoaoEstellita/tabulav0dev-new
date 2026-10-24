@@ -98,6 +98,43 @@ export const aspectSymbol = (type: string): string => ASPECT_SYM[norm(type)] || 
  */
 export const aspectTone = (type: string): string | undefined => ASPECT_TONE[norm(type)]
 
+/** Para onde o aspecto PUXA — bom, difícil, ou nem um nem outro. */
+export type Polaridade = 'bom' | 'dificil' | 'neutro'
+
+const MACIOS = new Set(['trigono', 'sextil', 'semissextil'])
+const DUROS = new Set(['quadratura', 'oposicao', 'semiquadratura', 'sesquiquadratura', 'quincuncio'])
+
+/**
+ * ⚠️ A CONJUNÇÃO NÃO TEM POLARIDADE PRÓPRIA — quem decide é o planeta.
+ *
+ * Saturno em conjunção pesa; Vênus em conjunção afaga. A mesma lista que
+ * `emocoesDoDia` usa, e pelo mesmo motivo: tratar conjunção como neutra joga
+ * fora quase um quinto dos trânsitos reais, e são justamente os mais fortes
+ * (orbe pequeno, contato direto).
+ */
+const CONJUNCAO_PESADA = new Set(['saturn', 'pluto', 'mars', 'neptune', 'uranus', 'saturno', 'plutao', 'marte', 'netuno', 'urano'])
+
+/**
+ * Para onde o aspecto puxa, para marcar a direção na tela.
+ *
+ * ⚠️ Existe porque `aspectNature` (em `utils/astro/pt`) devolve `'outro'` para
+ * SEMISSEXTIL, enquanto `emocoesDoDia` o trata como macio — o mesmo aspecto
+ * classificado de dois jeitos no mesmo app. Aqui ele é macio, que é a leitura
+ * correta e a que o cálculo já usa.
+ *
+ * ⚠️ Os menores DUROS contam como difíceis: o motor os trata como tensos desde
+ * `b96acf8`, e já houve uma versão que os deixava neutros.
+ */
+export function polaridadeDoAspecto(tipo: string, planeta?: string): Polaridade {
+  const a = norm(tipo)
+  if (MACIOS.has(a)) return 'bom'
+  if (DUROS.has(a)) return 'dificil'
+  if (a === 'conjuncao') {
+    return CONJUNCAO_PESADA.has(norm(planeta || '')) ? 'dificil' : 'bom'
+  }
+  return 'neutro'
+}
+
 /** A ordem em que a legenda lista os aspectos presentes. */
 export const ORDEM_DA_LEGENDA = [
   'conjuncao', 'sextil', 'quadratura', 'trigono', 'oposicao',
