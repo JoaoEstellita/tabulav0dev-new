@@ -463,6 +463,11 @@ export default function HomeScreen() {
       status: typeof percentage === 'number' ? percentage : 0,
       percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
       movementScore,
+      // ⚠️ Sem reserva, ao contrário do movimento: a atenção o motor calcula ou
+      // não calcula. Inventar um valor aqui encheria a roda de traços laranja
+      // derivados de outra régua, e a atenção já é 84% o espelho da nota — um
+      // palpite a mais ali seria barulho com cara de medida.
+      attentionScore: normalizeAxisScore((area as any)?.attentionScore),
       criticalLevel: typeof percentage === 'number' ? percentage < STATUS_THRESHOLDS.criticalBelow : !!area?.criticalLevel,
     }
   }, [])
@@ -509,6 +514,13 @@ export default function HomeScreen() {
       // (densidade × impacto) para quando ele não vem.
       movimento: typeof (normalizedArea as any)?.movementScore === 'number'
         ? (normalizedArea as any).movementScore
+        : null,
+      // ⚠️ ATENÇÃO mede quase o oposto da nota (r=-0,84 em 60 pessoas), e por
+      // isso ela vai para FORA do vértice no desenho: lá ela não disputa com a
+      // silhueta e ainda usa o espaço entre o polígono e a borda, que nos
+      // dados reais fica vazio em quase metade do raio.
+      atencao: typeof (normalizedArea as any)?.attentionScore === 'number'
+        ? (normalizedArea as any).attentionScore
         : null,
     }))
   }, [memoizedAreas, language, transitData?.currentTransits, backendCurrentTransits])

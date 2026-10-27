@@ -1862,6 +1862,8 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
       // já o extrai e normaliza; derivar de novo aqui daria dois movimentos
       // diferentes para a mesma área.
       movimento: typeof entry.movementScore === 'number' ? entry.movementScore : null,
+      // `buildMemberAreaEntries` já extrai e normaliza os dois eixos.
+      atencao: typeof entry.attentionScore === 'number' ? entry.attentionScore : null,
     }))
   }
 

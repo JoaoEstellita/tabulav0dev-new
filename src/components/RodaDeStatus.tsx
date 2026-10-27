@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
 import Svg, { Polygon, Line, Circle, Defs, RadialGradient, LinearGradient, Stop } from 'react-native-svg'
+import { STATUS_AXIS_COLORS } from '../utils/statusAxes'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import {
   poligonoDosValores,
   pontoDoMovimento,
+  pontoDaAtencao,
   anelDeReferencia,
   pontoNoEixo,
   rotuloDoEixo,
@@ -79,7 +81,16 @@ const ACENTO = '#9BB4E8'
  * chips, e repeti-los aqui faria a sombra parecer um julgamento da área.
  * Violeta está livre no desenho inteiro.
  */
-const MOVIMENTO = '#C4B5FD'
+/**
+ * ⚠️ AS CORES DOS EIXOS JÁ EXISTIAM no projeto — `STATUS_AXIS_COLORS`, as
+ * mesmas das barras M/A nas fichas de grupo. Houve uma versão que inventou um
+ * violeta aqui: a mesma grandeza com duas cores em duas telas.
+ *
+ * O violeta claro também lia como BRANCO sobre o fundo escuro, o que fazia os
+ * raios parecerem risco de lápis em vez de medida.
+ */
+const MOVIMENTO = STATUS_AXIS_COLORS.movement
+const ATENCAO = STATUS_AXIS_COLORS.attention
 
 // ⚠️ 12, não 10. Em 10 o nome da área ficava miúdo demais para ler de relance
 // num celular — era a queixa. Subir a fonte encolhe o raio disponível (o chip
@@ -187,13 +198,17 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
       valores: paraPoints(poligonoDosValores(eixos, raio, centro, giro)),
       borda: paraPoints(anelDeReferencia(1, total, raio, centro, giro)),
       critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro, giro)),
-      // Cada eixo vira um RAIO: do centro ao valor, com a parte que se mexe
-      // acesa por cima. Substitui o polígono de sombra — ver `pontoDoMovimento`.
+      bom: paraPoints(anelDeReferencia(limiares.positiveAbove / 100, total, raio, centro, giro)),
+      // Cada eixo vira um RAIO. Do centro ao valor corre o MOVIMENTO; do valor
+      // até a borda, a ATENÇÃO. Direções opostas de propósito — ver
+      // `pontoDaAtencao` em geometriaDaRoda.
       raios: eixos.map((e, i) => ({
         chave: e.chave,
         fim: pontoNoEixo(i, total, fracaoDoValor(e.valor), raio, centro, giro),
         movimento: pontoDoMovimento(e, i, total, raio, centro, giro),
-        temMovimento: e.movimento !== null && e.movimento !== undefined,
+        atencao: pontoDaAtencao(e, i, total, raio, centro, giro),
+        forcaMovimento: typeof e.movimento === 'number' ? Math.max(0, Math.min(100, e.movimento)) : null,
+        forcaAtencao: typeof e.atencao === 'number' ? Math.max(0, Math.min(100, e.atencao)) : null,
       })),
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -240,27 +255,35 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
             )
           })}
 
-          {/* ⚠️ O CRÍTICO É UMA ZONA, não um traço.
-              Era um octógono tracejado em vermelho fraco — e linha não diz de
-              que lado fica o ruim. Como mancha, a leitura dispensa legenda: o
-              que AFUNDA no vermelho está mal, e isso se vê de longe.
+          {/* ⚠️ DOIS ANÉIS TRACEJADOS, crítico e favorável — a pedido, e é o
+              desenho que estava antes. Houve uma versão que trocou o crítico
+              por uma MANCHA vermelha: lia melhor de longe, mas uma área grande
+              de cor no meio do gráfico virou o assunto da tela, competindo com
+              o polígono e com os raios. Linha fina marca o limiar sem reivindicar
+              espaço.
 
               ⚠️ Os anéis são POLÍGONOS, não círculos: num radar o valor mora no
               vértice, e um anel circular passaria por dentro das arestas — um
               valor que encosta no limiar pareceria estar abaixo dele.
 
-              ⚠️ SAÍRAM três teias (25/50/75) e o anel do BOM. Eram seis anéis
-              concêntricos e nenhum dizia um número — a escala quem dá é o
-              número no chip. E o anel do bom quase nunca era cruzado: medido em
-              60 pessoas, só 7% dos valores passam de 62, contra 28% abaixo de
-              35. Uma linha que ninguém toca não ensina nada, só polui. */}
-          <Polygon points={geo.critico} fill={CORES.critico} fillOpacity={0.13} stroke="none" />
+              ⚠️ As três teias (25/50/75) seguem fora. Elas não marcavam nada —
+              a escala quem dá é o número no chip, e seis anéis concêntricos era
+              o que deixava o desenho ilegível. */}
           <Polygon
             points={geo.critico}
             fill="none"
             stroke={CORES.critico}
             strokeWidth={1}
-            strokeOpacity={0.5}
+            strokeOpacity={0.45}
+            strokeDasharray="2 5"
+          />
+          <Polygon
+            points={geo.bom}
+            fill="none"
+            stroke={CORES.bom}
+            strokeWidth={1}
+            strokeOpacity={0.45}
+            strokeDasharray="2 5"
           />
           <Polygon points={geo.borda} fill="none" stroke={TRILHO} strokeWidth={1} />
 
@@ -270,17 +293,16 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
               como sombra. */}
           {/* Brilho do polígono: um traço largo e quase transparente por baixo
               faz as vezes de sombra, que o SVG do React Native não tem. */}
-          <Polygon
-            points={geo.valores}
-            fill="none"
-            stroke={ACENTO}
-            strokeWidth={7}
-            strokeOpacity={0.14}
-            strokeLinejoin="round"
-          />
+
           {/* O preenchimento do polígono, SEM traço — o contorno vem por
               último, depois da sombra, para fechar o desenho por cima. */}
-          <Polygon points={geo.valores} fill="url(#area)" stroke="none" />
+          {/* ⚠️ O POLÍGONO FICOU SUTIL, a pedido. Ele não é mais o assunto do
+              desenho: quem informa agora é o ponto (nota), o traço ciano
+              (movimento) e o traço laranja (atenção). A linha que liga os
+              pontos serve só para dar a SILHUETA — ver de relance se o dia é
+              parelho ou tem um buraco. Com traço cheio ela competia com as
+              três medidas. */}
+          <Polygon points={geo.valores} fill="url(#area)" fillOpacity={0.45} stroke="none" />
 
           {/* ⚠️ O MOVIMENTO VIRA RAIO ACESO, não uma segunda silhueta.
               Como polígono dentro do polígono, ele lia como DOIS gráficos — o
@@ -300,24 +322,39 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
               regra diferente da do motor. */}
           {geo.raios.map((r) => (
             <React.Fragment key={`raio-${r.chave}`}>
-              <Line
-                x1={centro.x}
-                y1={centro.y}
-                x2={r.fim.x}
-                y2={r.fim.y}
-                stroke={ACENTO}
-                strokeWidth={1}
-                strokeOpacity={0.3}
-              />
-              {r.temMovimento ? (
+              {/* ⚠️ SEM linha-guia até o vértice. Ela era um traço claro do
+                  centro a cada ponto, e oito deles viravam uma estrela branca
+                  no meio do desenho — mais chamativa que o próprio dado. O
+                  comprimento do traço colorido já diz onde ele termina. */}
+              {r.forcaMovimento !== null ? (
                 <Line
                   x1={centro.x}
                   y1={centro.y}
                   x2={r.movimento.x}
                   y2={r.movimento.y}
                   stroke={MOVIMENTO}
-                  strokeWidth={3}
-                  strokeOpacity={0.85}
+                  // ⚠️ A INTENSIDADE também está na espessura e na opacidade,
+                  // não só no comprimento: um raio curto e forte tem de se
+                  // distinguir de um curto e fraco, e comprimento sozinho não
+                  // separa os dois num desenho pequeno.
+                  strokeWidth={2 + (r.forcaMovimento / 100) * 2}
+                  strokeOpacity={0.35 + (r.forcaMovimento / 100) * 0.5}
+                  strokeLinecap="round"
+                />
+              ) : null}
+              {/* A ATENÇÃO cresce do vértice para FORA, no espaço entre o
+                  polígono e a borda — que nos dados reais fica vazio em quase
+                  metade do raio. Direção oposta à do movimento: é o que deixa
+                  os dois legíveis na mesma linha. */}
+              {r.forcaAtencao ? (
+                <Line
+                  x1={r.fim.x}
+                  y1={r.fim.y}
+                  x2={r.atencao.x}
+                  y2={r.atencao.y}
+                  stroke={ATENCAO}
+                  strokeWidth={2.5}
+                  strokeOpacity={0.3 + (r.forcaAtencao / 100) * 0.5}
                   strokeLinecap="round"
                 />
               ) : null}
@@ -329,7 +366,8 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
             points={geo.valores}
             fill="none"
             stroke={ACENTO}
-            strokeWidth={2.5}
+            strokeWidth={1.25}
+            strokeOpacity={0.5}
             strokeLinejoin="round"
           />
 

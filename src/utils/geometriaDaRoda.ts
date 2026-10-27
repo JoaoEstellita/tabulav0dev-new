@@ -13,6 +13,16 @@ export type EixoDaRoda = {
   rotulo: string
   valor: number | null
   /**
+   * De 0 a 100: o quanto esta área PEDE CUIDADO hoje.
+   *
+   * ⚠️ Mede quase o oposto da nota — r=-0,84 contra `valor` em 60 pessoas
+   * reais. Desenhar os dois é, em 84%, desenhar a mesma coisa duas vezes.
+   * Fica porque os 16% restantes existem e porque é o jeito de uma nota média
+   * com atenção alta se distinguir de uma nota média tranquila — mas é por
+   * isso que ela vai para FORA do vértice, onde não disputa com a silhueta.
+   */
+  atencao?: number | null
+  /**
    * De 0 a 100: quanto do peso desta área vem de trânsito que passa rápido.
    *
    * Vira a SOMBRA dentro do polígono — a fatia da nota que está em jogo hoje.
@@ -112,6 +122,33 @@ export function pontoNoEixo(
 }
 
 /** Os vértices do polígono dos valores, na ordem dos eixos. */
+/**
+ * O ponto onde a marca de ATENÇÃO termina — do vértice para FORA.
+ *
+ * ⚠️ Cresce na direção oposta à do movimento, e isso é o que deixa os dois
+ * legíveis na mesma linha: movimento vai do centro até o valor, atenção vai do
+ * valor até a borda. Cada um com âncora própria, sem se sobrepor, e usando o
+ * espaço entre o polígono e a borda — que nos dados reais fica vazio em quase
+ * metade do raio.
+ */
+export function pontoDaAtencao(
+  eixo: EixoDaRoda,
+  indice: number,
+  total: number,
+  raio: number,
+  centro: Ponto,
+  giro = 0,
+): Ponto {
+  const a = eixo.atencao
+  const fracao =
+    a === null || a === undefined || !Number.isFinite(Number(a))
+      ? 0
+      : Math.max(0, Math.min(100, Number(a))) / 100
+  const base = fracaoDoValor(eixo.valor)
+  // O que sobra entre o valor e a borda é o espaço que a atenção pode ocupar.
+  return pontoNoEixo(indice, total, base + (1 - base) * fracao, raio, centro, giro)
+}
+
 /**
  * O ponto onde a parte EM MOVIMENTO de um eixo termina.
  *

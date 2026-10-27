@@ -64,22 +64,51 @@ describe('o raio do movimento', () => {
  */
 describe('o desenho da roda', () => {
   /**
-   * O crítico é uma ZONA, não um traço. Linha não diz de que lado fica o ruim;
-   * mancha diz, e sem legenda. Se o `fill` sair, volta a ser um contorno
-   * tracejado que ninguém sabe ler.
+   * ⚠️ OS DOIS LIMIARES SÃO LINHA TRACEJADA, não mancha.
+   *
+   * Houve uma versão que pintou o crítico como ZONA vermelha. Lia melhor de
+   * longe e perdeu o resto: uma área grande de cor no meio do gráfico virou o
+   * assunto da tela, competindo com o polígono e com os raios num desenho que
+   * existia justamente para mostrar três medidas por eixo.
    */
-  it('a zona crítica é preenchida, não só contornada', () => {
-    expect(RODA).toContain('points={geo.critico} fill={CORES.critico}')
+  it('crítico e favorável são anéis tracejados, não manchas', () => {
+    expect(RODA, 'o crítico virou mancha de novo').not.toMatch(/points=\{geo\.critico\}\s+fill=\{CORES/)
+    for (const anel of ['geo.critico', 'geo.bom']) {
+      expect(RODA, `${anel} sumiu`).toContain(anel)
+    }
+    expect((RODA.match(/strokeDasharray="2 5"/g) || []).length, 'os dois limiares têm de ser tracejados')
+      .toBeGreaterThanOrEqual(2)
   })
 
   /**
-   * ⚠️ Seis anéis concêntricos e nenhum dizia um número. E o anel do BOM quase
-   * nunca era cruzado: medido em 60 pessoas, 7% dos valores passam de 62
-   * contra 28% abaixo de 35. Linha que ninguém toca não ensina, só polui.
+   * ⚠️ As teias seguem fora. Elas não marcavam número nenhum — a escala quem dá
+   * é o número no chip —, e seis anéis concêntricos era o que deixava o desenho
+   * ilegível.
    */
-  it('as teias e o anel do "bom" não voltaram', () => {
+  it('as três teias não voltaram', () => {
     expect(RODA, 'as teias 25/50/75 voltaram').not.toContain('geo.teias')
-    expect(RODA, 'o anel do bom voltou').not.toContain('geo.bom')
+  })
+
+  /**
+   * ⚠️ MOVIMENTO E ATENÇÃO CRESCEM EM DIREÇÕES OPOSTAS, e é só isso que os
+   * deixa legíveis na mesma linha: um do centro até o valor, o outro do valor
+   * até a borda. Se os dois partissem do centro, o mais curto ficaria escondido
+   * embaixo do mais longo.
+   */
+  it('o movimento sai do centro e a atenção sai do vértice', () => {
+    expect(RODA).toMatch(/x1=\{centro\.x\}[\s\S]{0,120}x2=\{r\.movimento\.x\}/)
+    expect(RODA).toMatch(/x1=\{r\.fim\.x\}[\s\S]{0,120}x2=\{r\.atencao\.x\}/)
+  })
+
+  /**
+   * ⚠️ As cores dos dois eixos vêm de `STATUS_AXIS_COLORS` — as mesmas das
+   * barras M/A nas fichas de grupo. Uma versão inventou um violeta local: a
+   * mesma grandeza com duas cores em duas telas, e o violeta claro ainda lia
+   * como branco sobre o fundo escuro.
+   */
+  it('as cores dos eixos vêm da fonte única do projeto', () => {
+    expect(RODA).toContain('STATUS_AXIS_COLORS.movement')
+    expect(RODA).toContain('STATUS_AXIS_COLORS.attention')
   })
 
   /**
@@ -91,6 +120,15 @@ describe('o desenho da roda', () => {
     expect(RODA, 'o polígono de sombra voltou').not.toContain('geo.sombra')
     expect(RODA).toContain('geo.raios.map')
     expect(RODA, 'o raio tem de ser Line').toMatch(/<Line[\s\S]{0,200}stroke=\{MOVIMENTO\}/)
+  })
+
+  /**
+   * ⚠️ Nada de linha-guia do centro a cada vértice. Oito delas viravam uma
+   * estrela clara no meio do desenho, mais chamativa que o próprio dado — foi
+   * a queixa que trouxe esta versão.
+   */
+  it('não há linha-guia até o vértice', () => {
+    expect(RODA, 'a estrela de linhas-guia voltou').not.toMatch(/x2=\{r\.fim\.x\}[\s\S]{0,160}stroke=\{ACENTO\}/)
   })
 
   /** Quatro círculos por vértice eram trinta e dois na tela, para marcar oito. */
