@@ -27,8 +27,6 @@ import RodaDeStatus from '../../components/RodaDeStatus'
 import { useVisaoDeStatus } from '../../hooks/useVisaoDeStatus'
 import { useOrdemDaHome } from '../../hooks/useOrdemDaHome'
 import OrganizarHome from '../../components/OrganizarHome'
-import { movimentoDaArea } from '../../utils/movimentoDaArea'
-import { mergeAreaTransits } from '../../utils/transitsByArea'
 import ClimaEmocional from '../../components/ClimaEmocional'
 import type { EixoDaRoda } from '../../utils/geometriaDaRoda'
 import FraseDoDia from '../../components/FraseDoDia'
@@ -501,13 +499,17 @@ export default function HomeScreen() {
       // roda pinta "sem dado" em cinza em vez de fingir zero, que sairia
       // vermelho de critico.
       valor: typeof (normalizedArea as any)?.percentage === 'number' ? (normalizedArea as any).percentage : null,
-      // ⚠️ A SOMBRA da roda. Quanto do peso desta area vem de transito que
-      // passa rapido — a fatia da nota que muda em dias e nao em meses. Duas
-      // areas com a mesma nota podem ser situacoes opostas: uma acaba sexta, a
-      // outra esta ali ha dois anos, e sem isto as duas apareciam identicas.
-      movimento: movimentoDaArea(
-        mergeAreaTransits(name, transitData?.currentTransits as any, backendCurrentTransits as any) as any,
-      ),
+      // ⚠️ O MOVIMENTO vem de `movementScore`, que o MOTOR já calcula por
+      // área — não de uma conta local. Houve uma versão que derivava isto da
+      // duração dos trânsitos aqui no app: reinvenção de algo que já existia,
+      // e com regra diferente da do motor, então a mesma área podia ter dois
+      // "movimentos" dependendo de onde se olhasse.
+      //
+      // `normalizeDisplayArea` já resolve o campo e tem a própria reserva
+      // (densidade × impacto) para quando ele não vem.
+      movimento: typeof (normalizedArea as any)?.movementScore === 'number'
+        ? (normalizedArea as any).movementScore
+        : null,
     }))
   }, [memoizedAreas, language, transitData?.currentTransits, backendCurrentTransits])
 

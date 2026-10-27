@@ -39,7 +39,7 @@ export type TransitoAtivo = {
   endAt?: string | null
 }
 
-/** O formato que `emocoesDoDia` e `movimentoDaArea` esperam. */
+/** O formato que `emocoesDoDia` espera. */
 export type TransitoDeArea = {
   transitPlanet?: string
   natalPlanet?: string
@@ -58,9 +58,7 @@ type MembroComAreas = {
  * A classe de duração, derivada da janela.
  *
  * `activeTransits` não traz `durationClass`, mas traz `startAt` e `endAt` — e é
- * a duração que diz se o trânsito é notícia do dia ou pano de fundo. Sem isto a
- * sombra de movimento da roda cairia toda no ramo de reserva (pelo planeta),
- * que é mais grosseiro.
+ * a duração que diz se o trânsito é notícia do dia ou pano de fundo.
  *
  * Os cortes seguem o resto do projeto: até duas semanas é curto, até três meses
  * é médio, daí para cima é longo.
@@ -134,16 +132,4 @@ export function transitosDoMembro(membro: MembroComAreas): TransitoDeArea[] {
     }
   }
   return saida
-}
-
-/**
- * Os trânsitos de UMA área, para a sombra de movimento da roda.
- *
- * Aqui NÃO se deduplica: é uma área só, e repetição dentro dela seria o mesmo
- * trânsito listado duas vezes pelo motor — o que não acontece.
- */
-export function transitosDaArea(membro: MembroComAreas, area: string): TransitoDeArea[] {
-  const lista = (membro?.lifeAreas as any)?.[area]?.activeTransits
-  if (!Array.isArray(lista)) return []
-  return lista.map(paraFormatoDoCalculo).filter(Boolean) as TransitoDeArea[]
 }

@@ -41,8 +41,7 @@ import Avatar from "../../components/Avatar"
 import RodaDeStatus from "../../components/RodaDeStatus"
 import ClimaEmocional from "../../components/ClimaEmocional"
 import { useVisaoDeStatus } from "../../hooks/useVisaoDeStatus"
-import { movimentoDaArea } from "../../utils/movimentoDaArea"
-import { transitosDoMembro, transitosDaArea } from "../../utils/transitosDoMembro"
+import { transitosDoMembro } from "../../utils/transitosDoMembro"
 import type { EixoDaRoda } from "../../utils/geometriaDaRoda"
 import ExpiryBanner from "../../components/ExpiryBanner"
 import StarLoader from "../../components/StarLoader"
@@ -1859,7 +1858,10 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
       // `percentage` já vem 0–100 ou null, e o null segue COMO null: a roda
       // pinta "sem dado" em cinza em vez de fingir zero, que sairia vermelho.
       valor: typeof entry.percentage === "number" ? entry.percentage : null,
-      movimento: movimentoDaArea(transitosDaArea(member as any, entry.key) as any),
+      // ⚠️ `movementScore` vem do MOTOR, igual à Home. `buildMemberAreaEntries`
+      // já o extrai e normaliza; derivar de novo aqui daria dois movimentos
+      // diferentes para a mesma área.
+      movimento: typeof entry.movementScore === 'number' ? entry.movementScore : null,
     }))
   }
 

@@ -113,26 +113,33 @@ export function pontoNoEixo(
 
 /** Os vértices do polígono dos valores, na ordem dos eixos. */
 /**
- * O polígono da SOMBRA: em cada eixo, a parte do valor que está em movimento.
+ * O ponto onde a parte EM MOVIMENTO de um eixo termina.
  *
- * ⚠️ Fica sempre DENTRO do polígono principal, nunca fora. O desenho cheio é a
- * nota; a sombra é a fatia dela que se mexe; o vão entre as duas é o que está
- * assentado. Desenhar a sombra no valor bruto do movimento colocaria duas
- * escalas diferentes no mesmo lugar — o jeito clássico de um gráfico mentir
- * sem querer.
+ * O raio do eixo vai do centro até o valor. Deste ponto para dentro é a fatia
+ * que se mexe; dele para fora, o que está assentado.
  *
- * Eixo sem movimento conhecido cai no próprio valor, e ali a sombra encosta na
- * borda — melhor do que colapsar para o centro e sugerir "nada se move".
+ * ⚠️ Substitui o polígono de sombra. Uma segunda silhueta dentro da primeira
+ * lê como DOIS gráficos concorrentes — o olho compara as duas formas em vez de
+ * ler uma. No raio, a mesma informação vira comprimento sobre uma linha que já
+ * existe, sem criar forma nova.
+ *
+ * Sem movimento conhecido devolve o CENTRO: o raio fica todo apagado, que é a
+ * leitura honesta de "não sabemos o quanto isto se mexe".
  */
-export function poligonoDaSombra(eixos: EixoDaRoda[], raio: number, centro: Ponto, giro = 0): Ponto[] {
-  return eixos.map((e, i) => {
-    const m = e.movimento
-    const fracaoMovel =
-      m === null || m === undefined || !Number.isFinite(Number(m))
-        ? 1
-        : Math.max(0, Math.min(100, Number(m))) / 100
-    return pontoNoEixo(i, eixos.length, fracaoDoValor(e.valor) * fracaoMovel, raio, centro, giro)
-  })
+export function pontoDoMovimento(
+  eixo: EixoDaRoda,
+  indice: number,
+  total: number,
+  raio: number,
+  centro: Ponto,
+  giro = 0,
+): Ponto {
+  const m = eixo.movimento
+  const fracao =
+    m === null || m === undefined || !Number.isFinite(Number(m))
+      ? 0
+      : Math.max(0, Math.min(100, Number(m))) / 100
+  return pontoNoEixo(indice, total, fracaoDoValor(eixo.valor) * fracao, raio, centro, giro)
 }
 
 export function poligonoDosValores(eixos: EixoDaRoda[], raio: number, centro: Ponto, giro = 0): Ponto[] {

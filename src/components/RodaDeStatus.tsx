@@ -4,7 +4,7 @@ import Svg, { Polygon, Line, Circle, Defs, RadialGradient, LinearGradient, Stop 
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import {
   poligonoDosValores,
-  poligonoDaSombra,
+  pontoDoMovimento,
   anelDeReferencia,
   pontoNoEixo,
   rotuloDoEixo,
@@ -185,12 +185,16 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
     if (!total || raio <= 0) return null
     return {
       valores: paraPoints(poligonoDosValores(eixos, raio, centro, giro)),
-      sombra: paraPoints(poligonoDaSombra(eixos, raio, centro, giro)),
-      temSombra: eixos.some((e) => e.movimento !== null && e.movimento !== undefined),
       borda: paraPoints(anelDeReferencia(1, total, raio, centro, giro)),
-      teias: [0.25, 0.5, 0.75].map((f) => paraPoints(anelDeReferencia(f, total, raio, centro, giro))),
       critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro, giro)),
-      bom: paraPoints(anelDeReferencia(limiares.positiveAbove / 100, total, raio, centro, giro)),
+      // Cada eixo vira um RAIO: do centro ao valor, com a parte que se mexe
+      // acesa por cima. Substitui o polígono de sombra — ver `pontoDoMovimento`.
+      raios: eixos.map((e, i) => ({
+        chave: e.chave,
+        fim: pontoNoEixo(i, total, fracaoDoValor(e.valor), raio, centro, giro),
+        movimento: pontoDoMovimento(e, i, total, raio, centro, giro),
+        temMovimento: e.movimento !== null && e.movimento !== undefined,
+      })),
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eixos, raio, giro, lado, total, limiares.criticalBelow, limiares.positiveAbove])
@@ -236,38 +240,29 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
             )
           })}
 
-          {/* ⚠️ Os anéis são POLÍGONOS, não círculos: num radar o valor mora no
+          {/* ⚠️ O CRÍTICO É UMA ZONA, não um traço.
+              Era um octógono tracejado em vermelho fraco — e linha não diz de
+              que lado fica o ruim. Como mancha, a leitura dispensa legenda: o
+              que AFUNDA no vermelho está mal, e isso se vê de longe.
+
+              ⚠️ Os anéis são POLÍGONOS, não círculos: num radar o valor mora no
               vértice, e um anel circular passaria por dentro das arestas — um
               valor que encosta no limiar pareceria estar abaixo dele.
-              Três teias fracas em vez de uma: dão noção de escala sem pedir
-              atenção, como o papel milimetrado atrás de um gráfico. */}
-          {geo.teias.map((pts, k) => (
-            <Polygon
-              key={`teia-${k}`}
-              points={pts}
-              fill="none"
-              stroke={TRILHO}
-              strokeWidth={1}
-              strokeOpacity={0.45}
-            />
-          ))}
-          <Polygon points={geo.borda} fill="none" stroke={TRILHO} strokeWidth={1} />
+
+              ⚠️ SAÍRAM três teias (25/50/75) e o anel do BOM. Eram seis anéis
+              concêntricos e nenhum dizia um número — a escala quem dá é o
+              número no chip. E o anel do bom quase nunca era cruzado: medido em
+              60 pessoas, só 7% dos valores passam de 62, contra 28% abaixo de
+              35. Uma linha que ninguém toca não ensina nada, só polui. */}
+          <Polygon points={geo.critico} fill={CORES.critico} fillOpacity={0.13} stroke="none" />
           <Polygon
             points={geo.critico}
             fill="none"
             stroke={CORES.critico}
             strokeWidth={1}
-            strokeOpacity={0.45}
-            strokeDasharray="2 5"
+            strokeOpacity={0.5}
           />
-          <Polygon
-            points={geo.bom}
-            fill="none"
-            stroke={CORES.bom}
-            strokeWidth={1}
-            strokeOpacity={0.45}
-            strokeDasharray="2 5"
-          />
+          <Polygon points={geo.borda} fill="none" stroke={TRILHO} strokeWidth={1} />
 
           {/* O polígono dos valores: ele dá a silhueta; quem informa é o número.
               O traço vai em DUAS camadas — uma larga e quase transparente por
@@ -287,34 +282,47 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
               último, depois da sombra, para fechar o desenho por cima. */}
           <Polygon points={geo.valores} fill="url(#area)" stroke="none" />
 
-          {/* ⚠️ A SOMBRA DO MOVIMENTO vem DEPOIS do preenchimento.
-              Antes vinha antes, e por isso nunca apareceu: o `fill` do
-              polígono principal pintava por cima dela. Ficava um gráfico com
-              uma informação invisível, sem erro nenhum para denunciar.
+          {/* ⚠️ O MOVIMENTO VIRA RAIO ACESO, não uma segunda silhueta.
+              Como polígono dentro do polígono, ele lia como DOIS gráficos — o
+              olho comparava as duas formas em vez de ler uma. E antes disso
+              nem aparecia: desenhado antes do preenchimento, o `fill` do
+              principal pintava por cima, e o gráfico carregava uma informação
+              com zero pixel para mostrá-la.
 
-              Ela mostra quanto de cada nota vem de trânsito que passa rápido —
-              a fatia que muda em dias, não em meses. Duas áreas com a mesma
-              nota podem ser situações opostas: uma acaba na sexta, a outra está
-              ali há dois anos.
+              Agora cada eixo tem um raio do centro ao valor, e o trecho que se
+              MEXE vai aceso por cima dele. Duas áreas com a mesma nota podem
+              ser situações opostas — uma acaba na sexta, a outra está ali há
+              dois anos — e agora isso é comprimento de linha, não forma nova.
 
-              ⚠️ Cor PRÓPRIA e contorno tracejado. Pintada no mesmo azul do
-              polígono, só com opacidade, ela some contra o preenchimento —
-              era o segundo motivo de não dar para distinguir. O tracejado
-              separa as duas formas sem competir com o contorno sólido. */}
-          {geo.temSombra ? (
-            <>
-              <Polygon points={geo.sombra} fill={MOVIMENTO} fillOpacity={0.34} stroke="none" />
-              <Polygon
-                points={geo.sombra}
-                fill="none"
-                stroke={MOVIMENTO}
-                strokeWidth={1.5}
-                strokeOpacity={0.9}
-                strokeDasharray="4 3"
-                strokeLinejoin="round"
+              ⚠️ A fonte do número é `movementScore`, que o motor já calcula
+              por área. Houve uma versão que derivava movimento da duração dos
+              trânsitos aqui no app: reinvenção de algo que já existia, e com
+              regra diferente da do motor. */}
+          {geo.raios.map((r) => (
+            <React.Fragment key={`raio-${r.chave}`}>
+              <Line
+                x1={centro.x}
+                y1={centro.y}
+                x2={r.fim.x}
+                y2={r.fim.y}
+                stroke={ACENTO}
+                strokeWidth={1}
+                strokeOpacity={0.3}
               />
-            </>
-          ) : null}
+              {r.temMovimento ? (
+                <Line
+                  x1={centro.x}
+                  y1={centro.y}
+                  x2={r.movimento.x}
+                  y2={r.movimento.y}
+                  stroke={MOVIMENTO}
+                  strokeWidth={3}
+                  strokeOpacity={0.85}
+                  strokeLinecap="round"
+                />
+              ) : null}
+            </React.Fragment>
+          ))}
 
           {/* O contorno do polígono principal fecha por cima de tudo. */}
           <Polygon
@@ -330,16 +338,16 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
             const cor = corDoValor(e.valor, limiares, CORES)
             return (
               <React.Fragment key={`ponto-${e.chave}`}>
-                {/* Halo + anel escuro: sem eles, um vértice sobre a linha do
-                    polígono some dentro do próprio traço. */}
-                <Circle cx={p.x} cy={p.y} r={10} fill={cor} fillOpacity={0.16} />
-                {/* O anel escuro acompanha o FUNDO DO APP (o degrade vai de
-                    #0F0F23 a #1A1A3A), nao mais o fundo de um card. */}
+                {/* ⚠️ DOIS círculos, não quatro. Eram halo, anel escuro, disco e
+                    brilho branco — trinta e dois círculos na tela para marcar
+                    oito vértices, num desenho que já tinha camadas demais. O
+                    anel escuro fica porque sem ele o ponto some dentro do
+                    próprio traço do polígono; o resto era enfeite.
+
+                    A COR é a faixa do valor, e é o único lugar do desenho onde
+                    vermelho/âmbar/verde aparecem além da zona crítica. */}
                 <Circle cx={p.x} cy={p.y} r={6} fill="#141731" />
                 <Circle cx={p.x} cy={p.y} r={4.5} fill={cor} />
-                {/* Ponto claro no centro: o vértice deixa de ser um disco chapado
-                    e passa a ter brilho, como uma conta de vidro. */}
-                <Circle cx={p.x - 1} cy={p.y - 1} r={1.4} fill="#FFFFFF" fillOpacity={0.75} />
               </React.Fragment>
             )
           })}

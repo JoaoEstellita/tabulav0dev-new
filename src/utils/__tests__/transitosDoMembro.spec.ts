@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   transitosDoMembro,
-  transitosDaArea,
   paraFormatoDoCalculo,
   duracaoDoTransito,
 } from '../transitosDoMembro'
@@ -159,23 +158,5 @@ describe('trânsitos de um membro do grupo', () => {
                         { lifeAreas: { a: null } }, { lifeAreas: { a: { activeTransits: 'x' } } }]) {
       expect(transitosDoMembro(lixo as any), JSON.stringify(lixo)).toEqual([])
     }
-  })
-})
-
-describe('trânsitos de uma área só', () => {
-  it('devolve a lista da área pedida, já traduzida', () => {
-    const m = membro({
-      carreira: { activeTransits: [A('Saturn', 'quadratura', 'Sun')] },
-      amor: { activeTransits: [A('Venus', 'trigono', 'Moon')] },
-    })
-    expect(transitosDaArea(m, 'carreira')).toHaveLength(1)
-    expect(transitosDaArea(m, 'amor')[0].transitPlanet).toBe('Venus')
-    expect(transitosDaArea(m, 'amor')[0].type).toBe('trigono')
-  })
-
-  it('área ausente ou dado torto devolve vazio', () => {
-    expect(transitosDaArea(membro({}), 'carreira')).toEqual([])
-    expect(transitosDaArea(null, 'carreira')).toEqual([])
-    expect(transitosDaArea(membro({ carreira: { activeTransits: 'x' } }) as any, 'carreira')).toEqual([])
   })
 })
