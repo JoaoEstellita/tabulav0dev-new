@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { pontoDoMovimento, pontoNoEixo, fracaoDoValor, type EixoDaRoda } from '../geometriaDaRoda'
+import {
+  pontoDoMovimento,
+  pontoNoEixo,
+  fracaoDoValor,
+  barraNoEixo,
+  fracaoDoEixoSecundario,
+  type EixoDaRoda,
+} from '../geometriaDaRoda'
 
 const RODA = readFileSync(
   join(__dirname, '..', '..', 'components', 'RodaDeStatus.tsx'),
@@ -90,14 +97,23 @@ describe('o desenho da roda', () => {
   })
 
   /**
-   * ⚠️ MOVIMENTO E ATENÇÃO CRESCEM EM DIREÇÕES OPOSTAS, e é só isso que os
-   * deixa legíveis na mesma linha: um do centro até o valor, o outro do valor
-   * até a borda. Se os dois partissem do centro, o mais curto ficaria escondido
-   * embaixo do mais longo.
+   * ⚠️ AS DUAS BARRAS SAEM DO MESMO PONTO, lado a lado.
+   *
+   * Houve uma versão em que a atenção crescia do vértice para a BORDA, na
+   * direção oposta à do movimento. Lia como espigão: oito deles viravam uma
+   * estrela laranja maior que o próprio polígono, e o que era medida virou
+   * moldura. Partindo juntas, as duas se comparam direto — a mais longa é a
+   * que manda naquela área.
    */
-  it('o movimento sai do centro e a atenção sai do vértice', () => {
-    expect(RODA).toMatch(/x1=\{centro\.x\}[\s\S]{0,120}x2=\{r\.movimento\.x\}/)
-    expect(RODA).toMatch(/x1=\{r\.fim\.x\}[\s\S]{0,120}x2=\{r\.atencao\.x\}/)
+  it('movimento e atenção saem os dois do centro, deslocados', () => {
+    expect(RODA, 'a atenção voltou a crescer do vértice').not.toContain('r.fim')
+    for (const eixo of ['movimento', 'atencao']) {
+      expect(RODA).toContain(`x1={r.${eixo}.inicio.x}`)
+      expect(RODA).toContain(`x2={r.${eixo}.fim.x}`)
+    }
+    // Um para cada lado da linha do eixo: sem sinais opostos elas se sobrepõem.
+    expect(RODA).toContain('giro, -DESLOCAMENTO)')
+    expect(RODA).toContain('giro, DESLOCAMENTO)')
   })
 
   /**
@@ -135,5 +151,64 @@ describe('o desenho da roda', () => {
   it('o vértice usa dois círculos, não quatro', () => {
     const circulos = (RODA.match(/<Circle\s/g) || []).length
     expect(circulos, `achei ${circulos} <Circle> no fonte`).toBeLessThanOrEqual(2)
+  })
+})
+
+describe('as barras paralelas de movimento e atenção', () => {
+  const dist = (p: { x: number; y: number }, q: { x: number; y: number }) =>
+    Math.hypot(p.x - q.x, p.y - q.y)
+
+  /**
+   * ⚠️ A BARRA É FATIA DA NOTA, não a nota do eixo secundário.
+   *
+   * Movimento e atenção são 0–100 na própria escala. Desenhados crus, uma área
+   * de nota 18 com movimento 90 teria uma barra maior que o próprio polígono —
+   * a parte passando o todo.
+   */
+  it('a barra nunca passa do ponto da nota', () => {
+    for (const valor of [10, 44, 78, 100]) {
+      for (const eixo of [0, 30, 70, 100]) {
+        const nota = pontoNoEixo(0, 8, fracaoDoValor(valor), RAIO, CENTRO)
+        const b = barraNoEixo(0, 8, fracaoDoEixoSecundario(valor, eixo), RAIO, CENTRO, 0, 0)
+        expect(dist(CENTRO, b.fim), `nota ${valor} eixo ${eixo}`)
+          .toBeLessThanOrEqual(dist(CENTRO, nota) + 0.001)
+      }
+    }
+  })
+
+  it('eixo em 100 encosta na nota; em 0 fica no centro', () => {
+    const nota = pontoNoEixo(0, 8, fracaoDoValor(60), RAIO, CENTRO)
+    const cheia = barraNoEixo(0, 8, fracaoDoEixoSecundario(60, 100), RAIO, CENTRO, 0, 0)
+    expect(cheia.fim.x).toBeCloseTo(nota.x, 5)
+    const vazia = barraNoEixo(0, 8, fracaoDoEixoSecundario(60, 0), RAIO, CENTRO, 0, 0)
+    expect(dist(CENTRO, vazia.fim)).toBeCloseTo(0, 5)
+  })
+
+  /**
+   * ⚠️ O DESLOCAMENTO É PERPENDICULAR, e as duas barras ficam PARALELAS.
+   *
+   * Girar a segunda em vez de deslocá-la faria o par abrir num V, e o ângulo
+   * passaria a parecer dado — um gráfico dizendo algo que ninguém quis dizer.
+   */
+  it('as duas barras são paralelas e não se sobrepõem', () => {
+    const a = barraNoEixo(0, 8, 0.6, RAIO, CENTRO, 0, -2.5)
+    const b = barraNoEixo(0, 8, 0.6, RAIO, CENTRO, 0, 2.5)
+    // Mesma direção: o vetor de uma é igual ao da outra.
+    const va = { x: a.fim.x - a.inicio.x, y: a.fim.y - a.inicio.y }
+    const vb = { x: b.fim.x - b.inicio.x, y: b.fim.y - b.inicio.y }
+    expect(va.x).toBeCloseTo(vb.x, 5)
+    expect(va.y).toBeCloseTo(vb.y, 5)
+    // E separadas pelo dobro do deslocamento.
+    expect(dist(a.inicio, b.inicio)).toBeCloseTo(5, 5)
+  })
+
+  it('eixo ausente ou torto não desenha nada', () => {
+    for (const v of [null, undefined, NaN, 'abc' as any]) {
+      expect(fracaoDoEixoSecundario(60, v as any), String(v)).toBe(0)
+    }
+  })
+
+  it('sem nota não há fatia da nota', () => {
+    expect(fracaoDoEixoSecundario(null, 90)).toBe(0)
   })
 })

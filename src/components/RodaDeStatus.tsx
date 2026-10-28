@@ -5,8 +5,8 @@ import { STATUS_AXIS_COLORS } from '../utils/statusAxes'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import {
   poligonoDosValores,
-  pontoDoMovimento,
-  pontoDaAtencao,
+  barraNoEixo,
+  fracaoDoEixoSecundario,
   anelDeReferencia,
   pontoNoEixo,
   rotuloDoEixo,
@@ -91,6 +91,15 @@ const ACENTO = '#9BB4E8'
  */
 const MOVIMENTO = STATUS_AXIS_COLORS.movement
 const ATENCAO = STATUS_AXIS_COLORS.attention
+
+/**
+ * Quanto cada barra se afasta da linha do eixo, em pixels.
+ *
+ * Com 2.5 e traço de 2.5, as duas ficam encostadas sem se sobrepor — lêem como
+ * um par, não como dois desenhos. Mais que isso e o par abre num Y perto do
+ * centro; menos e a de baixo some sob a de cima.
+ */
+const DESLOCAMENTO = 2.5
 
 // ⚠️ 12, não 10. Em 10 o nome da área ficava miúdo demais para ler de relance
 // num celular — era a queixa. Subir a fonte encolhe o raio disponível (o chip
@@ -199,14 +208,19 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
       borda: paraPoints(anelDeReferencia(1, total, raio, centro, giro)),
       critico: paraPoints(anelDeReferencia(limiares.criticalBelow / 100, total, raio, centro, giro)),
       bom: paraPoints(anelDeReferencia(limiares.positiveAbove / 100, total, raio, centro, giro)),
-      // Cada eixo vira um RAIO. Do centro ao valor corre o MOVIMENTO; do valor
-      // até a borda, a ATENÇÃO. Direções opostas de propósito — ver
-      // `pontoDaAtencao` em geometriaDaRoda.
+      // ⚠️ DUAS BARRAS PARALELAS por eixo, as duas do centro até a nota:
+      // movimento de um lado da linha do eixo, atenção do outro.
+      //
+      // A versão anterior mandava a atenção do vértice para FORA, até a borda.
+      // Lia como espigão — oito deles viravam uma estrela de raios laranja
+      // maior que o próprio polígono, e o que era medida virava moldura.
+      //
+      // Lado a lado as duas partem do mesmo ponto e se comparam direto: a mais
+      // longa é a que manda naquela área.
       raios: eixos.map((e, i) => ({
         chave: e.chave,
-        fim: pontoNoEixo(i, total, fracaoDoValor(e.valor), raio, centro, giro),
-        movimento: pontoDoMovimento(e, i, total, raio, centro, giro),
-        atencao: pontoDaAtencao(e, i, total, raio, centro, giro),
+        movimento: barraNoEixo(i, total, fracaoDoEixoSecundario(e.valor, e.movimento), raio, centro, giro, -DESLOCAMENTO),
+        atencao: barraNoEixo(i, total, fracaoDoEixoSecundario(e.valor, e.atencao), raio, centro, giro, DESLOCAMENTO),
         forcaMovimento: typeof e.movimento === 'number' ? Math.max(0, Math.min(100, e.movimento)) : null,
         forcaAtencao: typeof e.atencao === 'number' ? Math.max(0, Math.min(100, e.atencao)) : null,
       })),
@@ -324,37 +338,39 @@ export default function RodaDeStatus({ eixos, aoTocarEixo, larguraMaxima }: Prop
             <React.Fragment key={`raio-${r.chave}`}>
               {/* ⚠️ SEM linha-guia até o vértice. Ela era um traço claro do
                   centro a cada ponto, e oito deles viravam uma estrela branca
-                  no meio do desenho — mais chamativa que o próprio dado. O
-                  comprimento do traço colorido já diz onde ele termina. */}
+                  no meio do desenho — mais chamativa que o próprio dado.
+
+                  ⚠️ As duas barras PARAM NA NOTA. Passar dela tiraria o
+                  significado de "parte de" e viraria medida solta. */}
               {r.forcaMovimento !== null ? (
                 <Line
-                  x1={centro.x}
-                  y1={centro.y}
-                  x2={r.movimento.x}
-                  y2={r.movimento.y}
+                  x1={r.movimento.inicio.x}
+                  y1={r.movimento.inicio.y}
+                  x2={r.movimento.fim.x}
+                  y2={r.movimento.fim.y}
                   stroke={MOVIMENTO}
-                  // ⚠️ A INTENSIDADE também está na espessura e na opacidade,
-                  // não só no comprimento: um raio curto e forte tem de se
-                  // distinguir de um curto e fraco, e comprimento sozinho não
-                  // separa os dois num desenho pequeno.
-                  strokeWidth={2 + (r.forcaMovimento / 100) * 2}
-                  strokeOpacity={0.35 + (r.forcaMovimento / 100) * 0.5}
+                  // ⚠️ A INTENSIDADE está também na opacidade, não só no
+                  // comprimento: uma barra curta e forte tem de se distinguir
+                  // de uma curta e fraca, e num desenho pequeno o comprimento
+                  // sozinho não separa as duas.
+                  //
+                  // A ESPESSURA é fixa: variá-la junto faria a barra mais
+                  // comprida parecer ainda maior, exagerando a diferença que a
+                  // escala já mostra.
+                  strokeWidth={2.5}
+                  strokeOpacity={0.4 + (r.forcaMovimento / 100) * 0.5}
                   strokeLinecap="round"
                 />
               ) : null}
-              {/* A ATENÇÃO cresce do vértice para FORA, no espaço entre o
-                  polígono e a borda — que nos dados reais fica vazio em quase
-                  metade do raio. Direção oposta à do movimento: é o que deixa
-                  os dois legíveis na mesma linha. */}
-              {r.forcaAtencao ? (
+              {r.forcaAtencao !== null ? (
                 <Line
-                  x1={r.fim.x}
-                  y1={r.fim.y}
-                  x2={r.atencao.x}
-                  y2={r.atencao.y}
+                  x1={r.atencao.inicio.x}
+                  y1={r.atencao.inicio.y}
+                  x2={r.atencao.fim.x}
+                  y2={r.atencao.fim.y}
                   stroke={ATENCAO}
                   strokeWidth={2.5}
-                  strokeOpacity={0.3 + (r.forcaAtencao / 100) * 0.5}
+                  strokeOpacity={0.4 + (r.forcaAtencao / 100) * 0.5}
                   strokeLinecap="round"
                 />
               ) : null}

@@ -123,30 +123,53 @@ export function pontoNoEixo(
 
 /** Os vértices do polígono dos valores, na ordem dos eixos. */
 /**
- * O ponto onde a marca de ATENÇÃO termina — do vértice para FORA.
+ * Uma BARRA paralela ao eixo, deslocada para o lado.
  *
- * ⚠️ Cresce na direção oposta à do movimento, e isso é o que deixa os dois
- * legíveis na mesma linha: movimento vai do centro até o valor, atenção vai do
- * valor até a borda. Cada um com âncora própria, sem se sobrepor, e usando o
- * espaço entre o polígono e a borda — que nos dados reais fica vazio em quase
- * metade do raio.
+ * Movimento e atenção correm os dois do centro até a nota, lado a lado. Sem o
+ * deslocamento elas ficariam uma EM CIMA da outra e só a mais longa apareceria
+ * — e qual delas é a mais longa muda por área, então a informação sumiria de
+ * forma imprevisível.
+ *
+ * ⚠️ O deslocamento é PERPENDICULAR ao eixo, não um ângulo a mais: girar a
+ * segunda barra faria o par abrir como um V, e o ângulo passaria a parecer
+ * dado. Paralelas, as duas se leem como duas réguas do mesmo ponto de partida.
+ *
+ * ⚠️ As duas param na NOTA, nunca além. Ultrapassar o vértice tiraria o
+ * significado de "parte de" e viraria uma medida solta — que foi o problema da
+ * versão em que a atenção crescia do vértice para a borda e virava um espigão.
  */
-export function pontoDaAtencao(
-  eixo: EixoDaRoda,
+export function barraNoEixo(
   indice: number,
   total: number,
+  fracao: number,
   raio: number,
   centro: Ponto,
-  giro = 0,
-): Ponto {
-  const a = eixo.atencao
-  const fracao =
-    a === null || a === undefined || !Number.isFinite(Number(a))
-      ? 0
-      : Math.max(0, Math.min(100, Number(a))) / 100
-  const base = fracaoDoValor(eixo.valor)
-  // O que sobra entre o valor e a borda é o espaço que a atenção pode ocupar.
-  return pontoNoEixo(indice, total, base + (1 - base) * fracao, raio, centro, giro)
+  giro: number,
+  deslocamento: number,
+): { inicio: Ponto; fim: Ponto } {
+  const ang = anguloDoEixo(indice, total, giro)
+  // Perpendicular ao eixo: gira 90°.
+  const dx = -Math.sin(ang) * deslocamento
+  const dy = Math.cos(ang) * deslocamento
+  const alvo = pontoNoEixo(indice, total, fracao, raio, centro, giro)
+  return {
+    inicio: { x: centro.x + dx, y: centro.y + dy },
+    fim: { x: alvo.x + dx, y: alvo.y + dy },
+  }
+}
+
+/**
+ * A fração de um dos eixos secundários (movimento, atenção) DENTRO da nota.
+ *
+ * Os dois são 0–100 sobre a própria escala, mas desenhados como fatia da nota:
+ * "deste tanto que a área vale, esta parte está em movimento". Sem multiplicar
+ * pela nota, uma área de nota 18 com movimento 90 teria uma barra maior que o
+ * próprio polígono.
+ */
+export function fracaoDoEixoSecundario(valor: number | null, eixo: number | null | undefined): number {
+  if (eixo === null || eixo === undefined || !Number.isFinite(Number(eixo))) return 0
+  const f = Math.max(0, Math.min(100, Number(eixo))) / 100
+  return fracaoDoValor(valor) * f
 }
 
 /**
