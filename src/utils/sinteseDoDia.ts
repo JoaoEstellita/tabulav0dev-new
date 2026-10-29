@@ -745,7 +745,27 @@ export function sintetizarODia(
 
     // Os mais fortes primeiro, no máximo dois por linha: três origens numa
     // linha discreta deixam de ser referência e viram outra frase para ler.
-    const citados = [...g.ts].sort((a, b) => forca(b) - forca(a)).slice(0, 2)
+    //
+    // ⚠️ QUANDO É MISTO, UM DE CADA LADO — e isto não é preferência de ordem,
+    // é honestidade.
+    //
+    // `tensos` e `faceis` são contados sobre o GRUPO INTEIRO, mas só dois
+    // trânsitos aparecem na tela. Pegando os dois mais fortes sem olhar a
+    // natureza, um grupo com três harmônicos fortes e um tenso fraco dizia
+    // "a ação rende numa frente e esbarra em outra" e mostrava dois aspectos
+    // harmônicos embaixo — a frase afirmava uma divisão que a evidência
+    // visível negava, e quem sabe ler um sextil percebia na hora.
+    //
+    // O texto de `misto` existe para descrever a DIVISÃO; citar os dois lados
+    // é o que o torna verificável. A síntese do WhatsApp já fazia assim, em
+    // palavras ("Hoje X pressiona e Y favorece") — era só o app que não.
+    const maisForte = (lista: typeof g.ts) =>
+      [...lista].sort((a, b) => forca(b) - forca(a))[0]
+    const citados = misto
+      ? [maisForte(tensos), maisForte(faceis)]
+          .filter(Boolean)
+          .sort((a, b) => forca(b) - forca(a))
+      : [...g.ts].sort((a, b) => forca(b) - forca(a)).slice(0, 2)
     const principal = citados[0]
 
     // A fase vem do trânsito mais forte do grupo: é ele que define se a

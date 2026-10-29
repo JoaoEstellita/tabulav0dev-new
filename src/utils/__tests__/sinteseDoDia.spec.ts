@@ -431,3 +431,60 @@ describe('origens e chaves andam juntas', () => {
     }
   })
 })
+
+/**
+ * ⚠️ A EVIDÊNCIA TEM DE BATER COM A AFIRMAÇÃO.
+ *
+ * `tensos` e `faceis` são contados sobre o GRUPO INTEIRO, mas só dois trânsitos
+ * aparecem na tela. Pegando os dois mais fortes sem olhar a natureza, um grupo
+ * com harmônicos fortes e um tenso fraco dizia "a ação rende numa frente e
+ * esbarra em outra" e mostrava dois aspectos harmônicos embaixo — a frase
+ * afirmava uma divisão que a evidência visível negava.
+ *
+ * Foi assim que o João pegou: duas frases de divisão com conjunção e sextil
+ * listados, nenhum aspecto tenso à vista.
+ */
+describe('frase mista cita os dois lados', () => {
+  const alvo = 'Mars'
+  // Três harmônicos fortes e um tenso fraco, todos no mesmo ponto focal: sem a
+  // correção, os dois citados seriam harmônicos e a frase falaria de divisão.
+  const CEU = [
+    { transitPlanet: 'Moon', natalPlanet: alvo, type: 'conjuncao', strength: 95, window: { exact: dias(0) } },
+    { transitPlanet: 'Venus', natalPlanet: alvo, type: 'trigono', strength: 90, window: { exact: dias(1) } },
+    { transitPlanet: 'Jupiter', natalPlanet: alvo, type: 'sextil', strength: 85, window: { exact: dias(2) } },
+    { transitPlanet: 'Saturn', natalPlanet: alvo, type: 'quadratura', strength: 20, window: { exact: dias(3) } },
+  ]
+
+  it('mostra um tenso e um fácil, não os dois mais fortes', () => {
+    const r = sintetizarODia(CEU as any, 'pt-BR')
+    const f = r!.frases.find((x) => x.natureza === 'misto')
+    expect(f, 'nenhuma frase mista foi gerada — a fixture não exercita o caso').toBeTruthy()
+
+    const tipos = f!.chaves.map((c) => String(c).split('|')[1])
+    expect(tipos, `citou: ${tipos.join(', ')}`).toContain('quadratura')
+    expect(tipos.some((t) => ['trigono', 'sextil', 'conjuncao'].includes(t))).toBe(true)
+  })
+
+  it('o mais forte dos dois vem primeiro', () => {
+    const r = sintetizarODia(CEU as any, 'pt-BR')
+    const f = r!.frases.find((x) => x.natureza === 'misto')!
+    // A conjunção da Lua (95) tem de abrir, não a quadratura de Saturno (20).
+    expect(String(f.chaves[0]).split('|')[0]).toBe('Moon')
+  })
+
+  /**
+   * Quando NÃO é misto, a regra antiga vale: os dois mais fortes, porque não há
+   * divisão a provar — só o que mais pesa.
+   */
+  it('frase de um lado só segue citando os dois mais fortes', () => {
+    const soTenso = [
+      { transitPlanet: 'Saturn', natalPlanet: alvo, type: 'quadratura', strength: 90, window: { exact: dias(0) } },
+      { transitPlanet: 'Pluto', natalPlanet: alvo, type: 'oposicao', strength: 80, window: { exact: dias(1) } },
+      { transitPlanet: 'Mars', natalPlanet: alvo, type: 'quincuncio', strength: 10, window: { exact: dias(2) } },
+    ]
+    const r = sintetizarODia(soTenso as any, 'pt-BR')
+    const f = r!.frases.find((x) => x.natureza === 'tenso')
+    expect(f).toBeTruthy()
+    expect(f!.chaves.map((c) => String(c).split('|')[0])).toEqual(['Saturn', 'Pluto'])
+  })
+})
