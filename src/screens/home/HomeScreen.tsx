@@ -747,8 +747,17 @@ export default function HomeScreen() {
               `personalTodayRich` é a mesma fonte que alimenta "O seu dia", então
               a frase lá em cima e as emoções aqui nunca discordam. */}
           <AnimatedMount>
+            {/* ⚠️ `valoresGravados` MANDA quando chega. O backend calcula as
+                emoções junto do status (`currentTransits.emocoes`), e preferir
+                o gravado é o que faz a pessoa ver o MESMO número aqui, no
+                agente do WhatsApp e no grupo. O cálculo local segue como
+                reserva para quando o status não chegou — o app funciona sem
+                backend, com motor próprio. */}
             <ClimaEmocional
               transitos={transitData?.dailyOverview?.personalTodayRich as any}
+              valoresGravados={(backendCurrentTransits as any)?.emocoes?.valores
+                ?? (transitData?.currentTransits as any)?.emocoes?.valores
+                ?? null}
               idioma={language}
             />
           </AnimatedMount>

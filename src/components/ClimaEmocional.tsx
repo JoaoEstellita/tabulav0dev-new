@@ -6,7 +6,15 @@ import { rotuloDeAspecto } from '../utils/transitPresentation'
 import { Ionicons } from '@expo/vector-icons'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { GLOSSARIO_EMOCOES, indiceIdioma } from '../data/emocoesGlossario'
-import { emocoesDoDia, type TransitoParaEmocao, type ChaveEmocao, type EmocaoDoDia, type Contribuicao } from '../utils/emocoesDoDia'
+import {
+  emocoesDoDia,
+  EMOCOES,
+  EMOCAO_PESA,
+  type TransitoParaEmocao,
+  type ChaveEmocao,
+  type EmocaoDoDia,
+  type Contribuicao,
+} from '../utils/emocoesDoDia'
 
 /**
  * A TENDÊNCIA EMOCIONAL do dia, em seis anéis.
@@ -21,6 +29,20 @@ import { emocoesDoDia, type TransitoParaEmocao, type ChaveEmocao, type EmocaoDoD
 
 type Props = {
   transitos: ReadonlyArray<TransitoParaEmocao> | null | undefined
+  /**
+   * Os valores que o BACKEND já calculou e gravou (`currentTransits.emocoes`).
+   *
+   * ⚠️ Quando vierem, MANDAM — o cálculo local é reserva. Os dois usam a mesma
+   * matemática (há teste de paridade dos dois lados), mas não a mesma ENTRADA:
+   * o backend calcula sobre `transitosRicos`, o app sobre `personalTodayRich`,
+   * e as duas listas são montadas por caminhos diferentes. Preferindo o
+   * gravado, a pessoa vê o mesmo número no app, no WhatsApp e no grupo.
+   *
+   * O cálculo local existe para quando o status não chegou — o app funciona
+   * sem backend, com motor próprio, e uma seção que some offline seria pior
+   * que uma que mostra um número ligeiramente diferente.
+   */
+  valoresGravados?: Record<string, number> | null
   idioma?: string
   /**
    * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
@@ -95,7 +117,7 @@ const TINTA = '#8892a4'
 const TINTA_ROTULO = '#C7D2E8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, idioma, compacto }: Props) {
+export default function ClimaEmocional({ transitos, valoresGravados, idioma, compacto }: Props) {
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
   const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
@@ -104,7 +126,31 @@ export default function ClimaEmocional({ transitos, idioma, compacto }: Props) {
   const tl = (pt: string, en: string, es: string, it: string) =>
     l.startsWith('en') ? en : l.startsWith('es') ? es : l.startsWith('it') ? it : pt
 
-  const emocoes = useMemo(() => emocoesDoDia(transitos), [transitos])
+  const emocoes = useMemo(() => {
+    // O cálculo local roda de qualquer jeito: ele é quem traz o `porque` (os
+    // trânsitos que produziram cada número), que o documento gravado não
+    // carrega — seriam uns 8 KB por pessoa num doc que todo cron lê.
+    const local = emocoesDoDia(transitos)
+    if (!valoresGravados) return local
+
+    // ⚠️ Só os VALORES vêm do gravado; o `porque` segue do cálculo local.
+    // Pode haver pequena discordância entre o número e a soma das
+    // contribuições listadas, porque as entradas são listas diferentes — e é
+    // por isso que o detalhe diz "de onde vem", não "quanto cada um somou".
+    const comGravado = EMOCOES.map((chave) => {
+      const doLocal = local?.find((e) => e.chave === chave)
+      const v = valoresGravados[chave]
+      return {
+        chave,
+        valor: typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : (doLocal?.valor ?? 0),
+        pesa: EMOCAO_PESA[chave],
+        porque: doLocal?.porque ?? [],
+      }
+    })
+    // Se o gravado veio vazio ou sem nenhuma chave conhecida, não vale nada:
+    // oito zeros afirmariam "hoje você não sente nada".
+    return comGravado.some((e) => e.valor > 0) ? comGravado : local
+  }, [transitos, valoresGravados])
 
   // ⚠️ `null` quando não há trânsito: a seção inteira some. Seis zeros
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
