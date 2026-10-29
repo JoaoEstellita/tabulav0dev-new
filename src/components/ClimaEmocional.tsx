@@ -80,6 +80,19 @@ const ROTULO: Record<ChaveEmocao, [string, string, string, string]> = {
 }
 
 const TINTA = '#8892a4'
+/**
+ * O tom do NOME da tendência, embaixo do anel.
+ *
+ * ⚠️ Era `TINTA`, o mesmo cinza dos textos de apoio, e em 12px sobre o fundo
+ * escuro não dava para ler. O nome é metade da informação — "45" sozinho não
+ * diz 45 de quê —, então ele não pode ser a parte apagada do par.
+ *
+ * Aqui o peso também sobe para 600: a célula tem largura fixa, então o texto
+ * mais grosso não rouba espaço de desenho nenhum. Na roda isso não foi feito
+ * porque lá o chip se dimensiona pelo texto e a estimativa de largura não sabe
+ * do peso.
+ */
+const TINTA_ROTULO = '#C7D2E8'
 const TRILHO = '#232B3D'
 
 export default function ClimaEmocional({ transitos, idioma, compacto }: Props) {
@@ -396,11 +409,14 @@ const s = StyleSheet.create({
   // ⚠️ 12 e não 10: em 10 o nome da tendência ficava miúdo demais para ler de
   // relance. O rótulo é metade da informação — o número sem a palavra não diz
   // nada —, então ele não pode ser o primeiro a encolher.
-  rotulo: { fontSize: 12, color: TINTA, marginTop: 5, textAlign: 'center' },
+  rotulo: { fontSize: 12, color: TINTA_ROTULO, fontWeight: '600', marginTop: 5, textAlign: 'center' },
   // No compacto o anel encolhe mas o rótulo NÃO: abaixo de 12px o nome deixa
   // de ser legível, e é o nome que diz o que o número significa.
-  rotuloCompacto: { fontSize: 12, color: TINTA, marginTop: 3, textAlign: 'center' },
-  nota: { fontSize: 11, color: '#5c6477', textAlign: 'center', marginTop: 2 },
+  rotuloCompacto: { fontSize: 12, color: TINTA_ROTULO, fontWeight: '600', marginTop: 3, textAlign: 'center' },
+  // ⚠️ Era #5c6477 — mais escuro ainda que o rótulo, e é a linha que diz que
+  // estes números são leitura do céu e não medida da pessoa. A ressalva que
+  // ninguém consegue ler não cumpre o papel de ressalva.
+  nota: { fontSize: 11, color: '#8892a4', textAlign: 'center', marginTop: 2 },
 
   fundo: { flex: 1, backgroundColor: 'rgba(5,7,18,0.82)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   caixa: { width: '100%', maxWidth: 380, backgroundColor: '#13162B', borderRadius: 16, borderWidth: 1, borderColor: '#242B40', padding: 16 },

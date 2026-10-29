@@ -70,6 +70,20 @@ const CORES = {
 
 const TRILHO = '#232B3D'
 const TINTA = '#8892a4'
+/**
+ * O tom do NOME da área, dentro do chip.
+ *
+ * ⚠️ Era `TINTA` (#8892a4), o mesmo cinza dos textos de apoio — e sobre o fundo
+ * do chip, em 12px, não dava para ler. O número ao lado é grande, grosso e
+ * colorido pela faixa; o nome ficava sendo a parte apagada de um par em que ele
+ * é metade da informação: "44" sozinho não diz 44 de quê.
+ *
+ * ⚠️ NÃO foi resolvido com fonte maior, e isso é medido: subir o rótulo de 12
+ * para 14px encolhe o diâmetro da roda em 17 a 21%, porque o raio sai de uma
+ * busca limitada pela LARGURA dos chips (ver `melhorGiro`) — e a roda pequena
+ * demais já tinha sido queixa. Contraste resolve a leitura sem custar desenho.
+ */
+const TINTA_ROTULO = '#C7D2E8'
 const TINTA_FORTE = '#F2F5FA'
 const ACENTO = '#9BB4E8'
 /**
@@ -516,6 +530,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  rotulo: { fontSize: FONTE_ROTULO, color: TINTA, lineHeight: 15 },
+  rotulo: { fontSize: FONTE_ROTULO, color: TINTA_ROTULO, lineHeight: 15 },
   valor: { fontSize: 18, fontWeight: '800', lineHeight: 21 },
 })
