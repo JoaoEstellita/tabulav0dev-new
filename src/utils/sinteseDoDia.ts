@@ -1,7 +1,7 @@
 import { translatePlanet, aspectNature, type AppLanguage } from './astro/pt'
 import { areasAffectedByTransit } from './transitLifeAreas'
 import { getLifeAreaLabelI18n } from '../constants/lifeAreas'
-import { nomeDoPonto, efeitoNoPonto } from './efeitoDoTransito'
+import { nomeDoPonto, efeitoNoPonto, detalheDoPonto } from './efeitoDoTransito'
 import { enumerar, costurar, janelaEmPalavras } from './leituraDoDia'
 
 /**
@@ -53,6 +53,17 @@ export interface TransitoAtivo {
 export interface FraseDoDia {
   /** O que muda hoje — o texto que ganha destaque. */
   efeito: string
+  /**
+   * A segunda linha: como isso aparece no dia e o que fazer com isso.
+   *
+   * ⚠️ A manchete sozinha e bonita e vaga — diz que ha uma tensao, nao diz
+   * o que a pessoa faz com ela. Esta linha e o que transforma a frase em
+   * leitura.
+   *
+   * ⚠️ PODE VIR VAZIA, e quem renderiza tem de aguentar isso sem sumir com
+   * a frase: a manchete continua valendo sozinha.
+   */
+  detalhe: string
   /** De onde vem, tudo numa linha (compatibilidade). */
   fonte: string
   /**
@@ -742,6 +753,10 @@ export function sintetizarODia(
       : efeitoNoPonto(g.alvo, tensos.length ? 'tenso' : 'facil', idioma)
     if (!efeitoBruto) continue
     const efeito = `${maiuscula(efeitoBruto)}.`
+    // A segunda linha vem do MESMO ponto e da MESMA natureza da manchete —
+    // senao as duas falariam de dias diferentes na mesma frase.
+    const detalheBruto = detalheDoPonto(g.alvo, misto ? 'misto' : (tensos.length ? 'tenso' : 'facil'), idioma)
+    const detalhe = detalheBruto ? `${maiuscula(detalheBruto)}` : ''
 
     // Os mais fortes primeiro, no máximo dois por linha: três origens numa
     // linha discreta deixam de ser referência e viram outra frase para ler.
@@ -780,6 +795,7 @@ export function sintetizarODia(
 
     frases.push({
       efeito,
+      detalhe,
       fonte: fonteDosTransitos(citados, idioma),
       // Uma linha por trânsito, cada uma com a sua janela. Desfaz a fatoração
       // do alvo (que aparecia uma vez só) — mas o alvo repetido custa menos

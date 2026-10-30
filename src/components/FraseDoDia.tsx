@@ -351,6 +351,27 @@ export default function FraseDoDia({ transitos }: Props) {
             <Ionicons name="book-outline" size={15} color="#7f8aa3" />
           </View>
         </View>
+        {/* ⚠️ A SEGUNDA LINHA — o que a manchete acima NÃO diz.
+            "A mudança abre tanto quanto desorganiza" informa que há uma tensão
+            e para ali: a pessoa não fica sabendo como aquilo aparece no dia
+            dela nem o que fazer com isso. Esta linha é o que separa uma frase
+            de efeito de uma leitura.
+
+            ⚠️ FORA do `fraseTopo` de propósito: ali dentro ela dividiria a
+            largura com o livrinho e quebraria mais cedo, e o ícone deve alinhar
+            com a PRIMEIRA linha, que é onde o olho está.
+
+            ⚠️ 15px e não 12: o arquivo está com catraca ZERO no piso de
+            legibilidade (`theme/__tests__/pisoDeLegibilidade.spec.ts`). Texto de
+            apoio aqui continua sendo texto para ler, não etiqueta — e já houve
+            a queixa de rótulo ilegível nesta mesma tela.
+
+            ⚠️ Some sozinha quando o ponto não tem detalhe: a manchete vale
+            sozinha, e sumir com a frase inteira por falta do complemento é o
+            erro que `efeitoNoPonto` já cometeu com os ângulos. */}
+        {f.detalhe ? (
+          <TextoComGlossario style={[s.texto, s.fraseDetalhe]}>{f.detalhe}</TextoComGlossario>
+        ) : null}
         {/* ⚠️ O ASPECTO VIRA GLIFO e a linha é COMPOSTA, não extraída.
             Ela dizia "Marte em quincúncio com o seu Saturno" — vinte e tantos
             caracteres para uma relação que cabe num símbolo. Com oito grupos na
@@ -612,6 +633,16 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
   },
   fraseTexto: { flex: 1 },
+  // Secundaria pela COR e pelo tamanho, nao por ser miuda: 15px contra os 17
+  // da manchete marca a hierarquia sem cair no piso de legibilidade (14px).
+  // O `lineHeight` folgado e o que faz duas linhas corridas se lerem como
+  // paragrafo, e nao como bloco apertado.
+  fraseDetalhe: {
+    color: '#b9c2d6',
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 6,
+  },
   // Discreto de proposito: sinaliza que ha leitura por tras, sem disputar
   // atencao com o texto. Quem nao quiser aprofundar nao precisa notar.
   // O `paddingTop` alinha o livro com a PRIMEIRA linha do texto, que e onde o
