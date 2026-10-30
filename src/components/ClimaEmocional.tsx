@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView, useWindowDimensions } from 'react-native'
-import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
+import Svg, { Circle, Defs, Line, LinearGradient, Stop } from 'react-native-svg'
 import { translatePlanet } from '../utils/astro/pt'
 import { rotuloDeAspecto } from '../utils/transitPresentation'
 import { Ionicons } from '@expo/vector-icons'
@@ -10,6 +10,7 @@ import {
   emocoesDoDia,
   EMOCOES,
   EMOCAO_PESA,
+  REFERENCIA_POR_ANEL,
   type TransitoParaEmocao,
   type ChaveEmocao,
   type EmocaoDoDia,
@@ -58,6 +59,19 @@ type Props = {
    */
   transitosDoBackend?: ReadonlyArray<TransitoParaEmocao> | null
   valoresGravados?: Record<string, number> | null
+  /**
+   * A REFERENCIA de cada anel — o ponto contra o qual o numero do dia se le.
+   *
+   * ⚠️ ELA EXISTE PORQUE OS ANEIS NAO ESTAO NA MESMA ESCALA, e a roda os mostra
+   * lado a lado como se estivessem. Medido: 45 fica acima de 90% dos casos no
+   * Afeto e acima de so 33% no Entusiasmo. Sem a marca, a pessoa compara dois
+   * aneis iguais na tela e le coisas opostas como se fossem a mesma.
+   *
+   * ⚠️ E UM SLOT, de proposito. O padrao e a referencia do ANEL (quanto aquele
+   * anel costuma marcar). Quando a tendencia NATAL existir, ela entra aqui no
+   * lugar — e a marca passa a dizer "comparado a VOCE" sem mudar nada do resto.
+   */
+  referencia?: Record<string, number> | null
   idioma?: string
   /**
    * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
@@ -130,9 +144,19 @@ const TINTA = '#8892a4'
  * do peso.
  */
 const TINTA_ROTULO = '#C7D2E8'
+/**
+ * A marca do normal de cada anel.
+ *
+ * Clara o bastante para ser vista sobre o trilho escuro e sobre o arco colorido
+ * (ela cruza os dois), e NEUTRA de proposito: se levasse a cor da emocao,
+ * competiria com o arco pela leitura e viraria mais um elemento colorido numa
+ * roda que ja tem oito.
+ */
+const TINTA_MARCA = '#E6ECF8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, idioma, compacto }: Props) {
+export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, idioma, compacto }: Props) {
+  const refs = referencia || REFERENCIA_POR_ANEL
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
   const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
@@ -224,12 +248,27 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
         {emocoes.map((e) => {
           const [escuro, claro] = COR[e.chave]
           const preenchido = (Math.max(0, Math.min(100, e.valor)) / 100) * perimetro
+          // A marca do normal deste anel. `null` quando nao ha referencia — e
+          // melhor nenhuma marca do que uma marca inventada.
+          const ref = Number(refs?.[e.chave])
+          const temRef = Number.isFinite(ref) && ref > 0 && ref < 100
+          const anguloRef = temRef ? (ref / 100) * 360 - 90 : 0
           return (
             <Pressable
               key={e.chave}
               onPress={() => setAberta(e)}
               accessibilityRole="button"
-              accessibilityLabel={`${tl(...ROTULO[e.chave])}: ${e.valor}`}
+              accessibilityLabel={
+                temRef
+                  ? `${tl(...ROTULO[e.chave])}: ${e.valor}, ${
+                      e.valor > ref
+                        ? tl('acima do normal', 'above normal', 'por encima de lo normal', 'sopra la norma')
+                        : e.valor < ref
+                          ? tl('abaixo do normal', 'below normal', 'por debajo de lo normal', 'sotto la norma')
+                          : tl('no normal', 'at normal', 'en lo normal', 'nella norma')
+                    }`
+                  : `${tl(...ROTULO[e.chave])}: ${e.valor}`
+              }
               style={({ pressed }) => [
                 s.item,
                 { width: celula, opacity: pressed ? 0.6 : 1 },
@@ -260,6 +299,26 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
                     // anel parece torto — o olho espera o zero às 12 horas.
                     transform={`rotate(-90 ${tamanho / 2} ${tamanho / 2})`}
                   />
+                  {/* ⚠️ A MARCA DO NORMAL DESTE ANEL.
+                      Um tracinho atravessando o anel no ponto de referencia: o
+                      arco passando dele le "acima do normal", parando antes le
+                      "abaixo". E o que torna dois aneis comparaveis sem mexer
+                      no numero — que ja circula no WhatsApp e no agente.
+
+                      Desenhada DEPOIS do arco: ordem de desenho decide quem
+                      aparece em SVG, e este projeto ja perdeu uma camada
+                      inteira por desenha-la antes do preenchimento. */}
+                  {temRef ? (
+                    <Line
+                      x1={tamanho / 2 + (raio - traco / 2 - 1) * Math.cos((anguloRef * Math.PI) / 180)}
+                      y1={tamanho / 2 + (raio - traco / 2 - 1) * Math.sin((anguloRef * Math.PI) / 180)}
+                      x2={tamanho / 2 + (raio + traco / 2 + 1) * Math.cos((anguloRef * Math.PI) / 180)}
+                      y2={tamanho / 2 + (raio + traco / 2 + 1) * Math.sin((anguloRef * Math.PI) / 180)}
+                      stroke={TINTA_MARCA}
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
+                  ) : null}
                 </Svg>
                 {/* O número POR CIMA do anel: o arco dá a sensação, o número dá
                     o valor — e nenhum depende de cor para ser lido. */}
@@ -286,6 +345,7 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
 
       <DetalheDaEmocao
         emocao={aberta}
+        referencia={aberta ? refs?.[aberta.chave] : null}
         aoFechar={() => setAberta(null)}
         aoLerAspecto={setLeitura}
         tl={tl}
@@ -343,12 +403,15 @@ function leituraDoAspecto(c: Contribuicao, idioma: string) {
 
 function DetalheDaEmocao({
   emocao,
+  referencia,
   aoFechar,
   aoLerAspecto,
   tl,
   idioma,
 }: {
   emocao: EmocaoDoDia | null
+  /** O normal deste anel — a mesma referencia da marca na roda. */
+  referencia?: number | null
   aoFechar: () => void
   aoLerAspecto: (leitura: { titulo: string; corpo: string }) => void
   tl: (pt: string, en: string, es: string, it: string) => string
@@ -356,6 +419,27 @@ function DetalheDaEmocao({
 }) {
   if (!emocao) return null
   const [escuro] = COR[emocao.chave]
+
+  // ⚠️ A MARGEM E PROPORCIONAL A REFERENCIA, nao um numero fixo — e esse e o
+  // ponto da linha inteira. Um corte fixo ("acima de 60 e alto") repetiria
+  // exatamente o erro que ela existe para corrigir: o normal do Afeto e 21 e o
+  // da Ansiedade e 48, entao 10 pontos acima significam coisas diferentes nos
+  // dois. Usar 20% da propria referencia mantem a leitura na escala do anel.
+  //
+  // O piso de 6 existe para os aneis de referencia baixa: 20% de 21 sao 4
+  // pontos, e 4 pontos de diferenca nao sustentam a afirmacao "acima do
+  // normal" num numero que se move dezenas de pontos por dia.
+  const ref = Number(referencia)
+  const comparacao = (() => {
+    if (!Number.isFinite(ref) || ref <= 0) return null
+    const d = emocao.valor - ref
+    const margem = Math.max(6, Math.round(ref * 0.2))
+    if (d >= margem * 2) return tl('Bem acima do normal deste anel.', 'Well above normal for this ring.', 'Bastante por encima de lo normal de este anillo.', 'Ben sopra la norma di questo anello.')
+    if (d >= margem) return tl('Acima do normal deste anel.', 'Above normal for this ring.', 'Por encima de lo normal de este anillo.', 'Sopra la norma di questo anello.')
+    if (d <= -margem * 2) return tl('Bem abaixo do normal deste anel.', 'Well below normal for this ring.', 'Bastante por debajo de lo normal de este anillo.', 'Ben sotto la norma di questo anello.')
+    if (d <= -margem) return tl('Abaixo do normal deste anel.', 'Below normal for this ring.', 'Por debajo de lo normal de este anillo.', 'Sotto la norma di questo anello.')
+    return tl('No normal deste anel.', 'At normal for this ring.', 'En lo normal de este anillo.', 'Nella norma di questo anello.')
+  })()
   const nome = tl(...ROTULO[emocao.chave])
   // ⚠️ A EXPLICAÇÃO ANTES DA CONTA. "Ansiedade 73" sozinho é um oráculo: a
   // pessoa não sabe se é muito, se é dela, nem o que fazer. A definição diz o
@@ -420,6 +504,16 @@ function DetalheDaEmocao({
             <Text style={[s.caixaTitulo, { color: escuro }]}>{nome}</Text>
             <Text style={[s.caixaValor, { color: escuro }]}>{emocao.valor}</Text>
           </View>
+
+          {/* ⚠️ O NUMERO SOZINHO E UM ORACULO. "54" nao diz se e muito — e a
+              comparacao com o anel do lado engana, porque as escalas sao
+              diferentes (45 fica acima de 90% dos casos no Afeto e acima de so
+              33% no Entusiasmo). Esta linha responde "54 de quanto?" contra o
+              normal DAQUELE anel, que e o mesmo ponto da marca na roda.
+
+              Some quando nao ha referencia: sem base, qualquer comparacao
+              seria inventada. */}
+          {comparacao ? <Text style={s.comparacao}>{comparacao}</Text> : null}
 
           <ScrollView style={{ maxHeight: 380 }}>
             <Text style={s.definicao}>{verbete.definicao[i]}</Text>
@@ -510,6 +604,13 @@ const s = StyleSheet.create({
   cabecalho: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 },
   caixaTitulo: { fontSize: 16, fontWeight: '800' },
   caixaValor: { fontSize: 22, fontWeight: '800' },
+  // Discreta: e contexto para o numero grande acima, nao uma afirmacao nova.
+  comparacao: {
+    color: TINTA_ROTULO,
+    fontSize: 14,
+    marginTop: -2,
+    marginBottom: 10,
+  },
   definicao: { fontSize: 13, color: '#E8ECF5', lineHeight: 19 },
   leitura: { fontSize: 12.5, color: TINTA, lineHeight: 18, marginTop: 8 },
   // A fonte fica em caixa alta e miúda: é referência, não leitura corrida.

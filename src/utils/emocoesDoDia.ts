@@ -577,6 +577,43 @@ export type EmocaoDoDia = {
 }
 
 /**
+ * O NORMAL DE CADA ANEL — a referencia contra a qual o numero do dia se le.
+ *
+ * ⚠️ POR QUE EXISTE. Os oito aneis NAO estao na mesma escala, e a roda os mostra
+ * lado a lado como se estivessem. Medido nos 21 mapas reais: o valor 45 fica
+ * acima de 90% dos casos no Afeto e acima de apenas 33% no Entusiasmo. Mesmo
+ * numero, leitura oposta. A causa e estrutural: cada anel tem um conjunto
+ * diferente de planetas-fonte e somas de peso diferentes, logo tetos diferentes
+ * (o Entusiasmo nao passa de 61 nem chega a zero; a Ansiedade vai a 89).
+ *
+ * ⚠️ DE ONDE SAIRAM ESTES NUMEROS. Nao da mediana dos 21 — sao 21 mapas num
+ * UNICO dia, e qualquer ruido daquele ceu entraria na constante para sempre.
+ * Vem de `backend/scripts/calibrar-aneis.js`: 12.000 dias sinteticos montados
+ * por reamostragem do POOL REAL de transitos observados, com a mesma cota que o
+ * motor aplica (6 lentos + 6 rapidos). O material e real; o que varia e a
+ * combinacao.
+ *
+ * ⚠️ O MODELO FOI VALIDADO antes de virar constante: as medianas simuladas
+ * reproduzem as observadas com no maximo 7 pontos de diferenca (a maioria em 4
+ * ou menos). A primeira versao do script sorteava dias RALOS e errava feio — a
+ * mediana do Afeto dava 8 contra 27 reais — e so a comparacao com o observado
+ * mostrou isso. Sem essa checagem, a tabela errada teria entrado calada.
+ *
+ * ⚠️ ISTO NAO MUDA NENHUM NUMERO. E referencia de LEITURA: o valor do dia segue
+ * o que sempre foi, e o mesmo que o agente e o WhatsApp usam.
+ */
+export const REFERENCIA_POR_ANEL: Record<ChaveEmocao, number> = {
+  afeto: 21,
+  entusiasmo: 43,
+  calma: 32,
+  sensibilidade: 32,
+  estresse: 37,
+  desanimo: 47,
+  ansiedade: 48,
+  pressao: 36,
+}
+
+/**
  * As oito tendências do dia, de 0 a 100.
  *
  * Sem trânsito nenhum devolve `null` — e isso importa: zerar tudo diria "hoje
