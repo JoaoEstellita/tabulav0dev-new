@@ -42,6 +42,21 @@ type Props = {
    * sem backend, com motor próprio, e uma seção que some offline seria pior
    * que uma que mostra um número ligeiramente diferente.
    */
+  /**
+   * `currentTransits.transitosRicos` — A LISTA QUE O BACKEND USOU para calcular
+   * os valores gravados.
+   *
+   * ⚠️ ELA É A CORREÇÃO DE UM BUG REAL. Antes, o número vinha do gravado e a
+   * explicação do cálculo LOCAL (`personalTodayRich`), que é outra lista. Deu
+   * na tela "Sensível 54" junto de "Nenhum trânsito de hoje mexe nisso" — os 54
+   * vinham de dois trânsitos de Netuno (ao ASC e ao IC) que só existiam na
+   * lista do backend. Número de uma fonte, explicação de outra.
+   *
+   * ⚠️ Recalculando daqui, o número e o "de onde vem" saem da MESMA lista, e o
+   * resultado bate com o gravado por construção — o cálculo é o mesmo dos dois
+   * lados, e há teste de paridade provando (`emocoesParidade.spec.ts`).
+   */
+  transitosDoBackend?: ReadonlyArray<TransitoParaEmocao> | null
   valoresGravados?: Record<string, number> | null
   idioma?: string
   /**
@@ -117,7 +132,7 @@ const TINTA = '#8892a4'
 const TINTA_ROTULO = '#C7D2E8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, valoresGravados, idioma, compacto }: Props) {
+export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, idioma, compacto }: Props) {
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
   const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
@@ -127,30 +142,42 @@ export default function ClimaEmocional({ transitos, valoresGravados, idioma, com
     l.startsWith('en') ? en : l.startsWith('es') ? es : l.startsWith('it') ? it : pt
 
   const emocoes = useMemo(() => {
-    // O cálculo local roda de qualquer jeito: ele é quem traz o `porque` (os
-    // trânsitos que produziram cada número), que o documento gravado não
-    // carrega — seriam uns 8 KB por pessoa num doc que todo cron lê.
+    // ⚠️ PRIMEIRA ESCOLHA: recalcular da lista do BACKEND.
+    //
+    // É o que faz o número e a explicação virem da MESMA fonte. Antes, o valor
+    // vinha gravado e o `porque` do cálculo local, que roda sobre outra lista —
+    // e a tela mostrou "Sensível 54" com "Nenhum trânsito de hoje mexe nisso".
+    //
+    // O resultado é idêntico ao gravado: mesmo cálculo, mesma entrada (há teste
+    // de paridade dos dois lados). Então isto não é "outra conta", é a mesma
+    // conta com o detalhe junto.
+    if (transitosDoBackend?.length) {
+      const doBackend = emocoesDoDia(transitosDoBackend)
+      if (doBackend) return doBackend
+    }
+
     const local = emocoesDoDia(transitos)
     if (!valoresGravados) return local
 
-    // ⚠️ Só os VALORES vêm do gravado; o `porque` segue do cálculo local.
-    // Pode haver pequena discordância entre o número e a soma das
-    // contribuições listadas, porque as entradas são listas diferentes — e é
-    // por isso que o detalhe diz "de onde vem", não "quanto cada um somou".
+    // ⚠️ SEGUNDA ESCOLHA: valores gravados SEM a lista que os gerou (status de
+    // uma versão anterior). O número é o certo, mas não há de onde tirar o
+    // "de onde vem" — e inventar a explicação da lista local foi exatamente o
+    // bug. Então `porque` fica VAZIO de propósito, e o modal diz que o detalhe
+    // não está disponível em vez de afirmar que nenhum trânsito mexe nisso.
     const comGravado = EMOCOES.map((chave) => {
-      const doLocal = local?.find((e) => e.chave === chave)
       const v = valoresGravados[chave]
+      const doLocal = local?.find((e) => e.chave === chave)
       return {
         chave,
         valor: typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : (doLocal?.valor ?? 0),
         pesa: EMOCAO_PESA[chave],
-        porque: doLocal?.porque ?? [],
+        porque: [] as Contribuicao[],
       }
     })
     // Se o gravado veio vazio ou sem nenhuma chave conhecida, não vale nada:
     // oito zeros afirmariam "hoje você não sente nada".
     return comGravado.some((e) => e.valor > 0) ? comGravado : local
-  }, [transitos, valoresGravados])
+  }, [transitos, transitosDoBackend, valoresGravados])
 
   // ⚠️ `null` quando não há trânsito: a seção inteira some. Seis zeros
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
@@ -417,9 +444,23 @@ function DetalheDaEmocao({
               </>
             ) : null}
 
+            {/* ⚠️ DUAS AUSÊNCIAS DIFERENTES, e confundi-las foi o bug.
+                "Nenhum trânsito mexe nisso" é uma AFIRMAÇÃO — e ela só é
+                verdadeira quando o número é zero. Com o anel marcando 54, a
+                mesma frase vira contradição: a pessoa lê que não há nada
+                movendo algo que claramente está alto, e passa a duvidar do
+                número inteiro. Quando há valor mas não há lista, o honesto é
+                dizer que o detalhe não veio. */}
             {!pesam.length && !aliviam.length ? (
               <Text style={s.vazio}>
-                {tl('Nenhum trânsito de hoje mexe nisso.', 'No transit today stirs this.', 'Ningun transito de hoy mueve esto.', 'Nessun transito di oggi muove questo.')}
+                {emocao.valor > 0
+                  ? tl(
+                      'O detalhe de onde vem não carregou nesta leitura. O número está certo; abra de novo daqui a pouco.',
+                      'The breakdown did not load for this reading. The number is right; try again shortly.',
+                      'El detalle de donde viene no cargo en esta lectura. El numero esta correcto; abre de nuevo en un momento.',
+                      'Il dettaglio di dove viene non e stato caricato. Il numero e corretto; riprova tra poco.',
+                    )
+                  : tl('Nenhum trânsito de hoje mexe nisso.', 'No transit today stirs this.', 'Ningun transito de hoy mueve esto.', 'Nessun transito di oggi muove questo.')}
               </Text>
             ) : null}
           </ScrollView>

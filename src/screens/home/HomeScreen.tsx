@@ -753,8 +753,23 @@ export default function HomeScreen() {
                 agente do WhatsApp e no grupo. O cálculo local segue como
                 reserva para quando o status não chegou — o app funciona sem
                 backend, com motor próprio. */}
+            {/* ⚠️ `transitosDoBackend` MANDA, e é a correção de um bug real: o
+                número vinha do valor gravado e a explicação do cálculo local,
+                que roda sobre OUTRA lista. A tela mostrou "Sensível 54" junto
+                de "Nenhum trânsito de hoje mexe nisso" — os 54 vinham de dois
+                trânsitos de Netuno (ao ASC e ao IC) que só existiam na lista
+                do backend.
+
+                Recalculando de `transitosRicos` (a mesma lista que gerou o
+                gravado), número e explicação saem da mesma fonte e batem por
+                construção. `valoresGravados` fica como reserva para status
+                antigo, sem a lista; o cálculo local, para quando não há
+                backend. */}
             <ClimaEmocional
               transitos={transitData?.dailyOverview?.personalTodayRich as any}
+              transitosDoBackend={((backendCurrentTransits as any)?.transitosRicos
+                ?? (transitData?.currentTransits as any)?.transitosRicos
+                ?? null) as any}
               valoresGravados={(backendCurrentTransits as any)?.emocoes?.valores
                 ?? (transitData?.currentTransits as any)?.emocoes?.valores
                 ?? null}
