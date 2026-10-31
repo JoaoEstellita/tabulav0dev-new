@@ -15,6 +15,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { LocalAstrologyService, type LocalTransitData } from '../../services/astrology/LocalAstrologyService'
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { AstroProfileContent } from '../cosmos/AstroProfileScreen'
+import ClimaEmocional from '../../components/ClimaEmocional'
 import { VedicProfileContent } from '../cosmos/VedicProfileContent'
 import TzolkinProfileContent from '../cosmos/TzolkinProfileContent'
 import ChineseProfileContent from '../cosmos/ChineseProfileContent'
@@ -310,6 +311,25 @@ export default function MemberProfileScreen() {
                   // O embedded lê route.params.member (o mesmo que abriu esta tela).
                   <PersonalTransitsScreen embedded />
                 ) : null}
+                {/* ⚠️ AS OITO TENDÊNCIAS DO MAPA DESTA PESSOA — o temperamento
+                    dela, não o dia. É o que explica por que o mesmo céu pesa
+                    diferente em cada um do grupo.
+
+                    ⚠️ Calculada dos planetas LOCAIS: o mapa do membro é montado
+                    aqui (`computeNatalChart`) e nunca passou pelo status dele,
+                    que o app nem poderia ler. Sem o cálculo local, esta seção
+                    existiria só para o dono da conta.
+
+                    ⚠️ Consentimento: quem chega nesta tela já passou pelo gate do
+                    grupo — a roda natal e o perfil completo dela já estão
+                    desenhados acima. Não há exposição nova aqui. */}
+                <ClimaEmocional
+                  modo="natal"
+                  planetasNatais={((data as any)?.currentTransits?.natalPlanets ?? []) as any}
+                  transitos={null}
+                  idioma={language}
+                />
+
                 <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
               </>
             )}

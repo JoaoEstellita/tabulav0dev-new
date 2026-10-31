@@ -33,6 +33,18 @@ export type VerbeteEmocao = {
   leitura: Quatro
   /** Os planetas que movem o anel — ensina mesmo quando não aparecem hoje. */
   fonte: Quatro
+  /**
+   * O que um valor ALTO significa no MAPA NATAL — temperamento, não o dia.
+   *
+   * ⚠️ As outras três linhas falam do DIA ("o atrito do dia"), e no mapa isso
+   * estaria errado: o natal não é um dia. A distinção que esta linha carrega é
+   * sempre a mesma — o que é de ESTRUTURA contra o que é do momento.
+   *
+   * ⚠️ Fala do MAPA, nunca da pessoa. Aqui a tentação é maior do que no resto
+   * da feature, porque o natal parece descrever quem alguém é; ele descreve
+   * quantos aspectos natais alimentam aquele anel.
+   */
+  natal: Quatro
 }
 
 export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
@@ -55,6 +67,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Venus y Sol, en aspecto suave',
       'Venere e Sole, in aspetto morbido',
     ],
+    natal: [
+      'Alto no mapa, o desenho já pende para o prazer e a troca; baixo, esse lado depende mais do dia.',
+      'High in the chart, the design already leans toward pleasure and exchange; low, that side depends more on the day.',
+      'Alto en la carta, el diseno ya se inclina al placer y al intercambio; bajo, ese lado depende mas del dia.',
+      'Alto nella carta, il disegno pende gia verso il piacere e lo scambio; basso, quel lato dipende piu dal giorno.',
+    ],
   },
 
   entusiasmo: {
@@ -75,6 +93,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Jupiter, Sun and Mars, in soft aspect',
       'Jupiter, Sol y Marte, en aspecto suave',
       'Giove, Sole e Marte, in aspetto morbido',
+    ],
+    natal: [
+      'Alto no mapa, há combustível próprio para começar; baixo, o impulso costuma vir de fora.',
+      'High in the chart, there is fuel of its own to start things; low, the push usually comes from outside.',
+      'Alto en la carta, hay combustible propio para empezar; bajo, el impulso suele venir de fuera.',
+      'Alto nella carta, c e carburante proprio per iniziare; basso, la spinta di solito viene da fuori.',
     ],
   },
 
@@ -97,6 +121,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Saturno, Pluton y Mercurio, en aspecto suave',
       'Saturno, Plutone e Mercurio, in aspetto morbido',
     ],
+    natal: [
+      'Alto no mapa, há estrutura de base que segura; baixo, o apoio tende a vir da situação, não do desenho.',
+      'High in the chart, there is underlying structure that holds; low, support tends to come from the situation, not the design.',
+      'Alto en la carta, hay estructura de base que sostiene; bajo, el apoyo tiende a venir de la situacion, no del diseno.',
+      'Alto nella carta, c e struttura di base che regge; basso, il sostegno tende a venire dalla situazione, non dal disegno.',
+    ],
   },
 
   sensibilidade: {
@@ -117,6 +147,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Moon and Neptune, in soft aspect',
       'Luna y Neptuno, en aspecto suave',
       'Luna e Nettuno, in aspetto morbido',
+    ],
+    natal: [
+      'Alto no mapa, o ambiente alcança mais fundo por natureza; baixo, o dia escorrega com mais facilidade.',
+      'High in the chart, the surroundings reach deeper by nature; low, the day slides by more easily.',
+      'Alto en la carta, el ambiente alcanza mas hondo por naturaleza; bajo, el dia resbala con mas facilidad.',
+      'Alto nella carta, l ambiente arriva piu a fondo per natura; basso, il giorno scivola piu facilmente.',
     ],
   },
 
@@ -139,6 +175,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Marte y Sol, en aspecto duro',
       'Marte e Sole, in aspetto duro',
     ],
+    natal: [
+      'Alto no mapa, há atrito interno de fábrica; baixo, o pavio curto que aparecer é do dia, não do desenho.',
+      'High in the chart, there is built-in friction; low, a short fuse that shows up belongs to the day, not the design.',
+      'Alto en la carta, hay roce interno de fabrica; bajo, la mecha corta que aparezca es del dia, no del diseno.',
+      'Alto nella carta, c e attrito interno di fabbrica; basso, la miccia corta che appare e del giorno, non del disegno.',
+    ],
   },
 
   desanimo: {
@@ -159,6 +201,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Saturn, Neptune and Venus, in hard aspect',
       'Saturno, Neptuno y Venus, en aspecto duro',
       'Saturno, Nettuno e Venere, in aspetto duro',
+    ],
+    natal: [
+      'Alto no mapa, o cansaço tem raiz estrutural; baixo, o peso que aparecer é do momento.',
+      'High in the chart, the tiredness has a structural root; low, any weight that shows up belongs to the moment.',
+      'Alto en la carta, el cansancio tiene raiz estructural; bajo, el peso que aparezca es del momento.',
+      'Alto nella carta, la stanchezza ha radice strutturale; basso, il peso che appare e del momento.',
     ],
   },
 
@@ -181,6 +229,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Urano y Mercurio, en aspecto duro',
       'Urano e Mercurio, in aspetto duro',
     ],
+    natal: [
+      'Alto no mapa, o chão se move com mais facilidade por desenho; baixo, o sobressalto vem de fora.',
+      'High in the chart, the ground shifts more easily by design; low, the jolt comes from outside.',
+      'Alto en la carta, el suelo se mueve con mas facilidad por diseno; bajo, el sobresalto viene de fuera.',
+      'Alto nella carta, il terreno si muove piu facilmente per disegno; basso, il soprassalto viene da fuori.',
+    ],
   },
 
   pressao: {
@@ -201,6 +255,12 @@ export const GLOSSARIO_EMOCOES: Record<ChaveEmocao, VerbeteEmocao> = {
       'Pluto and Saturn, in hard aspect',
       'Pluton y Saturno, en aspecto duro',
       'Plutone e Saturno, in aspetto duro',
+    ],
+    natal: [
+      'Alto no mapa, há um aperto de fundo que acompanha; baixo, a cobrança que vier é da situação.',
+      'High in the chart, there is a background squeeze that stays; low, any demand that comes is from the situation.',
+      'Alto en la carta, hay un apreton de fondo que acompana; bajo, la exigencia que venga es de la situacion.',
+      'Alto nella carta, c e una stretta di fondo che accompagna; basso, la richiesta che arriva e della situazione.',
     ],
   },
 }

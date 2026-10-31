@@ -662,6 +662,105 @@ export function baseDaPessoa(
 }
 
 /**
+ * A TENDENCIA EMOCIONAL DO NATAL — o temperamento, contra o qual o dia se le.
+ *
+ * ⚠️ GEMEO de `backend/lib/status/emocoes-do-dia.js`. O cabecalho completo (de
+ * onde vem o K por anel, e por que um K so nao serve) esta la; aqui fica o
+ * resumo e a trava: `emocoesNatalParidade.spec.ts` compara a tabela dos dois.
+ *
+ * ⚠️ O K E POR ANEL, medido em 53 mapas reais. Com o K unico do dia (0,45) o
+ * Afeto natal daria 57 para a pessoa mediana, contra 21 no dia: o natal tem uma
+ * mistura de aspectos diferente da do transito, e a mesma curva produz escalas
+ * diferentes. Sem calibrar, "hoje acima do seu mapa" seria afirmacao sobre a
+ * curva e nao sobre a pessoa.
+ *
+ * ⚠️ OS DOIS PLANETAS DO ASPECTO CONTAM: no natal nao ha quem transita, e
+ * eleger o primeiro como ator seria decidir por ordem alfabetica.
+ *
+ * ⚠️ NAO DIAGNOSTICA NINGUEM. "Ansiedade natal 48" quer dizer que o mapa tem a
+ * quantidade tipica de aspectos que alimentam aquele anel — nao que a pessoa e
+ * ansiosa.
+ */
+export const K_NATAL: Record<ChaveEmocao, number> = {
+  afeto: 0.126,
+  entusiasmo: 0.201,
+  calma: 0.205,
+  sensibilidade: 0.186,
+  estresse: 0.502,
+  desanimo: 0.365,
+  ansiedade: 0.488,
+  pressao: 0.633,
+}
+
+const ASPECTOS_NATAIS: ReadonlyArray<{ nome: string; angulo: number }> = [
+  { nome: 'conjuncao', angulo: 0 },
+  { nome: 'sextil', angulo: 60 },
+  { nome: 'quadratura', angulo: 90 },
+  { nome: 'trigono', angulo: 120 },
+  { nome: 'oposicao', angulo: 180 },
+]
+const ORBE_NATAL = 6
+const PLANETAS_NATAIS = new Set([
+  'sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto',
+])
+
+export type PlanetaNatal = { name?: string; planetEn?: string; longitude?: unknown }
+
+/**
+ * Os aspectos natais, ja na forma que o calculo entende — cada um nos DOIS
+ * sentidos.
+ */
+export function aspectosDoNatal(
+  planetas: ReadonlyArray<PlanetaNatal> | null | undefined,
+): TransitoParaEmocao[] {
+  const pl = (planetas || [])
+    .map((p) => ({ nome: String(p?.name ?? p?.planetEn ?? ''), lon: Number(p?.longitude) }))
+    .filter((p) => PLANETAS_NATAIS.has(p.nome.toLowerCase()) && Number.isFinite(p.lon))
+
+  const out: TransitoParaEmocao[] = []
+  for (let i = 0; i < pl.length; i++) {
+    for (let j = i + 1; j < pl.length; j++) {
+      let d = Math.abs(pl[i].lon - pl[j].lon) % 360
+      if (d > 180) d = 360 - d
+      for (const a of ASPECTOS_NATAIS) {
+        const orb = Math.abs(d - a.angulo)
+        if (orb > ORBE_NATAL) continue
+        out.push({ t: pl[i].nome, a: a.nome, n: pl[j].nome, strength: 1, orb } as TransitoParaEmocao)
+        out.push({ t: pl[j].nome, a: a.nome, n: pl[i].nome, strength: 1, orb } as TransitoParaEmocao)
+        break
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * Os oito numeros do NATAL, com o `porque` de cada um.
+ *
+ * `null` sem aspectos — oito zeros afirmariam que a pessoa nao tem temperamento
+ * nenhum, que e diferente de nao haver dado.
+ */
+export function emocoesDoNatal(
+  planetas: ReadonlyArray<PlanetaNatal> | null | undefined,
+): EmocaoDoDia[] | null {
+  const lista = aspectosDoNatal(planetas)
+  if (!lista.length) return null
+  const somas = somasBrutas(lista)
+  const contribs = contribuicoesPorEmocao(lista)
+  const out = EMOCOES.map((chave) => {
+    const k = K_NATAL[chave] ?? K_CURVA
+    const bruto = Math.round(100 * (1 - Math.exp(-k * (somas[chave] || 0))))
+    return {
+      chave,
+      valor: Math.max(0, Math.min(100, bruto)),
+      pesa: EMOCAO_PESA[chave],
+      porque: [...(contribs[chave] || [])].sort((a, b) => b.valor - a.valor),
+    }
+  })
+  return out.some((e) => e.valor > 0) ? out : null
+}
+
+/**
  * As oito tendências do dia, de 0 a 100.
  *
  * Sem trânsito nenhum devolve `null` — e isso importa: zerar tudo diria "hoje

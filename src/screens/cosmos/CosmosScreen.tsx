@@ -23,6 +23,7 @@ import { NatalChartWheelContent } from './NatalChartWheelScreen'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
+import ClimaEmocional from '../../components/ClimaEmocional'
 import { VedicProfileContent } from './VedicProfileContent'
 import TzolkinProfileContent from './TzolkinProfileContent'
 import ChineseProfileContent from './ChineseProfileContent'
@@ -808,6 +809,26 @@ export default function CosmosScreen() {
                     showCosmosEntry={false}
                   />
                 </View>
+
+                {/* ⚠️ AS OITO TENDÊNCIAS DO MAPA — o temperamento, não o dia.
+                    Na Home os mesmos anéis mostram o clima de HOJE; aqui mostram
+                    o que o desenho natal já traz, e é a comparação entre os dois
+                    que dá sentido ao número do dia ("56 hoje, 14 no mapa").
+
+                    ⚠️ Mesmo componente, em `modo="natal"`: os anéis, o modal, o
+                    toque e o glossário são os mesmos. Uma tela própria daria duas
+                    versões do mesmo desenho para divergir.
+
+                    ⚠️ Some sozinha quando o status ainda não trouxe o natal —
+                    ele é calculado junto do status do dia, então aparece quando o
+                    cache girar. */}
+                <ClimaEmocional
+                  modo="natal"
+                  planetasNatais={natalPlanets as any}
+                  natal={(transitData?.currentTransits as any)?.emocoesNatais?.valores ?? null}
+                  transitos={null}
+                  idioma={language}
+                />
 
                 <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
               </>

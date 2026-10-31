@@ -12,6 +12,7 @@ import {
   EMOCAO_PESA,
   REFERENCIA_POR_ANEL,
   baseDaPessoa,
+  emocoesDoNatal,
   type DiaDeMemoria,
   type TransitoParaEmocao,
   type ChaveEmocao,
@@ -100,6 +101,30 @@ type Props = {
    * sobre a curva, nao sobre a pessoa.
    */
   natal?: Record<string, number> | null
+  /**
+   * MODO NATAL: mostra o temperamento do MAPA em vez do clima de hoje.
+   *
+   * ⚠️ E um modo e nao um componente novo porque os aneis, o modal, o toque e o
+   * glossario sao os mesmos. Duplicar a tela daria duas versoes do mesmo
+   * desenho para divergir — o padrao que esta frente passou a semana
+   * consertando.
+   *
+   * No modo natal nao ha marca de referencia: o natal E a referencia, e marcar
+   * nele "o normal deste anel" compararia a pessoa com a media de todo mundo
+   * numa tela que fala justamente do que ela tem de proprio.
+   */
+  modo?: 'dia' | 'natal'
+  /**
+   * Os PLANETAS NATAIS, para o modo natal calcular na hora.
+   *
+   * ⚠️ E a unica forma de a aba Grupos funcionar: o mapa do membro e montado
+   * LOCALMENTE (`computeNatalChart`), nao vem do status dele — e o status de
+   * outra pessoa nem estaria acessivel ao app. Lendo do gravado, a tendencia
+   * natal existiria so para o dono da conta.
+   *
+   * De quebra, na aba Mapa ela aparece na hora, sem esperar o cache de 6h.
+   */
+  planetasNatais?: ReadonlyArray<{ name?: string; planetEn?: string; longitude?: unknown }> | null
   idioma?: string
   /**
    * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
@@ -183,7 +208,8 @@ const TINTA_ROTULO = '#C7D2E8'
 const TINTA_MARCA = '#E6ECF8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, natal, idioma, compacto }: Props) {
+export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, natal, modo = 'dia', planetasNatais, idioma, compacto }: Props) {
+  const ehNatal = modo === 'natal'
   // ⚠️ ORDEM DAS REFERENCIAS, da melhor para a pior:
   //   1. a passada de fora (quem chama manda)
   //   2. o NATAL — o temperamento desta pessoa, disponivel desde o 1o acesso
@@ -195,7 +221,10 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
   // comparacao.
   const base = useMemo(() => baseDaPessoa(historico), [historico])
   const temNatal = !!natal && EMOCOES.some((k) => Number.isFinite(Number(natal[k])))
-  const refs = referencia || (temNatal ? natal : null) || base?.referencia || REFERENCIA_POR_ANEL
+  // ⚠️ No modo natal a marca SAI: o natal e a referencia, e marcar nele o
+  // normal do anel compararia a pessoa com a media de todo mundo numa tela
+  // que fala do que ela tem de proprio.
+  const refs = ehNatal ? null : (referencia || (temNatal ? natal : null) || base?.referencia || REFERENCIA_POR_ANEL)
   const origemDaRef: 'externa' | 'natal' | 'memoria' | 'anel' =
     referencia ? 'externa' : temNatal ? 'natal' : base ? 'memoria' : 'anel'
   const { width } = useWindowDimensions()
@@ -207,6 +236,29 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
     l.startsWith('en') ? en : l.startsWith('es') ? es : l.startsWith('it') ? it : pt
 
   const emocoes = useMemo(() => {
+    // ⚠️ MODO NATAL: os valores vem do mapa, e o `porque` dos ASPECTOS NATAIS
+    // gravados — a mesma lista que o backend usou para calcular, entao numero e
+    // explicacao saem da mesma fonte, como no modo do dia.
+    if (ehNatal) {
+      // ⚠️ Calculado dos PLANETAS, nao lido do gravado: numero e explicacao
+      // saem da mesma passagem, e funciona para o mapa de QUALQUER pessoa — o
+      // do membro do grupo e montado localmente e nunca passou pelo backend.
+      if (planetasNatais?.length) return emocoesDoNatal(planetasNatais)
+      // Reserva: valores gravados sem os planetas (status antigo). Sem o
+      // `porque`, porque inventa-lo de outra lista foi o bug do "Sensivel 54".
+      if (!natal) return null
+      const lista = EMOCOES.map((chave) => {
+        const v = Number(natal[chave])
+        return {
+          chave,
+          valor: Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : 0,
+          pesa: EMOCAO_PESA[chave],
+          porque: [] as Contribuicao[],
+        }
+      })
+      return lista.some((e) => e.valor > 0) ? lista : null
+    }
+
     // ⚠️ PRIMEIRA ESCOLHA: recalcular da lista do BACKEND.
     //
     // É o que faz o número e a explicação virem da MESMA fonte. Antes, o valor
@@ -242,7 +294,7 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
     // Se o gravado veio vazio ou sem nenhuma chave conhecida, não vale nada:
     // oito zeros afirmariam "hoje você não sente nada".
     return comGravado.some((e) => e.valor > 0) ? comGravado : local
-  }, [transitos, transitosDoBackend, valoresGravados])
+  }, [transitos, transitosDoBackend, valoresGravados, ehNatal, natal, planetasNatais])
 
   // ⚠️ `null` quando não há trânsito: a seção inteira some. Seis zeros
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
@@ -387,7 +439,8 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
       <DetalheDaEmocao
         emocao={aberta}
         referencia={aberta ? refs?.[aberta.chave] : null}
-        origemDaReferencia={origemDaRef}
+        origemDaReferencia={ehNatal ? undefined : origemDaRef}
+        ehNatal={ehNatal}
         diasDeMemoria={base?.dias ?? 0}
         natalDaEmocao={aberta && natal ? Number(natal[aberta.chave]) : null}
         aoFechar={() => setAberta(null)}
@@ -451,6 +504,7 @@ function DetalheDaEmocao({
   origemDaReferencia,
   diasDeMemoria,
   natalDaEmocao,
+  ehNatal,
   aoFechar,
   aoLerAspecto,
   tl,
@@ -471,6 +525,8 @@ function DetalheDaEmocao({
   diasDeMemoria?: number
   /** O valor NATAL desta emocao, para aparecer explicito no detalhe. */
   natalDaEmocao?: number | null
+  /** Quando o modal ja ESTA falando do natal: o verbete muda, e nao ha "hoje". */
+  ehNatal?: boolean
   aoFechar: () => void
   aoLerAspecto: (leitura: { titulo: string; corpo: string }) => void
   tl: (pt: string, en: string, es: string, it: string) => string
@@ -591,7 +647,11 @@ function DetalheDaEmocao({
 
           <ScrollView style={{ maxHeight: 380 }}>
             <Text style={s.definicao}>{verbete.definicao[i]}</Text>
-            <Text style={s.leitura}>{verbete.leitura[i]}</Text>
+            {/* ⚠️ No natal, a leitura de "alto e baixo" do DIA nao serve: ela
+                fala do que fazer hoje. A linha `natal` diz o que o valor
+                significa como ESTRUTURA — e a distincao que ela carrega
+                (estrutura x momento) e a leitura inteira desta tela. */}
+            <Text style={s.leitura}>{ehNatal ? verbete.natal[i] : verbete.leitura[i]}</Text>
             <Text style={s.fonte}>{verbete.fonte[i]}</Text>
 
             {/* ⚠️ O NUMERO DO NATAL, explicito. E o que transforma o valor do
@@ -605,7 +665,7 @@ function DetalheDaEmocao({
 
                 ⚠️ "Mapa" e nao "voce": o numero diz quantos aspectos natais
                 alimentam aquele anel, nao que a pessoa E assim. */}
-            {Number.isFinite(Number(natalDaEmocao)) ? (
+            {!ehNatal && Number.isFinite(Number(natalDaEmocao)) ? (
               <View style={s.natalLinha}>
                 <Text style={s.natalRotulo}>
                   {tl('No seu mapa', 'In your chart', 'En tu carta', 'Nella tua carta')}
@@ -617,9 +677,11 @@ function DetalheDaEmocao({
             {pesam.length ? (
               <>
                 <Text style={s.secao}>
-                  {emocao.pesa
-                    ? tl('O que puxa para cima', 'What pushes it up', 'Lo que lo sube', 'Cosa lo spinge su')
-                    : tl('O que favorece', 'What favors it', 'Lo que favorece', 'Cosa lo favorisce')}
+                  {ehNatal
+                    ? tl('No mapa, vem de', 'In the chart, it comes from', 'En la carta, viene de', 'Nella carta, viene da')
+                    : emocao.pesa
+                      ? tl('O que puxa para cima', 'What pushes it up', 'Lo que lo sube', 'Cosa lo spinge su')
+                      : tl('O que favorece', 'What favors it', 'Lo que favorece', 'Cosa lo favorisce')}
                 </Text>
                 {pesam.map(linha)}
               </>
