@@ -57,6 +57,7 @@ import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModa
 import SynastryModal from "../../components/SynastryModal"
 import SynastryTabs from "../../components/SynastryTabs"
 import { affinityBand, affinityLabel } from "../../theme/lenses"
+import CombinacaoDoCasal from "../../components/CombinacaoDoCasal"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
@@ -206,6 +207,15 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
 
   // Sinastria: aspectos entre o mapa do usuário e o de cada membro (Você × cada membro)
   const [synastryByMember, setSynastryByMember] = useState<Record<string, SynastryAspect[]>>({})
+  // A COMBINAÇÃO aberta: guarda o par inteiro, porque a tela precisa dos
+  // aspectos E das longitudes dos dois (o trânsito toca um GRAU).
+  const [combinacao, setCombinacao] = useState<{
+    aspects: SynastryAspect[]
+    grausA: Record<string, number>
+    grausB: Record<string, number>
+    nomeA?: string
+    nomeB?: string
+  } | null>(null)
   const [gunaMilanByMember, setGunaMilanByMember] = useState<Record<string, ResolvedGunaMilan>>({})
   const [pairSynastry, setPairSynastry] = useState<PairSynastry[]>([])
   // Cartas natais em cache (viewer + cada membro) — alimentam a sobreposição de casas.
@@ -1959,6 +1969,33 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
             <Text style={styles.synastryHint}>{tr('groups.synastry.tapToExpand', 'Toque para ver a leitura completa')}</Text>
           ) : null}
         </TouchableOpacity>
+
+        {/* ⚠️ A COMBINAÇÃO é outra leitura, não um detalhe da de cima: ali está
+            o quanto os dois combinam NO TOTAL; aqui, o vínculo ÁREA POR ÁREA e
+            o que o céu está ativando nele nos próximos dias.
+
+            ⚠️ FORA do TouchableOpacity que colapsa a caixa — senão tocar no
+            botão fecharia a sinastria por baixo. */}
+        {chartA && chartB ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={tr('groups.synastry.combination', 'Ver a combinação de vocês')}
+            style={styles.combinacaoBtn}
+            onPress={() => setCombinacao({
+              aspects,
+              grausA: Object.fromEntries((chartA.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude])),
+              grausB: Object.fromEntries((chartB.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude])),
+              nomeA: aName,
+              nomeB: bName,
+            })}
+          >
+            <Text style={styles.combinacaoBtnText}>
+              {tr('groups.synastry.combination', 'Ver a combinação de vocês')}
+            </Text>
+            <Text style={styles.combinacaoBtnSeta}>›</Text>
+          </TouchableOpacity>
+        ) : null}
         {shown.map((asp, index) => {
             const toneColor = asp.tone === 'harmonioso' ? '#4ECDC4' : asp.tone === 'tenso' ? '#FF6B6B' : '#B39DDB'
             const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
@@ -3787,6 +3824,18 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
         nameB={synDetail?.nameB || ''}
         onClose={() => setSynDetail(null)}
       />
+      {combinacao ? (
+        <CombinacaoDoCasal
+          aspectos={combinacao.aspects}
+          grausMeus={combinacao.grausA}
+          grausDoOutro={combinacao.grausB}
+          nomeA={combinacao.nomeA}
+          nomeB={combinacao.nomeB}
+          idioma={language}
+          aoFechar={() => setCombinacao(null)}
+        />
+      ) : null}
+
     </LinearGradient>
   )
 }
@@ -4172,6 +4221,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  // Botão da COMBINAÇÃO: presente mas discreto — ele convida, não compete
+  // com a leitura que já está aberta acima.
+  combinacaoBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 10, paddingVertical: 10, paddingHorizontal: 13,
+    borderRadius: 13, borderWidth: 1, borderColor: 'rgba(196,181,253,0.38)',
+    backgroundColor: 'rgba(167,139,250,0.10)',
+  },
+  combinacaoBtnText: { color: '#DDD6FE', fontSize: 14, fontWeight: '700' },
+  combinacaoBtnSeta: { color: '#A78BFA', fontSize: 19, fontWeight: '700' },
   synastryBox: {
     borderWidth: 1,
     borderColor: "rgba(255,215,0,0.14)",
