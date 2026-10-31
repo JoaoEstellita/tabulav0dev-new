@@ -87,6 +87,19 @@ type Props = {
    * prometer.
    */
   historico?: ReadonlyArray<DiaDeMemoria> | null
+  /**
+   * A TENDENCIA EMOCIONAL DO NATAL (`currentTransits.emocoesNatais.valores`),
+   * calculada e gravada pelo backend.
+   *
+   * ⚠️ E A MELHOR REFERENCIA das tres, e nao so por ser astrologicamente mais
+   * funda: ela existe desde o PRIMEIRO acesso. A memoria precisa de sete dias e
+   * a referencia do anel nao sabe nada sobre esta pessoa. O mapa nao muda.
+   *
+   * ⚠️ As escalas foram calibradas para serem comparaveis (K por anel no natal,
+   * medido em 53 mapas). Sem isso, "hoje acima do seu natal" seria afirmacao
+   * sobre a curva, nao sobre a pessoa.
+   */
+  natal?: Record<string, number> | null
   idioma?: string
   /**
    * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
@@ -170,13 +183,21 @@ const TINTA_ROTULO = '#C7D2E8'
 const TINTA_MARCA = '#E6ECF8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, idioma, compacto }: Props) {
-  // ⚠️ ORDEM DAS REFERENCIAS, da melhor para a pior: a que vier de fora
-  // (hoje nada, amanha o natal), depois a DESTA PESSOA, e por fim a do
-  // anel. Cada degrau abaixo e mais generico, e a leitura diz qual e.
+export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, natal, idioma, compacto }: Props) {
+  // ⚠️ ORDEM DAS REFERENCIAS, da melhor para a pior:
+  //   1. a passada de fora (quem chama manda)
+  //   2. o NATAL — o temperamento desta pessoa, disponivel desde o 1o acesso
+  //   3. a MEMORIA — os ultimos dias dela, a partir de sete
+  //   4. o ANEL — o normal geral daquele anel, que nao sabe nada dela
+  //
+  // Cada degrau abaixo e mais generico, e a leitura SEMPRE diz qual esta
+  // usando: trocar a origem sem trocar o texto seria mentir sobre a
+  // comparacao.
   const base = useMemo(() => baseDaPessoa(historico), [historico])
-  const refs = referencia || base?.referencia || REFERENCIA_POR_ANEL
-  const refEhPessoal = !referencia && !!base
+  const temNatal = !!natal && EMOCOES.some((k) => Number.isFinite(Number(natal[k])))
+  const refs = referencia || (temNatal ? natal : null) || base?.referencia || REFERENCIA_POR_ANEL
+  const origemDaRef: 'externa' | 'natal' | 'memoria' | 'anel' =
+    referencia ? 'externa' : temNatal ? 'natal' : base ? 'memoria' : 'anel'
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
   const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
@@ -366,8 +387,9 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
       <DetalheDaEmocao
         emocao={aberta}
         referencia={aberta ? refs?.[aberta.chave] : null}
-        referenciaEhPessoal={refEhPessoal}
+        origemDaReferencia={origemDaRef}
         diasDeMemoria={base?.dias ?? 0}
+        natalDaEmocao={aberta && natal ? Number(natal[aberta.chave]) : null}
         aoFechar={() => setAberta(null)}
         aoLerAspecto={setLeitura}
         tl={tl}
@@ -426,8 +448,9 @@ function leituraDoAspecto(c: Contribuicao, idioma: string) {
 function DetalheDaEmocao({
   emocao,
   referencia,
-  referenciaEhPessoal,
+  origemDaReferencia,
   diasDeMemoria,
+  natalDaEmocao,
   aoFechar,
   aoLerAspecto,
   tl,
@@ -437,15 +460,17 @@ function DetalheDaEmocao({
   /** O normal deste anel — a mesma referencia da marca na roda. */
   referencia?: number | null
   /**
-   * Se a referencia acima e a DESTA PESSOA (memoria) ou a generica do anel.
+   * DE ONDE vem a referencia acima.
    *
-   * ⚠️ Muda o TEXTO, nao so o numero: "acima do seu normal" e uma afirmacao
-   * sobre ela; "acima do normal deste anel", sobre a escala. Trocar uma pela
-   * outra seria mentir sobre a origem da comparacao.
+   * ⚠️ Muda o TEXTO, nao so o numero: "acima do seu natal" e uma afirmacao
+   * sobre o temperamento da pessoa; "acima do normal deste anel", sobre a
+   * escala. Trocar uma pela outra seria mentir sobre a origem da comparacao.
    */
-  referenciaEhPessoal?: boolean
+  origemDaReferencia?: 'externa' | 'natal' | 'memoria' | 'anel'
   /** Quantos dias de memoria sustentam a base pessoal. */
   diasDeMemoria?: number
+  /** O valor NATAL desta emocao, para aparecer explicito no detalhe. */
+  natalDaEmocao?: number | null
   aoFechar: () => void
   aoLerAspecto: (leitura: { titulo: string; corpo: string }) => void
   tl: (pt: string, en: string, es: string, it: string) => string
@@ -471,21 +496,23 @@ function DetalheDaEmocao({
     // ⚠️ O SUJEITO DA FRASE MUDA com a origem da referencia. Com memoria, a
     // comparacao e com a PESSOA e vale dizer isso — e citar quantos dias a
     // sustentam, para a afirmacao vir com o seu tamanho.
-    const quanto = referenciaEhPessoal && diasDeMemoria
+    const quanto = origemDaReferencia === 'memoria' && diasDeMemoria
       ? tl(` (${diasDeMemoria} dias de leitura)`, ` (${diasDeMemoria} days of readings)`, ` (${diasDeMemoria} dias de lectura)`, ` (${diasDeMemoria} giorni di letture)`)
       : ''
-    const onde = referenciaEhPessoal
-      ? tl('do seu normal', 'your normal', 'de tu normal', 'della tua norma')
-      : tl('do normal deste anel', 'normal for this ring', 'de lo normal de este anillo', 'della norma di questo anello')
+    const onde = origemDaReferencia === 'natal'
+      ? tl('do seu mapa', 'your chart', 'de tu carta', 'della tua carta')
+      : origemDaReferencia === 'memoria'
+        ? tl('do seu normal', 'your normal', 'de tu normal', 'della tua norma')
+        : tl('do normal deste anel', 'normal for this ring', 'de lo normal de este anillo', 'della norma di questo anello')
     if (d >= margem * 2) return tl(`Bem acima ${onde}.${quanto}`, `Well above ${onde}.${quanto}`, `Bastante por encima ${onde}.${quanto}`, `Ben sopra ${onde}.${quanto}`)
     if (d >= margem) return tl(`Acima ${onde}.${quanto}`, `Above ${onde}.${quanto}`, `Por encima ${onde}.${quanto}`, `Sopra ${onde}.${quanto}`)
     if (d <= -margem * 2) return tl(`Bem abaixo ${onde}.${quanto}`, `Well below ${onde}.${quanto}`, `Bastante por debajo ${onde}.${quanto}`, `Ben sotto ${onde}.${quanto}`)
     if (d <= -margem) return tl(`Abaixo ${onde}.${quanto}`, `Below ${onde}.${quanto}`, `Por debajo ${onde}.${quanto}`, `Sotto ${onde}.${quanto}`)
     // ⚠️ O caso "no normal" não aceita a mesma costura dos outros: capitalizar
     // `onde` produzia "Do seu normal, como de costume.", que não é português.
-    return referenciaEhPessoal
-      ? tl(`Dentro do seu normal.${quanto}`, `Within your normal.${quanto}`, `Dentro de tu normal.${quanto}`, `Dentro della tua norma.${quanto}`)
-      : tl('Dentro do normal deste anel.', 'Within normal for this ring.', 'Dentro de lo normal de este anillo.', 'Dentro della norma di questo anello.')
+    if (origemDaReferencia === 'natal') return tl('Na mesma altura do seu mapa.', 'Level with your chart.', 'A la misma altura de tu carta.', 'Allo stesso livello della tua carta.')
+    if (origemDaReferencia === 'memoria') return tl(`Dentro do seu normal.${quanto}`, `Within your normal.${quanto}`, `Dentro de tu normal.${quanto}`, `Dentro della tua norma.${quanto}`)
+    return tl('Dentro do normal deste anel.', 'Within normal for this ring.', 'Dentro de lo normal de este anillo.', 'Dentro della norma di questo anello.')
   })()
   const nome = tl(...ROTULO[emocao.chave])
   // ⚠️ A EXPLICAÇÃO ANTES DA CONTA. "Ansiedade 73" sozinho é um oráculo: a
@@ -566,6 +593,26 @@ function DetalheDaEmocao({
             <Text style={s.definicao}>{verbete.definicao[i]}</Text>
             <Text style={s.leitura}>{verbete.leitura[i]}</Text>
             <Text style={s.fonte}>{verbete.fonte[i]}</Text>
+
+            {/* ⚠️ O NUMERO DO NATAL, explicito. E o que transforma o valor do
+                dia em leitura: "Sensibilidade 56" nao diz nada; "56 hoje, 14 no
+                seu mapa" diz que o ceu esta mexendo num ponto que normalmente e
+                discreto nela.
+
+                ⚠️ As duas escalas foram calibradas para serem comparaveis (K
+                por anel no natal, medido em 53 mapas). Sem isso, poe-los lado a
+                lado convidaria a uma subtracao que nao significa nada.
+
+                ⚠️ "Mapa" e nao "voce": o numero diz quantos aspectos natais
+                alimentam aquele anel, nao que a pessoa E assim. */}
+            {Number.isFinite(Number(natalDaEmocao)) ? (
+              <View style={s.natalLinha}>
+                <Text style={s.natalRotulo}>
+                  {tl('No seu mapa', 'In your chart', 'En tu carta', 'Nella tua carta')}
+                </Text>
+                <Text style={[s.natalValor, { color: escuro }]}>{Math.round(Number(natalDaEmocao))}</Text>
+              </View>
+            ) : null}
 
             {pesam.length ? (
               <>
@@ -658,6 +705,19 @@ const s = StyleSheet.create({
     marginTop: -2,
     marginBottom: 10,
   },
+  // O natal ao lado do rotulo: e referencia, nao um segundo titulo.
+  natalLinha: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 2,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#2a3148',
+  },
+  natalRotulo: { color: TINTA_ROTULO, fontSize: 14 },
+  natalValor: { fontSize: 18, fontWeight: '700' },
   definicao: { fontSize: 13, color: '#E8ECF5', lineHeight: 19 },
   leitura: { fontSize: 12.5, color: TINTA, lineHeight: 18, marginTop: 8 },
   // A fonte fica em caixa alta e miúda: é referência, não leitura corrida.

@@ -776,6 +776,9 @@ export default function HomeScreen() {
               historico={((backendCurrentTransits as any)?.emocoes?.historico
                 ?? (transitData?.currentTransits as any)?.emocoes?.historico
                 ?? null) as any}
+              natal={((backendCurrentTransits as any)?.emocoesNatais?.valores
+                ?? (transitData?.currentTransits as any)?.emocoesNatais?.valores
+                ?? null) as any}
               idioma={language}
             />
           </AnimatedMount>
