@@ -250,7 +250,6 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
     referencia ? 'externa' : temNatal ? 'natal' : base ? 'memoria' : 'anel'
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
-  const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
 
   const l = String(idioma || 'pt-BR')
   const tl = (pt: string, en: string, es: string, it: string) =>
@@ -479,27 +478,9 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
           return typeof v === 'number' && Number.isFinite(v) ? v : null
         })()}
         aoFechar={() => setAberta(null)}
-        aoLerAspecto={setLeitura}
         tl={tl}
         idioma={l}
       />
-
-      {/* ⚠️ A leitura do aspecto é um modal IRMÃO, não aninhado dentro do
-          detalhe da emoção. Modal dentro de modal no React Native é fonte
-          conhecida de tela presa — o de dentro fecha e o de fora some junto,
-          ou o toque para no lugar errado. Irmãos, cada um fecha sozinho e o
-          detalhe continua aberto por baixo, que é para onde a pessoa volta. */}
-      <Modal visible={!!leitura} transparent animationType="fade" onRequestClose={() => setLeitura(null)}>
-        <Pressable style={s.fundo} onPress={() => setLeitura(null)}>
-          <Pressable style={s.caixa} onPress={() => {}}>
-            <Text style={s.leituraTitulo}>{leitura?.titulo}</Text>
-            <ScrollView style={{ maxHeight: 360 }}>
-              <Text style={s.leituraCorpo}>{leitura?.corpo}</Text>
-            </ScrollView>
-            <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   )
 }
@@ -541,7 +522,6 @@ function DetalheDaEmocao({
   natalDaEmocao,
   ehNatal,
   aoFechar,
-  aoLerAspecto,
   tl,
   idioma,
 }: {
@@ -563,10 +543,21 @@ function DetalheDaEmocao({
   /** Quando o modal ja ESTA falando do natal: o verbete muda, e nao ha "hoje". */
   ehNatal?: boolean
   aoFechar: () => void
-  aoLerAspecto: (leitura: { titulo: string; corpo: string }) => void
   tl: (pt: string, en: string, es: string, it: string) => string
   idioma: string
 }) {
+  // ⚠️ A LEITURA DO ASPECTO MORA AQUI, como estado do proprio detalhe.
+  //
+  // Antes era um <Modal> IRMAO, la fora. Relatado na tela: a interpretacao
+  // abria ATRAS do modal do humor e o do humor nao fechava. Dois <Modal>
+  // visiveis ao mesmo tempo no Android sao dois dialogos nativos, e alternar
+  // `visible` num que ja esta montado nao o traz para a frente — irmaos sao
+  // melhores que aninhados, mas nao resolvem isso.
+  //
+  // Como CAMADA dentro do mesmo modal, ela fica sempre por cima do conteudo e,
+  // ao fechar, devolve a pessoa ao detalhe da emocao — que e para onde ela quer
+  // voltar depois de ler o aspecto.
+  const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
   if (!emocao) return null
   const [escuro] = COR[emocao.chave]
 
@@ -643,7 +634,7 @@ function DetalheDaEmocao({
             mesma coisa em dois lugares ensina. */}
         {leitura ? (
           <Pressable
-            onPress={() => aoLerAspecto({ titulo:
+            onPress={() => setLeitura({ titulo:
               `${translatePlanet(c.planeta, idioma as any)} ${rotuloDeAspecto(c.aspecto, idioma as any).toLowerCase()} ${translatePlanet(c.alvo, idioma as any)}`,
               corpo: leitura })}
             accessibilityRole="button"
@@ -781,7 +772,40 @@ function DetalheDaEmocao({
                   'Tendenza del cielo di oggi, non misura del tuo stato.',
                 )}
           </Text>
-          <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
+          {/* ⚠️ PRESSABLE, nao Text. Ele vivia dentro do <Pressable> da caixa,
+              que existe para ENGOLIR o toque e impedir que tocar no conteudo
+              feche pelo fundo — entao o texto prometia uma acao e nao fazia
+              nada. Relatado: "so fecha quando clico fora da janela". */}
+          <Pressable
+            onPress={aoFechar}
+            accessibilityRole="button"
+            hitSlop={10}
+            style={({ pressed }) => pressed && { opacity: 0.6 }}
+          >
+            <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
+          </Pressable>
+
+          {/* ⚠️ A LEITURA DO ASPECTO, COMO CAMADA e nao como outro Modal.
+              Fica por cima do detalhe dentro do MESMO modal nativo, e fechar
+              devolve a pessoa ao detalhe em vez de sair da emocao inteira. */}
+          {leitura ? (
+            <Pressable style={s.camada} onPress={() => setLeitura(null)}>
+              <Pressable style={s.camadaCaixa} onPress={() => {}}>
+                <Text style={s.leituraTitulo}>{leitura.titulo}</Text>
+                <ScrollView style={{ maxHeight: 320 }}>
+                  <Text style={s.leituraCorpo}>{leitura.corpo}</Text>
+                </ScrollView>
+                <Pressable
+                  onPress={() => setLeitura(null)}
+                  accessibilityRole="button"
+                  hitSlop={10}
+                  style={({ pressed }) => pressed && { opacity: 0.6 }}
+                >
+                  <Text style={s.fechar}>{tl('Voltar', 'Back', 'Volver', 'Indietro')}</Text>
+                </Pressable>
+              </Pressable>
+            </Pressable>
+          ) : null}
         </Pressable>
       </Pressable>
     </Modal>
@@ -859,6 +883,16 @@ const s = StyleSheet.create({
   // coluna — alinhado, ele vira uma affordance; desalinhado, vira enfeite.
   linhaBotao: { flexDirection: 'row', alignItems: 'center' },
   livro: { marginLeft: 'auto', paddingRight: 6 },
+  // A camada cobre o modal inteiro, por dentro dele — nao e outro Modal.
+  camada: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(5,7,18,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 18,
+  },
+  camadaCaixa: { width: '100%', backgroundColor: '#161D33', borderRadius: 16, padding: 16 },
   leituraTitulo: { fontSize: 16, fontWeight: '800', color: '#E8ECF5', marginBottom: 10 },
   leituraCorpo: { fontSize: 14, color: '#C7D2E8', lineHeight: 21 },
   vazio: { fontSize: 12, color: TINTA, paddingVertical: 10 },

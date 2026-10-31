@@ -184,7 +184,18 @@ export default function StatusNatalDoMapa({
                   'Lettura della tua carta, non previsione di come andra la tua vita.',
                 )}
               </Text>
-              <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
+              {/* ⚠️ PRESSABLE, nao Text — o mesmo defeito que o modal do humor
+                  teve: o texto vive dentro do <Pressable> da caixa, que existe
+                  para ENGOLIR o toque, entao ele prometia uma acao e nao fazia
+                  nada. Escrevi este componente com o mesmo erro no mesmo dia. */}
+              <Pressable
+                onPress={() => setAberta(null)}
+                accessibilityRole="button"
+                hitSlop={10}
+                style={({ pressed }) => pressed && { opacity: 0.6 }}
+              >
+                <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
+              </Pressable>
             </Pressable>
           </Pressable>
         </Modal>
