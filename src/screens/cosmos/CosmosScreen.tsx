@@ -24,6 +24,7 @@ import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvi
 import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
 import ClimaEmocional from '../../components/ClimaEmocional'
+import StatusNatalDoMapa from '../../components/StatusNatalDoMapa'
 import { VedicProfileContent } from './VedicProfileContent'
 import TzolkinProfileContent from './TzolkinProfileContent'
 import ChineseProfileContent from './ChineseProfileContent'
@@ -827,6 +828,24 @@ export default function CosmosScreen() {
                   aspectosNatais={((transitData?.currentTransits as any)?.aspectsNatalToNatal ?? null) as any}
                   natal={(transitData?.currentTransits as any)?.emocoesNatais?.valores ?? null}
                   transitos={null}
+                  idioma={language}
+                />
+
+                {/* ⚠️ QUANTO O MAPA SUSTENTA CADA ÁREA — o par da tendência
+                    emocional acima: aquela diz o clima interno do desenho, esta
+                    diz onde ele apoia e onde cobra. As duas pontuações (mapa e
+                    dia) usam o MESMO marcador, então a comparação no detalhe é
+                    legítima pela mesma curva. */}
+                <StatusNatalDoMapa
+                  planetasNatais={natalPlanets as any}
+                  aspectosNatais={((transitData?.currentTransits as any)?.aspectsNatalToNatal ?? null) as any}
+                  // ⚠️ As CUSPIDES, e nao regentes prontos: o app nao recebe
+                  // `houseRulers` de lugar nenhum. Sem isto a perna da REGENCIA
+                  // sumiria so no app, divergindo do backend em silencio.
+                  cuspides={((transitData as any)?.currentTransits?.natalHouses
+                    ?? (transitData as any)?.natalCusps
+                    ?? null) as any}
+                  statusDeHoje={(transitData?.lifeAreas ?? null) as any}
                   idioma={language}
                 />
 

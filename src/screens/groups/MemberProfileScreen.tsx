@@ -16,6 +16,7 @@ import { LocalAstrologyService, type LocalTransitData } from '../../services/ast
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { AstroProfileContent } from '../cosmos/AstroProfileScreen'
 import ClimaEmocional from '../../components/ClimaEmocional'
+import StatusNatalDoMapa from '../../components/StatusNatalDoMapa'
 import { VedicProfileContent } from '../cosmos/VedicProfileContent'
 import TzolkinProfileContent from '../cosmos/TzolkinProfileContent'
 import ChineseProfileContent from '../cosmos/ChineseProfileContent'
@@ -327,6 +328,25 @@ export default function MemberProfileScreen() {
                   modo="natal"
                   aspectosNatais={((data as any)?.currentTransits?.aspectsNatalToNatal ?? null) as any}
                   transitos={null}
+                  idioma={language}
+                />
+
+                {/* ⚠️ QUANTO O MAPA DESTA PESSOA SUSTENTA CADA ÁREA.
+                    Calculado dos dados LOCAIS, como a tendência emocional acima:
+                    o mapa do membro nunca passou pelo status dele.
+
+                    ⚠️ Consentimento: quem chega nesta tela já passou pelo gate
+                    do grupo — a roda natal e o perfil completo já estão
+                    desenhados acima. Não há exposição nova. */}
+                <StatusNatalDoMapa
+                  planetasNatais={((data as any)?.currentTransits?.natalPlanets ?? null) as any}
+                  aspectosNatais={((data as any)?.currentTransits?.aspectsNatalToNatal ?? null) as any}
+                  // ⚠️ As CUSPIDES, e nao regentes prontos: o app nao recebe
+                  // `houseRulers` de lugar nenhum. Sem isto a perna da REGENCIA
+                  // sumiria so no app, divergindo do backend em silencio.
+                  cuspides={((data as any)?.currentTransits?.natalHouses
+                    ?? (data as any)?.natalCusps
+                    ?? null) as any}
                   idioma={language}
                 />
 
