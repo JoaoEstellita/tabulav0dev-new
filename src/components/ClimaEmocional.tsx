@@ -13,6 +13,7 @@ import {
   REFERENCIA_POR_ANEL,
   baseDaPessoa,
   emocoesDoNatal,
+  type AspectoNatal,
   type DiaDeMemoria,
   type TransitoParaEmocao,
   type ChaveEmocao,
@@ -115,7 +116,8 @@ type Props = {
    */
   modo?: 'dia' | 'natal'
   /**
-   * Os PLANETAS NATAIS, para o modo natal calcular na hora.
+   * Os ASPECTOS NATAIS que o motor ja calculou (`aspectsNatalToNatal`) — os
+   * MESMOS que a grade de aspectos desenha.
    *
    * ⚠️ E a unica forma de a aba Grupos funcionar: o mapa do membro e montado
    * LOCALMENTE (`computeNatalChart`), nao vem do status dele — e o status de
@@ -123,8 +125,14 @@ type Props = {
    * natal existiria so para o dono da conta.
    *
    * De quebra, na aba Mapa ela aparece na hora, sem esperar o cache de 6h.
+   *
+   * ⚠️ E vem do MOTOR, nao de deteccao propria. A primeira versao detectava
+   * aqui, com os 5 aspectos maiores e orbe fixa 6, e deu "Ansiedade 0" num mapa
+   * cujo Jupiter faz quincuncio EXATO com Urano — com a grade logo acima
+   * mostrando o aspecto. Usar a lista do motor faz a tendencia e a grade
+   * concordarem por construcao.
    */
-  planetasNatais?: ReadonlyArray<{ name?: string; planetEn?: string; longitude?: unknown }> | null
+  aspectosNatais?: ReadonlyArray<AspectoNatal> | null
   idioma?: string
   /**
    * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
@@ -208,7 +216,7 @@ const TINTA_ROTULO = '#C7D2E8'
 const TINTA_MARCA = '#E6ECF8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, natal, modo = 'dia', planetasNatais, idioma, compacto }: Props) {
+export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, natal, modo = 'dia', aspectosNatais, idioma, compacto }: Props) {
   const ehNatal = modo === 'natal'
   // ⚠️ ORDEM DAS REFERENCIAS, da melhor para a pior:
   //   1. a passada de fora (quem chama manda)
@@ -227,12 +235,12 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
   // anel, no mesmo aparelho, ao mesmo tempo. O cálculo é o mesmo dos dois
   // lados, então não há duas verdades: há uma que chega antes.
   const natalDoAnel = useMemo(() => {
-    if (planetasNatais?.length) {
-      const r = emocoesDoNatal(planetasNatais)
+    if (aspectosNatais?.length) {
+      const r = emocoesDoNatal(aspectosNatais)
       if (r) return Object.fromEntries(r.map((e) => [e.chave, e.valor])) as Record<string, number>
     }
     return natal || null
-  }, [planetasNatais, natal])
+  }, [aspectosNatais, natal])
   const temNatal = !!natalDoAnel && EMOCOES.some((k) => typeof natalDoAnel[k] === 'number' && Number.isFinite(natalDoAnel[k]))
   // ⚠️ No modo natal a marca SAI: o natal e a referencia, e marcar nele o
   // normal do anel compararia a pessoa com a media de todo mundo numa tela
@@ -256,7 +264,7 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
       // ⚠️ Calculado dos PLANETAS, nao lido do gravado: numero e explicacao
       // saem da mesma passagem, e funciona para o mapa de QUALQUER pessoa — o
       // do membro do grupo e montado localmente e nunca passou pelo backend.
-      if (planetasNatais?.length) return emocoesDoNatal(planetasNatais)
+      if (aspectosNatais?.length) return emocoesDoNatal(aspectosNatais)
       // Reserva: valores gravados sem os planetas (status antigo). Sem o
       // `porque`, porque inventa-lo de outra lista foi o bug do "Sensivel 54".
       if (!natal) return null
@@ -307,7 +315,7 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
     // Se o gravado veio vazio ou sem nenhuma chave conhecida, não vale nada:
     // oito zeros afirmariam "hoje você não sente nada".
     return comGravado.some((e) => e.valor > 0) ? comGravado : local
-  }, [transitos, transitosDoBackend, valoresGravados, ehNatal, natal, planetasNatais])
+  }, [transitos, transitosDoBackend, valoresGravados, ehNatal, natal, aspectosNatais])
 
   // ⚠️ `null` quando não há trânsito: a seção inteira some. Seis zeros
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
@@ -745,20 +753,33 @@ function DetalheDaEmocao({
                       'El detalle de donde viene no cargo en esta lectura. El numero esta correcto; abre de nuevo en un momento.',
                       'Il dettaglio di dove viene non e stato caricato. Il numero e corretto; riprova tra poco.',
                     )
-                  : tl('Nenhum trânsito de hoje mexe nisso.', 'No transit today stirs this.', 'Ningun transito de hoy mueve esto.', 'Nessun transito di oggi muove questo.')}
+                  : ehNatal
+                    ? tl('Nenhum aspecto do seu mapa alimenta este anel.', 'No aspect in your chart feeds this ring.', 'Ningun aspecto de tu carta alimenta este anillo.', 'Nessun aspetto della tua carta alimenta questo anello.')
+                    : tl('Nenhum trânsito de hoje mexe nisso.', 'No transit today stirs this.', 'Ningun transito de hoy mueve esto.', 'Nessun transito di oggi muove questo.')}
               </Text>
             ) : null}
           </ScrollView>
 
           {/* ⚠️ A moldura fica AQUI, onde a pessoa está olhando a conta — e não
               só numa linha solta embaixo dos anéis, fácil de não ler. */}
+          {/* ⚠️ A RESSALVA TEM DE CASAR COM O QUE A TELA MOSTRA. No modo natal
+              ela dizia "do céu de HOJE" sobre um MAPA — negando o que a pessoa
+              está vendo. A fronteira que a frase protege é a mesma nos dois
+              casos (leitura, não medida da pessoa), mas o sujeito muda. */}
           <Text style={s.aviso}>
-            {tl(
-              'Tendência do céu de hoje, não medida do seu estado.',
-              "Today's sky tendency, not a measure of your state.",
-              'Tendencia del cielo de hoy, no medida de tu estado.',
-              'Tendenza del cielo di oggi, non misura del tuo stato.',
-            )}
+            {ehNatal
+              ? tl(
+                  'Leitura do seu mapa, não medida de quem você é.',
+                  'A reading of your chart, not a measure of who you are.',
+                  'Lectura de tu carta, no medida de quien eres.',
+                  'Lettura della tua carta, non misura di chi sei.',
+                )
+              : tl(
+                  'Tendência do céu de hoje, não medida do seu estado.',
+                  "Today's sky tendency, not a measure of your state.",
+                  'Tendencia del cielo de hoy, no medida de tu estado.',
+                  'Tendenza del cielo di oggi, non misura del tuo stato.',
+                )}
           </Text>
           <Text style={s.fechar}>{tl('Tocar para fechar', 'Tap to close', 'Toca para cerrar', 'Tocca per chiudere')}</Text>
         </Pressable>

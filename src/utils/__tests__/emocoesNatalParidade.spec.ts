@@ -16,13 +16,14 @@ import { emocoesDoNatal, aspectosDoNatal, K_NATAL, EMOCOES, REFERENCIA_POR_ANEL 
  * diferentes no app e no agente — sem erro, só discordância.
  */
 
-const mapa = (pares: Array<[string, number]>) => pares.map(([name, longitude]) => ({ name, longitude }))
+/** Aspectos na forma do motor: `{planet1, planet2, type, orb}`. */
+const asp = (p1: string, tipo: string, p2: string, orb = 1) => ({ planet1: p1, planet2: p2, type: tipo, orb })
 
 describe('tendência emocional do natal', () => {
   it('detecta os aspectos nos DOIS sentidos', () => {
-    const asp = aspectosDoNatal(mapa([['Sun', 0], ['Moon', 90], ['Venus', 120]]))
-    expect(asp.length % 2, 'lista ímpar — algum aspecto entrou por um lado só').toBe(0)
-    const solLua = asp.filter((x) => (x.t === 'Sun' && x.n === 'Moon') || (x.t === 'Moon' && x.n === 'Sun'))
+    const lista = aspectosDoNatal([asp('Sun', 'quadratura', 'Moon'), asp('Venus', 'trigono', 'Mars')])
+    expect(lista.length % 2, 'lista ímpar — algum aspecto entrou por um lado só').toBe(0)
+    const solLua = lista.filter((x) => (x.t === 'Sun' && x.n === 'Moon') || (x.t === 'Moon' && x.n === 'Sun'))
     expect(solLua.length, 'Sol-Lua tem de entrar dos dois lados').toBe(2)
   })
 
@@ -33,7 +34,7 @@ describe('tendência emocional do natal', () => {
    * lado apagaria metade da leitura, sem dar erro.
    */
   it('os dois planetas de um aspecto duro contribuem', () => {
-    const r = emocoesDoNatal(mapa([['Sun', 0], ['Moon', 90]]))!
+    const r = emocoesDoNatal([asp('Sun', 'quadratura', 'Moon')])!
     expect(r, 'Sol quadratura Lua deveria produzir leitura').not.toBeNull()
     const estresse = r.find((e) => e.chave === 'estresse')!
     const ansiedade = r.find((e) => e.chave === 'ansiedade')!
@@ -42,13 +43,14 @@ describe('tendência emocional do natal', () => {
   })
 
   it('sem aspectos devolve null, não oito zeros', () => {
-    expect(emocoesDoNatal(mapa([['Sun', 0], ['Moon', 45]]))).toBeNull()
+    // Aspecto que o modelo nao classifica nao vira palpite.
+    expect(emocoesDoNatal([asp('Sun', 'quintil', 'Moon')])).toBeNull()
     expect(emocoesDoNatal([])).toBeNull()
     expect(emocoesDoNatal(null)).toBeNull()
   })
 
   it('o número vem com a explicação, como no modo do dia', () => {
-    const r = emocoesDoNatal(mapa([['Sun', 0], ['Moon', 90], ['Venus', 120], ['Saturn', 180]]))!
+    const r = emocoesDoNatal([asp('Sun', 'quadratura', 'Moon'), asp('Venus', 'trigono', 'Mars'), asp('Saturn', 'oposicao', 'Sun')])!
     for (const e of r) {
       if (e.valor > 0) {
         expect(e.porque.length, `${e.chave}: valor ${e.valor} sem contribuição`).toBeGreaterThan(0)
@@ -103,8 +105,8 @@ describe('tendência emocional do natal', () => {
     }
     const esperado = JSON.parse(readFileSync(ESPERADO, 'utf8'))
     const divergencias: string[] = []
-    for (const m of esperado.mapas as Array<{ id: string; p: Array<[string, number]> }>) {
-      const r = emocoesDoNatal(mapa(m.p))
+    for (const m of esperado.mapas as Array<{ id: string; a: any[] }>) {
+      const r = emocoesDoNatal(m.a)
       const esp = esperado.valores[m.id]
       if (esp === null || esp === undefined) {
         if (r !== null) divergencias.push(`${m.id}: app calculou, backend devolveu null`)
@@ -133,7 +135,7 @@ describe('tendência emocional do natal', () => {
    * dado — devolve `null`.
    */
   it('ausência de dado vira null, nunca zero', () => {
-    for (const vazio of [null, undefined, [], [{}], [{ name: 'Sun' }]]) {
+    for (const vazio of [null, undefined, [], [{}], [{ planet1: 'Sun' }]]) {
       const r = emocoesDoNatal(vazio as any)
       expect(r, `entrada ${JSON.stringify(vazio)} deveria dar null, não uma leitura`).toBeNull()
     }
@@ -141,6 +143,31 @@ describe('tendência emocional do natal', () => {
     expect(Number(null)).toBe(0)
     expect(Number.isFinite(Number(null)), 'é por isso que Number(x) não serve de guarda').toBe(true)
     expect(typeof null === 'number', 'a guarda que serve').toBe(false)
+  })
+
+  /**
+   * ⚠️ OS ASPECTOS MENORES DUROS CONTAM — foi o defeito relatado na tela.
+   *
+   * O mapa mostrava "Ansiedade 0" logo abaixo de uma GRADE cheia de
+   * quincúncios e semiquadraturas. A detecção era própria, com os cinco
+   * aspectos maiores e orbe fixa 6; o projeto trata semiquadratura,
+   * sesquiquadratura e quincúncio como DUROS — inclusive no cálculo do dia, no
+   * mesmo arquivo. O mesmo aspecto que empurra a Ansiedade num trânsito não a
+   * empurrava no mapa.
+   *
+   * O caso real: Júpiter quincúncio Urano com orbe 0,0° — exato — ignorado.
+   */
+  it('quincúncio e semiquadratura movem os anéis, como no cálculo do dia', () => {
+    const quincuncio = emocoesDoNatal([asp('Jupiter', 'quincuncio', 'Uranus', 0)])
+    expect(quincuncio, 'quincúncio exato não produziu leitura nenhuma').not.toBeNull()
+    expect(
+      quincuncio!.find((e) => e.chave === 'ansiedade')!.valor,
+      'Urano em aspecto duro tem de mover a Ansiedade',
+    ).toBeGreaterThan(0)
+
+    const semi = emocoesDoNatal([asp('Mercury', 'semiquadratura', 'Uranus', 1)])
+    expect(semi, 'semiquadratura não produziu leitura').not.toBeNull()
+    expect(semi!.find((e) => e.chave === 'ansiedade')!.valor).toBeGreaterThan(0)
   })
 
   it('a calibração é a mesma no backend', () => {
@@ -155,8 +182,16 @@ describe('tendência emocional do natal', () => {
     const doBackend: Record<string, number> = {}
     for (const m of bloco![1].matchAll(/(\w+):\s*([\d.]+)/g)) doBackend[m[1]] = Number(m[2])
     expect(doBackend, 'a calibração do natal divergiu entre app e backend').toEqual({ ...K_NATAL })
-    // E a orbe, que decide quantos aspectos entram na conta.
-    const orbe = fonte.match(/const ORBE_NATAL = (\d+)/)
-    expect(orbe?.[1], 'a orbe natal divergiu').toBe('6')
+    // ⚠️ E NENHUM DOS DOIS pode voltar a detectar aspectos por conta propria.
+    //
+    // Era isso que produzia "Ansiedade 0" embaixo de uma grade cheia de
+    // quincuncios: uma lista de aspectos e uma orbe fixa, escolhidas aqui,
+    // divergindo da politica do projeto. Os aspectos vem do motor; se alguem
+    // reintroduzir uma tabela local, a tendencia volta a desmentir a grade.
+    expect(fonte, 'o backend voltou a ter orbe propria do natal').not.toMatch(/ORBE_NATAL/)
+    expect(fonte, 'o backend voltou a ter lista de aspectos propria do natal').not.toMatch(/ASPECTOS_NATAIS/)
+    const noApp = readFileSync(join(__dirname, '..', 'emocoesDoDia.ts'), 'utf8')
+    expect(noApp, 'o app voltou a ter orbe propria do natal').not.toMatch(/ORBE_NATAL/)
+    expect(noApp, 'o app voltou a ter lista de aspectos propria do natal').not.toMatch(/ASPECTOS_NATAIS/)
   })
 })

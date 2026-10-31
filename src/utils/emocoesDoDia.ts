@@ -682,54 +682,45 @@ export function baseDaPessoa(
  * ansiosa.
  */
 export const K_NATAL: Record<ChaveEmocao, number> = {
-  afeto: 0.126,
-  entusiasmo: 0.201,
-  calma: 0.205,
-  sensibilidade: 0.186,
-  estresse: 0.502,
-  desanimo: 0.365,
-  ansiedade: 0.488,
-  pressao: 0.633,
+  afeto: 0.104,
+  entusiasmo: 0.173,
+  calma: 0.208,
+  sensibilidade: 0.175,
+  estresse: 0.239,
+  desanimo: 0.199,
+  ansiedade: 0.349,
+  pressao: 0.465,
 }
 
-const ASPECTOS_NATAIS: ReadonlyArray<{ nome: string; angulo: number }> = [
-  { nome: 'conjuncao', angulo: 0 },
-  { nome: 'sextil', angulo: 60 },
-  { nome: 'quadratura', angulo: 90 },
-  { nome: 'trigono', angulo: 120 },
-  { nome: 'oposicao', angulo: 180 },
-]
-const ORBE_NATAL = 6
-const PLANETAS_NATAIS = new Set([
-  'sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto',
-])
-
-export type PlanetaNatal = { name?: string; planetEn?: string; longitude?: unknown }
+/** O que o motor devolve em `aspectsNatalToNatal`. */
+export type AspectoNatal = { planet1?: string; planet2?: string; type?: string; orb?: unknown }
 
 /**
- * Os aspectos natais, ja na forma que o calculo entende — cada um nos DOIS
- * sentidos.
+ * Converte a lista de aspectos do motor para a forma que o calculo entende.
+ * ⚠️ RECEBE OS ASPECTOS DO MOTOR, e nao os detecta. A primeira versao tinha
+ * deteccao propria, com os cinco aspectos maiores e orbe fixa 6 — e produziu o
+ * defeito que apareceu na tela: "Ansiedade 0" logo abaixo de uma grade cheia de
+ * quadraturas e quincuncios. O projeto trata semiquadratura, sesquiquadratura e
+ * quincuncio como DUROS (inclusive no calculo do dia, neste mesmo arquivo) e usa
+ * orbe por planeta e por aspecto. Ter lista propria era divergir do produto
+ * inteiro — e a grade, que a pessoa ve logo acima, desmentia o numero.
+ *
+ * ⚠️ OS DOIS PLANETAS CONTAM: no natal nao ha quem transita, e eleger o
+ * primeiro seria decidir por ordem alfabetica.
  */
 export function aspectosDoNatal(
-  planetas: ReadonlyArray<PlanetaNatal> | null | undefined,
+  aspectos: ReadonlyArray<AspectoNatal> | null | undefined,
 ): TransitoParaEmocao[] {
-  const pl = (planetas || [])
-    .map((p) => ({ nome: String(p?.name ?? p?.planetEn ?? ''), lon: Number(p?.longitude) }))
-    .filter((p) => PLANETAS_NATAIS.has(p.nome.toLowerCase()) && Number.isFinite(p.lon))
-
   const out: TransitoParaEmocao[] = []
-  for (let i = 0; i < pl.length; i++) {
-    for (let j = i + 1; j < pl.length; j++) {
-      let d = Math.abs(pl[i].lon - pl[j].lon) % 360
-      if (d > 180) d = 360 - d
-      for (const a of ASPECTOS_NATAIS) {
-        const orb = Math.abs(d - a.angulo)
-        if (orb > ORBE_NATAL) continue
-        out.push({ t: pl[i].nome, a: a.nome, n: pl[j].nome, strength: 1, orb } as TransitoParaEmocao)
-        out.push({ t: pl[j].nome, a: a.nome, n: pl[i].nome, strength: 1, orb } as TransitoParaEmocao)
-        break
-      }
-    }
+  for (const a of (aspectos || [])) {
+    const p1 = String(a?.planet1 || '')
+    const p2 = String(a?.planet2 || '')
+    const tipo = String(a?.type || '')
+    if (!p1 || !p2 || !tipo) continue
+    const n = Number(a?.orb)
+    const orb = Number.isFinite(n) ? n : 0
+    out.push({ t: p1, a: tipo, n: p2, strength: 1, orb } as TransitoParaEmocao)
+    out.push({ t: p2, a: tipo, n: p1, strength: 1, orb } as TransitoParaEmocao)
   }
   return out
 }
@@ -741,9 +732,9 @@ export function aspectosDoNatal(
  * nenhum, que e diferente de nao haver dado.
  */
 export function emocoesDoNatal(
-  planetas: ReadonlyArray<PlanetaNatal> | null | undefined,
+  aspectos: ReadonlyArray<AspectoNatal> | null | undefined,
 ): EmocaoDoDia[] | null {
-  const lista = aspectosDoNatal(planetas)
+  const lista = aspectosDoNatal(aspectos)
   if (!lista.length) return null
   const somas = somasBrutas(lista)
   const contribs = contribuicoesPorEmocao(lista)

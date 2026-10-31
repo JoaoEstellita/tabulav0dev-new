@@ -824,7 +824,7 @@ export default function CosmosScreen() {
                     cache girar. */}
                 <ClimaEmocional
                   modo="natal"
-                  planetasNatais={natalPlanets as any}
+                  aspectosNatais={((transitData?.currentTransits as any)?.aspectsNatalToNatal ?? null) as any}
                   natal={(transitData?.currentTransits as any)?.emocoesNatais?.valores ?? null}
                   transitos={null}
                   idioma={language}

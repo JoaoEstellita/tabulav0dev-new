@@ -781,7 +781,7 @@ export default function HomeScreen() {
               // certo enquanto a Home mostrava zero para o mesmo anel. O
               // gravado fica como reserva, para quando os planetas nao vierem
               // do motor local.
-              planetasNatais={((transitData?.currentTransits as any)?.natalPlanets ?? null) as any}
+              aspectosNatais={((transitData?.currentTransits as any)?.aspectsNatalToNatal ?? null) as any}
               natal={((backendCurrentTransits as any)?.emocoesNatais?.valores
                 ?? (transitData?.currentTransits as any)?.emocoesNatais?.valores
                 ?? null) as any}

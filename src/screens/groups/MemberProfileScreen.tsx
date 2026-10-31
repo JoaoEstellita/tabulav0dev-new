@@ -325,7 +325,7 @@ export default function MemberProfileScreen() {
                     desenhados acima. Não há exposição nova aqui. */}
                 <ClimaEmocional
                   modo="natal"
-                  planetasNatais={((data as any)?.currentTransits?.natalPlanets ?? []) as any}
+                  aspectosNatais={((data as any)?.currentTransits?.aspectsNatalToNatal ?? null) as any}
                   transitos={null}
                   idioma={language}
                 />
