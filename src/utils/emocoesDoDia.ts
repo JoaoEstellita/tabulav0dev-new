@@ -752,6 +752,47 @@ export function emocoesDoNatal(
 }
 
 /**
+ * O DESVIO de um valor em relacao a sua referencia, em palavras.
+ *
+ * ⚠️ A MARGEM E PROPORCIONAL, nao um corte fixo — e esse e o ponto. O normal do
+ * Afeto e 21 e o da Ansiedade e 48: dez pontos acima significam coisas
+ * diferentes nos dois. Um corte fixo repetiria o erro que a referencia por anel
+ * existe para corrigir.
+ *
+ * ⚠️ O PISO DE 6 existe para os aneis de referencia baixa: 20% de 21 sao 4
+ * pontos, e 4 pontos nao sustentam a afirmacao "acima do normal" num numero que
+ * se move dezenas de pontos por dia.
+ *
+ * ⚠️ MORA AQUI, e nao na tela, porque o agente do WhatsApp usa a MESMA regra.
+ * Defini-la nos dois lugares daria duas versoes de "bem acima" para a mesma
+ * pessoa: uma no app, outra na conversa, no mesmo dia.
+ */
+export const PROPORCAO_DA_MARGEM = 0.2
+export const MARGEM_MINIMA = 6
+
+export type Desvio = 'bem acima' | 'acima' | 'dentro' | 'abaixo' | 'bem abaixo'
+
+export function desvioDaReferencia(valor: unknown, referencia: unknown): Desvio | null {
+  // ⚠️ `Number(null)` É 0, E 0 É FINITO. Sem rejeitar o vazio ANTES de
+  // converter, "não há valor" virava "o valor é zero" e a função respondia
+  // "bem abaixo" com toda a confiança. Esta é a TERCEIRA vez que a armadilha
+  // morde este projeto (`scoreDeltaText`, depois "No seu mapa: 0") — e mordeu
+  // aqui mesmo, na função escrita para centralizar a regra.
+  const vazio = (x: unknown) => x === null || x === undefined || x === ''
+  if (vazio(valor) || vazio(referencia)) return null
+  const v = Number(valor)
+  const r = Number(referencia)
+  if (!Number.isFinite(v) || !Number.isFinite(r) || r <= 0) return null
+  const margem = Math.max(MARGEM_MINIMA, Math.round(r * PROPORCAO_DA_MARGEM))
+  const d = v - r
+  if (d >= margem * 2) return 'bem acima'
+  if (d >= margem) return 'acima'
+  if (d <= -margem * 2) return 'bem abaixo'
+  if (d <= -margem) return 'abaixo'
+  return 'dentro'
+}
+
+/**
  * As oito tendências do dia, de 0 a 100.
  *
  * Sem trânsito nenhum devolve `null` — e isso importa: zerar tudo diria "hoje

@@ -12,6 +12,7 @@ import {
   EMOCAO_PESA,
   REFERENCIA_POR_ANEL,
   baseDaPessoa,
+  desvioDaReferencia,
   emocoesDoNatal,
   type AspectoNatal,
   type DiaDeMemoria,
@@ -573,8 +574,12 @@ function DetalheDaEmocao({
   const ref = Number(referencia)
   const comparacao = (() => {
     if (!Number.isFinite(ref) || ref <= 0) return null
-    const d = emocao.valor - ref
-    const margem = Math.max(6, Math.round(ref * 0.2))
+    // ⚠️ A REGRA VEM DO CALCULO COMPARTILHADO, nao daqui. O agente do
+    // WhatsApp usa a MESMA para dizer "bem acima do seu mapa" — defini-la nos
+    // dois lugares daria duas versoes de "bem acima" para a mesma pessoa: uma
+    // na tela, outra na conversa, no mesmo dia.
+    const desvio = desvioDaReferencia(emocao.valor, ref)
+    if (!desvio) return null
     // ⚠️ O SUJEITO DA FRASE MUDA com a origem da referencia. Com memoria, a
     // comparacao e com a PESSOA e vale dizer isso — e citar quantos dias a
     // sustentam, para a afirmacao vir com o seu tamanho.
@@ -586,10 +591,10 @@ function DetalheDaEmocao({
       : origemDaReferencia === 'memoria'
         ? tl('do seu normal', 'your normal', 'de tu normal', 'della tua norma')
         : tl('do normal deste anel', 'normal for this ring', 'de lo normal de este anillo', 'della norma di questo anello')
-    if (d >= margem * 2) return tl(`Bem acima ${onde}.${quanto}`, `Well above ${onde}.${quanto}`, `Bastante por encima ${onde}.${quanto}`, `Ben sopra ${onde}.${quanto}`)
-    if (d >= margem) return tl(`Acima ${onde}.${quanto}`, `Above ${onde}.${quanto}`, `Por encima ${onde}.${quanto}`, `Sopra ${onde}.${quanto}`)
-    if (d <= -margem * 2) return tl(`Bem abaixo ${onde}.${quanto}`, `Well below ${onde}.${quanto}`, `Bastante por debajo ${onde}.${quanto}`, `Ben sotto ${onde}.${quanto}`)
-    if (d <= -margem) return tl(`Abaixo ${onde}.${quanto}`, `Below ${onde}.${quanto}`, `Por debajo ${onde}.${quanto}`, `Sotto ${onde}.${quanto}`)
+    if (desvio === 'bem acima') return tl(`Bem acima ${onde}.${quanto}`, `Well above ${onde}.${quanto}`, `Bastante por encima ${onde}.${quanto}`, `Ben sopra ${onde}.${quanto}`)
+    if (desvio === 'acima') return tl(`Acima ${onde}.${quanto}`, `Above ${onde}.${quanto}`, `Por encima ${onde}.${quanto}`, `Sopra ${onde}.${quanto}`)
+    if (desvio === 'bem abaixo') return tl(`Bem abaixo ${onde}.${quanto}`, `Well below ${onde}.${quanto}`, `Bastante por debajo ${onde}.${quanto}`, `Ben sotto ${onde}.${quanto}`)
+    if (desvio === 'abaixo') return tl(`Abaixo ${onde}.${quanto}`, `Below ${onde}.${quanto}`, `Por debajo ${onde}.${quanto}`, `Sotto ${onde}.${quanto}`)
     // ⚠️ O caso "no normal" não aceita a mesma costura dos outros: capitalizar
     // `onde` produzia "Do seu normal, como de costume.", que não é português.
     if (origemDaReferencia === 'natal') return tl('Na mesma altura do seu mapa.', 'Level with your chart.', 'A la misma altura de tu carta.', 'Allo stesso livello della tua carta.')
