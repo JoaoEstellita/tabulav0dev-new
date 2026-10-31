@@ -119,6 +119,30 @@ describe('tendência emocional do natal', () => {
     expect(divergencias, divergencias.join(' · ')).toEqual([])
   })
 
+  /**
+   * ⚠️ `Number(null)` É 0, E 0 PASSA NO `isFinite` — a mordida que este projeto
+   * já levou duas vezes.
+   *
+   * Em `scoreDeltaText` ela virava "ontem foi zero" para quem não tinha
+   * histórico. Aqui ela virou pior: a Home mostrou "No seu mapa: 0" nos oito
+   * anéis enquanto a aba Mapa exibia 45, 43, 34... no mesmo aparelho, ao mesmo
+   * tempo. "Zero" é uma AFIRMAÇÃO sobre o mapa da pessoa, e era falsa.
+   *
+   * A guarda certa é `typeof x === 'number'` ANTES do isFinite. Este teste
+   * trava a propriedade no cálculo: ele nunca devolve zero por ausência de
+   * dado — devolve `null`.
+   */
+  it('ausência de dado vira null, nunca zero', () => {
+    for (const vazio of [null, undefined, [], [{}], [{ name: 'Sun' }]]) {
+      const r = emocoesDoNatal(vazio as any)
+      expect(r, `entrada ${JSON.stringify(vazio)} deveria dar null, não uma leitura`).toBeNull()
+    }
+    // E a armadilha nua, para quem for mexer nisto depois:
+    expect(Number(null)).toBe(0)
+    expect(Number.isFinite(Number(null)), 'é por isso que Number(x) não serve de guarda').toBe(true)
+    expect(typeof null === 'number', 'a guarda que serve').toBe(false)
+  })
+
   it('a calibração é a mesma no backend', () => {
     const JS = join(__dirname, '..', '..', '..', '..', 'backend', 'lib', 'status', 'emocoes-do-dia.js')
     if (!existsSync(JS)) {

@@ -220,11 +220,24 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
   // usando: trocar a origem sem trocar o texto seria mentir sobre a
   // comparacao.
   const base = useMemo(() => baseDaPessoa(historico), [historico])
-  const temNatal = !!natal && EMOCOES.some((k) => Number.isFinite(Number(natal[k])))
+  // ⚠️ CALCULA DOS PLANETAS quando eles vierem, em vez de ler o gravado.
+  //
+  // Ler do status só funciona depois que o cache de 6h girar — e a aba Mapa
+  // (que calcula) mostrava 45 enquanto a Home (que lia) mostrava 0 para o mesmo
+  // anel, no mesmo aparelho, ao mesmo tempo. O cálculo é o mesmo dos dois
+  // lados, então não há duas verdades: há uma que chega antes.
+  const natalDoAnel = useMemo(() => {
+    if (planetasNatais?.length) {
+      const r = emocoesDoNatal(planetasNatais)
+      if (r) return Object.fromEntries(r.map((e) => [e.chave, e.valor])) as Record<string, number>
+    }
+    return natal || null
+  }, [planetasNatais, natal])
+  const temNatal = !!natalDoAnel && EMOCOES.some((k) => typeof natalDoAnel[k] === 'number' && Number.isFinite(natalDoAnel[k]))
   // ⚠️ No modo natal a marca SAI: o natal e a referencia, e marcar nele o
   // normal do anel compararia a pessoa com a media de todo mundo numa tela
   // que fala do que ela tem de proprio.
-  const refs = ehNatal ? null : (referencia || (temNatal ? natal : null) || base?.referencia || REFERENCIA_POR_ANEL)
+  const refs = ehNatal ? null : (referencia || (temNatal ? natalDoAnel : null) || base?.referencia || REFERENCIA_POR_ANEL)
   const origemDaRef: 'externa' | 'natal' | 'memoria' | 'anel' =
     referencia ? 'externa' : temNatal ? 'natal' : base ? 'memoria' : 'anel'
   const { width } = useWindowDimensions()
@@ -427,12 +440,22 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
 
       {compacto ? null : (
       <Text style={s.nota}>
-        {tl(
-          'Tendência do dia · toque para ver de onde vem',
-          "The day's tendency · tap to see where it comes from",
-          'Tendencia del dia · toca para ver de donde viene',
-          'Tendenza del giorno · tocca per vedere da dove viene',
-        )}
+        {/* ⚠️ A legenda dizia "do DIA" embaixo dos anéis do MAPA. São as duas
+            leituras que esta tela existe para distinguir — trocar o rótulo é
+            trocar o significado dos oito números. */}
+        {ehNatal
+          ? tl(
+              'Tendência do seu mapa · toque para ver de onde vem',
+              'Your chart\'s tendency · tap to see where it comes from',
+              'Tendencia de tu carta · toca para ver de donde viene',
+              'Tendenza della tua carta · tocca per vedere da dove viene',
+            )
+          : tl(
+              'Tendência do dia · toque para ver de onde vem',
+              "The day's tendency · tap to see where it comes from",
+              'Tendencia del dia · toca para ver de donde viene',
+              'Tendenza del giorno · tocca per vedere da dove viene',
+            )}
       </Text>
       )}
 
@@ -442,7 +465,11 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
         origemDaReferencia={ehNatal ? undefined : origemDaRef}
         ehNatal={ehNatal}
         diasDeMemoria={base?.dias ?? 0}
-        natalDaEmocao={aberta && natal ? Number(natal[aberta.chave]) : null}
+        natalDaEmocao={(() => {
+          if (!aberta) return null
+          const v = natalDoAnel?.[aberta.chave]
+          return typeof v === 'number' && Number.isFinite(v) ? v : null
+        })()}
         aoFechar={() => setAberta(null)}
         aoLerAspecto={setLeitura}
         tl={tl}
@@ -665,7 +692,15 @@ function DetalheDaEmocao({
 
                 ⚠️ "Mapa" e nao "voce": o numero diz quantos aspectos natais
                 alimentam aquele anel, nao que a pessoa E assim. */}
-            {!ehNatal && Number.isFinite(Number(natalDaEmocao)) ? (
+            {/* ⚠️ `typeof === 'number'` ANTES do isFinite, e não `Number(x)`.
+                `Number(null)` é 0 e 0 PASSA no isFinite — então "o natal não
+                chegou" virava "o seu mapa marca zero aqui", que é uma
+                afirmação, e falsa. Foi o que a tela mostrou: oito zeros na Home
+                enquanto a aba Mapa exibia os valores certos.
+
+                Este projeto já levou essa mordida em `scoreDeltaText`, onde
+                "não existe score de ontem" virava "ontem foi zero". */}
+            {!ehNatal && typeof natalDaEmocao === 'number' && Number.isFinite(natalDaEmocao) ? (
               <View style={s.natalLinha}>
                 <Text style={s.natalRotulo}>
                   {tl('No seu mapa', 'In your chart', 'En tu carta', 'Nella tua carta')}

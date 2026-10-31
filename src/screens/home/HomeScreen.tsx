@@ -776,6 +776,12 @@ export default function HomeScreen() {
               historico={((backendCurrentTransits as any)?.emocoes?.historico
                 ?? (transitData?.currentTransits as any)?.emocoes?.historico
                 ?? null) as any}
+              // ⚠️ Os PLANETAS, nao o gravado: o calculo roda na hora e nao
+              // espera o cache de 6h. Sem isto, a aba Mapa mostrava o natal
+              // certo enquanto a Home mostrava zero para o mesmo anel. O
+              // gravado fica como reserva, para quando os planetas nao vierem
+              // do motor local.
+              planetasNatais={((transitData?.currentTransits as any)?.natalPlanets ?? null) as any}
               natal={((backendCurrentTransits as any)?.emocoesNatais?.valores
                 ?? (transitData?.currentTransits as any)?.emocoesNatais?.valores
                 ?? null) as any}
