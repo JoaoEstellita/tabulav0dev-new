@@ -11,6 +11,8 @@ import {
   EMOCOES,
   EMOCAO_PESA,
   REFERENCIA_POR_ANEL,
+  baseDaPessoa,
+  type DiaDeMemoria,
   type TransitoParaEmocao,
   type ChaveEmocao,
   type EmocaoDoDia,
@@ -72,6 +74,19 @@ type Props = {
    * lugar — e a marca passa a dizer "comparado a VOCE" sem mudar nada do resto.
    */
   referencia?: Record<string, number> | null
+  /**
+   * A MEMORIA desta pessoa (`currentTransits.emocoes.historico`), escrita pelo
+   * backend um registro por dia.
+   *
+   * ⚠️ Quando ha dias suficientes, ela VIRA a referencia: "acima do SEU normal"
+   * e uma leitura muito melhor que "acima do normal deste anel", porque o que
+   * interessa e o desvio da pessoa, nao da media de todo mundo.
+   *
+   * ⚠️ Com memoria curta, `baseDaPessoa` devolve null e a referencia do anel
+   * continua valendo. Prometer "o seu normal" com tres dias e pior do que nao
+   * prometer.
+   */
+  historico?: ReadonlyArray<DiaDeMemoria> | null
   idioma?: string
   /**
    * Versão enxuta, para quando os anéis NÃO são o assunto da tela — dentro do
@@ -155,8 +170,13 @@ const TINTA_ROTULO = '#C7D2E8'
 const TINTA_MARCA = '#E6ECF8'
 const TRILHO = '#232B3D'
 
-export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, idioma, compacto }: Props) {
-  const refs = referencia || REFERENCIA_POR_ANEL
+export default function ClimaEmocional({ transitos, transitosDoBackend, valoresGravados, referencia, historico, idioma, compacto }: Props) {
+  // ⚠️ ORDEM DAS REFERENCIAS, da melhor para a pior: a que vier de fora
+  // (hoje nada, amanha o natal), depois a DESTA PESSOA, e por fim a do
+  // anel. Cada degrau abaixo e mais generico, e a leitura diz qual e.
+  const base = useMemo(() => baseDaPessoa(historico), [historico])
+  const refs = referencia || base?.referencia || REFERENCIA_POR_ANEL
+  const refEhPessoal = !referencia && !!base
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<EmocaoDoDia | null>(null)
   const [leitura, setLeitura] = useState<{ titulo: string; corpo: string } | null>(null)
@@ -346,6 +366,8 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
       <DetalheDaEmocao
         emocao={aberta}
         referencia={aberta ? refs?.[aberta.chave] : null}
+        referenciaEhPessoal={refEhPessoal}
+        diasDeMemoria={base?.dias ?? 0}
         aoFechar={() => setAberta(null)}
         aoLerAspecto={setLeitura}
         tl={tl}
@@ -404,6 +426,8 @@ function leituraDoAspecto(c: Contribuicao, idioma: string) {
 function DetalheDaEmocao({
   emocao,
   referencia,
+  referenciaEhPessoal,
+  diasDeMemoria,
   aoFechar,
   aoLerAspecto,
   tl,
@@ -412,6 +436,16 @@ function DetalheDaEmocao({
   emocao: EmocaoDoDia | null
   /** O normal deste anel — a mesma referencia da marca na roda. */
   referencia?: number | null
+  /**
+   * Se a referencia acima e a DESTA PESSOA (memoria) ou a generica do anel.
+   *
+   * ⚠️ Muda o TEXTO, nao so o numero: "acima do seu normal" e uma afirmacao
+   * sobre ela; "acima do normal deste anel", sobre a escala. Trocar uma pela
+   * outra seria mentir sobre a origem da comparacao.
+   */
+  referenciaEhPessoal?: boolean
+  /** Quantos dias de memoria sustentam a base pessoal. */
+  diasDeMemoria?: number
   aoFechar: () => void
   aoLerAspecto: (leitura: { titulo: string; corpo: string }) => void
   tl: (pt: string, en: string, es: string, it: string) => string
@@ -434,11 +468,24 @@ function DetalheDaEmocao({
     if (!Number.isFinite(ref) || ref <= 0) return null
     const d = emocao.valor - ref
     const margem = Math.max(6, Math.round(ref * 0.2))
-    if (d >= margem * 2) return tl('Bem acima do normal deste anel.', 'Well above normal for this ring.', 'Bastante por encima de lo normal de este anillo.', 'Ben sopra la norma di questo anello.')
-    if (d >= margem) return tl('Acima do normal deste anel.', 'Above normal for this ring.', 'Por encima de lo normal de este anillo.', 'Sopra la norma di questo anello.')
-    if (d <= -margem * 2) return tl('Bem abaixo do normal deste anel.', 'Well below normal for this ring.', 'Bastante por debajo de lo normal de este anillo.', 'Ben sotto la norma di questo anello.')
-    if (d <= -margem) return tl('Abaixo do normal deste anel.', 'Below normal for this ring.', 'Por debajo de lo normal de este anillo.', 'Sotto la norma di questo anello.')
-    return tl('No normal deste anel.', 'At normal for this ring.', 'En lo normal de este anillo.', 'Nella norma di questo anello.')
+    // ⚠️ O SUJEITO DA FRASE MUDA com a origem da referencia. Com memoria, a
+    // comparacao e com a PESSOA e vale dizer isso — e citar quantos dias a
+    // sustentam, para a afirmacao vir com o seu tamanho.
+    const quanto = referenciaEhPessoal && diasDeMemoria
+      ? tl(` (${diasDeMemoria} dias de leitura)`, ` (${diasDeMemoria} days of readings)`, ` (${diasDeMemoria} dias de lectura)`, ` (${diasDeMemoria} giorni di letture)`)
+      : ''
+    const onde = referenciaEhPessoal
+      ? tl('do seu normal', 'your normal', 'de tu normal', 'della tua norma')
+      : tl('do normal deste anel', 'normal for this ring', 'de lo normal de este anillo', 'della norma di questo anello')
+    if (d >= margem * 2) return tl(`Bem acima ${onde}.${quanto}`, `Well above ${onde}.${quanto}`, `Bastante por encima ${onde}.${quanto}`, `Ben sopra ${onde}.${quanto}`)
+    if (d >= margem) return tl(`Acima ${onde}.${quanto}`, `Above ${onde}.${quanto}`, `Por encima ${onde}.${quanto}`, `Sopra ${onde}.${quanto}`)
+    if (d <= -margem * 2) return tl(`Bem abaixo ${onde}.${quanto}`, `Well below ${onde}.${quanto}`, `Bastante por debajo ${onde}.${quanto}`, `Ben sotto ${onde}.${quanto}`)
+    if (d <= -margem) return tl(`Abaixo ${onde}.${quanto}`, `Below ${onde}.${quanto}`, `Por debajo ${onde}.${quanto}`, `Sotto ${onde}.${quanto}`)
+    // ⚠️ O caso "no normal" não aceita a mesma costura dos outros: capitalizar
+    // `onde` produzia "Do seu normal, como de costume.", que não é português.
+    return referenciaEhPessoal
+      ? tl(`Dentro do seu normal.${quanto}`, `Within your normal.${quanto}`, `Dentro de tu normal.${quanto}`, `Dentro della tua norma.${quanto}`)
+      : tl('Dentro do normal deste anel.', 'Within normal for this ring.', 'Dentro de lo normal de este anillo.', 'Dentro della norma di questo anello.')
   })()
   const nome = tl(...ROTULO[emocao.chave])
   // ⚠️ A EXPLICAÇÃO ANTES DA CONTA. "Ansiedade 73" sozinho é um oráculo: a

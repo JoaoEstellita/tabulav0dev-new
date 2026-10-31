@@ -614,6 +614,54 @@ export const REFERENCIA_POR_ANEL: Record<ChaveEmocao, number> = {
 }
 
 /**
+ * QUANTOS DIAS A MEMORIA GUARDA, e quantos ela exige para abrir a boca.
+ *
+ * ⚠️ O TETO E DE TAMANHO, nao de estatistica. O historico mora dentro de
+ * `userStatus/{uid}`, que TODO cron que toca status le inteiro. Trinta dias em
+ * forma compacta dao ~1,5 KB; foi por peso assim que o `porque` (uns 8 KB) ficou
+ * de fora do documento. Mais dias dariam base melhor e custariam leitura em
+ * todo cron, todo dia, para todo mundo.
+ *
+ * ⚠️ O PISO E DE HONESTIDADE. Com dois ou tres dias guardados, "acima do seu
+ * normal" nao e leitura: e ruido com cara de descoberta. Abaixo de
+ * MIN_DIAS_DE_BASE a funcao devolve `null` e quem chama volta para a referencia
+ * do anel, que nao depende de historico nenhum.
+ */
+export const DIAS_DE_MEMORIA = 30
+export const MIN_DIAS_DE_BASE = 7
+
+/** Um dia guardado: a data e os oito valores, na ordem de `EMOCOES`. */
+export type DiaDeMemoria = { d: string; v: number[] }
+
+/**
+ * O NORMAL DESTA PESSOA, de cada anel — a mediana dos dias guardados.
+ *
+ * ⚠️ MEDIANA e não média: um único dia extremo puxaria a média e a base
+ * passaria a chamar de "normal" um dia que não é.
+ *
+ * ⚠️ Devolve `null` com memória curta. Prometer "o seu normal" com três dias é
+ * pior do que não prometer, porque a pessoa acredita — e aí volta a valer a
+ * referência do anel, que não depende de histórico.
+ *
+ * ⚠️ O app só LÊ o histórico; quem escreve é o backend (`avancarHistorico`, no
+ * gêmeo). Escrever dos dois lados daria duas versões do mesmo dia.
+ */
+export function baseDaPessoa(
+  historico: ReadonlyArray<DiaDeMemoria> | null | undefined,
+): { referencia: Record<ChaveEmocao, number>; dias: number } | null {
+  const h = (historico || []).filter((e) => e && Array.isArray(e.v) && e.v.length === EMOCOES.length)
+  if (h.length < MIN_DIAS_DE_BASE) return null
+  const out = {} as Record<ChaveEmocao, number>
+  for (let i = 0; i < EMOCOES.length; i++) {
+    const col = h.map((e) => Number(e.v[i])).filter((n) => Number.isFinite(n)).sort((a, b) => a - b)
+    if (!col.length) return null
+    const meio = Math.floor(col.length / 2)
+    out[EMOCOES[i]] = col.length % 2 ? col[meio] : Math.round((col[meio - 1] + col[meio]) / 2)
+  }
+  return { referencia: out, dias: h.length }
+}
+
+/**
  * As oito tendências do dia, de 0 a 100.
  *
  * Sem trânsito nenhum devolve `null` — e isso importa: zerar tudo diria "hoje

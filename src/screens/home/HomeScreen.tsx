@@ -773,6 +773,9 @@ export default function HomeScreen() {
               valoresGravados={(backendCurrentTransits as any)?.emocoes?.valores
                 ?? (transitData?.currentTransits as any)?.emocoes?.valores
                 ?? null}
+              historico={((backendCurrentTransits as any)?.emocoes?.historico
+                ?? (transitData?.currentTransits as any)?.emocoes?.historico
+                ?? null) as any}
               idioma={language}
             />
           </AnimatedMount>
