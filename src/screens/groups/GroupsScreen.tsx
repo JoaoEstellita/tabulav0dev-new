@@ -1926,6 +1926,35 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
     const m = (c?.planets || []).find((p) => p.name === 'Moon' || p.name === 'Lua')
     return typeof m?.longitude === 'number' ? m.longitude : null
   }
+  /**
+   * Abre a combinação de um par.
+   *
+   * ⚠️ UMA FUNÇÃO SÓ porque há DOIS pontos de entrada — o card do membro e a
+   * matriz de duplas do grupo. Duas cópias do mesmo `setCombinacao` divergiriam
+   * no primeiro ajuste, e a divergência seria invisível: as duas abririam a
+   * mesma tela com dados montados de jeitos diferentes.
+   */
+  const abrirCombinacao = (
+    aspects: SynastryAspect[],
+    chartA: NatalChart | undefined,
+    chartB: NatalChart | undefined,
+    aName?: string,
+    bName?: string,
+  ) => {
+    if (!chartA || !chartB) return
+    const graus = (c: NatalChart) => Object.fromEntries(
+      (c.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude]),
+    )
+    setCombinacao({ aspects, grausA: graus(chartA), grausB: graus(chartB), nomeA: aName, nomeB: bName })
+  }
+
+  /** Dá para abrir a combinação deste par? Precisa dos dois mapas e de aspecto. */
+  const temCombinacao = (uid: string) => (
+    (synastryByMember[uid] || []).length > 0
+    && !!chartByMember[user?.uid || '']
+    && !!chartByMember[uid]
+  )
+
   const renderSynastryBody = (
     key: string,
     aspects: SynastryAspect[],
@@ -1970,32 +1999,11 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
           ) : null}
         </TouchableOpacity>
 
-        {/* ⚠️ A COMBINAÇÃO é outra leitura, não um detalhe da de cima: ali está
-            o quanto os dois combinam NO TOTAL; aqui, o vínculo ÁREA POR ÁREA e
-            o que o céu está ativando nele nos próximos dias.
-
-            ⚠️ FORA do TouchableOpacity que colapsa a caixa — senão tocar no
-            botão fecharia a sinastria por baixo. */}
-        {chartA && chartB ? (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel={tr('groups.synastry.combination', 'Ver a combinação de vocês')}
-            style={styles.combinacaoBtn}
-            onPress={() => setCombinacao({
-              aspects,
-              grausA: Object.fromEntries((chartA.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude])),
-              grausB: Object.fromEntries((chartB.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude])),
-              nomeA: aName,
-              nomeB: bName,
-            })}
-          >
-            <Text style={styles.combinacaoBtnText}>
-              {tr('groups.synastry.combination', 'Ver a combinação de vocês')}
-            </Text>
-            <Text style={styles.combinacaoBtnSeta}>›</Text>
-          </TouchableOpacity>
-        ) : null}
+        {/* ⚠️ O BOTÃO DA COMBINAÇÃO NÃO FICA MAIS AQUI. Ele subiu para a linha
+            de ações do membro, ao lado de "Ver mapa completo" e "Sinastria" —
+            é onde moram as coisas que ABREM outra tela, e era onde se
+            procurava por ele. Aqui embaixo ele competia com o resumo de
+            afinidade, que é leitura, não navegação. Ver `abrirCombinacao`. */}
         {shown.map((asp, index) => {
             const toneColor = asp.tone === 'harmonioso' ? '#4ECDC4' : asp.tone === 'tenso' ? '#FF6B6B' : '#B39DDB'
             const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
@@ -2379,6 +2387,31 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                           </Text>
                         </TouchableOpacity>
                       ) : null}
+                      {/* ⚠️ A COMBINAÇÃO é outra leitura, não um detalhe da
+                          sinastria: lá está o quanto os dois combinam NO
+                          TOTAL; aqui, o vínculo ÁREA POR ÁREA e o que o céu
+                          ativa nele nos próximos 45 dias. Por isso tem botão
+                          próprio, ao lado dos outros que abrem tela. */}
+                      {member.userId !== user?.uid && (member as any).shareSynastry !== false && temCombinacao(member.userId) ? (
+                        <TouchableOpacity
+                          style={styles.memberChartBtn}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('groups.synastry.combination', 'Ver a combinação de vocês')}
+                          onPress={() => abrirCombinacao(
+                            synastryByMember[member.userId] || [],
+                            chartByMember[user?.uid || ''],
+                            chartByMember[member.userId],
+                            tr('groups.synastry.you', 'Você'),
+                            member.displayName,
+                          )}
+                        >
+                          <Ionicons name="sparkles-outline" size={14} color="#FFD700" />
+                          <Text style={styles.memberChartBtnText} numberOfLines={1}>
+                            {tr('groups.synastry.combinationShort', 'Combinação')}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
                       {member.isManaged && selectedGroup?.createdBy === user?.uid ? (
                         <TouchableOpacity
                           style={styles.memberChartBtn}
@@ -2607,9 +2640,32 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                 </Text>
                 {pairSynastry.map((pair) => (
                   <View key={`pair-${pair.id}`} style={styles.synastryCard}>
-                    <Text style={styles.synastryMemberName} numberOfLines={1}>
-                      {`${pair.aName}  ×  ${pair.bName}`}
-                    </Text>
+                    {/* ⚠️ O MESMO BOTAO do card do membro, aqui no cabecalho da
+                        dupla: a combinacao vale para QUALQUER par do grupo, nao
+                        so para os que envolvem voce. Deixa-lo so no card do
+                        membro tornaria o recurso invisivel para as duplas
+                        entre terceiros, que sao a maioria num grupo. */}
+                    <View style={styles.parCabecalho}>
+                      <Text style={[styles.synastryMemberName, { flex: 1 }]} numberOfLines={1}>
+                        {`${pair.aName}  ×  ${pair.bName}`}
+                      </Text>
+                      {chartByMember[pair.aId] && chartByMember[pair.bId] && pair.aspects.length > 0 ? (
+                        <TouchableOpacity
+                          style={styles.memberChartBtn}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('groups.synastry.combination', 'Ver a combinação de vocês')}
+                          onPress={() => abrirCombinacao(
+                            pair.aspects, chartByMember[pair.aId], chartByMember[pair.bId], pair.aName, pair.bName,
+                          )}
+                        >
+                          <Ionicons name="sparkles-outline" size={13} color="#FFD700" />
+                          <Text style={styles.memberChartBtnText} numberOfLines={1}>
+                            {tr('groups.synastry.combinationShort', 'Combinação')}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
                     {renderSynastryBody(pair.id, pair.aspects, pair.guna, chartByMember[pair.aId], chartByMember[pair.bId], pair.aName, pair.bName, birthOf(pair.aId), birthOf(pair.bId))}
                   </View>
                 ))}
@@ -4223,14 +4279,7 @@ const styles = StyleSheet.create({
   },
   // Botão da COMBINAÇÃO: presente mas discreto — ele convida, não compete
   // com a leitura que já está aberta acima.
-  combinacaoBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginTop: 10, paddingVertical: 10, paddingHorizontal: 13,
-    borderRadius: 13, borderWidth: 1, borderColor: 'rgba(196,181,253,0.38)',
-    backgroundColor: 'rgba(167,139,250,0.10)',
-  },
-  combinacaoBtnText: { color: '#DDD6FE', fontSize: 14, fontWeight: '700' },
-  combinacaoBtnSeta: { color: '#A78BFA', fontSize: 19, fontWeight: '700' },
+  parCabecalho: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
   synastryBox: {
     borderWidth: 1,
     borderColor: "rgba(255,215,0,0.14)",
