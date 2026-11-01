@@ -4,9 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 /**
  * A ORDEM DOS BLOCOS DA HOME, escolhida por quem usa.
  *
- * A ordem padrão é um roteiro de leitura — "Seu dia" responde, as emoções dão
- * o tom em palavras que qualquer um entende, as áreas dizem onde aquilo pega
- * na vida e o céu fecha mostrando de onde tudo saiu. Do imediato para o
+ * A ordem padrão é um roteiro de leitura — "Seu dia" responde, as áreas dizem
+ * onde aquilo pega na vida, as emoções dão o tom em palavras que qualquer um
+ * entende, e o céu fecha mostrando de onde tudo saiu. Do imediato para o
  * técnico.
  *
  * Mas esse roteiro é UMA leitura, não A leitura: quem abre o app para saber do
@@ -36,17 +36,22 @@ export type BlocoDaHome = 'ceu' | 'status' | 'emocoes'
 /**
  * A ordem de fábrica: do mais imediato para o mais técnico.
  *
- * Emoções primeiro porque é o que se lê sem saber nada de astrologia — oito
- * palavras do dia a dia com um número do lado. Depois as áreas, que dizem onde
- * aquilo pega. Por último o céu, que é a explicação de tudo e a parte mais
- * densa da tela.
+ * As áreas primeiro — elas respondem "onde isso pega na minha vida hoje", que
+ * é a pergunta que traz a pessoa ao app. Depois as emoções, que dão o tom em
+ * oito palavras do dia a dia. Por último o céu, que é a explicação de tudo e a
+ * parte mais densa da tela.
  *
- * ⚠️ É o INVERSO do roteiro que esta Home teve por meses — céu, status,
- * emoções: do mecanismo para o significado. A troca foi deliberada: a ordem
- * antiga pedia que a pessoa atravessasse uma roda natal e uma grade de cem
- * símbolos antes de chegar na parte que ela entende de graça.
+ * ⚠️ A ORDEM JÁ MUDOU VÁRIAS VEZES, e isso é dado, não indecisão: não existe
+ * uma resposta única. Por meses foi céu → status → emoções (do mecanismo para
+ * o significado), o que obrigava a atravessar uma roda natal e uma grade de
+ * cem símbolos antes de chegar na parte que se entende de graça. Depois foi
+ * emoções → status → céu. Agora é status → emoções → céu, a pedido do João.
+ *
+ * ⚠️ MUDAR ISTO NÃO MEXE EM QUEM JÁ ESCOLHEU. A preferência salva no aparelho
+ * vence o padrão — de propósito: trocar a ordem debaixo de quem já arrumou a
+ * própria tela seria pior que manter um padrão discutível.
  */
-export const ORDEM_PADRAO: readonly BlocoDaHome[] = ['emocoes', 'status', 'ceu'] as const
+export const ORDEM_PADRAO: readonly BlocoDaHome[] = ['status', 'emocoes', 'ceu'] as const
 
 const VALIDOS = new Set<string>(ORDEM_PADRAO)
 
