@@ -571,6 +571,15 @@ export function paraEscala(soma: number): number {
 export type EmocaoDoDia = {
   chave: ChaveEmocao
   valor: number
+  /**
+   * ⚠️ NADA TOCOU ESTE ANEL — diferente de "tocou e deu pouco".
+   *
+   * O cálculo devolve 0 nos dois casos, e quem DESENHA precisa separá-los: um
+   * 0 na roda afirma "você não tem nada disso hoje", quando o que houve foi o
+   * céu não mexer ali. Acontece em pelo menos um quarto dos dias na Calma e na
+   * Sensibilidade.
+   */
+  semMaterial: boolean
   pesa: boolean
   /** Os trânsitos que produziram este número, do que mais pesa ao que menos. */
   porque: Contribuicao[]
@@ -741,11 +750,15 @@ export function emocoesDoNatal(
   const out = EMOCOES.map((chave) => {
     const k = K_NATAL[chave] ?? K_CURVA
     const bruto = Math.round(100 * (1 - Math.exp(-k * (somas[chave] || 0))))
+    const porque = [...(contribs[chave] || [])].sort((a, b) => b.valor - a.valor)
     return {
       chave,
       valor: Math.max(0, Math.min(100, bruto)),
+      // ⚠️ No NATAL vale o mesmo: nenhum aspecto natal tocando o anel não é
+      // "zero de ansiedade no mapa", é o mapa não falar daquilo.
+      semMaterial: porque.length === 0,
       pesa: EMOCAO_PESA[chave],
-      porque: [...(contribs[chave] || [])].sort((a, b) => b.valor - a.valor),
+      porque,
     }
   })
   return out.some((e) => e.valor > 0) ? out : null
@@ -807,10 +820,29 @@ export function emocoesDoDia(
   if (!lista.length) return null
   // ⚠️ A cota entra AQUI, antes de qualquer conta. Ver `selecionarTransitos`.
   const porEmocao = contribuicoesPorEmocao(selecionarTransitos(lista))
-  return EMOCOES.map((chave) => ({
-    chave,
-    valor: paraEscala(porEmocao[chave].reduce((acc, c) => acc + c.valor, 0)),
-    pesa: EMOCAO_PESA[chave],
-    porque: porEmocao[chave],
-  }))
+  return EMOCOES.map((chave) => {
+    const contribuicoes = porEmocao[chave]
+    // ⚠️ ZERO É UMA AFIRMAÇÃO QUE O DADO NÃO FAZ. `paraEscala(0)` devolve 0
+    // quando NENHUM trânsito toca o anel, e a roda desenhava esse 0 como
+    // número: "Desânimo 0" lê como "você não tem desânimo nenhum hoje", quando
+    // significa "o céu não mexeu nisso". São coisas diferentes.
+    //
+    // ⚠️ E NÃO É RARO: reamostrando 8.000 dias do pool real, Calma e
+    // Sensibilidade ficam sem material em pelo menos um quarto dos dias.
+    //
+    // ⚠️ O PROJETO JÁ TOMOU ESTA DECISÃO do outro lado — em
+    // `sinastriaPorArea`, área sem contato devolve `null` e não 0, com o
+    // comentário dizendo que "cinco barras em zero afirmariam que o vínculo não
+    // tem nada, que é diferente de não haver dado para ler". Aqui fazia o
+    // oposto. O valor segue 0 para quem faz conta; quem DESENHA olha
+    // `semMaterial` e mostra tracinho.
+    const semMaterial = contribuicoes.length === 0
+    return {
+      chave,
+      valor: paraEscala(contribuicoes.reduce((acc, c) => acc + c.valor, 0)),
+      semMaterial,
+      pesa: EMOCAO_PESA[chave],
+      porque: contribuicoes,
+    }
+  })
 }

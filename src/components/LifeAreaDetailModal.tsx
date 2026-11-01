@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
+import { desvioDaArea, referenciaDaArea, textoDoDesvio } from '../constants/referenciaPorArea'
 import ReadingDetailModal from './ReadingDetailModal'
 import { resolveTransitAphorism } from '../utils/transitAphorism'
 import { mergeAreaTransits } from '../utils/transitsByArea'
@@ -1442,13 +1443,48 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
   }, [activeTransits, backendActiveTransits, buildTransitIdentityKey])
   const totalTransitStrength = activeTransits.reduce((sum, t) => sum + safeNumber(t.strength), 0)
 
+  /**
+   * ⚠️ A REFERÊNCIA VEM DA MEDIÇÃO, não de um palpite de redação. Ver
+   * `constants/referenciaPorArea.ts` — 20 mapas reais × 60 datas no ano.
+   */
+  const leituraDoNormal = React.useMemo(() => {
+    // ⚠️ `LifeArea` só tem `name` — não existe `key`. Supus que existisse e o
+    // TypeScript pegou; em runtime teria virado `undefined` e a referência
+    // nunca apareceria, calada.
+    const chave = String(areaData?.name || '')
+    const valor = safeNumber(areaData?.status)
+    const desvio = desvioDaArea(chave, valor)
+    const texto = textoDoDesvio(desvio, language)
+    const ref = referenciaDaArea(chave)
+    if (!texto || ref == null) return null
+    // O número de referência vem junto: sem ele "acima do normal" é uma
+    // afirmação sem apoio, e quem quiser conferir não tem com o que comparar.
+    return `${texto} (${ref})`
+  }, [areaData?.name, areaData?.status, language])
+
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
       <View style={styles.headerContent}>
         <View style={styles.headerLeft}>
           <Ionicons name={areaIcon as any} size={24} color={DESIGN_SYSTEM.colors.white} />
-          <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
-          <Text style={styles.areaScore}>{safeNumber(areaData.status)}%</Text>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
+              <Text style={styles.areaScore}>{safeNumber(areaData.status)}%</Text>
+            </View>
+            {/* ⚠️ O NÚMERO SOZINHO SE PASSA POR NOTA DE 0 A 100, e não é.
+                Medido com o motor real em 1200 leituras: a mediana das áreas é
+                41, e só 24% chegam a 50 — três de cada quatro leituras ficam
+                abaixo do meio. Sem esta linha, o app diz a quase todo mundo,
+                quase todo dia, que a vida está abaixo da média.
+
+                ⚠️ E O NORMAL MUDA DE ÁREA PARA ÁREA: Carreira tem mediana 36;
+                Comunicação, 45. "Carreira 36 · Comunicação 45" aparenta nove
+                pontos de diferença que são, de fato, zero. */}
+            {leituraDoNormal ? (
+              <Text style={styles.areaNormal}>{leituraDoNormal}</Text>
+            ) : null}
+          </View>
         </View>
         <TouchableOpacity onPress={closeBySwipe} style={styles.closeButton}>
           <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
@@ -3369,7 +3405,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.white,
-    textAlign: 'center'
+    // ⚠️ Era `center` quando o nome dividia uma linha horizontal com o número.
+    // Agora ele encabeça uma coluna, e centrar o texto sobre uma coluna larga
+    // o descola do número que ele nomeia.
+    textAlign: 'left'
+  },
+  areaNormal: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 2,
   },
   areaScore: {
     fontSize: 16,

@@ -270,9 +270,15 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
       if (!natal) return null
       const lista = EMOCOES.map((chave) => {
         const v = Number(natal[chave])
+        const valor = Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : 0
         return {
           chave,
-          valor: Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : 0,
+          valor,
+          // ⚠️ AQUI `semMaterial` VEM DO VALOR, não da lista vazia. Nestas
+          // reservas o `porque` está vazio porque o detalhe não foi gravado —
+          // não porque nada tocou o anel. Derivar "sem material" da lista
+          // marcaria TODOS os anéis como vazios e a roda viraria oito traços.
+          semMaterial: valor <= 0,
           pesa: EMOCAO_PESA[chave],
           porque: [] as Contribuicao[],
         }
@@ -305,9 +311,14 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
     const comGravado = EMOCOES.map((chave) => {
       const v = valoresGravados[chave]
       const doLocal = local?.find((e) => e.chave === chave)
+      const valor = typeof v === 'number' && Number.isFinite(v)
+        ? Math.max(0, Math.min(100, Math.round(v)))
+        : (doLocal?.valor ?? 0)
       return {
         chave,
-        valor: typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : (doLocal?.valor ?? 0),
+        valor,
+        // ⚠️ DO VALOR, não da lista — ver a reserva do natal acima.
+        semMaterial: valor <= 0,
         pesa: EMOCAO_PESA[chave],
         porque: [] as Contribuicao[],
       }
@@ -435,9 +446,18 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
                   ) : null}
                 </Svg>
                 {/* O número POR CIMA do anel: o arco dá a sensação, o número dá
-                    o valor — e nenhum depende de cor para ser lido. */}
+                    o valor — e nenhum depende de cor para ser lido.
+
+                    ⚠️ SEM MATERIAL, TRAÇO E NÃO ZERO. Quando nenhum trânsito
+                    toca o anel o cálculo dá 0, e um 0 desenhado afirma "você
+                    não tem nada disso hoje" — que é diferente de "o céu não
+                    mexeu nisso". Acontece em ao menos um quarto dos dias na
+                    Calma e na Sensibilidade. */}
                 <View style={[StyleSheet.absoluteFillObject, s.centro]}>
-                  <Text style={[s.valor, { fontSize: Math.round(tamanho * 0.3) }]}>{e.valor}</Text>
+                  <Text style={[s.valor, { fontSize: Math.round(tamanho * (e.semMaterial ? 0.34 : 0.3)) },
+                    e.semMaterial && s.valorVazio]}>
+                    {e.semMaterial ? '—' : e.valor}
+                  </Text>
                 </View>
               </View>
               <Text style={compacto ? s.rotuloCompacto : s.rotulo} numberOfLines={1}>{tl(...ROTULO[e.chave])}</Text>
@@ -663,7 +683,9 @@ function DetalheDaEmocao({
         <Pressable style={s.caixa} onPress={() => {}}>
           <View style={s.cabecalho}>
             <Text style={[s.caixaTitulo, { color: escuro }]}>{nome}</Text>
-            <Text style={[s.caixaValor, { color: escuro }]}>{emocao.valor}</Text>
+            <Text style={[s.caixaValor, { color: escuro }, emocao.semMaterial && s.valorVazio]}>
+              {emocao.semMaterial ? '—' : emocao.valor}
+            </Text>
           </View>
 
           {/* ⚠️ O NUMERO SOZINHO E UM ORACULO. "54" nao diz se e muito — e a
@@ -828,6 +850,10 @@ const s = StyleSheet.create({
   item: { alignItems: 'center', marginBottom: 10 },
   centro: { alignItems: 'center', justifyContent: 'center' },
   valor: { color: '#F2F5FA', fontWeight: '800' },
+  // ⚠️ O traço de "sem material" é APAGADO de propósito. Com o mesmo peso do
+  // número ele competiria com os anéis que têm leitura de verdade, e o olho
+  // pararia justamente no anel que não tem nada a dizer.
+  valorVazio: { color: TINTA_ROTULO, fontWeight: '600' },
   // ⚠️ 12 e não 10: em 10 o nome da tendência ficava miúdo demais para ler de
   // relance. O rótulo é metade da informação — o número sem a palavra não diz
   // nada —, então ele não pode ser o primeiro a encolher.
