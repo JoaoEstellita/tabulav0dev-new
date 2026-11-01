@@ -20,6 +20,15 @@ export interface SynastryScore {
   bandKey: SynastryBand
   harmonics: number
   tensions: number
+  /**
+   * ⚠️ O PESO dos dois lados, não a contagem — é daqui que sai o número.
+   * `harmonics`/`tensions` contam cabeças; estes pesam cada contato pela orbe
+   * e por quem são os planetas. Um trígono Vênus–Marte exato e um sextil
+   * Netuno–Júpiter na borda contam 1 cada, mas pesam muito diferente, e é o
+   * peso que decide a porcentagem.
+   */
+  apoio: number
+  tensao: number
 }
 
 /**
@@ -160,16 +169,59 @@ export function pontuarContatos(
  */
 export function synastryScore(aspects: SynastryAspect[] | null | undefined): SynastryScore {
   const list = Array.isArray(aspects) ? aspects : []
-  if (list.length === 0) return { pct: 50, bandKey: 'neutra', harmonics: 0, tensions: 0 }
+  if (list.length === 0) return { pct: 50, bandKey: 'neutra', harmonics: 0, tensions: 0, apoio: 0, tensao: 0 }
   let harmonics = 0
   let tensions = 0
   for (const a of list) {
     if (a.tone === 'harmonioso') harmonics++
     else if (a.tone === 'tenso') tensions++
   }
-  const { pct } = pontuarContatos(list)
+  const { pct, apoio, tensao } = pontuarContatos(list)
   const bandKey: SynastryBand = pct >= 62 ? 'harmonica' : pct >= 45 ? 'mista' : 'tensa'
-  return { pct, bandKey, harmonics, tensions }
+  return { pct, bandKey, harmonics, tensions, apoio, tensao }
+}
+
+/**
+ * A PORCENTAGEM EXPLICADA, em uma ou duas frases.
+ *
+ * ⚠️ UM NÚMERO SOZINHO NÃO SE DEFENDE. "71%" não diz de que escala, nem o que
+ * seria 50, nem por que não é 95 — e sem isso a pessoa preenche o vazio com a
+ * suposição mais comum, que é "71 de 100 pontos possíveis". Não é: é um saldo
+ * entre o que flui e o que atrita, e 50 é o empate.
+ *
+ * ⚠️ FALA DE SALDO, NÃO DE QUANTIDADE, porque é assim que a conta funciona:
+ * vinte contatos bons e dois contatos bons dão o mesmo resultado se a
+ * proporção for a mesma. Dizer "15 harmônicos" sem isso convida a somar
+ * cabeças, que é justamente a leitura errada — e era a fórmula antiga.
+ */
+export function explicarAfinidade(score: SynastryScore, lang: Lang): string[] {
+  const i = lang === 'en-US' ? 1 : lang === 'es-ES' ? 2 : lang === 'it-IT' ? 3 : 0
+  const tl = (pt: string, en: string, es: string, it: string) => [pt, en, es, it][i]
+  const total = score.apoio + score.tensao
+  // Participação de cada lado NO PESO — a mesma conta que produz a %.
+  const parteApoio = total > 0 ? Math.round((score.apoio / total) * 100) : 50
+  const linhas: string[] = []
+
+  linhas.push(tl(
+    `50% seria empate. Aqui, ${parteApoio}% do contato entre os dois mapas é do que flui, e o resto é do que atrita.`,
+    `50% would be a tie. Here, ${parteApoio}% of the contact between the two charts is what flows, and the rest is what grinds.`,
+    `50% seria empate. Aqui, ${parteApoio}% del contacto entre las dos cartas es lo que fluye, y el resto lo que roza.`,
+    `50% sarebbe pareggio. Qui, ${parteApoio}% del contatto tra le due carte e cio che scorre, e il resto cio che attrita.`,
+  ))
+
+  // ⚠️ A RESSALVA DO SALDO só entra quando há os dois lados. Num par sem
+  // nenhuma tensão ela soaria como desculpa para um número que não precisa de
+  // nenhuma.
+  if (score.harmonics > 0 && score.tensions > 0) {
+    linhas.push(tl(
+      'Conta o saldo, não a quantidade: dobrar os contatos do mesmo tipo não muda a leitura. O que muda é a proporção — e o quanto cada contato é exato.',
+      'It is the balance that counts, not the count: doubling contacts of the same kind does not change the reading. What changes it is the proportion — and how exact each contact is.',
+      'Cuenta el saldo, no la cantidad: duplicar contactos del mismo tipo no cambia la lectura. Lo que cambia es la proporcion, y cuan exacto es cada contacto.',
+      'Conta il saldo, non la quantita: raddoppiare i contatti dello stesso tipo non cambia la lettura. Cambia la proporzione, e quanto ogni contatto e esatto.',
+    ))
+  }
+
+  return linhas
 }
 
 // Domínio relacional de cada planeta (1 palavra), nos 4 idiomas.

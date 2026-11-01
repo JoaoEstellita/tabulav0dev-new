@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { getSynastry, type SynastryResult } from '../services/DiscoveryService'
 import SynastryWheel from './SynastryWheel'
-import { synastryScore } from '../astro/synastryReading'
-import { affinityBand, affinityLabel } from '../theme/lenses'
+import { synastryScore, explicarAfinidade } from '../astro/synastryReading'
+import { affinityBand, affinityLabel, affinityColor } from '../theme/lenses'
 import { resolvePlanetInSignText } from '../utils/natalInterpretation'
 
 // Camada de signos (o "tempero"): planeta pessoal → signo pela longitude.
@@ -166,12 +166,25 @@ export default function SynastryModal({ visible, uid, name, onClose, targetBirth
             devolveria os 50% de reserva, que leem como medição e não são. */}
         {score ? (
           <View style={s.afinidade}>
-            <Text style={s.afinidadeTexto}>
-              {`${affinityLabel(affinityBand(score.pct), language)} · ${score.pct}%`}
-            </Text>
-            <Text style={s.afinidadeMeta}>
-              {`${score.harmonics} ${tl('harmônicos', 'harmonic', 'armonicos', 'armonici')} · ${score.tensions} ${tl('tensos', 'tense', 'tensos', 'tesi')}`}
-            </Text>
+            {/* ⚠️ O NÚMERO LIDERA, o rótulo legenda. Invertido — como estava —
+                a pessoa lia a palavra e o número virava enfeite, mas é ele que
+                diz QUANTO. Mesma ordem do card dos Grupos: o mesmo dado não
+                pode se apresentar de dois jeitos em duas telas. */}
+            <View style={s.afinidadeLinha}>
+              <Text style={[s.afinidadeNumero, { color: affinityColor(score.pct) }]}>{score.pct}</Text>
+              <Text style={[s.afinidadeSimbolo, { color: affinityColor(score.pct) }]}>%</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.afinidadeTexto}>{affinityLabel(affinityBand(score.pct), language)}</Text>
+                <Text style={s.afinidadeMeta}>
+                  {`${score.harmonics} ${tl('harmônicos', 'harmonic', 'armonicos', 'armonici')} · ${score.tensions} ${tl('tensos', 'tense', 'tensos', 'tesi')}`}
+                </Text>
+              </View>
+            </View>
+            {/* ⚠️ SEM O EMPATE NÃO DÁ PARA LER O NÚMERO. "71%" sozinho é tomado
+                por "71 de 100 possíveis"; é um saldo, e 50 é o empate. */}
+            {explicarAfinidade(score, language as any).map((linha, k) => (
+              <Text key={`afin-${k}`} style={s.afinidadeExplica}>{linha}</Text>
+            ))}
           </View>
         ) : null}
 
@@ -260,15 +273,18 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 },
   title: { color: C.tx, fontSize: 20, fontWeight: '900', flex: 1, marginRight: 12 },
   afinidade: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+    // ⚠️ Virou COLUNA: era `row` com `space-between`, que servia enquanto o
+    // conteúdo era uma linha só. Com o número grande e a explicação embaixo, o
+    // `row` empilharia tudo de lado e espremeria a frase.
     paddingHorizontal: 16,
     paddingBottom: 12,
-    gap: 10,
   },
+  afinidadeLinha: { flexDirection: 'row', alignItems: 'flex-start', gap: 2 },
+  afinidadeNumero: { fontSize: 30, fontWeight: '800', lineHeight: 32 },
+  afinidadeSimbolo: { fontSize: 14, fontWeight: '700', marginTop: 3, marginRight: 8 },
   afinidadeTexto: { color: C.gold, fontSize: 16, fontWeight: '800', flexShrink: 1 },
   afinidadeMeta: { color: C.dim, fontSize: 14 },
+  afinidadeExplica: { color: C.dim, fontSize: 12, lineHeight: 17, marginTop: 7 },
   sect: { color: C.dim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, marginTop: 4 },
   scoreBox: { alignItems: 'center', marginBottom: 16 },
   scorePct: { color: C.magenta, fontSize: 40, fontWeight: '900' },

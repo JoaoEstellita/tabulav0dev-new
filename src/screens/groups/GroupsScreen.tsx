@@ -56,10 +56,10 @@ import AspectGrid, { transitCellId } from "../../components/AspectGrid"
 import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModal"
 import SynastryModal from "../../components/SynastryModal"
 import SynastryTabs from "../../components/SynastryTabs"
-import { affinityBand, affinityLabel } from "../../theme/lenses"
+import { affinityBand, affinityLabel, affinityColor } from "../../theme/lenses"
 import CombinacaoDoCasal from "../../components/CombinacaoDoCasal"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
-import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
+import { synastryScore, synastryAspectLine, synastryHouseOverlays, explicarAfinidade } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
 import { searchProfiles, type PublicProfile } from "../../services/DiscoveryService"
 import { gunaMilanBetween } from "../../astro/vedic"
@@ -1986,14 +1986,34 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
       <View style={styles.synastryBox}>
         {/* Só o cabeçalho colapsa/expande — assim tocar numa aba/aspecto interno não fecha a box. */}
         <TouchableOpacity activeOpacity={0.85} onPress={() => toggleSyn(key)}>
+          {/* ⚠️ A PORCENTAGEM VEM NA FRENTE, e grande. Antes o rótulo liderava
+              e o número vinha pendurado depois de um ponto — a pessoa lia
+              "Alta afinidade" e o 71% virava enfeite, quando é ele que diz
+              QUANTO. O rótulo passa a ser a legenda do número, não o
+              contrário. */}
           <View style={styles.synastryCompatRow}>
-            <Text style={styles.synastryCompatText}>
-              {`${affinityLabel(affinityBand(score.pct), language)} · ${score.pct}%`}
-            </Text>
-            <Text style={styles.synastryCompatMeta}>
-              {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}  ${expanded ? '▴' : '▾'}`}
-            </Text>
+            <View style={styles.afinNumeroBloco}>
+              <Text style={[styles.afinNumero, { color: affinityColor(score.pct) }]}>{score.pct}</Text>
+              <Text style={[styles.afinSimbolo, { color: affinityColor(score.pct) }]}>%</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.synastryCompatText}>
+                {affinityLabel(affinityBand(score.pct), language)}
+              </Text>
+              <Text style={styles.synastryCompatMeta}>
+                {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}`}
+              </Text>
+            </View>
+            <Text style={styles.synastryCompatMeta}>{expanded ? '▴' : '▾'}</Text>
           </View>
+
+          {/* ⚠️ O NÚMERO SE EXPLICA NA PRÓPRIA TELA. Sozinho, "71%" é lido como
+              "71 de 100 pontos possíveis", que não é o que ele é: é um SALDO
+              entre o que flui e o que atrita, com 50 no empate. Sem dizer onde
+              fica o empate, não há como saber se 71 é muito. */}
+          {explicarAfinidade(score, language as any).map((linha, k) => (
+            <Text key={`afin-exp-${k}`} style={styles.afinExplica}>{linha}</Text>
+          ))}
           {!expanded ? (
             <Text style={styles.synastryHint}>{tr('groups.synastry.tapToExpand', 'Toque para ver a leitura completa')}</Text>
           ) : null}
@@ -2355,6 +2375,15 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                                 : tr('groups.label.noRecentUpdate', 'Sem atualizacao recente')}
                         </Text>
                       </View>
+                    </View>
+
+                    {/* ⚠️ AS AÇÕES TÊM LINHA PRÓPRIA. Elas dividiam a linha com o
+                        nome e, ao virarem TRÊS botões, espremeram o nome até
+                        "Érica …" — o `flex: 1` do bloco do nome cede antes dos
+                        botões, então quem cresce empurra quem identifica. Com
+                        `flexWrap`, botão novo quebra para baixo em vez de roubar
+                        largura do nome. */}
+                    <View style={styles.memberAcoes}>
                       {member.birthData?.datetime && member.birthData?.coordinates && (member.userId === user?.uid || (member as any).shareChart !== false) ? (
                         <TouchableOpacity
                           style={styles.memberChartBtn}
@@ -4031,6 +4060,17 @@ const styles = StyleSheet.create({
   },
   memberHeaderInfo: {
     flex: 1,
+    // ⚠️ `minWidth: 0` é o que deixa o `numberOfLines={1}` do nome funcionar
+    // dentro de um flex row: sem isso o filho se recusa a encolher abaixo do
+    // conteúdo e empurra o resto para fora em vez de truncar.
+    minWidth: 0,
+  },
+  memberAcoes: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
   },
   memberChartBtn: {
     flexDirection: "row",
@@ -4280,6 +4320,10 @@ const styles = StyleSheet.create({
   // Botão da COMBINAÇÃO: presente mas discreto — ele convida, não compete
   // com a leitura que já está aberta acima.
   parCabecalho: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  afinNumeroBloco: { flexDirection: 'row', alignItems: 'flex-start' },
+  afinNumero: { fontSize: 30, fontWeight: '800', lineHeight: 32 },
+  afinSimbolo: { fontSize: 14, fontWeight: '700', marginTop: 3, marginLeft: 1 },
+  afinExplica: { color: '#9AA3BA', fontSize: 12, lineHeight: 17, marginTop: 7 },
   synastryBox: {
     borderWidth: 1,
     borderColor: "rgba(255,215,0,0.14)",

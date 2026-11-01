@@ -22,11 +22,31 @@ export const lensLabel = (k: LensKey, lang: Lang) => LENS[k].label[langIdx(lang)
 
 // ── Afinidade: UMA palavra, UMA escala de faixas (5), em todas as telas ──────────
 export type AffinityBand = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
+/**
+ * ⚠️ OS CORTES SAÍRAM DE MEDIÇÃO, e os anteriores eram da escala SATURADA.
+ *
+ * Eram 80/65/50/35, de quando o índice somava os aspectos e um quarto dos
+ * pares batia no teto de 95. Depois que a escala passou a medir o saldo
+ * (`pontuarContatos`), medi 2000 pares: p10=38 p50=53 p90=69, máximo 84. Com
+ * os cortes velhos, "afinidade altíssima" aparecia para 0,45% dos pares — uma
+ * faixa que nunca acontece é tão inútil quanto uma que acontece sempre, e é
+ * exatamente o mesmo erro que já havia sido corrigido nos tiers do Match.
+ *
+ * ⚠️ SÃO OS MESMOS NÚMEROS de `tierOf` em `backend/lib/discovery/affinity.js`,
+ * de propósito: as duas telas usam as MESMAS PALAVRAS ("Alta afinidade"), e
+ * palavras iguais com limiares diferentes fariam o mesmo rótulo significar
+ * coisas distintas nos Grupos e no Match.
+ *
+ * ⚠️ SE A CURVA MUDAR, REMEDIR. Foi não ter feito isso que produziu a faixa
+ * morta.
+ */
+export const AFFINITY_CUTS = { altissima: 72, alta: 62, boa: 50, moderada: 40 } as const
+
 export function affinityBand(pct: number): AffinityBand {
-  if (pct >= 80) return 'altissima'
-  if (pct >= 65) return 'alta'
-  if (pct >= 50) return 'boa'
-  if (pct >= 35) return 'moderada'
+  if (pct >= AFFINITY_CUTS.altissima) return 'altissima'
+  if (pct >= AFFINITY_CUTS.alta) return 'alta'
+  if (pct >= AFFINITY_CUTS.boa) return 'boa'
+  if (pct >= AFFINITY_CUTS.moderada) return 'moderada'
   return 'baixa'
 }
 const BAND_LABEL: Record<AffinityBand, [string, string, string, string]> = {
@@ -39,10 +59,16 @@ const BAND_LABEL: Record<AffinityBand, [string, string, string, string]> = {
 export const affinityLabel = (band: AffinityBand, lang: Lang) => BAND_LABEL[band][langIdx(lang)]
 /** "Afinidade" — a palavra canônica pro conceito de score entre pessoas. */
 export const affinityWord = (lang: Lang) => (['Afinidade', 'Affinity', 'Afinidad', 'Affinita'][langIdx(lang)])
-/** Cor da afinidade por faixa (verde→âmbar→vermelho). */
+/**
+ * Cor da afinidade por faixa (verde→âmbar→vermelho).
+ *
+ * ⚠️ PELOS MESMOS CORTES do rótulo. Quando a cor e a palavra viravam em
+ * pontos diferentes, existia uma faixa onde a tela dizia "boa afinidade" em
+ * âmbar de alerta — dois sinais contraditórios sobre o mesmo número.
+ */
 export function affinityColor(pct: number): string {
-  if (pct >= 65) return '#3ecf8e'
-  if (pct >= 50) return '#d0a95c'
-  if (pct >= 35) return '#e0a03a'
+  if (pct >= AFFINITY_CUTS.alta) return '#3ecf8e'
+  if (pct >= AFFINITY_CUTS.boa) return '#d0a95c'
+  if (pct >= AFFINITY_CUTS.moderada) return '#e0a03a'
   return '#e4572e'
 }
