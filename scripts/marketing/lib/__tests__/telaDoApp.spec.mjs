@@ -69,9 +69,15 @@ describe('o desenho não pode divergir do app', () => {
     expect(corDoScore(40)).toBe('#FFD700')
     expect(corDoScore(39)).toBe('#FF6B6B')
 
-    expect(faixaDaArea(62, STATUS_THRESHOLDS)).toBe('Positivo')
-    expect(faixaDaArea(61, STATUS_THRESHOLDS)).toBe('Moderado')
-    expect(faixaDaArea(34, STATUS_THRESHOLDS)).toBe('Crítico')
+    // ⚠️ DERIVADO DOS LIMIARES, não escrito à mão. Eles já mudaram de escala
+    // uma vez (35/62 eram da escala crua) e estes asserts quebraram sem que
+    // nada estivesse errado — o mesmo padrão que deixou `costing.unit.js`
+    // meses vermelho. O contrato é "no corte é positivo, um abaixo não é".
+    const { criticalBelow, positiveAbove } = STATUS_THRESHOLDS
+    expect(faixaDaArea(positiveAbove, STATUS_THRESHOLDS)).toBe('Positivo')
+    expect(faixaDaArea(positiveAbove - 1, STATUS_THRESHOLDS)).toBe('Moderado')
+    expect(faixaDaArea(criticalBelow - 1, STATUS_THRESHOLDS)).toBe('Crítico')
+    expect(faixaDaArea(criticalBelow, STATUS_THRESHOLDS)).toBe('Moderado')
   })
 })
 

@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { emocoesDoDia, EMOCOES } from '../emocoesDoDia'
 import { ANCORAS_POR_AREA, escalaDaArea, TIPICO, textoDoDesvio } from '../../constants/escalaDaArea'
 import { desvioDaReferencia } from '../emocoesDoDia'
+import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 
 /** Trânsito na forma que o motor entrega. */
 const t = (planeta: string, aspecto: string, alvo: string, orb = 1) => ({
@@ -176,12 +177,39 @@ describe('a escala exibida das áreas', () => {
   })
 
   /**
-   * ⚠️ OS ALERTAS CONTINUAM NO CRU, de propósito. Mudar a escala e mudar quem
-   * recebe WhatsApp/push são duas decisões, e só a primeira foi tomada.
+   * ⚠️ OS ALERTAS AGORA COMPARAM NA ESCALA EXIBIDA. Este teste afirmava o
+   * contrário — era a segunda decisão, tomada depois, com medição na frente.
+   *
+   * Os limiares vivem na escala em que 50 é o típico. Comparar o valor CRU
+   * contra eles fazia Carreira disparar "crítico" em 43,7% das leituras e
+   * Espiritualidade em 14,7%: três vezes mais alerta numa área que na outra,
+   * por artefato de escala. Remapeado, fica entre 7,9% e 10,0% nas oito.
    */
-  it('o caminho dos alertas não foi remapeado', () => {
+  it('o caminho dos alertas compara na escala exibida', () => {
     const hook = readFileSync(join(__dirname, '..', '..', 'hooks', 'useLifeAreas.ts'), 'utf8')
-    expect(hook, 'o hook dos alertas passou a remapear — isso muda quem é alertado')
-      .not.toMatch(/escalaDaArea/)
+    const limpo = hook.split(String.fromCharCode(10))
+      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+      .join(String.fromCharCode(10))
+    expect(limpo, 'o hook dos alertas voltou a comparar o valor cru').toMatch(/escalaDaArea/)
+    expect(limpo, 'o limiar tem de ser lido do runtime, não fixado aqui')
+      .toMatch(/STATUS_THRESHOLDS\.criticalBelow/)
+  })
+
+  /**
+   * ⚠️ OS LIMIARES TÊM DE ESTAR NA ESCALA EXIBIDA. Se alguém devolver os
+   * valores antigos (35/62), eles passam a significar 23% de "crítico" e 26%
+   * de "favorável" sobre números já centrados — e nada acusa, porque os dois
+   * continuam entre 0 e 100.
+   */
+  it('os limiares padrão são da escala exibida', () => {
+    expect(STATUS_THRESHOLDS.criticalBelow, 'criticalBelow voltou para a escala crua').toBe(25)
+    expect(STATUS_THRESHOLDS.positiveAbove, 'positiveAbove voltou para a escala crua').toBe(75)
+    // ⚠️ SIMETRIA: raro dos dois lados e igualmente raro. Medido, 8,8% e 10,8%.
+    // Um aviso de atenção que dispara três vezes mais que um de boa fase
+    // ensina que o app só traz má notícia.
+    const aoCritico = TIPICO - STATUS_THRESHOLDS.criticalBelow
+    const aoPositivo = STATUS_THRESHOLDS.positiveAbove - TIPICO
+    expect(Math.abs(aoCritico - aoPositivo), 'os dois extremos deixaram de ser simétricos')
+      .toBeLessThanOrEqual(5)
   })
 })

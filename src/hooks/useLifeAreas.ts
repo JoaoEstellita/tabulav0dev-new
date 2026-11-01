@@ -19,6 +19,7 @@ import {
   chaveStatusUsuario,
   TTL_STATUS_MS,
 } from '../services/firebase/docCache'
+import { escalaDaArea } from '../constants/escalaDaArea'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 const ENABLE_LOCAL_ENGINE_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_LOCAL_ENGINE_FALLBACK === '1'
@@ -496,20 +497,24 @@ export function useLifeAreas(): UseLifeAreasReturn {
     if (!transitData || !user) return
 
     try {
-      // Encontrar areas criticas (abaixo de 40%)
+      // ⚠️ REMAPEIA ANTES DE COMPARAR. `transitData.lifeAreas` traz o valor
+      // CRU do motor, e os limiares vivem na escala exibida (onde 50 é o
+      // típico em toda área). Comparar o cru contra eles era o que fazia
+      // Carreira disparar alerta em 43,7% das leituras e Espiritualidade em
+      // 14,7% — três vezes mais alerta numa área que na outra, por artefato de
+      // escala. Remapeado, fica entre 7,9% e 10,0% em todas as oito.
+      const naEscala = (nome: string, area: any) => {
+        const bruto = typeof area?.percentage === 'number'
+          ? area.percentage
+          : (typeof area?.status === 'number' ? area.status : null)
+        if (bruto === null) return null
+        const exibido = escalaDaArea(nome, bruto)
+        // Área sem âncora segue no cru: ficar de fora do alerta seria pior.
+        return exibido !== null ? exibido : bruto
+      }
       const criticalAreas = Object.entries(transitData.lifeAreas)
-        .filter(([_, area]) => {
-          const value = typeof area?.percentage === 'number'
-            ? area.percentage
-            : (typeof area?.status === 'number' ? area.status : null)
-          return typeof value === 'number' && value < STATUS_THRESHOLDS.criticalBelow
-        })
-        .map(([name, area]) => ({
-          name,
-          status: typeof area?.percentage === 'number'
-            ? area.percentage
-            : (typeof area?.status === 'number' ? area.status : null)
-        }))
+        .map(([name, area]) => ({ name, status: naEscala(name, area) }))
+        .filter((a) => typeof a.status === 'number' && a.status < STATUS_THRESHOLDS.criticalBelow)
 
       if (criticalAreas.length === 0) {
         if (__DEV__) console.log(' Nenhuma area critica encontrada')

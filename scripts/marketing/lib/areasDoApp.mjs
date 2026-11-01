@@ -58,8 +58,12 @@ export const NOME_DA_AREA = {
  * diferentes no app, e o mockup copia cada um no seu lugar.
  */
 export const STATUS_THRESHOLDS = {
-  criticalBelow: 35,
-  positiveAbove: 62,
+  // ⚠️ NA ESCALA EXIBIDA (`src/constants/escalaDaArea.ts`), onde 50 é o típico
+  // em toda área. Os valores anteriores (35/62) eram da escala crua, cuja
+  // mediana é 41: medido em 19.200 leituras davam 27,5% de "Crítico" e 4,5%
+  // de "Positivo", e a peça de marketing herdava esse desequilíbrio.
+  criticalBelow: 25,
+  positiveAbove: 75,
 }
 
 /**
@@ -72,17 +76,22 @@ export const STATUS_THRESHOLDS = {
  * Os valores cobrem as três faixas de propósito, para a peça mostrar o app
  * dizendo também o que está ruim. Tela de produto só com número alto é a que
  * ninguém acredita.
+ *
+ * ⚠️ REFEITOS PARA A ESCALA EXIBIDA, onde 50 é o típico e os cortes são 25 e
+ * 75. Os anteriores (31 a 83) foram escolhidos quando "Positivo" começava em
+ * 62: na escala nova quase todos cairiam em "Moderado" e a peça mostraria uma
+ * tela morna, sem nenhuma faixa alta nem baixa.
  */
 export const DIA_DE_EXEMPLO = {
   score: 72,
   areas: {
-    amor: 78,
-    saude: 64,
-    familia: 71,
-    comunicacao: 83,
-    carreira: 45,
-    financas: 58,
-    espiritualidade: 69,
-    transformacao: 31,
+    amor: 82,
+    saude: 61,
+    familia: 76,
+    comunicacao: 88,
+    carreira: 44,
+    financas: 55,
+    espiritualidade: 71,
+    transformacao: 19,
   },
 }
