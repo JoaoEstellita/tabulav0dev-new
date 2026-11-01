@@ -23,25 +23,151 @@ export interface SynastryScore {
 }
 
 /**
- * Índice de compatibilidade 0–100 + faixa. Harmônicos somam, tensos descontam,
- * conjunção quase-neutra; contato mais exato e entre planetas pessoais pesa mais.
+ * ⚠️ POR QUE ESTA FÓRMULA, e por que a anterior estava errada.
+ *
+ * A anterior era `50 + soma × 5`, somando TODOS os aspectos. Medido em 600
+ * pares: p50=74, p75 E p90 ambos em 95, 28% nas pontas, e 66% dos pares
+ * lendo "harmônica". Um índice de compatibilidade que diz "harmônica" para
+ * dois terços das pessoas não distingue nada.
+ *
+ * A causa é a de sempre nesta base: curva calibrada para poucos itens
+ * recebendo muitos. Um par tem 20–25 aspectos — a soma estoura o teto de 95
+ * antes do décimo, e a partir dali todo par recebe o mesmo número.
+ *
+ * ⚠️ A CORREÇÃO É A RECEITA QUE O PRÓPRIO PROJETO JÁ USA no status
+ * (`scoreFromSupportPressure`, no backend), com as MESMAS constantes de
+ * `STATUS_POLICY.calc`. Separa duas coisas que a soma confundia:
+ *
+ *   BALANÇO   — (apoio − tensão) / total. Normalizado, então o NÚMERO de
+ *               aspectos não infla nada: 20 harmônicos e 2 harmônicos dão o
+ *               mesmo balanço, que é o certo.
+ *   AMPLITUDE — quanto contato existe. É ela que separa "forte e harmônico"
+ *               de "mal se tocam": com pouco contato o resultado fica perto
+ *               de 50, porque há pouco a dizer.
+ *
+ * Medido com a mesma amostra: p10=38 p25=46 p50=54 p75=62 p90=69, ZERO nas
+ * pontas, e as faixas em 25% harmônica / 53% mista / 22% tensa.
+ *
+ * ⚠️ A CONJUNÇÃO PEGA O SINAL DE QUEM SE FUNDE, e não um +0,6 fixo. A regra é
+ * a mesma do cálculo das emoções e da ativação: Saturno, Plutão, Marte, Urano
+ * e Netuno pesam; o resto afaga. O +0,6 era um viés constante a favor,
+ * aplicado ao aspecto mais frequente que existe.
+ *
+ * ⚠️ ISTO MUDA O NÚMERO QUE JÁ ESTÁ NO AR, de propósito. Um par que mostrava
+ * 95% passa a mostrar ~69. O 95 não era um elogio: era o teto da escala.
+ */
+const CALC = { eps: 1e-6, beta: 1.2, k: 0.9, gamma: 1.6 }
+
+/** Planetas cuja conjunção PESA — mesma lista das emoções e da ativação. */
+const CONJUNCAO_PESADA = new Set(['saturn', 'pluto', 'mars', 'uranus', 'neptune'])
+
+/**
+ * Tom pelo nome do aspecto, quando quem chama nao mandou `tone`.
+ *
+ * ⚠️ MENORES DUROS SAO TENSOS (quincuncio, semiquadratura,
+ * sesquiquadratura) — decisao ja tomada em `getAspectType` (`b96acf8`).
+ * ⚠️ ESTE FALLBACK EXISTE PARA A PARIDADE com o gemeo do backend, que
+ * recebe os contatos sem `tone` (o Match manda `labelPt`). Sem ele, o mesmo par
+ * daria numeros diferentes no app e na Rede.
+ */
+const TOM_POR_ASPECTO: Record<string, string> = {
+  trigono: 'harmonioso', sextil: 'harmonioso', semissextil: 'harmonioso',
+  trine: 'harmonioso', sextile: 'harmonioso',
+  quadratura: 'tenso', oposicao: 'tenso', quincuncio: 'tenso',
+  semiquadratura: 'tenso', sesquiquadratura: 'tenso',
+  square: 'tenso', opposition: 'tenso',
+  conjuncao: 'neutro', conjunction: 'neutro',
+}
+
+/** ⚠️ Hermes NAO suporta regex `\p{...}` — usar o range direto. */
+const semAcento = (x: unknown) => String(x || '').toLowerCase().trim()
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+
+function tomDe(a: { tone?: unknown; aspect?: unknown; type?: unknown; labelPt?: unknown }): string {
+  const t = semAcento(a?.tone)
+  if (t === 'harmonioso' || t === 'tenso' || t === 'neutro') return t
+  return TOM_POR_ASPECTO[semAcento(a?.aspect ?? a?.type ?? a?.labelPt)] || 'neutro'
+}
+
+/**
+ * Os dois planetas de um contato.
+ *
+ * ⚠️ ACEITA `planet1/planet2` TAMBEM: e a forma que o motor natal usa e
+ * a que o gemeo do backend recebe. Sem este ramo, um contato nessa forma caia
+ * com os dois planetas vazios — nao entrava em PERSONAL nem em
+ * CONJUNCAO_PESADA, e virava apoio em silencio.
+ */
+function planetasDe(a: Record<string, unknown>): [string, string] {
+  const k = (x: unknown) => String(x ?? '').toLowerCase().trim()
+  return [
+    k(a?.mine != null ? a.mine : a?.planet1),
+    k(a?.theirs != null ? a.theirs : a?.planet2),
+  ]
+}
+
+/**
+ * O marcador ÚNICO da sinastria: vale para a dupla inteira e para cada área.
+ *
+ * ⚠️ É O MESMO nos dois justamente para que possam ser lidos na mesma tela.
+ * Com fórmulas diferentes, "Afeto 63" e "a dupla 69" seriam escalas distintas
+ * e a comparação que a tela convida a fazer não significaria nada.
+ */
+export interface ContatoPontuavel {
+  mine?: string
+  theirs?: string
+  /** Formato do motor natal — `tomDe`/`planetasDe` aceitam os dois. */
+  planet1?: string
+  planet2?: string
+  tone?: string
+  /** Quando `tone` não vem, o tom sai do nome do aspecto. */
+  aspect?: string
+  type?: string
+  labelPt?: string
+  orb: number
+}
+
+export function pontuarContatos(
+  contatos: ReadonlyArray<ContatoPontuavel>,
+): { pct: number; apoio: number; tensao: number } {
+  let apoio = 0
+  let tensao = 0
+  for (const a of contatos || []) {
+    const [m, t] = planetasDe(a as any)
+    const exatidao = Math.max(0, (6 - Math.min(6, Number(a.orb) || 0)) / 6)
+    const pessoais = (PERSONAL.has(m) ? 1 : 0) + (PERSONAL.has(t) ? 1 : 0)
+    const peso = exatidao * (pessoais >= 2 ? 1.4 : pessoais === 1 ? 1.15 : 1)
+    const tom = tomDe(a as any)
+    const pesa = tom === 'tenso'
+      || (tom !== 'harmonioso' && (CONJUNCAO_PESADA.has(m) || CONJUNCAO_PESADA.has(t)))
+    if (pesa) tensao += peso
+    else apoio += peso
+  }
+  const total = apoio + tensao
+  if (total <= 0) return { pct: 50, apoio, tensao }
+  const balanco = Math.tanh(CALC.beta * ((apoio - tensao) / (total + CALC.eps)))
+  const amplitude = Math.pow(1 - Math.exp(-CALC.k * total), CALC.gamma)
+  // 45 e não 50: o teto absoluto não deve ser alcançável — "100% compatível"
+  // é uma promessa que nenhum mapa sustenta.
+  const pct = Math.max(2, Math.min(98, Math.round(50 + 45 * amplitude * balanco)))
+  return { pct, apoio, tensao }
+}
+
+/**
+ * Índice de compatibilidade 0–100 + faixa, da dupla inteira.
+ *
+ * ⚠️ Usa o marcador ÚNICO (`pontuarContatos`), o mesmo das áreas — ver o
+ * cabeçalho dele para a medição que motivou a troca.
  */
 export function synastryScore(aspects: SynastryAspect[] | null | undefined): SynastryScore {
   const list = Array.isArray(aspects) ? aspects : []
   if (list.length === 0) return { pct: 50, bandKey: 'neutra', harmonics: 0, tensions: 0 }
-  const TONE_BASE: Record<string, number> = { harmonioso: 2, tenso: -2, neutro: 0.6 }
-  let sum = 0
   let harmonics = 0
   let tensions = 0
   for (const a of list) {
     if (a.tone === 'harmonioso') harmonics++
     else if (a.tone === 'tenso') tensions++
-    const closeness = Math.max(0, (6 - Math.min(6, a.orb)) / 6) // 0..1 (0° = 1)
-    const personals = (PERSONAL.has(a.mine) ? 1 : 0) + (PERSONAL.has(a.theirs) ? 1 : 0)
-    const personalMult = personals >= 2 ? 1.4 : personals === 1 ? 1.15 : 1
-    sum += (TONE_BASE[a.tone] ?? 0) * closeness * personalMult
   }
-  const pct = Math.max(5, Math.min(95, Math.round(50 + sum * 5)))
+  const { pct } = pontuarContatos(list)
   const bandKey: SynastryBand = pct >= 62 ? 'harmonica' : pct >= 45 ? 'mista' : 'tensa'
   return { pct, bandKey, harmonics, tensions }
 }

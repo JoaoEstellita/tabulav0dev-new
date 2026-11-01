@@ -1,4 +1,5 @@
 import type { SynastryAspect } from './synastry'
+import { pontuarContatos, type ContatoPontuavel } from './synastryReading'
 
 /**
  * O VÍNCULO, ÁREA POR ÁREA — o que os dois mapas têm entre si, por tema.
@@ -14,11 +15,12 @@ import type { SynastryAspect } from './synastry'
  * daria uma nota que sobe e desce sem a pessoa saber se mudou o vínculo ou o
  * céu — o mesmo erro que "hoje vs natal" existe para evitar nas emoções.
  *
- * ⚠️ A FÓRMULA É A DO `synastryScore`, não uma nova: mesmo peso de tom, mesma
- * curva de exatidão da orbe, mesmo bônus de planeta pessoal. Só muda QUAIS
- * aspectos entram em cada conta. Inventar uma fórmula por área exigiria
- * calibrá-la contra a geral depois, e áreas que não conversam com o total
- * seriam uma contradição na mesma tela.
+ * ⚠️ O MARCADOR É LITERALMENTE O MESMO da dupla inteira — a função
+ * `pontuarContatos`, importada, não uma cópia dela. Só muda QUAIS aspectos
+ * entram em cada conta. Antes eram duas cópias "idênticas por convenção", e
+ * cópia idêntica por convenção é a origem recorrente de divergência silenciosa
+ * neste projeto: ajusta-se uma, a outra fica, e a mesma tela passa a mostrar
+ * duas escalas com a mesma cara.
  */
 
 export type AreaSinastria = 'afeto' | 'comunicacao' | 'quimica' | 'sustentacao' | 'intensidade'
@@ -39,18 +41,6 @@ export const PLANETAS_DA_AREA: Record<AreaSinastria, ReadonlySet<string>> = {
 }
 
 export const AREAS_SINASTRIA: AreaSinastria[] = ['afeto', 'comunicacao', 'quimica', 'sustentacao', 'intensidade']
-
-/** Planetas pessoais pesam mais — mesma regra do `synastryScore`. */
-const PESSOAIS = new Set(['sun', 'moon', 'mercury', 'venus', 'mars'])
-
-/**
- * Peso do tom. Herdado do `synastryScore` para as duas contas conversarem.
- *
- * ⚠️ A conjunção é quase-neutra e POSITIVA (0,6), não zero: dois planetas no
- * mesmo grau se fundem, e fusão num vínculo é contato — o que decide se pesa é
- * QUEM se funde, e isso já entra pelo multiplicador de planeta pessoal.
- */
-const PESO_DO_TOM: Record<string, number> = { harmonioso: 2, tenso: -2, neutro: 0.6 }
 
 const chave = (p: unknown) => String(p || '').toLowerCase().trim()
 
@@ -75,14 +65,6 @@ export type ScoreDeArea = {
  */
 export const MIN_ASPECTOS_POR_AREA = 2
 
-/** O peso de um aspecto — exatidão × planetas pessoais, como no score geral. */
-function pesoDoAspecto(a: SynastryAspect): number {
-  const exatidao = Math.max(0, (6 - Math.min(6, Number(a.orb) || 0)) / 6)
-  const pessoais = (PESSOAIS.has(chave(a.mine)) ? 1 : 0) + (PESSOAIS.has(chave(a.theirs)) ? 1 : 0)
-  const mult = pessoais >= 2 ? 1.4 : pessoais === 1 ? 1.15 : 1
-  return exatidao * mult
-}
-
 /** Os aspectos que tocam uma área (qualquer um dos dois planetas basta). */
 export function aspectosDaArea(
   area: AreaSinastria,
@@ -104,7 +86,6 @@ export function vinculoDaArea(
   const lista = aspectosDaArea(area, aspectos)
   if (lista.length < MIN_ASPECTOS_POR_AREA) return null
 
-  let soma = 0
   let harmonicos = 0
   let tensos = 0
   const porque: ScoreDeArea['porque'] = []
@@ -113,19 +94,22 @@ export function vinculoDaArea(
     const tom = chave(a.tone)
     if (tom === 'harmonioso') harmonicos++
     else if (tom === 'tenso') tensos++
-    const peso = pesoDoAspecto(a)
-    const contrib = (PESO_DO_TOM[tom] ?? 0) * peso
-    soma += contrib
+    // ⚠️ O peso aqui é só para ORDENAR o "de onde vem" — a pontuação sai do
+    // marcador único abaixo, não desta soma. Tê-la como fonte do número foi o
+    // que, no geral, produziu a saturação.
+    const exatidao = Math.max(0, (6 - Math.min(6, Number(a.orb) || 0)) / 6)
     porque.push({
       mine: String(a.mine), theirs: String(a.theirs), aspect: String(a.aspect),
-      tone: tom, orb: Number(a.orb) || 0, peso: Math.round(contrib * 100) / 100,
+      tone: tom, orb: Number(a.orb) || 0,
+      peso: Math.round((tom === 'tenso' ? -exatidao : exatidao) * 100) / 100,
     })
   }
 
-  // ⚠️ A MESMA CURVA do score geral (50 + soma×5, travada em 5–95). Mantê-la
-  // idêntica é o que faz "Afeto 68" e "a dupla 62" serem comparáveis na mesma
-  // tela; uma curva própria aqui exigiria calibração contra a outra.
-  const pct = Math.max(5, Math.min(95, Math.round(50 + soma * 5)))
+  // ⚠️ O MARCADOR É O MESMO da dupla inteira (`pontuarContatos`). É isso que
+  // faz "Afeto 63" e "a dupla 69" serem lidos na mesma tela sem mentira — com
+  // fórmulas diferentes seriam escalas distintas, e a comparação que a tela
+  // convida a fazer não significaria nada.
+  const { pct } = pontuarContatos(lista as ContatoPontuavel[])
 
   porque.sort((x, y) => Math.abs(y.peso) - Math.abs(x.peso))
   return { pct, quantos: lista.length, harmonicos, tensos, porque: porque.slice(0, 5) }

@@ -97,20 +97,33 @@ describe('vínculo por área', () => {
 
   /**
    * ⚠️ AS ÁREAS TÊM DE SER COMPARÁVEIS ENTRE SI — é a razão de existirem lado a
-   * lado num gráfico. Medido em 400 pares sintéticos: as medianas ficam entre
-   * 53 e 60 e nenhuma satura.
+   * lado num gráfico. Remedido em 600 pares depois da troca de curva: as
+   * medianas ficam entre 49 e 57 e nenhuma área satura.
    *
-   * E é por isso que o % GERAL não entra no mesmo gráfico: medido nos mesmos
-   * 400 pares, ele dá 52/73/95 — um quarto dos pares bate no teto de 95, porque
-   * soma 20+ aspectos pela mesma curva calibrada para poucos. É a armadilha de
-   * sempre: curva de um tamanho de entrada aplicada a outro.
+   * ⚠️ ESTE TESTE AFIRMAVA A SATURAÇÃO — o nome dele era "a curva é a mesma do
+   * score geral, e é por isso que ela satura lá", e ele cobrava `toBe(95)`. A
+   * leitura estava certa no diagnóstico e errada na conclusão: em vez de
+   * consertar a curva do geral, congelou o defeito como contrato. O % geral
+   * dava 52/73/95, com um quarto dos pares no teto, e isso não era uma
+   * característica da escala: era a escala não medindo nada acima de dez
+   * contatos bons.
+   *
+   * Agora é UM marcador só (`pontuarContatos`) para as áreas, para a dupla e
+   * para o Match, e o que o teste cobra é justamente que o teto não volte.
    */
-  it('a curva é a mesma do score geral — e é por isso que ela satura lá', () => {
-    // Muitos aspectos harmônicos saturam no teto: o comportamento é o do geral.
-    const muitos = Array.from({ length: 12 }, (_, i) =>
+  it('o mesmo marcador do geral — e nenhum dos dois satura', () => {
+    // ⚠️ ANTES ISTO DAVA EXATAMENTE 95, com 12 trigonos ou com 40: o número
+    // parava de responder ao mapa. Hoje responde, e o teto fica inalcançável.
+    const trigonos = (n: number) => Array.from({ length: n }, (_, i) =>
       asp(i % 2 ? 'venus' : 'moon', 'venus', 'trigono', 'harmonioso', 0))
-    const v = vinculoDaArea('afeto', muitos as any)!
-    expect(v.pct, 'com muitos harmônicos exatos, satura no teto').toBe(95)
+    const doze = vinculoDaArea('afeto', trigonos(12) as any)!
+    const quarenta = vinculoDaArea('afeto', trigonos(40) as any)!
+    expect(doze.pct, `12 trigonos exatos saturaram em ${doze.pct}`).toBeLessThan(95)
+    expect(doze.pct, 'tudo harmônico tem de ler alto').toBeGreaterThan(70)
+    // ⚠️ O BALANÇO É NORMALIZADO: triplicar os contatos do mesmo tom não move o
+    // veredito. Se este assert cair, a soma crua voltou a ser a fonte do número.
+    expect(Math.abs(quarenta.pct - doze.pct), 'de 12 para 40 contatos iguais o índice se mexeu')
+      .toBeLessThanOrEqual(1)
     // Com poucos (o caso comum numa ÁREA), fica no meio da escala — que é o que
     // torna as cinco comparáveis entre si.
     const poucos = vinculoDaArea('afeto', [
