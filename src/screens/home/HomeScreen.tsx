@@ -59,6 +59,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
+import { escalaDaArea } from '../../constants/escalaDaArea'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch { }
@@ -457,11 +458,25 @@ export default function HomeScreen() {
         : Math.round((densityScore * 0.55) + (impactScore * 0.45))
       return Math.max(0, Math.min(100, merged))
     })()
+    // ⚠️ AQUI É ONDE A ESCALA EXIBIDA NASCE, e em um lugar só. O motor produz
+    // um número cujo típico é 41 e cujo patamar muda de área para área
+    // (Carreira 36, Comunicação 45). `escalaDaArea` remapeia para a escala em
+    // que 50 é o típico EM TODA ÁREA — ver `constants/escalaDaArea.ts`.
+    //
+    // ⚠️ O CRU FICA GUARDADO em `bruto`. Ele é o que o backend gravou e o que
+    // os alertas leem; perder o original aqui esconderia a origem de qualquer
+    // divergência futura.
+    //
+    // ⚠️ SE A ÁREA NÃO TIVER ÂNCORA, fica o cru — e isso é deliberado: área
+    // nova apareceria com o número do motor em vez de sumir da tela.
+    const exibido = escalaDaArea(name, percentage)
+    const valorFinal = exibido !== null ? exibido : percentage
     return {
       name,
       ...area,
-      status: typeof percentage === 'number' ? percentage : 0,
-      percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
+      bruto: percentage,
+      status: typeof valorFinal === 'number' ? valorFinal : 0,
+      percentage: typeof valorFinal === 'number' ? valorFinal : percentage,
       movementScore,
       // ⚠️ Sem reserva, ao contrário do movimento: a atenção o motor calcula ou
       // não calcula. Inventar um valor aqui encheria a roda de traços laranja

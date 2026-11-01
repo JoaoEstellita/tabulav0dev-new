@@ -57,7 +57,7 @@ import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModa
 import SynastryModal from "../../components/SynastryModal"
 import SynastryTabs from "../../components/SynastryTabs"
 import { affinityBand, affinityLabel, affinityColor } from "../../theme/lenses"
-import { referenciaDaArea } from "../../constants/referenciaPorArea"
+import { escalaDaArea } from "../../constants/escalaDaArea"
 import CombinacaoDoCasal from "../../components/CombinacaoDoCasal"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays, explicarAfinidade } from "../../astro/synastryReading"
@@ -1826,7 +1826,12 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
       .map((key) => {
         const data = (lifeAreas as any)?.[key]
         if (!data) return null
-        const percentage = coerceNumber(data.percentage ?? data.status)
+        const bruto = coerceNumber(data.percentage ?? data.status)
+        // ⚠️ MESMA ESCALA DA HOME. O card do membro e a roda da Home mostram o
+        // mesmo conceito; se um remapeasse e o outro não, a mesma pessoa teria
+        // dois números no mesmo app. Ver `constants/escalaDaArea.ts`.
+        const remapeado = escalaDaArea(key, bruto)
+        const percentage = remapeado !== null ? remapeado : bruto
         const movementScore = coerceNumber(data.movementScore)
         const attentionScore = coerceNumber(data.attentionScore)
         // Keep group classification aligned with profile cards:
@@ -1839,6 +1844,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
           key,
           label: lifeAreaLabel(key),
           percentage,
+          bruto,
           movementScore,
           attentionScore,
           bucket,
@@ -1894,28 +1900,20 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
   /**
    * A área mais frágil de um membro.
    *
-   * ⚠️ COMPARA A DISTÂNCIA DA REFERÊNCIA, NÃO O NÚMERO CRU. As oito áreas não
-   * vivem no mesmo patamar: medido com o motor real em 1200 leituras, Carreira
-   * tem mediana 36 e Comunicação 45. Pegar o menor número absoluto escolhia a
-   * área de base mais baixa quase sempre, e não a que o céu está de fato
-   * apertando hoje.
+   * ⚠️ COMPARA DIRETO, porque `percentage` JÁ VEM REMAPEADO de
+   * `buildMemberAreaEntries`. Na escala exibida o típico é 50 em toda área, e
+   * aí o menor número é de fato a área mais apertada — subtrair a referência
+   * aqui corrigiria duas vezes e inverteria o viés para o outro lado.
    *
-   * Medido: pelo número cru, Carreira saía como "mais frágil" em 25% das
-   * leituras e Espiritualidade em 4% — quando o esperado, se fossem
-   * comparáveis, seria ~12,5% cada. Pela distância da referência isso achata
-   * para 7–18%.
-   *
-   * ⚠️ SEM REFERÊNCIA, CAI NO NÚMERO CRU. Área nova sem calibração ainda entra
-   * na comparação; ficar de fora seria pior que entrar com viés.
+   * O bug que isto resolve: pelo número CRU, Carreira saía como "mais frágil"
+   * em 25% das leituras e Espiritualidade em 4% (medido com o motor real em
+   * 2400 leituras; o esperado seria ~12,5% cada), porque Carreira vive num
+   * patamar mais baixo. Com a escala remapeada isso vai a 16%/9%.
    */
   const getMemberWorstArea = (member: GroupMember) => {
     const entries = buildMemberAreaEntries(member).filter((entry) => typeof entry.percentage === "number")
     if (!entries.length) return null
-    const distancia = (entry: { key: string; percentage: number | null }) => {
-      const ref = referenciaDaArea(entry.key)
-      return entry.percentage! - (ref ?? 45)
-    }
-    return entries.reduce((worst, entry) => (distancia(entry as any) < distancia(worst as any) ? entry : worst), entries[0])
+    return entries.reduce((worst, entry) => (entry.percentage! < worst.percentage! ? entry : worst), entries[0])
   }
 
   const getMemberSummaryBucket = (member: GroupMember) => {

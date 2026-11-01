@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { emocoesDoDia, EMOCOES } from '../emocoesDoDia'
-import { REFERENCIA_POR_AREA, desvioDaArea, referenciaDaArea, textoDoDesvio } from '../../constants/referenciaPorArea'
+import { ANCORAS_POR_AREA, escalaDaArea, TIPICO, textoDoDesvio } from '../../constants/escalaDaArea'
+import { desvioDaReferencia } from '../emocoesDoDia'
 
 /** Trânsito na forma que o motor entrega. */
 const t = (planeta: string, aspecto: string, alvo: string, orb = 1) => ({
@@ -77,81 +78,110 @@ describe('anel sem material', () => {
   })
 })
 
-describe('a referência das áreas da vida', () => {
+describe('a escala exibida das áreas', () => {
   /**
-   * ⚠️ A CHAVE TEM DE CASAR COM O QUE A TELA PASSA. O modal recebe
-   * `areaData.name`, que é a CHAVE crua do objeto `lifeAreas` (`amor`,
-   * `saude`…), não um rótulo traduzido. Se não casar, `desvioDaArea` devolve
-   * null e a linha do normal simplesmente não aparece — sem erro, sem aviso.
-   * É o padrão "chave que não casa + fallback = bug invisível" que este
-   * projeto já pagou.
+   * ⚠️ 50 É O TÍPICO EM TODA ÁREA — é o ponto do remapeamento. Medido com o
+   * motor real em 2400 leituras: no CRU a mediana era 41 e só 24% chegavam a
+   * 50; depois do remap, mediana 50 e 51% acima. Sem isso o app dizia para
+   * quase todo mundo, quase todo dia, que a vida está abaixo da média.
    */
-  it('casa com as chaves que a tela realmente passa', () => {
-    const doMotor = ['amor', 'carreira', 'comunicacao', 'espiritualidade', 'familia', 'financas', 'saude', 'transformacao']
-    for (const chave of doMotor) {
-      expect(referenciaDaArea(chave), `a chave "${chave}" não tem referência`).not.toBeNull()
+  it('a mediana medida de cada área vai para 50', () => {
+    for (const [area, anc] of Object.entries(ANCORAS_POR_AREA)) {
+      expect(escalaDaArea(area, anc[2]), `${area}: a mediana não caiu em 50`).toBe(TIPICO)
     }
-    expect(Object.keys(REFERENCIA_POR_AREA).sort()).toEqual(doMotor.sort())
   })
 
-  it('aguenta acento e caixa', () => {
-    expect(referenciaDaArea('Saúde')).toBe(REFERENCIA_POR_AREA.saude)
-    expect(referenciaDaArea('  COMUNICAÇÃO ')).toBe(REFERENCIA_POR_AREA.comunicacao)
-    expect(referenciaDaArea('Transformação')).toBe(REFERENCIA_POR_AREA.transformacao)
+  it('os decis viram 25 e 75', () => {
+    for (const [area, anc] of Object.entries(ANCORAS_POR_AREA)) {
+      expect(escalaDaArea(area, anc[1]), `${area}: p10 fora de 25`).toBe(25)
+      expect(escalaDaArea(area, anc[3]), `${area}: p90 fora de 75`).toBe(75)
+    }
+  })
+
+  /**
+   * ⚠️ A ORDEM DENTRO DE CADA ÁREA NÃO PODE MUDAR. A transformação troca a
+   * régua, não o julgamento: se um dia pior passasse à frente de um melhor, o
+   * remap estaria inventando leitura em vez de centrar a escala.
+   */
+  it('preserva a ordem', () => {
+    for (const area of Object.keys(ANCORAS_POR_AREA)) {
+      let anterior = -1
+      for (let bruto = 0; bruto <= 100; bruto++) {
+        const v = escalaDaArea(area, bruto)!
+        expect(v, `${area}: ${bruto} quebrou a ordem`).toBeGreaterThanOrEqual(anterior)
+        anterior = v
+      }
+    }
+  })
+
+  /**
+   * ⚠️ ESTE É O PONTO TODO: o mesmo número cru NÃO é o mesmo estado em áreas
+   * diferentes. Carreira vive em 36, Comunicação em 45.
+   */
+  it('o mesmo cru lê diferente em áreas de patamar diferente', () => {
+    expect(escalaDaArea('carreira', 36)).toBe(TIPICO)
+    expect(escalaDaArea('comunicacao', 36)!).toBeLessThan(TIPICO)
+    expect(escalaDaArea('comunicacao', 45)).toBe(TIPICO)
+    expect(escalaDaArea('carreira', 45)!).toBeGreaterThan(TIPICO)
+  })
+
+  it('o teto absoluto não é alcançável', () => {
+    for (const area of Object.keys(ANCORAS_POR_AREA)) {
+      expect(escalaDaArea(area, 100)!).toBeLessThanOrEqual(98)
+      expect(escalaDaArea(area, 0)!).toBeGreaterThanOrEqual(2)
+    }
   })
 
   /**
    * ⚠️ `Number(null)` É 0, E 0 PASSA EM `isFinite` — a armadilha que já mordeu
-   * este projeto quatro vezes. Valor ausente não pode virar "bem abaixo do
-   * normal", que é a leitura mais alarmante que existe.
+   * este projeto cinco vezes. Aqui ela entraria como "o pior dia possível".
    */
-  it('valor ausente não vira alarme', () => {
-    for (const v of [null, undefined, '', NaN]) {
-      expect(desvioDaArea('carreira', v as never), `${String(v)} virou leitura`).toBeNull()
+  it('valor ausente não vira o pior dia', () => {
+    for (const v of [null, undefined, '', NaN, 'abc']) {
+      expect(escalaDaArea('carreira', v), `${String(v)} virou leitura`).toBeNull()
     }
-  })
-
-  it('o próprio normal lê "dentro"', () => {
-    for (const [area, ref] of Object.entries(REFERENCIA_POR_AREA)) {
-      expect(desvioDaArea(area, ref), `${area}: o próprio normal não leu "dentro"`).toBe('dentro')
-    }
-  })
-
-  /**
-   * ⚠️ O PONTO DA REFERÊNCIA: 36 em Carreira e 45 em Comunicação são a MESMA
-   * leitura. Antes a roda punha os dois lado a lado e aparentava nove pontos de
-   * diferença que, de fato, são zero.
-   */
-  it('o normal de cada área lê igual, mesmo com números diferentes', () => {
-    expect(desvioDaArea('carreira', 36)).toBe('dentro')
-    expect(desvioDaArea('comunicacao', 45)).toBe('dentro')
-    expect(REFERENCIA_POR_AREA.comunicacao - REFERENCIA_POR_AREA.carreira)
-      .toBeGreaterThanOrEqual(5)
+    expect(escalaDaArea('area-que-nao-existe', 50), 'área sem âncora deveria dar null').toBeNull()
   })
 
   it('a frase existe nos 4 idiomas e segue as regras de i18n', () => {
-    const d = desvioDaArea('carreira', 60)
+    const d = desvioDaReferencia(70, TIPICO)
     const pt = textoDoDesvio(d, 'pt-BR')
     expect(pt, 'frase vazia em pt-BR').toBeTruthy()
     for (const lang of ['en-US', 'es-ES', 'it-IT']) {
-      const txt = textoDoDesvio(d, lang)
-      expect(txt, `${lang}: frase vazia`).toBeTruthy()
-      expect(txt, `${lang}: devolveu o texto em português`).not.toBe(pt)
+      expect(textoDoDesvio(d, lang), `${lang}: frase vazia`).toBeTruthy()
+      expect(textoDoDesvio(d, lang), `${lang}: devolveu português`).not.toBe(pt)
     }
-    // Regra do projeto: es-ES sem tildes nem ñ; it-IT sem acentos.
     expect(textoDoDesvio(d, 'es-ES')!, 'es-ES com tilde ou ñ').not.toMatch(/[áéíóúñ]/i)
     expect(textoDoDesvio(d, 'it-IT')!, 'it-IT com acento').not.toMatch(/[àèéìòù]/i)
     expect(textoDoDesvio(null, 'pt-BR'), 'desvio nulo deveria dar frase nula').toBeNull()
   })
 
-  it('o modal da área mostra a linha do normal', () => {
-    const fonte = readFileSync(join(__dirname, '..', '..', 'components', 'LifeAreaDetailModal.tsx'), 'utf8')
-    const semComentario = fonte.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n')
-    expect(semComentario, 'o modal parou de calcular a leitura do normal').toMatch(/desvioDaArea\(/)
-    expect(semComentario, 'o modal parou de desenhar a linha').toMatch(/leituraDoNormal/)
-    // ⚠️ `LifeArea` só tem `name` — não existe `key`. Usar `.key` devolveria
-    // undefined e a linha nunca apareceria, calada.
-    expect(semComentario, 'voltou a ler uma chave que o tipo não tem')
-      .not.toMatch(/areaData\?\.key/)
+  /**
+   * ⚠️ UM LUGAR SÓ APLICA O REMAP, por funil. Aplicar duas vezes achataria
+   * tudo contra 50; não aplicar deixaria duas escalas no mesmo app.
+   */
+  it('o remap é aplicado uma vez por funil de exibição', () => {
+    const limpa = (p: string) => readFileSync(join(__dirname, '..', '..', p), 'utf8')
+      .split('\n')
+      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+      .join('\n')
+    const home = limpa('screens/home/HomeScreen.tsx')
+    const grupos = limpa('screens/groups/GroupsScreen.tsx')
+    expect((home.match(/escalaDaArea\(/g) || []).length, 'Home: remap fora do funil único').toBe(1)
+    expect((grupos.match(/escalaDaArea\(/g) || []).length, 'Grupos: remap fora do funil único').toBe(1)
+    // ⚠️ O "mais frágil" compara DIRETO: o valor já vem remapeado, e subtrair
+    // uma referência ali corrigiria duas vezes.
+    expect(grupos, 'o "mais frágil" voltou a subtrair uma referência')
+      .not.toMatch(/referenciaDaArea/)
+  })
+
+  /**
+   * ⚠️ OS ALERTAS CONTINUAM NO CRU, de propósito. Mudar a escala e mudar quem
+   * recebe WhatsApp/push são duas decisões, e só a primeira foi tomada.
+   */
+  it('o caminho dos alertas não foi remapeado', () => {
+    const hook = readFileSync(join(__dirname, '..', '..', 'hooks', 'useLifeAreas.ts'), 'utf8')
+    expect(hook, 'o hook dos alertas passou a remapear — isso muda quem é alertado')
+      .not.toMatch(/escalaDaArea/)
   })
 })

@@ -18,7 +18,8 @@ import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
-import { desvioDaArea, referenciaDaArea, textoDoDesvio } from '../constants/referenciaPorArea'
+import { TIPICO, textoDoDesvio } from '../constants/escalaDaArea'
+import { desvioDaReferencia } from '../utils/emocoesDoDia'
 import ReadingDetailModal from './ReadingDetailModal'
 import { resolveTransitAphorism } from '../utils/transitAphorism'
 import { mergeAreaTransits } from '../utils/transitsByArea'
@@ -1448,19 +1449,22 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
    * `constants/referenciaPorArea.ts` — 20 mapas reais × 60 datas no ano.
    */
   const leituraDoNormal = React.useMemo(() => {
+    // ⚠️ O VALOR AQUI JÁ VEM REMAPEADO (ver `constants/escalaDaArea.ts`), e na
+    // escala exibida o típico é 50 em TODA área. Então a comparação é contra
+    // 50, e não mais contra uma referência diferente por área — era assim
+    // antes do remapeamento, e manter aquilo agora diria "abaixo do normal"
+    // sobre um número que já foi centrado.
+    //
     // ⚠️ `LifeArea` só tem `name` — não existe `key`. Supus que existisse e o
-    // TypeScript pegou; em runtime teria virado `undefined` e a referência
-    // nunca apareceria, calada.
-    const chave = String(areaData?.name || '')
+    // TypeScript pegou; em runtime teria virado `undefined`, calado.
     const valor = safeNumber(areaData?.status)
-    const desvio = desvioDaArea(chave, valor)
-    const texto = textoDoDesvio(desvio, language)
-    const ref = referenciaDaArea(chave)
-    if (!texto || ref == null) return null
-    // O número de referência vem junto: sem ele "acima do normal" é uma
-    // afirmação sem apoio, e quem quiser conferir não tem com o que comparar.
-    return `${texto} (${ref})`
-  }, [areaData?.name, areaData?.status, language])
+    if (!Number.isFinite(valor)) return null
+    const texto = textoDoDesvio(desvioDaReferencia(valor, TIPICO), language)
+    if (!texto) return null
+    // O número de referência vem junto: sem ele "acima do normal" é afirmação
+    // sem apoio, e quem quiser conferir não tem com o que comparar.
+    return `${texto} (${TIPICO})`
+  }, [areaData?.status, language])
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
