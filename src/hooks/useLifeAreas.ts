@@ -19,7 +19,7 @@ import {
   chaveStatusUsuario,
   TTL_STATUS_MS,
 } from '../services/firebase/docCache'
-import { escalaDaArea } from '../constants/escalaDaArea'
+import { escalaDaArea } from '../constants/escalaExibida'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 const ENABLE_LOCAL_ENGINE_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_LOCAL_ENGINE_FALLBACK === '1'

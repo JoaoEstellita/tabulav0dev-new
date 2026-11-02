@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { emocoesDoDia, EMOCOES } from '../emocoesDoDia'
-import { ANCORAS_POR_AREA, escalaDaArea, TIPICO, textoDoDesvio } from '../../constants/escalaDaArea'
+import { ANCORAS_POR_AREA, escalaDaArea, TIPICO, textoDoDesvio } from '../../constants/escalaExibida'
 import { desvioDaReferencia } from '../emocoesDoDia'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 
@@ -88,14 +88,15 @@ describe('a escala exibida das áreas', () => {
    */
   it('a mediana medida de cada área vai para 50', () => {
     for (const [area, anc] of Object.entries(ANCORAS_POR_AREA)) {
-      expect(escalaDaArea(area, anc[2]), `${area}: a mediana não caiu em 50`).toBe(TIPICO)
+      // ⚠️ MEDIANA NO INDICE 3 — sao SETE ancoras, nao cinco.
+      expect(escalaDaArea(area, anc[3]), `${area}: a mediana não caiu em 50`).toBe(TIPICO)
     }
   })
 
   it('os decis viram 25 e 75', () => {
     for (const [area, anc] of Object.entries(ANCORAS_POR_AREA)) {
-      expect(escalaDaArea(area, anc[1]), `${area}: p10 fora de 25`).toBe(25)
-      expect(escalaDaArea(area, anc[3]), `${area}: p90 fora de 75`).toBe(75)
+      expect(escalaDaArea(area, anc[2]), `${area}: p10 fora de 25`).toBe(25)
+      expect(escalaDaArea(area, anc[4]), `${area}: p90 fora de 75`).toBe(75)
     }
   })
 

@@ -57,7 +57,7 @@ import SynastryAspectDetailModal from "../../components/SynastryAspectDetailModa
 import SynastryModal from "../../components/SynastryModal"
 import SynastryTabs from "../../components/SynastryTabs"
 import { affinityBand, affinityLabel, affinityColor } from "../../theme/lenses"
-import { escalaDaArea } from "../../constants/escalaDaArea"
+import { escalaDaArea } from "../../constants/escalaExibida"
 import CombinacaoDoCasal from "../../components/CombinacaoDoCasal"
 import { useTourAnchor, useTourScroller, useTabTour } from "../../tour/TourProvider"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays, explicarAfinidade } from "../../astro/synastryReading"
@@ -1829,7 +1829,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
         const bruto = coerceNumber(data.percentage ?? data.status)
         // ⚠️ MESMA ESCALA DA HOME. O card do membro e a roda da Home mostram o
         // mesmo conceito; se um remapeasse e o outro não, a mesma pessoa teria
-        // dois números no mesmo app. Ver `constants/escalaDaArea.ts`.
+        // dois números no mesmo app. Ver `constants/escalaExibida.ts`.
         const remapeado = escalaDaArea(key, bruto)
         const percentage = remapeado !== null ? remapeado : bruto
         const movementScore = coerceNumber(data.movementScore)

@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
-import { TIPICO, textoDoDesvio } from '../constants/escalaDaArea'
+import { TIPICO, textoDoDesvio } from '../constants/escalaExibida'
 import { desvioDaReferencia } from '../utils/emocoesDoDia'
 import ReadingDetailModal from './ReadingDetailModal'
 import { resolveTransitAphorism } from '../utils/transitAphorism'
@@ -1449,7 +1449,7 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
    * `constants/referenciaPorArea.ts` — 20 mapas reais × 60 datas no ano.
    */
   const leituraDoNormal = React.useMemo(() => {
-    // ⚠️ O VALOR AQUI JÁ VEM REMAPEADO (ver `constants/escalaDaArea.ts`), e na
+    // ⚠️ O VALOR AQUI JÁ VEM REMAPEADO (ver `constants/escalaExibida.ts`), e na
     // escala exibida o típico é 50 em TODA área. Então a comparação é contra
     // 50, e não mais contra uma referência diferente por área — era assim
     // antes do remapeamento, e manter aquilo agora diria "abaixo do normal"

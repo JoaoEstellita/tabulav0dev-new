@@ -59,7 +59,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useTourAnchor, useTourScroller, useTabTour } from '../../tour/TourProvider'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
-import { escalaDaArea } from '../../constants/escalaDaArea'
+import { escalaDaArea } from '../../constants/escalaExibida'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch { }
@@ -461,7 +461,7 @@ export default function HomeScreen() {
     // ⚠️ AQUI É ONDE A ESCALA EXIBIDA NASCE, e em um lugar só. O motor produz
     // um número cujo típico é 41 e cujo patamar muda de área para área
     // (Carreira 36, Comunicação 45). `escalaDaArea` remapeia para a escala em
-    // que 50 é o típico EM TODA ÁREA — ver `constants/escalaDaArea.ts`.
+    // que 50 é o típico EM TODA ÁREA — ver `constants/escalaExibida.ts`.
     //
     // ⚠️ O CRU FICA GUARDADO em `bruto`. Ele é o que o backend gravou e o que
     // os alertas leem; perder o original aqui esconderia a origem de qualquer

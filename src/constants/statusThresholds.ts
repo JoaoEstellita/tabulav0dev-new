@@ -1,7 +1,7 @@
 // Runtime defaults only.
 // Single source of truth must come from GET /api/status-policy loaded at app startup.
 //
-// ⚠️ ESTES NÚMEROS VIVEM NA ESCALA EXIBIDA (`constants/escalaDaArea.ts`), onde
+// ⚠️ ESTES NÚMEROS VIVEM NA ESCALA EXIBIDA (`constants/escalaExibida.ts`), onde
 // 50 é o típico em toda área. Quem compara contra eles tem de remapear ANTES.
 //
 // ⚠️ OS ANTERIORES (35/62) ERAM DA ESCALA CRUA, cuja mediana é 41. Medido com
