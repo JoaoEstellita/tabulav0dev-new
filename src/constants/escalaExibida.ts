@@ -105,6 +105,23 @@ export const ANCORAS_POR_ANEL: Record<string, number[]> = {
  * dez dias liam como ruins.
  */
 export const ANCORAS_DO_DIA: number[] = [16, 18, 24, 34, 51, 63, 68]
+
+/**
+ * MEDIA DAS 8 AREAS — o score das intencoes `decisao/viagem/lancar` do
+ * Momento Certo.
+ *
+ * ⚠️ MEDIA NAO E AREA, E NAO E O SCORE DO DIA. A media de oito numeros tem
+ * distribuicao mais ESTREITA que qualquer um deles (max 60 contra 71 de uma
+ * area isolada): reusar a ancora de area esmagaria o topo e faria "decisao"
+ * nunca chegar a valor alto nenhum. E tambem nao e `ANCORAS_DO_DIA`, que sai
+ * de uma formula propria e mede outra coisa.
+ *
+ * Medido com o motor real: 14 mapas x 55 datas espalhadas pelo ano, 770
+ * leituras. Mediana 42.
+ *
+ * Para remedir: `node scripts/medir-momento-media.js --mapas 15 --datas 60`
+ */
+export const ANCORAS_DA_MEDIA: number[] = [29, 30, 35, 42, 50, 57, 59]
 /** ⚠️ Hermes NAO suporta regex `\p{...}` — o gemeo usa o range direto. */
 export const chaveNormalizada = (x: unknown): string => String(x || '')
   .toLowerCase()
@@ -156,6 +173,11 @@ export function escalaDoAnel(anel: unknown, bruto: unknown): number | null {
 /** O valor exibido do SCORE GERAL do dia. */
 export function escalaDoDia(bruto: unknown): number | null {
   return aplicar(ANCORAS_DO_DIA, bruto)
+}
+
+/** A media das 8 areas, na escala exibida. */
+export function escalaDaMedia(bruto: unknown): number | null {
+  return aplicar(ANCORAS_DA_MEDIA, bruto)
 }
 
 /**

@@ -5,6 +5,8 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../hooks/useAuth'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { getMomento, type MomentoIntention } from '../services/MomentoService'
+import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
+import { TIPICO } from '../constants/escalaExibida'
 
 // Mapa área da vida → intenção do Momento Certo. Áreas sem intenção 1:1
 // (família/espiritualidade/transformação) usam 'decisao' (melhor dia geral).
@@ -46,10 +48,22 @@ export default function MomentoAreaCard({ areaKey }: { areaKey: string }) {
   const fmt = (iso: string) => {
     try { return new Date(iso + 'T12:00:00').toLocaleDateString(language, { weekday: 'short', day: '2-digit', month: 'short' }) } catch { return iso }
   }
+  /**
+   * ⚠️ OS CORTES VEM DOS LIMIARES, NAO DE NUMEROS SOLTOS. Eram 70/55/40 fixos
+   * aqui — a QUINTA copia dos limiares neste projeto, e a unica que ninguem
+   * tinha achado. Pior: eram cortes da escala CRUA aplicados a um score que
+   * agora vem remapeado, onde 70 cru equivalia a 97 exibido. Com eles, "forte"
+   * exigia o percentil 99,8 (praticamente nunca acontecia) e metade dos dias
+   * lia "fraco" — o mesmo artefato de escala que o resto do app ja corrigiu.
+   *
+   * Lido DENTRO da funcao de proposito: `STATUS_THRESHOLDS` e atualizado em
+   * runtime por `/api/status-policy`, e capturar no modulo congelaria o valor
+   * do boot.
+   */
   const band = (s: number) => (
-    s >= 70 ? tl('forte', 'strong', 'fuerte', 'forte')
-      : s >= 55 ? tl('bom', 'good', 'bueno', 'buono')
-        : s >= 40 ? tl('neutro', 'neutral', 'neutro', 'neutro')
+    s >= STATUS_THRESHOLDS.positiveAbove ? tl('forte', 'strong', 'fuerte', 'forte')
+      : s >= TIPICO ? tl('bom', 'good', 'bueno', 'buono')
+        : s >= STATUS_THRESHOLDS.criticalBelow ? tl('neutro', 'neutral', 'neutro', 'neutro')
           : tl('fraco', 'weak', 'debil', 'debole')
   )
 
