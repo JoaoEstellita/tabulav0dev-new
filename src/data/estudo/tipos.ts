@@ -62,6 +62,20 @@ export type ChaveDaFigura =
   | 'ciclo-da-lua'
   /** Os cinco angulos maiores, no circulo. */
   | 'angulos-dos-aspectos'
+  /** Licao 4: a velocidade separa o que e pessoal do que e de uma geracao. */
+  | 'velocidade-dos-planetas'
+  /** Licao 5: os 12 signos na matriz de 4 elementos x 3 modalidades. */
+  | 'elementos-e-modalidades'
+  /** Licao 6: as 12 casas e os setores da vida. */
+  | 'as-doze-casas'
+  /** Licao 8: o angulo exato, a folga aceita, e o peso caindo com ela. */
+  | 'a-orbe-e-a-forca'
+  /** Licao 9: o natal parado e o ceu de hoje girando por cima. */
+  | 'natal-e-transito'
+  /** Licao 10: quanto dura cada volta, da Lua a Plutao. */
+  | 'duracao-dos-ciclos'
+  /** Licao 11: os quatro passos de leitura, na ordem. */
+  | 'ordem-de-leitura'
 
 export type Bloco =
   | { tipo: 'paragrafo'; texto: T }

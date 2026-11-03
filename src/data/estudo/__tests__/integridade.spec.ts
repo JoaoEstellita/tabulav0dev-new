@@ -123,13 +123,13 @@ describe('integridade do catálogo de estudo', () => {
   })
 
   it('a trilha não tem buraco nem repetição', () => {
-    // ⚠️ Tolera a trilha VAZIA e cobra a ausência de BURACO, não o total de
-    // 12 — a trilha é escrita em três tarefas, e um teste vermelho entre elas
-    // treinaria a equipe a ignorar vermelho. Quando as 12 existirem, este
-    // assert passa a exigi-las (ver o plano, Task 4).
-    if (LICOES.length === 0) return
+    // ⚠️ AS 12 AGORA SAO EXIGIDAS. Enquanto a trilha estava sendo escrita este
+    // assert so cobrava a ausencia de BURACO — um teste vermelho entre as
+    // tarefas treinaria a ignorar vermelho. Com a trilha fechada, perder uma
+    // licao passa a ser falha.
     const ordens = LICOES.map((l) => l.ordem).sort((a, b) => (a ?? 0) - (b ?? 0))
-    expect(ordens).toEqual(ordens.map((_, i) => i + 1))
+    expect(ordens, 'a trilha tem 12 licoes e nenhuma pode faltar')
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     for (const l of LICOES) {
       expect([0, 1, 2, 3, 4], `${l.id}: ato fora da faixa`).toContain(l.ato)
     }
@@ -195,6 +195,23 @@ describe('integridade do catálogo de estudo', () => {
     }
     const orfas = desenhadas.filter((c) => !usadas.has(c))
     expect(orfas, 'figura desenhada que nenhuma lição ou verbete mostra').toEqual([])
+  })
+
+  /**
+   * ⚠️ OS GANCHOS DA LICAO 12 SAO A PONTE PARA A FASE 2, e precisam continuar
+   * INERTES. Se um deles ganhar texto, deixa de ser encaixe e vira conteudo
+   * publicado — e a fase 2 passa a ter de reescrever licao em vez de so
+   * preencher, que e exatamente a condicao que o desenho acordou evitar.
+   */
+  it('a lição 12 traz os ganchos da fase 2, e eles não têm texto', () => {
+    const l12 = LICOES.find((l) => l.ordem === 12)
+    expect(l12, 'a lição 12 sumiu').toBeTruthy()
+    const ganchos = (l12?.blocos ?? []).filter((b) => b.tipo === 'ganchoPessoal')
+    expect(ganchos.length, 'a ponte para a fase 2 sumiu').toBeGreaterThanOrEqual(3)
+    for (const g of ganchos) {
+      expect(Object.keys(g).sort(), 'gancho com texto deixaria de ser inerte')
+        .toEqual(['chave', 'tipo'])
+    }
   })
 
   /** ⚠️ O motor não calcula Quíron — um verbete prometeria o que o mapa não mostra. */

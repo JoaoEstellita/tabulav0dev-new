@@ -266,11 +266,7 @@ export const TRILHA_ATO0: Unidade[] = [
       },
     ],
     termos: ['natal'],
-    // ⚠️ VAZIO DE PROPÓSITO. O destino natural daqui é a lição 4, que ainda não
-    // existe — e um `verTambem` apontando para id inexistente é um beco
-    // invisível, exatamente o que o teste de links mortos existe para impedir.
-    // A Task 3 liga as duas quando a lição 4 nascer.
-    verTambem: [],
+    verTambem: ['licao-04-planeta-o-que'],
     minutos: 2,
   },
 ]

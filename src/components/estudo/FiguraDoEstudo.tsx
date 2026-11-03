@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
-import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polygon, Stop, Text as SvgText } from 'react-native-svg'
+import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg'
 import type { ChaveDaFigura, IdiomaEstudo } from '../../data/estudo'
 
 /**
@@ -381,6 +381,298 @@ function AngulosDosAspectos({ tl }: { tl: Tl }) {
   )
 }
 
+
+/**
+ * A VELOCIDADE SEPARA O PESSOAL DO GERACIONAL.
+ *
+ * ⚠️ A ESCALA É LOGARÍTMICA, e isso está escrito na figura. Plutão leva 248
+ * anos e a Lua 28 dias: em escala linear a Lua viraria um pixel e a figura
+ * provaria nada. O log mantém as nove barras legíveis e preserva a ordem, que
+ * é o que a lição afirma.
+ */
+function VelocidadeDosPlanetas({ tl }: { tl: Tl }) {
+  /** Período orbital aparente, em dias. */
+  const corpos: Array<[string, number, string]> = [
+    ['Lua', 27.3, AGUA], ['Merc.', 88, AGUA], ['Vênus', 225, AGUA],
+    ['Sol', 365, AGUA], ['Marte', 687, AGUA],
+    ['Júpiter', 4333, OURO], ['Saturno', 10759, OURO],
+    ['Urano', 30687, ROXO], ['Netuno', 60190, ROXO],
+  ]
+  const min = Math.log(27.3)
+  const max = Math.log(60190)
+  const larg = (d: number) => 14 + ((Math.log(d) - min) / (max - min)) * 214
+  return (
+    <Svg width="100%" height={178} viewBox="0 0 300 178">
+      {corpos.map(([nome, dias, cor], i) => {
+        const y = 20 + i * 16
+        return (
+          <G key={nome}>
+            <Rotulo x={46} y={y + 3.5} cor={FRACO} tam={8.5} meio={false}>{nome}</Rotulo>
+            <Rect x={50} y={y - 3.5} width={larg(dias)} height={7} rx={3.5} fill={cor} opacity={0.75} />
+          </G>
+        )
+      })}
+      <Line x1={46} y1={12} x2={46} y2={158} stroke={LINHA} strokeWidth={1} />
+      <Rotulo x={8} y={56} cor={AGUA} tam={8} meio={false}>{tl('pessoais', 'personal', 'personales', 'personali')}</Rotulo>
+      <Rotulo x={8} y={116} cor={OURO} tam={8} meio={false}>{tl('sociais', 'social', 'sociales', 'sociali')}</Rotulo>
+      <Rotulo x={8} y={150} cor={ROXO} tam={8} meio={false}>{tl('geração', 'generation', 'generacion', 'generazione')}</Rotulo>
+      <Rotulo x={150} y={173} cor={CLARO} tam={9}>
+        {tl('tempo de uma volta (escala log)', 'time for one lap (log scale)', 'tiempo de una vuelta (escala log)', 'tempo di un giro (scala log)')}
+      </Rotulo>
+    </Svg>
+  )
+}
+
+/**
+ * OS DOZE SIGNOS NA MATRIZ 4 × 3.
+ *
+ * ⚠️ A GRADE É O CONTEÚDO. Listar os doze em fila não mostraria nada; posta
+ * em quatro elementos por três modalidades, a tabela revela que cada
+ * combinação acontece UMA vez só — que é a razão de os doze serem doze.
+ */
+function ElementosEModalidades({ tl }: { tl: Tl }) {
+  const elementos = [
+    { nome: tl('fogo', 'fire', 'fuego', 'fuoco'), cor: '#F08A8A', signos: ['Áries', 'Leão', 'Sagit.'] },
+    { nome: tl('terra', 'earth', 'tierra', 'terra'), cor: '#9BCF8A', signos: ['Touro', 'Virgem', 'Capric.'] },
+    { nome: tl('ar', 'air', 'aire', 'aria'), cor: '#8AB6F0', signos: ['Gêmeos', 'Libra', 'Aquário'] },
+    { nome: tl('água', 'water', 'agua', 'acqua'), cor: ROXO, signos: ['Câncer', 'Escorp.', 'Peixes'] },
+  ]
+  const modos = [
+    tl('cardinal', 'cardinal', 'cardinal', 'cardinale'),
+    tl('fixo', 'fixed', 'fijo', 'fisso'),
+    tl('mutável', 'mutable', 'mutable', 'mobile'),
+  ]
+  return (
+    <Svg width="100%" height={158} viewBox="0 0 300 158">
+      {modos.map((m, c) => <Rotulo key={m} x={93 + c * 72} y={16} cor={CLARO} tam={9}>{m}</Rotulo>)}
+      {elementos.map((e, r) => (
+        <G key={e.nome}>
+          <Rotulo x={30} y={44 + r * 32} cor={e.cor} tam={9.5} meio={false}>{e.nome}</Rotulo>
+          {e.signos.map((sg, c) => (
+            <G key={sg}>
+              <Rect
+                x={60 + c * 72} y={30 + r * 32} width={66} height={22} rx={6}
+                fill={e.cor} opacity={0.14} stroke={e.cor} strokeOpacity={0.4} strokeWidth={0.8}
+              />
+              <Rotulo x={93 + c * 72} y={44 + r * 32} cor={CLARO} tam={8.5}>{sg}</Rotulo>
+            </G>
+          ))}
+        </G>
+      ))}
+      <Rotulo x={150} y={152} cor={FRACO} tam={8.5}>
+        {tl('4 matérias x 3 jeitos de agir = 12', '4 materials x 3 ways of acting = 12', '4 materias x 3 modos de actuar = 12', '4 materie x 3 modi di agire = 12')}
+      </Rotulo>
+    </Svg>
+  )
+}
+
+/** AS DOZE CASAS — os setores da vida, na roda. */
+function AsDozeCasas({ tl }: { tl: Tl }) {
+  const cx = 150; const cy = 92; const r = 78
+  const assuntos = [
+    tl('eu', 'self', 'yo', 'io'), tl('ter', 'having', 'tener', 'avere'),
+    tl('falar', 'speaking', 'hablar', 'parlare'), tl('casa', 'home', 'casa', 'casa'),
+    tl('criar', 'creating', 'crear', 'creare'), tl('rotina', 'routine', 'rutina', 'routine'),
+    tl('o outro', 'the other', 'el otro', 'l altro'), tl('crise', 'crisis', 'crisis', 'crisi'),
+    tl('sentido', 'meaning', 'sentido', 'senso'), tl('obra', 'work', 'obra', 'opera'),
+    tl('grupo', 'group', 'grupo', 'gruppo'), tl('recolher', 'retreat', 'recoger', 'ritiro'),
+  ]
+  const pt = (g: number, raio: number) => {
+    const a = ((g - 180) * Math.PI) / 180
+    return { x: cx + raio * Math.cos(a), y: cy + raio * Math.sin(a) }
+  }
+  return (
+    <Svg width="100%" height={188} viewBox="0 0 300 188">
+      <Circle cx={cx} cy={cy} r={r} fill="none" stroke={LINHA} strokeWidth={1.2} />
+      <Circle cx={cx} cy={cy} r={r * 0.56} fill="none" stroke={LINHA} strokeWidth={0.8} />
+      {/* A linha do horizonte: as casas 1 a 6 ficam abaixo dela. */}
+      <Line x1={cx - r - 6} y1={cy} x2={cx + r + 6} y2={cy} stroke={CLARO} strokeWidth={1} strokeOpacity={0.5} />
+
+      {assuntos.map((txt, i) => {
+        const ini = pt(i * 30, r)
+        const meio = pt(i * 30 + 15, r * 0.79)
+        const num = pt(i * 30 + 15, r * 0.4)
+        return (
+          <G key={i}>
+            <Line x1={cx} y1={cy} x2={ini.x} y2={ini.y} stroke={LINHA} strokeWidth={0.8} />
+            <SvgText x={num.x} y={num.y + 3} fill={i === 0 ? OURO : FRACO} fontSize={9} fontWeight="700" textAnchor="middle">
+              {String(i + 1)}
+            </SvgText>
+            <SvgText x={meio.x} y={meio.y + 2.5} fill={CLARO} fontSize={7.5} textAnchor="middle">{txt}</SvgText>
+          </G>
+        )
+      })}
+      <Rotulo x={cx - r - 4} y={cy - 6} cor={OURO} tam={8} meio={false}>ASC</Rotulo>
+      <Rotulo x={150} y={184} cor={FRACO} tam={8.5}>
+        {tl('a casa 1 começa no horizonte do seu nascimento', 'house 1 starts at the horizon of your birth', 'la casa 1 empieza en el horizonte de tu nacimiento', 'la casa 1 inizia all orizzonte della tua nascita')}
+      </Rotulo>
+    </Svg>
+  )
+}
+
+/**
+ * A ORBE E A FORÇA.
+ *
+ * ⚠️ A CURVA CAI, não é degrau. A lição diz que o peso diminui conforme se
+ * afasta do exato; desenhar faixas chapadas diria que 1° e 5° pesam igual até
+ * um corte, que é justamente o engano que a lição desfaz.
+ */
+function AOrbeEAForca({ tl }: { tl: Tl }) {
+  const x0 = 34; const x1 = 278; const base = 118; const topo = 34
+  const px = (g: number) => x0 + (g / 8) * (x1 - x0)
+  const py = (g: number) => base - Math.exp(-0.36 * g) * (base - topo)
+  const curva = Array.from({ length: 49 }, (_, i) => {
+    const g = i / 6
+    return `${i === 0 ? 'M' : 'L'} ${px(g).toFixed(1)} ${py(g).toFixed(1)}`
+  }).join(' ')
+  return (
+    <Svg width="100%" height={152} viewBox="0 0 300 152">
+      <Defs>
+        <LinearGradient id="forca" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={OURO} stopOpacity="0.3" />
+          <Stop offset="1" stopColor={OURO} stopOpacity="0.02" />
+        </LinearGradient>
+      </Defs>
+      <Path d={`${curva} L ${x1} ${base} L ${x0} ${base} Z`} fill="url(#forca)" />
+      <Path d={curva} stroke={OURO} strokeWidth={2} fill="none" />
+      <Line x1={x0} y1={base} x2={x1} y2={base} stroke={LINHA} strokeWidth={1} />
+      <Line x1={x0} y1={base} x2={x0} y2={topo - 6} stroke={LINHA} strokeWidth={1} />
+
+      <Circle cx={px(0)} cy={py(0)} r={4} fill={OURO} />
+      <Rotulo x={px(0) + 30} y={topo - 10} cor={OURO} tam={9} meio={false}>{tl('exato: pesa tudo', 'exact: full weight', 'exacto: pesa todo', 'esatto: pesa tutto')}</Rotulo>
+      {[0, 2, 4, 6, 8].map((g) => (
+        <G key={g}>
+          <Line x1={px(g)} y1={base} x2={px(g)} y2={base + 4} stroke={LINHA} strokeWidth={1} />
+          <Rotulo x={px(g)} y={base + 15} cor={FRACO} tam={8}>{`${g}°`}</Rotulo>
+        </G>
+      ))}
+      <Rotulo x={px(6.1)} y={py(6) - 10} cor={FRACO} tam={8.5} meio={false}>{tl('de fundo', 'background', 'de fondo', 'di sfondo')}</Rotulo>
+      <Rotulo x={150} y={146} cor={CLARO} tam={9}>
+        {tl('distância do ângulo exato', 'distance from the exact angle', 'distancia del angulo exacto', 'distanza dall angolo esatto')}
+      </Rotulo>
+    </Svg>
+  )
+}
+
+/**
+ * NATAL E TRÂNSITO — a figura mais importante do curso para o uso diário.
+ *
+ * ⚠️ DUAS RODAS CONCÊNTRICAS, e a de dentro NÃO GIRA. É o que a lição 9
+ * afirma: o natal é a foto de um instante e não muda nunca; o céu de hoje
+ * passa por cima. Desenhar as duas girando apagaria a única distinção que a
+ * lição existe para fazer — e é dela que depende todo número da Home deixar
+ * de ler como julgamento permanente.
+ */
+function NatalETransito({ tl }: { tl: Tl }) {
+  const cx = 150; const cy = 88; const ri = 42; const ro = 72
+  const pt = (g: number, r: number) => {
+    const a = ((g - 90) * Math.PI) / 180
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
+  }
+  const seta1 = pt(-28, ro + 11)
+  const seta2 = pt(22, ro + 11)
+  return (
+    <Svg width="100%" height={176} viewBox="0 0 300 176">
+      <Circle cx={cx} cy={cy} r={ro} fill="none" stroke={ROXO} strokeWidth={1.6} strokeDasharray="5 4" />
+      <Circle cx={cx} cy={cy} r={ri} fill="none" stroke={OURO} strokeWidth={2} />
+
+      {[20, 95, 160, 250, 310].map((g) => {
+        const p = pt(g, ri)
+        return <Circle key={`n${g}`} cx={p.x} cy={p.y} r={4} fill={OURO} />
+      })}
+      <Rotulo x={cx} y={cy + 1} cor={OURO} tam={9}>{tl('seu mapa', 'your chart', 'tu carta', 'la tua carta')}</Rotulo>
+      <Rotulo x={cx} y={cy + 14} cor={FRACO} tam={7.5}>{tl('não muda', 'never changes', 'no cambia', 'non cambia')}</Rotulo>
+
+      {[55, 140, 225].map((g) => {
+        const p = pt(g, ro)
+        return <Circle key={`t${g}`} cx={p.x} cy={p.y} r={4.5} fill={ROXO} />
+      })}
+      <Path
+        d={`M ${seta1.x} ${seta1.y} A ${ro + 11} ${ro + 11} 0 0 1 ${seta2.x} ${seta2.y}`}
+        stroke={ROXO} strokeWidth={1.4} fill="none"
+      />
+      <Polygon
+        points={`${pt(26, ro + 11).x},${pt(26, ro + 11).y} ${pt(19, ro + 15).x},${pt(19, ro + 15).y} ${pt(19, ro + 7).x},${pt(19, ro + 7).y}`}
+        fill={ROXO}
+      />
+      <Rotulo x={cx} y={12} cor={ROXO} tam={9.5}>{tl('o céu de hoje gira por cima', 'today sky turns above it', 'el cielo de hoy gira encima', 'il cielo di oggi gira sopra')}</Rotulo>
+
+      {/* O contato: quando um ponto de fora encosta num de dentro. */}
+      <Line x1={pt(140, ro).x} y1={pt(140, ro).y} x2={pt(160, ri).x} y2={pt(160, ri).y} stroke={AGUA} strokeWidth={1.6} />
+      <Circle cx={30} cy={152} r={3} fill={AGUA} />
+      <Rotulo x={38} y={155} cor={AGUA} tam={8.5} meio={false}>{tl('o encontro é o trânsito', 'the meeting is the transit', 'el encuentro es el transito', 'l incontro e il transito')}</Rotulo>
+      <Rotulo x={150} y={172} cor={FRACO} tam={8.5}>
+        {tl('o que você É, e o que está ACONTECENDO', 'what you ARE, and what is HAPPENING', 'lo que ERES, y lo que esta PASANDO', 'cio che SEI, e cio che sta ACCADENDO')}
+      </Rotulo>
+    </Svg>
+  )
+}
+
+/** QUANTO DURA CADA VOLTA — e por isso quais ciclos cabem numa vida. */
+function DuracaoDosCiclos({ tl }: { tl: Tl }) {
+  const ciclos: Array<[string, string, number, string]> = [
+    [tl('Lua', 'Moon', 'Luna', 'Luna'), tl('28 dias', '28 days', '28 dias', '28 giorni'), 0.08, AGUA],
+    [tl('Sol', 'Sun', 'Sol', 'Sole'), tl('1 ano', '1 year', '1 ano', '1 anno'), 1, AGUA],
+    [tl('Júpiter', 'Jupiter', 'Jupiter', 'Giove'), tl('12 anos', '12 years', '12 anos', '12 anni'), 12, OURO],
+    [tl('Saturno', 'Saturn', 'Saturno', 'Saturno'), tl('29 anos', '29 years', '29 anos', '29 anni'), 29, OURO],
+    [tl('Urano', 'Uranus', 'Urano', 'Urano'), tl('84 anos', '84 years', '84 anos', '84 anni'), 84, ROXO],
+  ]
+  const x0 = 70; const x1 = 268
+  const px = (anos: number) => x0 + Math.min(1, anos / 84) * (x1 - x0)
+  return (
+    <Svg width="100%" height={152} viewBox="0 0 300 152">
+      {/* A régua de uma vida, para o leitor ver o que cabe nela. */}
+      <Line x1={x0} y1={126} x2={x1} y2={126} stroke={LINHA} strokeWidth={1} />
+      {[0, 29, 58, 84].map((a) => (
+        <G key={a}>
+          <Line x1={px(a)} y1={122} x2={px(a)} y2={130} stroke={LINHA} strokeWidth={1} />
+          <Rotulo x={px(a)} y={140} cor={FRACO} tam={8}>{a === 0 ? tl('nasc.', 'birth', 'nac.', 'nasc.') : String(a)}</Rotulo>
+        </G>
+      ))}
+      {ciclos.map(([nome, dur, anos, cor], i) => {
+        const y = 22 + i * 19
+        return (
+          <G key={nome}>
+            <Rotulo x={64} y={y + 3} cor={cor} tam={8.5} meio={false}>{nome}</Rotulo>
+            <Rect x={x0} y={y - 3} width={Math.max(4, px(anos) - x0)} height={6} rx={3} fill={cor} opacity={0.8} />
+            <Rotulo x={Math.min(272, px(anos) + 6)} y={y + 3} cor={FRACO} tam={7.5} meio={false}>{dur}</Rotulo>
+          </G>
+        )
+      })}
+      <Rotulo x={26} y={129} cor={CLARO} tam={8} meio={false}>{tl('idade', 'age', 'edad', 'eta')}</Rotulo>
+    </Svg>
+  )
+}
+
+/** OS QUATRO PASSOS DE LEITURA, na ordem. */
+function OrdemDeLeitura({ tl }: { tl: Tl }) {
+  const passos: Array<[string, string, string]> = [
+    [tl('1. o conjunto', '1. the whole', '1. el conjunto', '1. l insieme'), tl('que elemento pesa', 'which element weighs', 'que elemento pesa', 'quale elemento pesa'), OURO],
+    [tl('2. os três', '2. the three', '2. los tres', '2. i tre'), tl('Sol, Lua, Ascendente', 'Sun, Moon, Ascendant', 'Sol, Luna, Ascendente', 'Sole, Luna, Ascendente'), OURO],
+    [tl('3. o que grita', '3. what shouts', '3. lo que grita', '3. cio che grida'), tl('stellium, aspecto exato', 'stellium, exact aspect', 'stellium, aspecto exacto', 'stellium, aspetto esatto'), AGUA],
+    [tl('4. o resto', '4. the rest', '4. el resto', '4. il resto'), tl('planeta a planeta', 'planet by planet', 'planeta a planeta', 'pianeta per pianeta'), FRACO],
+  ]
+  return (
+    <Svg width="100%" height={158} viewBox="0 0 300 158">
+      <Line x1={30} y1={26} x2={30} y2={128} stroke={LINHA} strokeWidth={1.4} />
+      {passos.map(([tit, sub, cor], i) => {
+        const y = 26 + i * 34
+        return (
+          <G key={tit}>
+            <Circle cx={30} cy={y} r={6.5} fill="#0F1426" stroke={cor} strokeWidth={1.8} />
+            <Circle cx={30} cy={y} r={2.6} fill={cor} />
+            <Rotulo x={46} y={y - 1} cor={CLARO} tam={10} meio={false} peso="700">{tit}</Rotulo>
+            <Rotulo x={46} y={y + 11} cor={FRACO} tam={8.5} meio={false} peso="400">{sub}</Rotulo>
+          </G>
+        )
+      })}
+      <Rotulo x={150} y={150} cor={FRACO} tam={8.5}>
+        {tl('do todo para a parte, nunca o contrário', 'from whole to part, never the reverse', 'del todo a la parte, nunca al reves', 'dall insieme alla parte, mai il contrario')}
+      </Rotulo>
+    </Svg>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function FiguraDoEstudo({ chave, descricao, idioma }: {
@@ -401,6 +693,13 @@ export default function FiguraDoEstudo({ chave, descricao, idioma }: {
       case 'volta-de-saturno': return <VoltaDeSaturno tl={tl} />
       case 'ciclo-da-lua': return <CicloDaLua tl={tl} />
       case 'angulos-dos-aspectos': return <AngulosDosAspectos tl={tl} />
+      case 'velocidade-dos-planetas': return <VelocidadeDosPlanetas tl={tl} />
+      case 'elementos-e-modalidades': return <ElementosEModalidades tl={tl} />
+      case 'as-doze-casas': return <AsDozeCasas tl={tl} />
+      case 'a-orbe-e-a-forca': return <AOrbeEAForca tl={tl} />
+      case 'natal-e-transito': return <NatalETransito tl={tl} />
+      case 'duracao-dos-ciclos': return <DuracaoDosCiclos tl={tl} />
+      case 'ordem-de-leitura': return <OrdemDeLeitura tl={tl} />
       default: {
         // ⚠️ SEM RAMO PADRÃO DE VERDADE. Uma chave nova sem desenho sairia como
         // moldura vazia na lição, em silêncio — o mesmo fallback mudo que este
