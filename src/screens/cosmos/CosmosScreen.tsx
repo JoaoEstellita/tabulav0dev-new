@@ -37,6 +37,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
 import ProfectionCard from '../../components/ProfectionCard'
+import EstudoScreen from '../estudo/EstudoScreen'
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
@@ -268,6 +269,13 @@ export default function CosmosScreen() {
   useTourScroller('Cosmos', useCallback((y: number) => (scrollRef.current as any)?.scrollTo({ y, animated: true }), []))
   const [showTop, setShowTop] = useState(false)
   const [mapMode, setMapMode] = useState<'western' | 'vedic' | 'tzolkin' | 'chinese'>('western')
+  /**
+   * ⚠️ UM NÍVEL ACIMA do alternador de sistemas. Estudo NÃO é um sistema de
+   * mapa — pô-lo como quinto botão ao lado de "Védico" mentiria sobre o que
+   * ele é, e cinco botões não cabem numa linha de celular (hoje são quatro a
+   * ~70px cada).
+   */
+  const [abaDoMapa, setAbaDoMapa] = useState<'mapas' | 'estudo'>('mapas')
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
   const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
   // Retorno Solar (carga sob demanda ao entrar no modo 'solar').
@@ -650,6 +658,30 @@ export default function CosmosScreen() {
           onTentarNovamente={() => refreshData(true)}
         />
 
+        <View style={styles.abaTopo}>
+          {([
+            ['mapas', tl('Mapas', 'Charts', 'Mapas', 'Mappe')],
+            ['estudo', tl('Estudo', 'Study', 'Estudio', 'Studio')],
+          ] as const).map(([v, rotulo]) => (
+            <TouchableOpacity
+              key={v}
+              style={[styles.abaTopoBtn, abaDoMapa === v && styles.abaTopoBtnAtiva]}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityState={{ selected: abaDoMapa === v }}
+              onPress={() => setAbaDoMapa(v)}
+            >
+              <Text style={[styles.abaTopoTexto, abaDoMapa === v && styles.abaTopoTextoAtivo]}>
+                {rotulo}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {abaDoMapa === 'estudo' ? <EstudoScreen /> : null}
+
+        {abaDoMapa === 'mapas' ? (
+        <>
         {/* Toggle Ocidental ↔ Védico — troca a visão do Mapa (só desta aba). */}
         <View style={styles.modeToggle} {...aSystem}>
           <TouchableOpacity style={[styles.modeBtn, mapMode === 'western' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('western')}>
@@ -856,6 +888,8 @@ export default function CosmosScreen() {
             )}
           </>
         )}
+        </>
+        ) : null}
       </ScrollView>
       <ScrollTopButton
         visible={showTop}
@@ -879,6 +913,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
   },
+  // ⚠️ O ALTERNADOR DE TOPO: Mapas | Estudo. Fica ACIMA do alternador de
+  // sistemas, que agora vive dentro de "Mapas".
+  abaTopo: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+    padding: 3,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  abaTopoBtn: { flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: 'center' },
+  abaTopoBtnAtiva: { backgroundColor: 'rgba(255,215,0,0.16)' },
+  abaTopoTexto: { color: '#9AA3BA', fontSize: 14, fontWeight: '600' },
+  abaTopoTextoAtivo: { color: '#FFD700' },
   modeToggle: {
     flexDirection: 'row',
     alignSelf: 'center',
