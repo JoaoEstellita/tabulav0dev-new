@@ -424,39 +424,62 @@ function VelocidadeDosPlanetas({ tl }: { tl: Tl }) {
 }
 
 /**
- * OS DOZE SIGNOS NA MATRIZ 4 × 3.
+ * OS DOZE SIGNOS NA MATRIZ 4 × 3, com o signo do verbete aceso.
  *
  * ⚠️ A GRADE É O CONTEÚDO. Listar os doze em fila não mostraria nada; posta
  * em quatro elementos por três modalidades, a tabela revela que cada
  * combinação acontece UMA vez só — que é a razão de os doze serem doze.
+ *
+ * ⚠️ O FOCO ACENDE A LINHA E A COLUNA, não só a célula. É o que responde a
+ * pergunta que o verbete abre: Leão é fogo FIXO, e ver a linha do fogo e a
+ * coluna do fixo acesas ao mesmo tempo mostra de onde vem cada metade.
  */
-function ElementosEModalidades({ tl }: { tl: Tl }) {
+function ElementosEModalidades({ tl, foco }: { tl: Tl; foco?: string }) {
   const elementos = [
-    { nome: tl('fogo', 'fire', 'fuego', 'fuoco'), cor: '#F08A8A', signos: ['Áries', 'Leão', 'Sagit.'] },
-    { nome: tl('terra', 'earth', 'tierra', 'terra'), cor: '#9BCF8A', signos: ['Touro', 'Virgem', 'Capric.'] },
-    { nome: tl('ar', 'air', 'aire', 'aria'), cor: '#8AB6F0', signos: ['Gêmeos', 'Libra', 'Aquário'] },
-    { nome: tl('água', 'water', 'agua', 'acqua'), cor: ROXO, signos: ['Câncer', 'Escorp.', 'Peixes'] },
+    { nome: tl('fogo', 'fire', 'fuego', 'fuoco'), cor: '#F08A8A', signos: ['Áries', 'Leão', 'Sagit.'], ids: ['aries', 'leao', 'sagitario'] },
+    { nome: tl('terra', 'earth', 'tierra', 'terra'), cor: '#9BCF8A', signos: ['Touro', 'Virgem', 'Capric.'], ids: ['touro', 'virgem', 'capricornio'] },
+    { nome: tl('ar', 'air', 'aire', 'aria'), cor: '#8AB6F0', signos: ['Gêmeos', 'Libra', 'Aquário'], ids: ['gemeos', 'libra', 'aquario'] },
+    { nome: tl('água', 'water', 'agua', 'acqua'), cor: ROXO, signos: ['Câncer', 'Escorp.', 'Peixes'], ids: ['cancer', 'escorpiao', 'peixes'] },
   ]
   const modos = [
     tl('cardinal', 'cardinal', 'cardinal', 'cardinale'),
     tl('fixo', 'fixed', 'fijo', 'fisso'),
     tl('mutável', 'mutable', 'mutable', 'mobile'),
   ]
+  // Onde o signo aceso está na grade: -1 em ambos quando não há foco.
+  let linhaAcesa = -1
+  let colunaAcesa = -1
+  elementos.forEach((e, r) => e.ids.forEach((id, c) => {
+    if (foco && id === foco) { linhaAcesa = r; colunaAcesa = c }
+  }))
+
   return (
     <Svg width="100%" height={158} viewBox="0 0 300 158">
-      {modos.map((m, c) => <Rotulo key={m} x={93 + c * 72} y={16} cor={CLARO} tam={9}>{m}</Rotulo>)}
+      {modos.map((m, c) => (
+        <Rotulo key={m} x={93 + c * 72} y={16} cor={c === colunaAcesa ? OURO : CLARO} tam={9} peso={c === colunaAcesa ? '800' : '600'}>{m}</Rotulo>
+      ))}
       {elementos.map((e, r) => (
         <G key={e.nome}>
-          <Rotulo x={30} y={44 + r * 32} cor={e.cor} tam={9.5} meio={false}>{e.nome}</Rotulo>
-          {e.signos.map((sg, c) => (
-            <G key={sg}>
-              <Rect
-                x={60 + c * 72} y={30 + r * 32} width={66} height={22} rx={6}
-                fill={e.cor} opacity={0.14} stroke={e.cor} strokeOpacity={0.4} strokeWidth={0.8}
-              />
-              <Rotulo x={93 + c * 72} y={44 + r * 32} cor={CLARO} tam={8.5}>{sg}</Rotulo>
-            </G>
-          ))}
+          <Rotulo x={30} y={44 + r * 32} cor={e.cor} tam={9.5} meio={false} peso={r === linhaAcesa ? '800' : '600'}>{e.nome}</Rotulo>
+          {e.signos.map((sg, c) => {
+            const aceso = r === linhaAcesa && c === colunaAcesa
+            // A linha e a coluna do signo aceso ficam meio-caminho: dizem de
+            // onde vem cada metade sem disputar com a celula.
+            const naCruz = (r === linhaAcesa || c === colunaAcesa) && linhaAcesa >= 0
+            return (
+              <G key={sg}>
+                <Rect
+                  x={60 + c * 72} y={30 + r * 32} width={66} height={22} rx={6}
+                  fill={aceso ? OURO : e.cor}
+                  opacity={aceso ? 0.26 : naCruz ? 0.2 : 0.14}
+                  stroke={aceso ? OURO : e.cor}
+                  strokeOpacity={aceso ? 0.95 : 0.4}
+                  strokeWidth={aceso ? 1.6 : 0.8}
+                />
+                <Rotulo x={93 + c * 72} y={44 + r * 32} cor={aceso ? OURO : CLARO} tam={8.5} peso={aceso ? '800' : '600'}>{sg}</Rotulo>
+              </G>
+            )
+          })}
         </G>
       ))}
       <Rotulo x={150} y={152} cor={FRACO} tam={8.5}>
@@ -466,9 +489,19 @@ function ElementosEModalidades({ tl }: { tl: Tl }) {
   )
 }
 
-/** AS DOZE CASAS — os setores da vida, na roda. */
-function AsDozeCasas({ tl }: { tl: Tl }) {
+/**
+ * AS DOZE CASAS — a roda inteira, com a casa do verbete acesa.
+ *
+ * ⚠️ O VERBETE DE UMA CASA MOSTRA A RODA TODA, não a casa sozinha. Ver a
+ * casa 7 acesa DENTRO do círculo ensina onde ela fica — de frente para a 1,
+ * acima do horizonte — e um desenho isolado dela não ensinaria nada disso.
+ * É também por isso que a mesma figura serve os doze verbetes em vez de
+ * existirem doze desenhos quase iguais para divergirem no primeiro ajuste.
+ */
+function AsDozeCasas({ tl, foco }: { tl: Tl; foco?: string }) {
   const cx = 150; const cy = 92; const r = 78
+  const acesa = Number(foco)
+  const temFoco = Number.isFinite(acesa) && acesa >= 1 && acesa <= 12
   const assuntos = [
     tl('eu', 'self', 'yo', 'io'), tl('ter', 'having', 'tener', 'avere'),
     tl('falar', 'speaking', 'hablar', 'parlare'), tl('casa', 'home', 'casa', 'casa'),
@@ -481,24 +514,38 @@ function AsDozeCasas({ tl }: { tl: Tl }) {
     const a = ((g - 180) * Math.PI) / 180
     return { x: cx + raio * Math.cos(a), y: cy + raio * Math.sin(a) }
   }
+  /** A fatia de uma casa, para poder pintá-la por baixo de tudo. */
+  const fatia = (i: number) => {
+    const a = pt(i * 30, r)
+    const b = pt(i * 30 + 30, r)
+    return `M ${cx} ${cy} L ${a.x} ${a.y} A ${r} ${r} 0 0 1 ${b.x} ${b.y} Z`
+  }
   return (
     <Svg width="100%" height={188} viewBox="0 0 300 188">
+      {temFoco ? <Path d={fatia(acesa - 1)} fill={OURO} opacity={0.17} /> : null}
       <Circle cx={cx} cy={cy} r={r} fill="none" stroke={LINHA} strokeWidth={1.2} />
       <Circle cx={cx} cy={cy} r={r * 0.56} fill="none" stroke={LINHA} strokeWidth={0.8} />
       {/* A linha do horizonte: as casas 1 a 6 ficam abaixo dela. */}
       <Line x1={cx - r - 6} y1={cy} x2={cx + r + 6} y2={cy} stroke={CLARO} strokeWidth={1} strokeOpacity={0.5} />
 
       {assuntos.map((txt, i) => {
+        const n = i + 1
+        const destaque = temFoco && n === acesa
+        // Sem foco a casa 1 fica dourada (é a referência da roda); com foco,
+        // só a acesa chama atenção, senão a figura teria dois centros.
+        const corNum = destaque ? OURO : (!temFoco && i === 0) ? OURO : FRACO
         const ini = pt(i * 30, r)
         const meio = pt(i * 30 + 15, r * 0.79)
         const num = pt(i * 30 + 15, r * 0.4)
         return (
           <G key={i}>
-            <Line x1={cx} y1={cy} x2={ini.x} y2={ini.y} stroke={LINHA} strokeWidth={0.8} />
-            <SvgText x={num.x} y={num.y + 3} fill={i === 0 ? OURO : FRACO} fontSize={9} fontWeight="700" textAnchor="middle">
-              {String(i + 1)}
+            <Line x1={cx} y1={cy} x2={ini.x} y2={ini.y} stroke={destaque ? OURO : LINHA} strokeWidth={destaque ? 1.4 : 0.8} />
+            <SvgText x={num.x} y={num.y + 3} fill={corNum} fontSize={destaque ? 11 : 9} fontWeight={destaque ? '800' : '700'} textAnchor="middle">
+              {String(n)}
             </SvgText>
-            <SvgText x={meio.x} y={meio.y + 2.5} fill={CLARO} fontSize={7.5} textAnchor="middle">{txt}</SvgText>
+            <SvgText x={meio.x} y={meio.y + 2.5} fill={destaque ? OURO : CLARO} fontSize={destaque ? 8.5 : 7.5} fontWeight={destaque ? '700' : '400'} textAnchor="middle">
+              {txt}
+            </SvgText>
           </G>
         )
       })}
@@ -673,10 +720,189 @@ function OrdemDeLeitura({ tl }: { tl: Tl }) {
   )
 }
 
+
+/**
+ * O RETRATO DE UM PLANETA — desenhado pelo traço que o olho reconhece.
+ *
+ * ⚠️ NÃO É ENFEITE, E TAMBÉM NÃO É FOTO. Cada planeta é desenhado pela marca
+ * que a lição cita como origem da força dele: os anéis de Saturno, as faixas
+ * e a mancha de Júpiter, o vermelho de Marte que toda cultura viu a olho nu.
+ * Quem lê o verbete reconhece o corpo de que o texto fala, em vez de ler um
+ * nome abstrato.
+ *
+ * ⚠️ OS TAMANHOS NÃO SÃO PROPORCIONAIS AQUI, de propósito, e isto é o oposto
+ * do que `tamanho-de-jupiter` faz. Lá a proporção É a afirmação; aqui o
+ * assunto é a aparência, e desenhar Mercúrio em escala real o deixaria um
+ * ponto invisível ao lado de Júpiter. Figura que mede e figura que retrata
+ * têm obrigações diferentes.
+ */
+function RetratoDoPlaneta({ foco, tl }: { foco?: string; tl: Tl }) {
+  const cx = 150; const cy = 62; const r = 44
+  const qual = String(foco || 'sol')
+
+  const nome = ({
+    sol: tl('Sol', 'Sun', 'Sol', 'Sole'),
+    lua: tl('Lua', 'Moon', 'Luna', 'Luna'),
+    mercurio: tl('Mercúrio', 'Mercury', 'Mercurio', 'Mercurio'),
+    venus: tl('Vênus', 'Venus', 'Venus', 'Venere'),
+    marte: tl('Marte', 'Mars', 'Marte', 'Marte'),
+    jupiter: tl('Júpiter', 'Jupiter', 'Jupiter', 'Giove'),
+    saturno: tl('Saturno', 'Saturn', 'Saturno', 'Saturno'),
+    urano: tl('Urano', 'Uranus', 'Urano', 'Urano'),
+    netuno: tl('Netuno', 'Neptune', 'Neptuno', 'Nettuno'),
+    plutao: tl('Plutão', 'Pluto', 'Pluton', 'Plutone'),
+  } as Record<string, string>)[qual] || qual
+
+  /** A marca pela qual o olho identifica cada um. */
+  const marca = ({
+    sol: tl('a luz que tudo gira em volta', 'the light everything turns around', 'la luz alrededor de la que todo gira', 'la luce attorno a cui tutto gira'),
+    lua: tl('a que muda de cara toda noite', 'the one that changes face nightly', 'la que cambia de cara cada noche', 'quella che cambia volto ogni notte'),
+    mercurio: tl('o menor, e o mais rápido', 'the smallest, and the fastest', 'el menor, y el mas rapido', 'il piu piccolo, e il piu veloce'),
+    venus: tl('a mais brilhante depois das luzes', 'the brightest after the lights', 'la mas brillante tras las luces', 'la piu luminosa dopo le luci'),
+    marte: tl('o vermelho, a olho nu', 'the red one, to the naked eye', 'el rojo, a simple vista', 'il rosso, a occhio nudo'),
+    jupiter: tl('as faixas e a grande mancha', 'the bands and the great spot', 'las bandas y la gran mancha', 'le fasce e la grande macchia'),
+    saturno: tl('os anéis', 'the rings', 'los anillos', 'gli anelli'),
+    urano: tl('deitado, e com anéis de pé', 'tipped over, rings standing up', 'tumbado, con anillos de pie', 'coricato, con anelli in piedi'),
+    netuno: tl('o azul mais fundo', 'the deepest blue', 'el azul mas hondo', 'il blu piu profondo'),
+    plutao: tl('o mais distante dos dez', 'the most distant of the ten', 'el mas distante de los diez', 'il piu lontano dei dieci'),
+  } as Record<string, string>)[qual] || ''
+
+  const corpo = () => {
+    switch (qual) {
+      case 'sol':
+        return (
+          <G>
+            {Array.from({ length: 12 }).map((_, i) => {
+              const a = (i * 30 * Math.PI) / 180
+              return (
+                <Line
+                  key={i}
+                  x1={cx + (r + 5) * Math.cos(a)} y1={cy + (r + 5) * Math.sin(a)}
+                  x2={cx + (r + 13) * Math.cos(a)} y2={cy + (r + 13) * Math.sin(a)}
+                  stroke={OURO} strokeWidth={1.8} strokeLinecap="round" opacity={0.75}
+                />
+              )
+            })}
+            <Circle cx={cx} cy={cy} r={r} fill="#FFC83D" />
+            <Circle cx={cx} cy={cy} r={r * 0.62} fill="#FFE27A" opacity={0.6} />
+          </G>
+        )
+      case 'lua':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r} fill="#D8DCE6" />
+            {/* Os mares, que é o que se vê daqui a olho nu. */}
+            <Circle cx={cx - 14} cy={cy - 12} r={11} fill="#AFB6C6" opacity={0.8} />
+            <Circle cx={cx + 13} cy={cy + 6} r={8} fill="#AFB6C6" opacity={0.7} />
+            <Circle cx={cx - 4} cy={cy + 20} r={6} fill="#AFB6C6" opacity={0.6} />
+            {/* A sombra da fase. */}
+            <Path d={`M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${r * 0.35} ${r} 0 0 0 ${cx} ${cy - r} Z`} fill="#0F1426" opacity={0.55} />
+          </G>
+        )
+      case 'mercurio':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r * 0.68} fill="#9A9DA6" />
+            <Circle cx={cx - 10} cy={cy - 8} r={6} fill="#7F838D" opacity={0.8} />
+            <Circle cx={cx + 8} cy={cy + 9} r={4.5} fill="#7F838D" opacity={0.7} />
+            <Circle cx={cx + 2} cy={cy - 16} r={3} fill="#7F838D" opacity={0.6} />
+          </G>
+        )
+      case 'venus':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r * 0.93} fill="#E8D5A3" />
+            {[-20, -6, 10, 24].map((dy, i) => (
+              <Path
+                key={i}
+                d={`M ${cx - 38} ${cy + dy} Q ${cx} ${cy + dy - 7} ${cx + 38} ${cy + dy}`}
+                stroke="#D3BC86" strokeWidth={5} fill="none" opacity={0.65} strokeLinecap="round"
+              />
+            ))}
+          </G>
+        )
+      case 'marte':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r * 0.78} fill="#C65B3C" />
+            <Circle cx={cx + 9} cy={cy + 4} r={10} fill="#A8482E" opacity={0.75} />
+            <Circle cx={cx - 12} cy={cy - 7} r={6} fill="#A8482E" opacity={0.6} />
+            {/* A calota polar. */}
+            <Path d={`M ${cx - 11} ${cy - 30} A 14 9 0 0 1 ${cx + 11} ${cy - 30}`} fill="#EDE6E0" opacity={0.85} />
+          </G>
+        )
+      case 'jupiter':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r} fill="#D9B98C" />
+            {[['#C49A68', -28, 8], ['#E4CBA4', -14, 7], ['#BC8F5C', 2, 9], ['#E0C49C', 17, 7], ['#C49A68', 30, 6]].map(([c, dy, h], i) => (
+              <Path
+                key={i}
+                d={`M ${cx - 43} ${cy + Number(dy)} Q ${cx} ${cy + Number(dy) - 5} ${cx + 43} ${cy + Number(dy)}`}
+                stroke={String(c)} strokeWidth={Number(h)} fill="none" opacity={0.9} strokeLinecap="round"
+              />
+            ))}
+            {/* A Grande Mancha Vermelha. */}
+            <Circle cx={cx + 16} cy={cy + 9} r={8} fill="#B5533C" opacity={0.9} />
+          </G>
+        )
+      case 'saturno':
+        return (
+          <G>
+            {/* Os anéis atrás, o corpo, e os anéis na frente: é o que dá o volume. */}
+            <Path d={`M ${cx - 74} ${cy + 6} A 74 20 0 0 1 ${cx + 74} ${cy - 6}`} stroke="#C9B183" strokeWidth={7} fill="none" opacity={0.95} />
+            <Circle cx={cx} cy={cy} r={r * 0.82} fill="#E0C993" />
+            <Path d={`M ${cx - 43} ${cy + 11} Q ${cx} ${cy + 5} ${cx + 43} ${cy - 1}`} stroke="#CDB383" strokeWidth={5} fill="none" opacity={0.7} />
+            <Path d={`M ${cx + 74} ${cy - 6} A 74 20 0 0 1 ${cx - 74} ${cy + 6}`} stroke="#D7BE8C" strokeWidth={7} fill="none" opacity={0.95} />
+          </G>
+        )
+      case 'urano':
+        return (
+          <G>
+            {/* Urano gira deitado: os aneis dele ficam de pe. */}
+            <Path d={`M ${cx - 6} ${cy - 66} A 20 66 0 0 1 ${cx + 6} ${cy + 66}`} stroke="#8FD6DA" strokeWidth={5} fill="none" opacity={0.9} />
+            <Circle cx={cx} cy={cy} r={r * 0.86} fill="#9FE0E3" />
+            <Circle cx={cx} cy={cy} r={r * 0.86} fill="#6FC6CC" opacity={0.28} />
+            <Path d={`M ${cx + 6} ${cy + 66} A 20 66 0 0 1 ${cx - 6} ${cy - 66}`} stroke="#A9E4E7" strokeWidth={5} fill="none" opacity={0.55} />
+          </G>
+        )
+      case 'netuno':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r * 0.86} fill="#3F63C4" />
+            <Circle cx={cx} cy={cy} r={r * 0.86} fill="#2A4699" opacity={0.35} />
+            <Path d={`M ${cx - 36} ${cy - 10} Q ${cx} ${cy - 18} ${cx + 36} ${cy - 10}`} stroke="#8FA8E8" strokeWidth={4} fill="none" opacity={0.6} strokeLinecap="round" />
+            <Circle cx={cx - 11} cy={cy + 12} r={9} fill="#28418C" opacity={0.8} />
+          </G>
+        )
+      case 'plutao':
+        return (
+          <G>
+            <Circle cx={cx} cy={cy} r={r * 0.5} fill="#B8A892" />
+            <Circle cx={cx + 4} cy={cy + 4} r={8} fill="#D8CCB8" opacity={0.75} />
+            <Circle cx={cx - 7} cy={cy - 6} r={4} fill="#9C8E7A" opacity={0.7} />
+          </G>
+        )
+      default:
+        return <Circle cx={cx} cy={cy} r={r} fill={FRACO} opacity={0.4} />
+    }
+  }
+
+  return (
+    <Svg width="100%" height={158} viewBox="0 0 300 158">
+      {corpo()}
+      <Rotulo x={cx} y={135} cor={CLARO} tam={12} peso="700">{nome}</Rotulo>
+      {marca ? <Rotulo x={cx} y={150} cor={FRACO} tam={9}>{marca}</Rotulo> : null}
+    </Svg>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function FiguraDoEstudo({ chave, descricao, idioma }: {
+export default function FiguraDoEstudo({ chave, foco, descricao, idioma }: {
   chave: ChaveDaFigura
+  /** O que acender: um planeta, o numero de uma casa, um signo. */
+  foco?: string
   descricao: string
   idioma: IdiomaEstudo
 }) {
@@ -693,9 +919,10 @@ export default function FiguraDoEstudo({ chave, descricao, idioma }: {
       case 'volta-de-saturno': return <VoltaDeSaturno tl={tl} />
       case 'ciclo-da-lua': return <CicloDaLua tl={tl} />
       case 'angulos-dos-aspectos': return <AngulosDosAspectos tl={tl} />
+      case 'retrato-do-planeta': return <RetratoDoPlaneta tl={tl} foco={foco} />
       case 'velocidade-dos-planetas': return <VelocidadeDosPlanetas tl={tl} />
-      case 'elementos-e-modalidades': return <ElementosEModalidades tl={tl} />
-      case 'as-doze-casas': return <AsDozeCasas tl={tl} />
+      case 'elementos-e-modalidades': return <ElementosEModalidades tl={tl} foco={foco} />
+      case 'as-doze-casas': return <AsDozeCasas tl={tl} foco={foco} />
       case 'a-orbe-e-a-forca': return <AOrbeEAForca tl={tl} />
       case 'natal-e-transito': return <NatalETransito tl={tl} />
       case 'duracao-dos-ciclos': return <DuracaoDosCiclos tl={tl} />

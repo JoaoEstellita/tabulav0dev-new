@@ -33,6 +33,32 @@ export type GanchoChave =
 export type CategoriaVerbete = 'planeta' | 'signo' | 'casa' | 'aspecto' | 'conceito'
 
 /**
+ * O FOCO de uma figura: o que nela deve acender.
+ *
+ * ⚠️ A MESMA FIGURA SERVE DOZE VERBETES. A roda das casas desenhada uma vez
+ * atende os doze verbetes de casa, cada um acendendo a sua; a matriz dos
+ * elementos atende os doze signos. Desenhar vinte e quatro figuras quase
+ * iguais seria vinte e quatro lugares para divergirem no primeiro ajuste —
+ * o mesmo defeito de arquivo gemeo que este projeto ja pagou varias vezes.
+ *
+ * ⚠️ E O FOCO SITUA O VERBETE NO CONJUNTO. Ver a casa 7 acesa DENTRO da roda
+ * inteira ensina onde ela fica; um desenho isolado da casa 7 nao ensinaria.
+ */
+export type FocoDaFigura = string
+
+/** Os dez planetas, como `retrato-do-planeta` os conhece. */
+export const PLANETAS_DESENHADOS = [
+  'sol', 'lua', 'mercurio', 'venus', 'marte',
+  'jupiter', 'saturno', 'urano', 'netuno', 'plutao',
+] as const
+
+/** Os doze signos, como `elementos-e-modalidades` os acende. */
+export const SIGNOS_DESENHADOS = [
+  'aries', 'touro', 'gemeos', 'cancer', 'leao', 'virgem',
+  'libra', 'escorpiao', 'sagitario', 'capricornio', 'aquario', 'peixes',
+] as const
+
+/**
  * As figuras do Estudo.
  *
  * ⚠️ CHAVE, NAO ARQUIVO NEM URL. Tres razoes. Imagem raster pesaria no OTA
@@ -76,6 +102,8 @@ export type ChaveDaFigura =
   | 'duracao-dos-ciclos'
   /** Licao 11: os quatro passos de leitura, na ordem. */
   | 'ordem-de-leitura'
+  /** O proprio planeta, desenhado pelo traco que o olho reconhece. */
+  | 'retrato-do-planeta'
 
 export type Bloco =
   | { tipo: 'paragrafo'; texto: T }
@@ -101,7 +129,22 @@ export type Bloco =
    * que a figura MOSTRA, nao repetir o titulo. O teste de paridade cobra os
    * quatro idiomas aqui como em qualquer outro texto.
    */
-  | { tipo: 'figura'; chave: ChaveDaFigura; descricao: T }
+  | {
+    tipo: 'figura'
+    chave: ChaveDaFigura
+    /**
+     * O que acender na figura: um planeta (`'saturno'`), uma casa (`'7'`) ou
+     * um signo (`'leao'`). Sem foco, a figura desenha o conjunto inteiro sem
+     * destacar nada — que é o que a lição quer, e o verbete não.
+     *
+     * ⚠️ O PAR CHAVE × FOCO É VALIDADO POR TESTE, não pelo tipo: um union
+     * discriminado por chave tornaria cada bloco de figura verboso ao ponto
+     * de o conteúdo ficar ilegível. O teste recusa foco em figura que não
+     * aceita, e foco com valor que não existe.
+     */
+    foco?: FocoDaFigura
+    descricao: T
+  }
   | { tipo: 'ganchoPessoal'; chave: GanchoChave }
 
 export interface Unidade {

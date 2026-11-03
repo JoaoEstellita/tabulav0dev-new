@@ -5,6 +5,8 @@ import { TRILHA_ATO2 } from './trilha-ato2'
 import { TRILHA_ATO3 } from './trilha-ato3'
 import { TRILHA_ATO4 } from './trilha-ato4'
 import { VERBETES_PLANETAS } from './verbetes-planetas'
+import { VERBETES_SIGNOS } from './verbetes-signos'
+import { VERBETES_CASAS } from './verbetes-casas'
 import { VERBETES_CONCEITOS } from './verbetes-conceitos'
 
 export * from './tipos'
@@ -23,6 +25,8 @@ export const CATALOGO: Unidade[] = [
   ...TRILHA_ATO3,
   ...TRILHA_ATO4,
   ...VERBETES_PLANETAS,
+  ...VERBETES_SIGNOS,
+  ...VERBETES_CASAS,
   ...VERBETES_CONCEITOS,
 ]
 

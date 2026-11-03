@@ -34,6 +34,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
     },
     blocos: [
       {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'sol',
+        descricao: {
+          'pt-BR': 'um disco dourado com raios em volta',
+          'en-US': 'a golden disc with rays around it',
+          'es-ES': 'un disco dorado con rayos alrededor',
+          'it-IT': 'un disco dorato con raggi intorno',
+        },
+      },
+      {
         tipo: 'paragrafo',
         texto: {
           'pt-BR': 'O Sol marca o centro: a identidade, a vontade, aquilo que você está aqui para ser. Não é a sua personalidade social nem o que os outros veem primeiro — é o núcleo que sobra quando todo o resto é tirado.',
@@ -69,6 +80,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
       'it-IT': 'Cio che senti prima di decidere cosa sentire.',
     },
     blocos: [
+      {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'lua',
+        descricao: {
+          'pt-BR': 'um disco acinzentado com os mares escuros e a sombra de uma fase cobrindo parte dele',
+          'en-US': 'a greyish disc with the dark seas and the shadow of a phase covering part of it',
+          'es-ES': 'un disco grisaceo con los mares oscuros y la sombra de una fase cubriendo parte de el',
+          'it-IT': 'un disco grigiastro con i mari scuri e l ombra di una fase che ne copre una parte',
+        },
+      },
       {
         tipo: 'paragrafo',
         texto: {
@@ -115,6 +137,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
       'it-IT': 'Come pensi, parli e colleghi una cosa all altra.',
     },
     blocos: [
+      {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'mercurio',
+        descricao: {
+          'pt-BR': 'um disco pequeno e cinzento, coberto de crateras',
+          'en-US': 'a small grey disc covered in craters',
+          'es-ES': 'un disco pequeno y gris, cubierto de crateres',
+          'it-IT': 'un disco piccolo e grigio, coperto di crateri',
+        },
+      },
       {
         tipo: 'paragrafo',
         texto: {
@@ -171,6 +204,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
     },
     blocos: [
       {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'venus',
+        descricao: {
+          'pt-BR': 'um disco creme com faixas de nuvem atravessando',
+          'en-US': 'a cream disc with cloud bands crossing it',
+          'es-ES': 'un disco crema con franjas de nube cruzandolo',
+          'it-IT': 'un disco crema con fasce di nuvola che lo attraversano',
+        },
+      },
+      {
         tipo: 'paragrafo',
         texto: {
           'pt-BR': 'Vênus é o gosto e o vínculo: o que você acha bonito, o que considera que vale, como se aproxima de alguém. Vale para afeto e vale para dinheiro — nos dois casos a pergunta é a mesma: o que, para você, merece ser tido por perto.',
@@ -207,6 +251,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
     },
     blocos: [
       {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'marte',
+        descricao: {
+          'pt-BR': 'um disco vermelho com manchas escuras e uma calota branca no polo',
+          'en-US': 'a red disc with dark patches and a white polar cap',
+          'es-ES': 'un disco rojo con manchas oscuras y un casquete blanco en el polo',
+          'it-IT': 'un disco rosso con macchie scure e una calotta bianca al polo',
+        },
+      },
+      {
         tipo: 'paragrafo',
         texto: {
           'pt-BR': 'Marte é a força aplicada: a iniciativa, a coragem, a raiva, o modo como você defende um limite. Vênus diz o que você quer; Marte diz o que você faz para ter.',
@@ -242,6 +297,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
       'it-IT': 'Dove cresci, ti fidi e a volte esageri.',
     },
     blocos: [
+      {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'jupiter',
+        descricao: {
+          'pt-BR': 'um disco grande com faixas horizontais de cor e a grande mancha vermelha',
+          'en-US': 'a large disc with horizontal colour bands and the great red spot',
+          'es-ES': 'un disco grande con franjas horizontales de color y la gran mancha roja',
+          'it-IT': 'un disco grande con fasce orizzontali di colore e la grande macchia rossa',
+        },
+      },
       {
         tipo: 'paragrafo',
         texto: {
@@ -288,6 +354,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
       'it-IT': 'Il peso che esige, e che per questo costruisce.',
     },
     blocos: [
+      {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'saturno',
+        descricao: {
+          'pt-BR': 'um disco cercado por aneis que passam por tras e por diante dele',
+          'en-US': 'a disc circled by rings passing behind and in front of it',
+          'es-ES': 'un disco rodeado por anillos que pasan por detras y por delante',
+          'it-IT': 'un disco circondato da anelli che passano dietro e davanti',
+        },
+      },
       {
         tipo: 'paragrafo',
         texto: {
@@ -343,6 +420,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
       'it-IT': 'La rottura che libera, e il pianeta trovato insieme all elettricita.',
     },
     blocos: [
+      {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'urano',
+        descricao: {
+          'pt-BR': 'um disco azul-esverdeado com os aneis de pe, na vertical, porque o planeta gira deitado',
+          'en-US': 'a blue-green disc with the rings standing upright, because the planet spins on its side',
+          'es-ES': 'un disco azul verdoso con los anillos de pie, en vertical, porque el planeta gira tumbado',
+          'it-IT': 'un disco verde-azzurro con gli anelli in piedi, verticali, perche il pianeta ruota coricato',
+        },
+      },
       {
         tipo: 'paragrafo',
         texto: {
@@ -412,6 +500,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
     },
     blocos: [
       {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'netuno',
+        descricao: {
+          'pt-BR': 'um disco azul profundo com uma faixa clara e uma mancha escura',
+          'en-US': 'a deep blue disc with a light band and a dark spot',
+          'es-ES': 'un disco azul profundo con una franja clara y una mancha oscura',
+          'it-IT': 'un disco blu profondo con una fascia chiara e una macchia scura',
+        },
+      },
+      {
         tipo: 'paragrafo',
         texto: {
           'pt-BR': 'Netuno apaga fronteiras: a imaginação, a compaixão, a arte, a fé — e também a confusão, a ilusão e a fuga. Onde ele toca, o contorno entre você e o resto fica menos nítido, para o bem e para o mal.',
@@ -470,6 +569,17 @@ export const VERBETES_PLANETAS: Unidade[] = [
       'it-IT': 'Cio che muore perche qualcosa nasca, trovato alla vigilia dell era atomica.',
     },
     blocos: [
+      {
+        tipo: 'figura',
+        chave: 'retrato-do-planeta',
+        foco: 'plutao',
+        descricao: {
+          'pt-BR': 'um disco pequeno e palido, bem menor que os outros',
+          'en-US': 'a small pale disc, much smaller than the others',
+          'es-ES': 'un disco pequeno y palido, bastante menor que los otros',
+          'it-IT': 'un disco piccolo e pallido, molto piu piccolo degli altri',
+        },
+      },
       {
         tipo: 'paragrafo',
         texto: {

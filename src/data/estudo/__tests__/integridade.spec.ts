@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CATALOGO, LICOES, VERBETES, porId } from '../index'
+import { CATALOGO, LICOES, VERBETES, porId, PLANETAS_DESENHADOS, SIGNOS_DESENHADOS } from '../index'
 import type { Bloco, T } from '../tipos'
 import { GLOSSARIO } from '../../glossarioAstrologico'
 
@@ -183,11 +183,20 @@ describe('integridade do catálogo de estudo', () => {
    * fecha o outro lado.
    */
   it('toda chave de figura desenhada aparece em alguma unidade', () => {
-    const fonte = readFileSync(
-      join(__dirname, '..', '..', '..', 'components', 'estudo', 'FiguraDoEstudo.tsx'), 'utf8',
-    )
-    const desenhadas = [...fonte.matchAll(/case '([a-z-]+)':/g)].map((m) => m[1])
-    expect(desenhadas.length, 'nenhuma figura foi desenhada').toBeGreaterThan(0)
+    // ⚠️ AS CHAVES SAEM DO TIPO, não dos `case` do componente. `RetratoDoPlaneta`
+    // tem um switch INTERNO por planeta, e varrer o arquivo por `case` contava
+    // 'sol' e 'lua' como se fossem figuras — o teste acusava dez órfãs que não
+    // existiam. `ChaveDaFigura` é a fonte de verdade de quais figuras existem.
+    const tipos = readFileSync(join(__dirname, '..', 'tipos.ts'), 'utf8')
+    const inicio = tipos.indexOf('export type ChaveDaFigura')
+    expect(inicio, 'ChaveDaFigura sumiu de tipos.ts').toBeGreaterThan(-1)
+    // Para no proximo `export`: sem esse limite o slice pegava o arquivo
+    // inteiro e varria outros unions junto.
+    const resto = tipos.slice(inicio + 'export type ChaveDaFigura'.length)
+    const fim = resto.indexOf('export ')
+    const bloco = fim > -1 ? resto.slice(0, fim) : resto
+    const desenhadas = [...bloco.matchAll(/\|\s*'([a-z-]+)'/g)].map((m) => m[1])
+    expect(desenhadas.length, 'nenhuma figura foi declarada').toBeGreaterThan(0)
 
     const usadas = new Set<string>()
     for (const u of CATALOGO) {
@@ -212,6 +221,49 @@ describe('integridade do catálogo de estudo', () => {
       expect(Object.keys(g).sort(), 'gancho com texto deixaria de ser inerte')
         .toEqual(['chave', 'tipo'])
     }
+  })
+
+  /**
+   * ⚠️ O PAR CHAVE × FOCO NÃO É VALIDADO PELO TIPO, é aqui. Um union
+   * discriminado por chave deixaria cada bloco de figura tão verboso que o
+   * conteúdo ficaria ilegível — então o tipo aceita `foco?: string` e este
+   * teste cobra o resto. Foco errado não quebra nada em runtime: a figura
+   * simplesmente não acende nada, em silêncio, que é o pior resultado
+   * possível.
+   */
+  it('o foco de cada figura existe e combina com a chave', () => {
+    const ACEITAM: Record<string, readonly string[]> = {
+      'retrato-do-planeta': PLANETAS_DESENHADOS,
+      'elementos-e-modalidades': SIGNOS_DESENHADOS,
+      'as-doze-casas': Array.from({ length: 12 }, (_, i) => String(i + 1)),
+    }
+    const erros: string[] = []
+    for (const u of CATALOGO) {
+      for (const b of u.blocos) {
+        if (b.tipo !== 'figura') continue
+        const aceita = ACEITAM[b.chave]
+        if (b.foco && !aceita) erros.push(`${u.id}: "${b.chave}" não aceita foco`)
+        if (b.foco && aceita && !aceita.includes(b.foco)) {
+          erros.push(`${u.id}: foco "${b.foco}" não existe em "${b.chave}"`)
+        }
+      }
+    }
+    expect(erros, 'foco inválido faz a figura não acender nada, em silêncio').toEqual([])
+  })
+
+  /**
+   * ⚠️ O VERBETE DE UM PLANETA, SIGNO OU CASA TEM DE TRAZER A SUA FIGURA.
+   * Sem ela o verbete vira parágrafo solto — e foi justamente por isso que a
+   * área ganhou diagramas. Um verbete novo que esqueça a figura falha aqui.
+   */
+  it('todo verbete de planeta, signo e casa traz a figura com o próprio foco', () => {
+    const semFigura: string[] = []
+    for (const u of VERBETES) {
+      if (!['planeta', 'signo', 'casa'].includes(String(u.categoria))) continue
+      const temFoco = u.blocos.some((b) => b.tipo === 'figura' && !!b.foco)
+      if (!temFoco) semFigura.push(u.id)
+    }
+    expect(semFigura, 'verbete sem a própria figura vira parágrafo solto').toEqual([])
   })
 
   /** ⚠️ O motor não calcula Quíron — um verbete prometeria o que o mapa não mostra. */

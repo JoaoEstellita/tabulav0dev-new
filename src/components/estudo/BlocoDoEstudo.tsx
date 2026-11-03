@@ -22,7 +22,7 @@ export default function BlocoDoEstudo({ bloco, idioma }: { bloco: Bloco; idioma:
   // ⚠️ ANTES DE `const texto = bloco.texto`: a figura nao tem `texto`, tem
   // `descricao` (o alternativo do leitor de tela).
   if (bloco.tipo === 'figura') {
-    return <FiguraDoEstudo chave={bloco.chave} descricao={bloco.descricao[idioma]} idioma={idioma} />
+    return <FiguraDoEstudo chave={bloco.chave} foco={bloco.foco} descricao={bloco.descricao[idioma]} idioma={idioma} />
   }
 
   if (bloco.tipo === 'sincronicidade') {
