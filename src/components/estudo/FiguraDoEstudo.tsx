@@ -336,45 +336,66 @@ function CicloDaLua({ tl }: { tl: Tl }) {
 }
 
 /**
- * OS CINCO ÂNGULOS MAIORES.
+ * OS CINCO ÂNGULOS MAIORES, com o do verbete aceso.
  *
  * ⚠️ O ÂNGULO É DESENHADO DE VERDADE (60° é 60° na figura). Um diagrama de
  * aspectos com ângulo aproximado ensinaria errado a única coisa que ele tem
  * para ensinar.
+ *
+ * ⚠️ OS OUTROS CONTINUAM NA FIGURA, apagados. O verbete da quadratura mostra
+ * a quadratura acesa ENTRE os demais — é assim que se vê que 90° fica na
+ * metade do caminho entre o sextil e o trígono, e que a oposição é o extremo.
+ * Desenhar o ângulo sozinho perderia a escala inteira.
  */
-function AngulosDosAspectos({ tl }: { tl: Tl }) {
+function AngulosDosAspectos({ tl, foco }: { tl: Tl; foco?: string }) {
   const cx = 150; const cy = 72; const r = 52
   const p = (graus: number) => {
     const a = ((graus - 90) * Math.PI) / 180
     return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
   }
-  const aspectos: Array<{ g: number; nome: string; cor: string }> = [
-    { g: 60, nome: tl('sextil 60°', 'sextile 60°', 'sextil 60°', 'sestile 60°'), cor: AGUA },
-    { g: 90, nome: tl('quadratura 90°', 'square 90°', 'cuadratura 90°', 'quadrato 90°'), cor: '#F08A8A' },
-    { g: 120, nome: tl('trígono 120°', 'trine 120°', 'trigono 120°', 'trigono 120°'), cor: AGUA },
-    { g: 180, nome: tl('oposição 180°', 'opposition 180°', 'oposicion 180°', 'opposizione 180°'), cor: '#F08A8A' },
+  const aspectos: Array<{ id: string; g: number; nome: string; cor: string }> = [
+    { id: 'sextil', g: 60, nome: tl('sextil 60°', 'sextile 60°', 'sextil 60°', 'sestile 60°'), cor: AGUA },
+    { id: 'quadratura', g: 90, nome: tl('quadratura 90°', 'square 90°', 'cuadratura 90°', 'quadrato 90°'), cor: '#F08A8A' },
+    { id: 'trigono', g: 120, nome: tl('trígono 120°', 'trine 120°', 'trigono 120°', 'trigono 120°'), cor: AGUA },
+    { id: 'oposicao', g: 180, nome: tl('oposição 180°', 'opposition 180°', 'oposicion 180°', 'opposizione 180°'), cor: '#F08A8A' },
   ]
   const origem = p(0)
+  const temFoco = !!foco
+  const aceso = (id: string) => !temFoco || foco === id
   return (
     <Svg width="100%" height={168} viewBox="0 0 300 168">
       <Circle cx={cx} cy={cy} r={r} fill="none" stroke={LINHA} strokeWidth={1.2} />
       {aspectos.map((a) => {
         const q = p(a.g)
-        return <Line key={a.g} x1={origem.x} y1={origem.y} x2={q.x} y2={q.y} stroke={a.cor} strokeWidth={1.6} opacity={0.85} />
+        const on = aceso(a.id)
+        return (
+          <Line
+            key={a.g} x1={origem.x} y1={origem.y} x2={q.x} y2={q.y}
+            stroke={a.cor} strokeWidth={on ? 2.4 : 1.2} opacity={on ? 0.95 : 0.22}
+          />
+        )
       })}
       {aspectos.map((a) => {
         const q = p(a.g)
-        return <Circle key={`d${a.g}`} cx={q.x} cy={q.y} r={4} fill={a.cor} />
+        const on = aceso(a.id)
+        return <Circle key={`d${a.g}`} cx={q.x} cy={q.y} r={on ? 5 : 3.2} fill={a.cor} opacity={on ? 1 : 0.3} />
       })}
-      <Circle cx={origem.x} cy={origem.y} r={5.5} fill={OURO} />
-      <Rotulo x={origem.x} y={origem.y - 10} cor={OURO} tam={9}>{tl('conjunção 0°', 'conjunction 0°', 'conjuncion 0°', 'congiunzione 0°')}</Rotulo>
+      <Circle cx={origem.x} cy={origem.y} r={foco === 'conjuncao' ? 7 : 5.5} fill={OURO} opacity={!temFoco || foco === 'conjuncao' ? 1 : 0.35} />
+      <Rotulo x={origem.x} y={origem.y - 11} cor={OURO} tam={9} peso={foco === 'conjuncao' ? '800' : '600'}>
+        {tl('conjunção 0°', 'conjunction 0°', 'conjuncion 0°', 'congiunzione 0°')}
+      </Rotulo>
 
-      {aspectos.map((a, i) => (
-        <G key={`l${a.g}`}>
-          <Circle cx={22} cy={140 + (i % 2) * 14} r={3} fill={a.cor} />
-          <Rotulo x={30} y={143 + (i % 2) * 14} cor={CLARO} tam={9} meio={false}>{a.nome}</Rotulo>
-        </G>
-      ))}
+      {aspectos.map((a, i) => {
+        const on = aceso(a.id)
+        return (
+          <G key={`l${a.g}`}>
+            <Circle cx={22} cy={140 + (i % 2) * 14} r={3} fill={a.cor} opacity={on ? 1 : 0.3} />
+            <Rotulo x={30} y={143 + (i % 2) * 14} cor={on ? CLARO : FRACO} tam={9} meio={false} peso={temFoco && on ? '800' : '600'}>
+              {a.nome}
+            </Rotulo>
+          </G>
+        )
+      })}
       <Rotulo x={214} y={143} cor={AGUA} tam={8.5} meio={false}>{tl('flui', 'flows', 'fluye', 'scorre')}</Rotulo>
       <Rotulo x={214} y={157} cor="#F08A8A" tam={8.5} meio={false}>{tl('atrita', 'grinds', 'roza', 'attrita')}</Rotulo>
     </Svg>
@@ -918,7 +939,7 @@ export default function FiguraDoEstudo({ chave, foco, descricao, idioma }: {
       case 'tamanho-de-jupiter': return <TamanhoDeJupiter tl={tl} />
       case 'volta-de-saturno': return <VoltaDeSaturno tl={tl} />
       case 'ciclo-da-lua': return <CicloDaLua tl={tl} />
-      case 'angulos-dos-aspectos': return <AngulosDosAspectos tl={tl} />
+      case 'angulos-dos-aspectos': return <AngulosDosAspectos tl={tl} foco={foco} />
       case 'retrato-do-planeta': return <RetratoDoPlaneta tl={tl} foco={foco} />
       case 'velocidade-dos-planetas': return <VelocidadeDosPlanetas tl={tl} />
       case 'elementos-e-modalidades': return <ElementosEModalidades tl={tl} foco={foco} />

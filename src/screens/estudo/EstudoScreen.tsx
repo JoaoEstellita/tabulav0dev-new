@@ -61,6 +61,42 @@ export default function EstudoScreen() {
   }, [busca, idioma])
 
   const unidadeAberta: Unidade | null = aberta ? porId(aberta) : null
+
+  /**
+   * "ATO 1 · LIÇÃO 4 DE 12" no topo da lição aberta.
+   *
+   * ⚠️ MONTADO AQUI, não dentro do modal: os nomes dos atos já vivem nesta
+   * tela, e duplicá-los lá seria a segunda cópia de uma lista que muda junto.
+   */
+  const contextoDe = (u: Unidade): string | null => {
+    if (u.tipo === 'verbete') {
+      const cat = CATEGORIAS.find((c) => c.chave === u.categoria)
+      return cat ? cat.nome[i] : null
+    }
+    const ato = ATOS.find((a) => a.ato === u.ato)
+    const pos = tl(
+      `Lição ${u.ordem} de ${LICOES.length}`,
+      `Lesson ${u.ordem} of ${LICOES.length}`,
+      `Leccion ${u.ordem} de ${LICOES.length}`,
+      `Lezione ${u.ordem} di ${LICOES.length}`,
+    )
+    return ato ? `${ato.nome[i]} · ${pos}` : pos
+  }
+
+  /**
+   * A lição anterior e a seguinte, para continuar sem voltar à lista.
+   *
+   * ⚠️ SÓ PARA LIÇÃO. A biblioteca não tem ordem; inventar uma no rodapé do
+   * verbete prometeria um percurso que não existe.
+   */
+  const vizinhasDe = (u: Unidade) => {
+    if (u.tipo !== 'licao') return { anterior: null, proxima: null }
+    const k = LICOES.findIndex((l) => l.id === u.id)
+    return {
+      anterior: k > 0 ? LICOES[k - 1] : null,
+      proxima: k > -1 && k < LICOES.length - 1 ? LICOES[k + 1] : null,
+    }
+  }
   const rotuloMin = tl('min', 'min', 'min', 'min')
 
   const cardDe = (u: Unidade, recomendado = false) => (
@@ -170,6 +206,8 @@ export default function EstudoScreen() {
           aoAbrirOutra={setAberta}
           marcarLido={marcarLido}
           tl={tl}
+          contexto={contextoDe(unidadeAberta)}
+          vizinhas={vizinhasDe(unidadeAberta)}
         />
       ) : null}
     </View>

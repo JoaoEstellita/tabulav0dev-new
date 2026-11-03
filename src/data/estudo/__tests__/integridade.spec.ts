@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CATALOGO, LICOES, VERBETES, porId, PLANETAS_DESENHADOS, SIGNOS_DESENHADOS } from '../index'
+import {
+  CATALOGO, LICOES, VERBETES, porId,
+  PLANETAS_DESENHADOS, SIGNOS_DESENHADOS, ASPECTOS_DESENHADOS,
+} from '../index'
 import type { Bloco, T } from '../tipos'
 import { GLOSSARIO } from '../../glossarioAstrologico'
 
@@ -236,6 +239,7 @@ describe('integridade do catálogo de estudo', () => {
       'retrato-do-planeta': PLANETAS_DESENHADOS,
       'elementos-e-modalidades': SIGNOS_DESENHADOS,
       'as-doze-casas': Array.from({ length: 12 }, (_, i) => String(i + 1)),
+      'angulos-dos-aspectos': ASPECTOS_DESENHADOS,
     }
     const erros: string[] = []
     for (const u of CATALOGO) {

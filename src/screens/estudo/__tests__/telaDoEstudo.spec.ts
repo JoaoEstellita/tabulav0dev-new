@@ -155,7 +155,48 @@ describe('a tela do Estudo', () => {
   it('a lição marca como lida ao abrir', () => {
     expect(LICAO, 'a marca de lido virou dependente da rolagem')
       .toMatch(/useEffect\(\(\) => \{ marcarLido\(unidade\.id\) \}/)
-    expect(LICAO, 'apareceu detecção de fim de rolagem').not.toMatch(/onScroll|contentOffset/)
+  })
+
+  /**
+   * ⚠️ A TELA AGORA TEM `onScroll` — para a BARRA DE PROGRESSO, e só. Este
+   * teste antes proibia `onScroll` no arquivo inteiro, o que era uma trava
+   * grosseira para uma regra fina: o proibido é a marca de LIDO depender da
+   * rolagem, não a tela saber onde a leitura está.
+   *
+   * Agora a regra é cobrada onde ela vive: dentro do manipulador de rolagem
+   * não pode haver `marcarLido`.
+   */
+  it('a rolagem move a barra, e não marca lido', () => {
+    const aoRolar = LICAO.slice(LICAO.indexOf('const aoRolar'))
+    const corpo = aoRolar.slice(0, aoRolar.indexOf('const ligados'))
+    expect(corpo, 'o manipulador de rolagem sumiu').toContain('setLido')
+    expect(corpo, 'marcar lido voltou a depender de rolar até o fim')
+      .not.toContain('marcarLido')
+  })
+
+  /** Abrir a próxima pelo rodapé não pode começar no meio do texto. */
+  it('volta ao topo ao trocar de unidade', () => {
+    expect(LICAO, 'a próxima lição abriria na posição em que a anterior parou')
+      .toMatch(/scrollTo\(\{ y: 0/)
+  })
+
+  /**
+   * ⚠️ A TRILHA CONTINUA SEM VOLTAR À LISTA, mas só para LIÇÃO: a biblioteca
+   * não tem ordem, e um "próximo" no verbete prometeria um percurso que não
+   * existe.
+   */
+  it('o rodapé de anterior/próxima é só da trilha', () => {
+    expect(LICAO, 'a navegação da trilha sumiu do rodapé').toMatch(/vizinhas\?\.proxima/)
+    expect(ESTUDO, 'o verbete ganharia vizinhas que não existem')
+      .toMatch(/u\.tipo !== 'licao'\) return \{ anterior: null, proxima: null \}/)
+  })
+
+  /** Tela cheia: ler uma lição é a tarefa inteira enquanto dura. */
+  it('a lição abre em tela cheia', () => {
+    expect(LICAO, 'voltou a ser folha parcial sobre a tela anterior')
+      .not.toMatch(/maxHeight: '9?\d%'/)
+    expect(LICAO, 'sem respeitar a área segura o título entra sob o relógio')
+      .toMatch(/useSafeAreaInsets/)
   })
 
   /** `flex: 1` no ScrollView e `minHeight: 0` na cadeia: regras deste projeto. */

@@ -52,6 +52,11 @@ export const PLANETAS_DESENHADOS = [
   'jupiter', 'saturno', 'urano', 'netuno', 'plutao',
 ] as const
 
+/** Os angulos que `angulos-dos-aspectos` sabe acender. */
+export const ASPECTOS_DESENHADOS = [
+  'conjuncao', 'sextil', 'quadratura', 'trigono', 'oposicao',
+] as const
+
 /** Os doze signos, como `elementos-e-modalidades` os acende. */
 export const SIGNOS_DESENHADOS = [
   'aries', 'touro', 'gemeos', 'cancer', 'leao', 'virgem',
