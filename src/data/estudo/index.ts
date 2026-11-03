@@ -1,4 +1,5 @@
 import type { Unidade } from './tipos'
+import { TRILHA_ATO0 } from './trilha-ato0'
 import { VERBETES_CONCEITOS } from './verbetes-conceitos'
 
 export * from './tipos'
@@ -11,6 +12,7 @@ export * from './tipos'
  * validação de integridade, que precisam ver o conjunto completo.
  */
 export const CATALOGO: Unidade[] = [
+  ...TRILHA_ATO0,
   ...VERBETES_CONCEITOS,
 ]
 
