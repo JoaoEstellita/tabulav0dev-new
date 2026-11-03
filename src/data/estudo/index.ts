@@ -1,5 +1,6 @@
 import type { Unidade } from './tipos'
 import { TRILHA_ATO0 } from './trilha-ato0'
+import { VERBETES_PLANETAS } from './verbetes-planetas'
 import { VERBETES_CONCEITOS } from './verbetes-conceitos'
 
 export * from './tipos'
@@ -13,6 +14,7 @@ export * from './tipos'
  */
 export const CATALOGO: Unidade[] = [
   ...TRILHA_ATO0,
+  ...VERBETES_PLANETAS,
   ...VERBETES_CONCEITOS,
 ]
 

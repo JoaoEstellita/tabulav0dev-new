@@ -129,6 +129,47 @@ describe('integridade do catálogo de estudo', () => {
     }
   })
 
+  /**
+   * ⚠️ SÓ OS TRANSNETUNIANOS TÊM SINCRONICIDADE, e isso é uma regra de
+   * honestidade, não de estilo. Urano, Netuno e Plutão foram descobertos com a
+   * história já escrita em volta — dá para pôr a data de descoberta ao lado do
+   * que acontecia no mundo e deixar o leitor ver. Os sete clássicos são
+   * conhecidos desde antes de qualquer registro: inventar uma coincidência de
+   * descoberta para eles seria fabricar o que esta área existe para não fazer.
+   */
+  it('só os transnetunianos têm sincronicidade, e com ano plausível', () => {
+    const comSinc = CATALOGO.filter((u) => u.blocos.some((b) => b.tipo === 'sincronicidade'))
+    expect(comSinc.map((u) => u.id).sort())
+      .toEqual(['planeta-netuno', 'planeta-plutao', 'planeta-urano'])
+    for (const u of comSinc) {
+      for (const b of u.blocos) {
+        if (b.tipo !== 'sincronicidade') continue
+        expect(b.ano, `${u.id}: ano fora do plausível`).toBeGreaterThan(1700)
+        expect(b.ano, `${u.id}: ano fora do plausível`).toBeLessThan(1950)
+      }
+    }
+  })
+
+  /**
+   * ⚠️ A LEITURA NÃO PODE SE APRESENTAR COMO FATO. `descoberta` e `noMundo` são
+   * verificáveis; `leitura` é interpretação da tradição. Se o texto da leitura
+   * disser "prova", "porque" ou "comprova", ele atravessa essa linha — e é
+   * justamente a credibilidade que esta área existe para construir.
+   */
+  it('a leitura da sincronicidade não se declara demonstrada', () => {
+    const proibidas = /(prova|provam|comprova|comprovam|demonstra|demonstram|portanto|logo se v[êe])/i
+    const infratores: string[] = []
+    for (const u of CATALOGO) {
+      for (const b of u.blocos) {
+        if (b.tipo !== 'sincronicidade') continue
+        for (const lang of IDIOMAS) {
+          if (proibidas.test(b.leitura[lang])) infratores.push(`${u.id} [${lang}]`)
+        }
+      }
+    }
+    expect(infratores, 'a leitura se apresentou como demonstrada').toEqual([])
+  })
+
   /** ⚠️ O motor não calcula Quíron — um verbete prometeria o que o mapa não mostra. */
   it('Quíron não aparece', () => {
     const cita = CATALOGO.filter((u) => camposDeTexto(u)
