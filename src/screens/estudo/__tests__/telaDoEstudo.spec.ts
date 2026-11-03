@@ -50,8 +50,8 @@ describe('o renderizador de blocos', () => {
   })
 
   /** Um tipo sem tratamento sumiria da tela em silêncio. */
-  it('cobre os seis tipos de bloco', () => {
-    for (const t of ['paragrafo', 'destaque', 'sincronicidade', 'exemplo', 'cuidado', 'ganchoPessoal']) {
+  it('cobre os sete tipos de bloco', () => {
+    for (const t of ['paragrafo', 'destaque', 'sincronicidade', 'exemplo', 'cuidado', 'ganchoPessoal', 'figura']) {
       expect(BLOCO, `o tipo "${t}" não é tratado`).toContain(`'${t}'`)
     }
   })
@@ -79,6 +79,34 @@ describe('o renderizador de blocos', () => {
     const total = BLOCO.match(/<TextoComGlossario/g) || []
     expect(comSimples.length, 'algum texto do Estudo voltaria a trocar o termo técnico')
       .toBe(total.length)
+  })
+})
+
+/**
+ * ⚠️ AS FIGURAS SAO DESENHADAS, NAO CARREGADAS. Imagem raster engordaria todo
+ * OTA (os assets do app ja somam 9 MB) e borraria em tela densa; URL remota
+ * deixaria a licao sem figura justamente offline, que e quando se estuda.
+ */
+describe('as figuras do Estudo', () => {
+  const FIGURA = limpar(join(__dirname, '..', '..', '..', 'components', 'estudo', 'FiguraDoEstudo.tsx'))
+
+  it('nao usa imagem raster nem rede', () => {
+    expect(FIGURA, 'virou <Image>, que pesa no OTA e borra em tela densa').not.toMatch(/<Image/)
+    expect(FIGURA, 'figura vindo de require() de asset').not.toMatch(/require\(.*\.(png|jpe?g|webp|gif)/i)
+    expect(FIGURA, 'figura vindo da rede: sem ela offline').not.toMatch(/https?:\/\//)
+  })
+
+  it('uma chave sem desenho nao vira moldura vazia', () => {
+    expect(FIGURA, 'o never sumiu — chave nova sairia em branco e em silencio')
+      .toMatch(/const naoDesenhada: never = chave/)
+  })
+
+  /** Quem usa leitor de tela recebe a descricao no lugar do desenho. */
+  it('a figura e um no acessivel com texto alternativo', () => {
+    expect(FIGURA, 'sem accessibilityLabel o desenho e mudo no leitor de tela')
+      .toMatch(/accessibilityLabel=\{descricao\}/)
+    expect(FIGURA, 'sem role de imagem o leitor nao anuncia o que e')
+      .toMatch(/accessibilityRole="image"/)
   })
 })
 

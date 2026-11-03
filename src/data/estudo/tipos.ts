@@ -32,6 +32,37 @@ export type GanchoChave =
 
 export type CategoriaVerbete = 'planeta' | 'signo' | 'casa' | 'aspecto' | 'conceito'
 
+/**
+ * As figuras do Estudo.
+ *
+ * ⚠️ CHAVE, NAO ARQUIVO NEM URL. Tres razoes. Imagem raster pesaria no OTA
+ * (os assets do app ja somam 9 MB) e borraria em tela densa; URL remota
+ * quebraria a licao offline, que e exatamente quando se estuda; e o desenho
+ * em SVG acompanha o tema e o idioma, coisa que PNG nao faz.
+ *
+ * ⚠️ DIAGRAMA, NAO ILUSTRACAO. Cada figura aqui mostra um MECANISMO que o
+ * texto afirma — a ladeira contra o trilho, a elongacao de Mercurio, as tres
+ * descobertas na linha do tempo. Enfeite que nao ensina nada so rouba a
+ * atencao do paragrafo ao lado.
+ */
+export type ChaveDaFigura =
+  /** Licao 2: na ladeira voce sente o peso e ainda escolhe; no trilho, nao. */
+  | 'ladeira-ou-trilho'
+  /** Licao 3: o mapa desenha o relevo; quem caminha nao esta no desenho. */
+  | 'terreno-e-viajante'
+  /** Urano/Netuno/Plutao: a descoberta ao lado do que o mundo descobria. */
+  | 'linha-das-descobertas'
+  /** Mercurio: nunca se afasta do Sol — por isso e o mensageiro dele. */
+  | 'elongacao-de-mercurio'
+  /** Jupiter: maior que todos os outros somados. */
+  | 'tamanho-de-jupiter'
+  /** Saturno: 29 anos por volta, e o retorno aos 29. */
+  | 'volta-de-saturno'
+  /** Lua: as fases, o ciclo mais visivel do ceu. */
+  | 'ciclo-da-lua'
+  /** Os cinco angulos maiores, no circulo. */
+  | 'angulos-dos-aspectos'
+
 export type Bloco =
   | { tipo: 'paragrafo'; texto: T }
   /** A frase que o leitor deveria levar embora. Uma por unidade, no máximo. */
@@ -48,6 +79,15 @@ export type Bloco =
   | { tipo: 'exemplo'; texto: T }
   /** O que a astrologia NÃO afirma. Nota discreta, nunca alarme. */
   | { tipo: 'cuidado'; texto: T }
+  /**
+   * Um diagrama desenhado em SVG.
+   *
+   * ⚠️ `descricao` NAO E LEGENDA — e o texto alternativo, nos 4 idiomas. Quem
+   * usa leitor de tela recebe ele no lugar do desenho, entao precisa dizer o
+   * que a figura MOSTRA, nao repetir o titulo. O teste de paridade cobra os
+   * quatro idiomas aqui como em qualquer outro texto.
+   */
+  | { tipo: 'figura'; chave: ChaveDaFigura; descricao: T }
   | { tipo: 'ganchoPessoal'; chave: GanchoChave }
 
 export interface Unidade {

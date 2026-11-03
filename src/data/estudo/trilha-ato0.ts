@@ -119,6 +119,16 @@ export const TRILHA_ATO0: Unidade[] = [
         },
       },
       {
+        tipo: 'figura',
+        chave: 'ladeira-ou-trilho',
+        descricao: {
+          'pt-BR': 'Dois caminhos com a MESMA inclinacao. Na ladeira, a pessoa sente o peso e varias setas saem dela: ha para onde ir. No trilho, a mesma subida, mas uma seta so.',
+          'en-US': 'Two paths with the SAME incline. On the slope, the person feels the weight and several arrows leave them: there is somewhere to go. On the rail, the same climb, but a single arrow.',
+          'es-ES': 'Dos caminos con la MISMA inclinacion. En la cuesta, la persona siente el peso y varias flechas salen de ella: hay adonde ir. En el riel, la misma subida, pero una sola flecha.',
+          'it-IT': 'Due percorsi con la STESSA pendenza. Sulla salita, la persona sente il peso e varie frecce partono da lei: c e dove andare. Sul binario, la stessa salita, ma una freccia sola.',
+        },
+      },
+      {
         tipo: 'paragrafo',
         texto: {
           'pt-BR': 'É aí que a leitura muda. A mesma passagem de Saturno pode virar duas coisas completamente diferentes. Quem reage a ela sente cobrança, cansaço, a sensação de que tudo ficou mais pesado sem motivo. Quem a usa descobre que o peso estava pedindo estrutura — e constrói o que antes não parava de pé. A pressão é a mesma; o que muda é quem atravessa.',
@@ -199,6 +209,16 @@ export const TRILHA_ATO0: Unidade[] = [
           'en-US': 'A natal chart is a portrait of the sky at the instant you arrived. It describes the ground of a crossing: where the climb is, where the flat stretch is, where the floor gives way. What it does not describe, at any point, is the traveller.',
           'es-ES': 'Una carta natal es un retrato del cielo en el instante en que llegaste. Describe el terreno de una travesia: donde hay subida, donde hay llanura, donde el suelo cede. Lo que no describe, en ningun punto, es al viajero.',
           'it-IT': 'Una carta natale e un ritratto del cielo nell istante in cui sei arrivato. Descrive il terreno di una traversata: dove c e salita, dove c e pianura, dove il suolo cede. Cio che non descrive, in nessun punto, e il viaggiatore.',
+        },
+      },
+      {
+        tipo: 'figura',
+        chave: 'terreno-e-viajante',
+        descricao: {
+          'pt-BR': 'Um perfil de terreno com subida, planicie e um trecho onde o chao cede. Acima dele, separada por uma seta tracejada, a figura de quem caminha: ela nao faz parte do desenho do relevo.',
+          'en-US': 'A ground profile with a climb, a flat stretch and a place where the floor gives way. Above it, separated by a dashed arrow, the figure of whoever walks: they are not part of the relief drawing.',
+          'es-ES': 'Un perfil de terreno con subida, llanura y un tramo donde el suelo cede. Encima, separada por una flecha punteada, la figura de quien camina: no forma parte del dibujo del relieve.',
+          'it-IT': 'Un profilo di terreno con salita, pianura e un tratto dove il suolo cede. Sopra, separata da una freccia tratteggiata, la figura di chi cammina: non fa parte del disegno del rilievo.',
         },
       },
       // ⚠️ INERTE NA FASE 1 — ver o comentário na lição 2. Aqui a fase 2 mostra

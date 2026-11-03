@@ -1,6 +1,7 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import TextoComGlossario from '../TextoComGlossario'
+import FiguraDoEstudo from './FiguraDoEstudo'
 import type { Bloco, IdiomaEstudo } from '../../data/estudo'
 
 /**
@@ -17,6 +18,12 @@ export default function BlocoDoEstudo({ bloco, idioma }: { bloco: Bloco; idioma:
   // ligado, ele não pode desenhar nem um espaço: um buraco visual faria a
   // fase 2 ter de "consertar" em vez de só completar.
   if (bloco.tipo === 'ganchoPessoal') return null
+
+  // ⚠️ ANTES DE `const texto = bloco.texto`: a figura nao tem `texto`, tem
+  // `descricao` (o alternativo do leitor de tela).
+  if (bloco.tipo === 'figura') {
+    return <FiguraDoEstudo chave={bloco.chave} descricao={bloco.descricao[idioma]} idioma={idioma} />
+  }
 
   if (bloco.tipo === 'sincronicidade') {
     return (

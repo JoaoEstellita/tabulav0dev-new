@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { CATALOGO, LICOES, VERBETES, porId } from '../index'
 import type { Bloco, T } from '../tipos'
 import { GLOSSARIO } from '../../glossarioAstrologico'
@@ -26,6 +28,10 @@ function camposDeTexto(u: { id: string; titulo: T; resumo: T; blocos: Bloco[] })
   ]
   u.blocos.forEach((b, i) => {
     if (b.tipo === 'ganchoPessoal') return
+    // ⚠️ A DESCRICAO DA FIGURA ENTRA NA PARIDADE. E o texto que o leitor de
+    // tela recebe no lugar do desenho: faltar num idioma deixa a figura muda
+    // para quem depende dele, e isso nao apareceria em revisao visual nenhuma.
+    if (b.tipo === 'figura') { out.push({ onde: `${u.id}.bloco${i}.descricao`, t: b.descricao }); return }
     if (b.tipo === 'sincronicidade') {
       out.push({ onde: `${u.id}.bloco${i}.descoberta`, t: b.descoberta })
       out.push({ onde: `${u.id}.bloco${i}.noMundo`, t: b.noMundo })
@@ -168,6 +174,27 @@ describe('integridade do catálogo de estudo', () => {
       }
     }
     expect(infratores, 'a leitura se apresentou como demonstrada').toEqual([])
+  })
+
+  /**
+   * ⚠️ CHAVE DE FIGURA DECLARADA E DESENHADA MAS NUNCA USADA é desenho que
+   * ninguém vê — e, pior, código que parece entregue. O `never` do
+   * renderizador cobre o caminho oposto (chave usada sem desenho); este
+   * fecha o outro lado.
+   */
+  it('toda chave de figura desenhada aparece em alguma unidade', () => {
+    const fonte = readFileSync(
+      join(__dirname, '..', '..', '..', 'components', 'estudo', 'FiguraDoEstudo.tsx'), 'utf8',
+    )
+    const desenhadas = [...fonte.matchAll(/case '([a-z-]+)':/g)].map((m) => m[1])
+    expect(desenhadas.length, 'nenhuma figura foi desenhada').toBeGreaterThan(0)
+
+    const usadas = new Set<string>()
+    for (const u of CATALOGO) {
+      for (const b of u.blocos) if (b.tipo === 'figura') usadas.add(b.chave)
+    }
+    const orfas = desenhadas.filter((c) => !usadas.has(c))
+    expect(orfas, 'figura desenhada que nenhuma lição ou verbete mostra').toEqual([])
   })
 
   /** ⚠️ O motor não calcula Quíron — um verbete prometeria o que o mapa não mostra. */
