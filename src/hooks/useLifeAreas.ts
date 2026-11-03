@@ -42,6 +42,8 @@ export interface UseLifeAreasReturn {
   loadStage: string
   /** Motor local falhou com o backend ok: a tela fica incompleta, não quebrada. */
   engineFailed: boolean
+  /** Etapa e nome do erro da última falha. Diagnóstico, nunca dado sensível. */
+  falhaDetalhe: string | null
 }
 
 export function useLifeAreas(): UseLifeAreasReturn {
@@ -57,6 +59,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
   // justamente o que deixava a grade e as interpretações vazias SEM nada no
   // Sentry nem na tela, e o que fez a caça ao bug do Mapa durar quatro rodadas.
   const [engineFailed, setEngineFailed] = useState(false)
+  // ⚠️ ONDE falhou, não só QUE falhou. `loadStage` sempre soube a etapa e
+  // ia só para o Sentry; sem ela na tela, diagnosticar a falha de um
+  // aparelho que não está aqui vira adivinhação.
+  const [falhaDetalhe, setFalhaDetalhe] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
@@ -138,6 +144,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       lastHouseSystemRef.current = normalizedHouseSystem
 
       setEngineFailed(false)
+      setFalhaDetalhe(null)
       let backendComputedAtMs: number | null = null
       let backendValidUntilMs: number | null = null
       let backendCalcVersion: string | null = null
@@ -389,6 +396,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         // O motor nao rodou — e isso e exatamente o que `engineFailed` quer
         // dizer. Com o sinal, a tela pode falar a verdade.
         setEngineFailed(true)
+        setFalhaDetalhe(`${loadStage} · sem motor local`)
         return
       }
 
@@ -481,6 +489,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
       // para quem consome poder dizer isso a quem está olhando, em vez de exibir
       // uma seção muda que parece defeito aleatório.
       setEngineFailed(true)
+      // ⚠️ SÓ O NOME DO ERRO. `err.message` carrega URL, parâmetro e às
+      // vezes token — e isto vai para a tela, de onde sai em print.
+      setFalhaDetalhe(`${loadStage} · ${(err as any)?.name || 'Erro'}`)
       if (!temSnapshotBackend) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrologicos')
       }
@@ -593,6 +604,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     localOverrideActive,
     loadStage,
     engineFailed,
+    falhaDetalhe,
   }
 }
 

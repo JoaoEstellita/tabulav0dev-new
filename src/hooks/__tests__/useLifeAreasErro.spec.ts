@@ -133,3 +133,57 @@ describe('a tela presa em "Mapa em processamento"', () => {
     expect(HOME).toMatch(/abra pelo aplicativo/)
   })
 })
+
+/**
+ * ⚠️ O AVISO DIZIA QUE FALHOU, NUNCA ONDE.
+ *
+ * Em 03/11 o aviso apareceu no aparelho do João e a investigação travou no
+ * mesmo ponto de sempre: `loadStage` sabe exatamente em que etapa o load
+ * morreu — perfil, leitura de status, refresh, motor — e esse valor ia só para
+ * o Sentry. Sem ele na mão, o diagnóstico vira adivinhação sobre um aparelho
+ * que não está aqui, e este projeto já perdeu quatro rodadas fazendo isso.
+ *
+ * ⚠️ A MENSAGEM DO ERRO NÃO VAI PARA A TELA — só a etapa e o NOME do erro.
+ * Mensagem de exceção carrega URL, parâmetro e às vezes token; a etapa e o
+ * nome localizam a falha sem esse risco. A mensagem continua indo ao Sentry.
+ */
+describe('useLifeAreas — o aviso diz ONDE falhou', () => {
+  it('guarda a etapa e o nome do erro quando o motor cai', () => {
+    expect(
+      /setFalhaDetalhe\(/.test(FONTE),
+      'sem detalhe, o print do usuário não diz em que etapa morreu',
+    ).toBe(true)
+  })
+
+  it('expõe o detalhe para quem consome o hook', () => {
+    expect(/falhaDetalhe,/.test(FONTE)).toBe(true)
+    expect(/falhaDetalhe: string \| null/.test(FONTE)).toBe(true)
+  })
+
+  it('limpa o detalhe quando uma carga dá certo', () => {
+    expect(
+      /setFalhaDetalhe\(null\)/.test(FONTE),
+      'detalhe velho contamina a leitura da próxima falha',
+    ).toBe(true)
+  })
+
+  /** ⚠️ Vazar `err.message` na tela é o risco que esta trava guarda. */
+  it('não põe a mensagem da exceção na tela', () => {
+    const semComentario = FONTE.split(String.fromCharCode(10))
+      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+      .join(String.fromCharCode(10))
+    const detalhe = semComentario.match(/setFalhaDetalhe\(([^)]*)\)/g) || []
+    const comMensagem = detalhe.filter((d) => /\.message/.test(d))
+    expect(comMensagem, 'mensagem de exceção carrega URL e às vezes token').toEqual([])
+  })
+
+  it('as duas telas passam o detalhe para o aviso', () => {
+    for (const [nome, caminho] of [
+      ['HomeScreen', '../../screens/home/HomeScreen.tsx'],
+      ['CosmosScreen', '../../screens/cosmos/CosmosScreen.tsx'],
+    ] as const) {
+      const fonte = readFileSync(resolve(__dirname, caminho), 'utf8')
+      expect(fonte, `${nome} não passa o detalhe ao aviso`).toMatch(/detalhe=\{falhaDetalhe\}/)
+    }
+  })
+})

@@ -116,6 +116,7 @@ export default function HomeScreen() {
     // incompleta. Sem dizer isso, a pessoa vê seções vazias e conclui que o
     // mapa dela não tem nada.
     engineFailed,
+    falhaDetalhe,
   } = useLifeAreas()
   const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem))
@@ -679,6 +680,7 @@ export default function HomeScreen() {
             precisa saber disso antes de interpretar as ausências. */}
         <AvisoConteudoIncompleto
           visivel={engineFailed}
+          detalhe={falhaDetalhe}
           carregando={loading}
           onTentarNovamente={() => refreshData(true)}
         />

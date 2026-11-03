@@ -253,7 +253,7 @@ export default function CosmosScreen() {
   const { user } = useAuth()
   const { subscription } = useSubscription()
   const { isAdmin } = useSubscriptionCheck()
-  const { transitData, loading, backendStatusPersonal, engineFailed, refreshData } = useLifeAreas()
+  const { transitData, loading, backendStatusPersonal, engineFailed, falhaDetalhe, refreshData } = useLifeAreas()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareName, setShareName] = useState('')
 
@@ -654,6 +654,7 @@ export default function CosmosScreen() {
             vazio em vez de uma falha de carregamento. */}
         <AvisoConteudoIncompleto
           visivel={engineFailed}
+          detalhe={falhaDetalhe}
           carregando={loading}
           onTentarNovamente={() => refreshData(true)}
         />

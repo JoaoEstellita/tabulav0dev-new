@@ -27,9 +27,18 @@ interface Props {
   onTentarNovamente?: () => void
   /** Desabilita o botão enquanto recarrega. */
   carregando?: boolean
+  /**
+   * Etapa e nome do erro — `engine · TypeError`.
+   *
+   * ⚠️ DIAGNÓSTICO, NÃO MENSAGEM DE ERRO. Existe porque a falha acontece
+   * no aparelho de quem usa, não aqui: sem a etapa num print, a
+   * investigação vira adivinhação. Nunca recebe `err.message`, que
+   * carrega URL e às vezes token.
+   */
+  detalhe?: string | null
 }
 
-export default function AvisoConteudoIncompleto({ visivel, onTentarNovamente, carregando }: Props) {
+export default function AvisoConteudoIncompleto({ visivel, onTentarNovamente, carregando, detalhe }: Props) {
   const { language } = useAppLanguage()
   if (!visivel) return null
 
@@ -57,6 +66,8 @@ export default function AvisoConteudoIncompleto({ visivel, onTentarNovamente, ca
             'La griglia degli aspetti e le letture dipendono da un calcolo che e fallito ora. Il resto della schermata e corretto.',
           )}
         </Text>
+        {/* Discreto: quem não precisa não repara, e quem precisa tem. */}
+        {detalhe ? <Text style={s.detalhe}>{detalhe}</Text> : null}
       </View>
 
       {onTentarNovamente ? (
@@ -89,6 +100,7 @@ const s = StyleSheet.create({
   texto: { flex: 1 },
   titulo: { color: '#fbbf24', fontSize: 14.5, fontWeight: '700' },
   corpo: { color: '#c9cfe2', fontSize: 14, lineHeight: 20, marginTop: 2 },
+  detalhe: { color: '#8D96AC', fontSize: 11, marginTop: 5, letterSpacing: 0.3 },
   botao: {
     paddingVertical: 7,
     paddingHorizontal: 12,
