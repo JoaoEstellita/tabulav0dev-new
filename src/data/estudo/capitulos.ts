@@ -1,4 +1,4 @@
-import type { CategoriaVerbete, T } from './tipos'
+import type { CategoriaVerbete, T, Unidade } from './tipos'
 
 /**
  * OS CAPÍTULOS DA TRILHA E AS ESTANTES DA BIBLIOTECA.
@@ -126,3 +126,29 @@ export const ESTANTES: Array<{ chave: CategoriaVerbete; nome: T }> = [
     nome: { 'pt-BR': 'Conceitos', 'en-US': 'Concepts', 'es-ES': 'Conceptos', 'it-IT': 'Concetti' },
   },
 ]
+
+/**
+ * AS ABERTURAS COMO UNIDADES.
+ *
+ * ⚠️ A ABERTURA ERA TEXTO SOLTO NO TOPO DO CAPÍTULO, e por isso ficava fora de
+ * tudo: não abria, não marcava como lida, não tinha anterior nem próxima. Quem
+ * percorre a trilha pelo rodapé pulava as cinco aberturas sem nunca as ver.
+ *
+ * ⚠️ DERIVADAS, NÃO DUPLICADAS. Saem dos mesmos `CAPITULOS` que dão nome ao
+ * capítulo na lista e no índice — escrever as cinco de novo aqui seria a
+ * segunda cópia de um texto que muda junto.
+ */
+export const ABERTURAS: Unidade[] = CAPITULOS.map((c) => ({
+  id: `abertura-ato-${c.ato}`,
+  tipo: 'abertura' as const,
+  ato: c.ato,
+  titulo: c.nome,
+  resumo: c.abertura,
+  blocos: [{ tipo: 'paragrafo' as const, texto: c.abertura }],
+  termos: [],
+  // ⚠️ VAZIO: a continuidade vem da ORDEM DO CURSO, não de link escrito à mão.
+  // Era exatamente o `verTambem` fazendo as vezes de percurso que embaralhava
+  // a navegação — ver `ORDEM_DO_CURSO` em `index.ts`.
+  verTambem: [],
+  minutos: 1,
+}))

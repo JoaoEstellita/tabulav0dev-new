@@ -154,7 +154,16 @@ export type Bloco =
 
 export interface Unidade {
   id: string
-  tipo: 'licao' | 'verbete'
+  /**
+   * ⚠️ `abertura` É UMA UNIDADE COMO AS OUTRAS, e não um texto solto no topo
+   * do capítulo. Ela abre em tela cheia, entra na ordem do curso, marca como
+   * lida e tem anterior e próxima — porque é o primeiro passo do capítulo, e
+   * não um rótulo dele.
+   *
+   * ⚠️ NÃO ENTRA EM `LICOES`: a trilha tem doze lições e a contagem que a
+   * tela mostra é essa. Abertura é o limiar do capítulo, não a primeira lição.
+   */
+  tipo: 'licao' | 'verbete' | 'abertura'
   /** Só lição: 0 a 4. */
   ato?: 0 | 1 | 2 | 3 | 4
   /** Só lição: a posição na trilha, 1 a 12. */

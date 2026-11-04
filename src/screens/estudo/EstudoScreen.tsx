@@ -6,10 +6,10 @@ import { useProgressoDoEstudo } from '../../hooks/useProgressoDoEstudo'
 import CardDaUnidade from '../../components/estudo/CardDaUnidade'
 import LicaoScreen from './LicaoScreen'
 import {
-  CATALOGO, LICOES, VERBETES, porId,
+  CATALOGO, LICOES, VERBETES, porId, vizinhasNaOrdem,
   type CategoriaVerbete, type IdiomaEstudo, type Unidade,
 } from '../../data/estudo'
-import { CAPITULOS, ESTANTES } from '../../data/estudo/capitulos'
+import { ABERTURAS, CAPITULOS, ESTANTES } from '../../data/estudo/capitulos'
 
 /**
  * O ESTUDO ASTROLÓGICO — trilha e biblioteca.
@@ -79,6 +79,15 @@ export default function EstudoScreen() {
    * tela, e duplicá-los lá seria a segunda cópia de uma lista que muda junto.
    */
   const contextoDe = (u: Unidade): string | null => {
+    if (u.tipo === 'abertura') {
+      const cap = CAPITULOS.find((c) => c.ato === u.ato)
+      return tl(
+        `Capítulo ${(u.ato ?? 0) + 1}${cap ? '' : ''}`,
+        `Chapter ${(u.ato ?? 0) + 1}`,
+        `Capitulo ${(u.ato ?? 0) + 1}`,
+        `Capitolo ${(u.ato ?? 0) + 1}`,
+      )
+    }
     if (u.tipo === 'verbete') {
       const cat = ESTANTES.find((c) => c.chave === u.categoria)
       return cat ? cat.nome[idioma] : null
@@ -99,24 +108,20 @@ export default function EstudoScreen() {
    * ⚠️ SÓ PARA LIÇÃO. A biblioteca não tem ordem; inventar uma no rodapé do
    * verbete prometeria um percurso que não existe.
    */
-  const vizinhasDe = (u: Unidade) => {
-    if (u.tipo !== 'licao') return { anterior: null, proxima: null }
-    const k = LICOES.findIndex((l) => l.id === u.id)
-    const ultima = k === LICOES.length - 1
-    return {
-      anterior: k > 0 ? LICOES[k - 1] : null,
-      // ⚠️ A TRILHA NÃO TERMINA NUM BECO. Na última lição o rodapé sumia
-      // inteiro e quem acabava de ler ficava sem saída a não ser fechar o
-      // modal — depois de doze lições, a pior hora para a tela parar de
-      // sugerir o que vem. A biblioteca é a continuação natural, e o primeiro
-      // planeta é a porta dela: a lição 12 manda abrir o próprio mapa, e o
-      // primeiro passo de ler um mapa é saber de quem é cada símbolo.
-      proxima: ultima
-        ? (VERBETES.find((v) => v.id === 'planeta-sol') ?? VERBETES[0] ?? null)
-        : (k > -1 ? LICOES[k + 1] : null),
-    }
-  }
+  /**
+   * ⚠️ AS VIZINHAS VÊM DA ORDEM DO CURSO, e valem para TODA unidade.
+   *
+   * Antes só a trilha tinha anterior/próxima, e a biblioteca não tinha
+   * nenhuma: abrir um planeta deixava a pessoa sem saída a não ser fechar.
+   * Pior, a continuidade saía do `verTambem`, que é lista de RELAÇÕES e não
+   * de percurso — o Sol apontava para a Lua e a Lua apontava de volta para o
+   * Sol. Ver `ORDEM_DO_CURSO`.
+   */
+  const vizinhasDe = (u: Unidade) => vizinhasNaOrdem(u.id)
   const rotuloMin = tl('min', 'min', 'min', 'min')
+
+  /** A abertura de um capítulo, como unidade abrível. */
+  const aberturaDoAto = (ato: number) => ABERTURAS.find((u) => u.ato === ato) ?? null
 
   /** Quantas lições de um ato já foram lidas — o número do chip do índice. */
   const lidasDoAto = (ato: number) => {
@@ -286,9 +291,11 @@ export default function EstudoScreen() {
                     <Text style={s.capituloConta}>{`${lidas}/${total}`}</Text>
                   </View>
                   <Text style={s.secao}>{nome[idioma]}</Text>
-                  {/* ⚠️ A ABERTURA DIZ POR QUE O CAPÍTULO EXISTE, não o que
-                      ele contém: a lista logo abaixo já diz o conteúdo. */}
-                  <Text style={s.abertura}>{abertura[idioma]}</Text>
+                  {/* ⚠️ A ABERTURA É UMA UNIDADE, não um texto solto. Como
+                      texto ela ficava fora de tudo: não abria, não marcava
+                      como lida e quem percorria a trilha pelo rodapé pulava as
+                      cinco sem nunca as ver. */}
+                  {aberturaDoAto(ato) ? cardDe(aberturaDoAto(ato)!, aberturaDoAto(ato)!.id === proxima?.id) : null}
                   {doAto.map((l) => cardDe(l, l.id === proxima?.id))}
                 </View>
               )

@@ -8,6 +8,7 @@ import { VERBETES_PLANETAS } from './verbetes-planetas'
 import { VERBETES_SIGNOS } from './verbetes-signos'
 import { VERBETES_CASAS } from './verbetes-casas'
 import { VERBETES_ASPECTOS } from './verbetes-aspectos'
+import { ABERTURAS, ESTANTES } from './capitulos'
 import { VERBETES_CONCEITOS } from './verbetes-conceitos'
 
 export * from './tipos'
@@ -20,6 +21,7 @@ export * from './tipos'
  * validação de integridade, que precisam ver o conjunto completo.
  */
 export const CATALOGO: Unidade[] = [
+  ...ABERTURAS,
   ...TRILHA_ATO0,
   ...TRILHA_ATO1,
   ...TRILHA_ATO2,
@@ -55,4 +57,56 @@ export function porId(id: string): Unidade | null {
  */
 export function verbeteDoTermo(termo: string): Unidade | null {
   return VERBETES.find((v) => v.termos.includes(termo)) ?? null
+}
+
+/**
+ * A ORDEM DO CURSO — toda unidade sabe o que vem antes e o que vem depois.
+ *
+ * ⚠️ ISTO EXISTE PORQUE `verTambem` ESTAVA FAZENDO AS VEZES DE PERCURSO, e ele
+ * nunca foi isso: é uma lista de RELAÇÕES. Medido antes da correção: 37 das 53
+ * unidades tinham link que VOLTAVA, e **28 das 53 não tinham para onde ir**. O
+ * Sol apontava para a Lua e a Lua apontava de volta para o Sol — um ciclo de
+ * duas unidades do qual não se saía.
+ *
+ * A ordem resolve isso de uma vez: abertura e lições de cada capítulo, na
+ * sequência dos atos, e depois a biblioteca por estante. Toda unidade tem
+ * anterior e próxima, e nenhuma seta aponta para trás.
+ *
+ * ⚠️ A BIBLIOTECA GANHA ORDEM SEM DEIXAR DE SER BIBLIOTECA. Ela continua se
+ * consultando por busca e por estante — a ordem só garante que quem decide
+ * percorrer nunca encontre um beco. É o mesmo princípio de um dicionário, que
+ * tem ordem alfabética e nem por isso se lê do A ao Z.
+ */
+export const ORDEM_DO_CURSO: Unidade[] = [
+  // Cada capítulo abre com a sua abertura, depois as lições dele em ordem.
+  ...[0, 1, 2, 3, 4].flatMap((ato) => [
+    ...CATALOGO.filter((u) => u.tipo === 'abertura' && u.ato === ato),
+    ...LICOES.filter((l) => l.ato === ato),
+  ]),
+  // A biblioteca, estante por estante, na ordem em que as estantes aparecem.
+  ...ESTANTES.flatMap(({ chave }) => VERBETES.filter((v) => v.categoria === chave)),
+]
+
+const POSICAO = new Map(ORDEM_DO_CURSO.map((u, i) => [u.id, i]))
+
+/**
+ * O que vem antes e depois desta unidade, na ordem do curso.
+ *
+ * ⚠️ VALE PARA TODAS AS UNIDADES, lição ou verbete. Antes só a trilha tinha
+ * vizinhas e a biblioteca não tinha nenhuma: abrir um planeta pelo glossário
+ * deixava a pessoa sem saída a não ser fechar.
+ */
+export function vizinhasNaOrdem(id: string): { anterior: Unidade | null; proxima: Unidade | null } {
+  const i = POSICAO.get(id)
+  if (i === undefined) return { anterior: null, proxima: null }
+  return {
+    anterior: i > 0 ? ORDEM_DO_CURSO[i - 1] : null,
+    proxima: i < ORDEM_DO_CURSO.length - 1 ? ORDEM_DO_CURSO[i + 1] : null,
+  }
+}
+
+/** A posição de uma unidade na ordem do curso, ou `null` se estiver fora. */
+export function posicaoNaOrdem(id: string): number | null {
+  const i = POSICAO.get(id)
+  return i === undefined ? null : i
 }

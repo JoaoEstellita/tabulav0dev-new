@@ -71,6 +71,12 @@ export default function LicaoScreen({
    * Filtrar aqui, e não limpar os `verTambem`, é de propósito: o dado continua
    * dizendo a verdade sobre o que se liga a quê — útil para busca e para
    * qualquer tela futura — e é a APRESENTAÇÃO que decide não repetir.
+   *
+   * ⚠️ E O TÍTULO DEIXOU DE SER "CONTINUE POR AQUI". Essa lista aponta para os
+   * lados e muitas vezes para trás — do signo de Áries para Marte, da casa 5
+   * para o Sol — e chamá-la de continuação prometia avanço onde havia
+   * revisita. Quem continua é o rodapé, que segue a ordem do curso. Aqui é
+   * "Relacionado", que é o que sempre foi.
    */
   const jaNoRodape = new Set([anterior?.id, proxima?.id].filter(Boolean))
   const ligados = unidade.verTambem
@@ -120,7 +126,7 @@ export default function LicaoScreen({
           {ligados.length ? (
             <View style={s.ligados}>
               <Text style={s.secao}>
-                {tl('Continue por aqui', 'Continue here', 'Sigue por aqui', 'Continua qui')}
+                {tl('Relacionado', 'Related', 'Relacionado', 'Correlato')}
               </Text>
               {ligados.map((u) => (
                 <Pressable

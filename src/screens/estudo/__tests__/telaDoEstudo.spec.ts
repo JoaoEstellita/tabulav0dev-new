@@ -172,20 +172,42 @@ describe('a tela do Estudo', () => {
   })
 
   /**
-   * ⚠️ A TRILHA NÃO PODE TERMINAR NUM BECO. Na última lição o rodapé sumia
-   * inteiro, e quem acabava de ler doze lições ficava sem saída a não ser
-   * fechar o modal — a pior hora para a tela parar de sugerir o que vem.
+   * ⚠️ A CONTINUIDADE VEM DA ORDEM DO CURSO, não de `verTambem`.
+   *
+   * Medido antes da correção: 37 das 53 unidades tinham link que VOLTAVA, e
+   * 28 das 53 não tinham para onde ir. O Sol apontava para a Lua e a Lua
+   * apontava de volta para o Sol — um ciclo de duas unidades do qual não se
+   * saía. A causa era `verTambem` (lista de RELAÇÕES) fazendo as vezes de
+   * percurso.
    */
-  it('a última lição continua na biblioteca', () => {
-    expect(ESTUDO, 'a trilha voltou a terminar sem continuação')
-      .toMatch(/ultima$[\s\S]*?planeta-sol/m)
-    expect(LICAO, 'o botão não avisa que a natureza do conteúdo mudou')
-      .toMatch(/proxima\.tipo === 'verbete'/)
+  it('as vizinhas saem da ordem do curso, e valem para toda unidade', () => {
+    expect(ESTUDO, 'a navegação voltou a sair de verTambem')
+      .toMatch(/vizinhasNaOrdem\(u\.id\)/)
+    expect(ESTUDO, 'alguma unidade voltou a ficar sem vizinhas por tipo')
+      .not.toMatch(/tipo !== 'licao'\) return \{ anterior: null/)
   })
 
-  /** A abertura diz por que o capítulo existe; a lista já diz o conteúdo. */
-  it('cada capítulo abre com um texto', () => {
-    expect(ESTUDO, 'a abertura do capítulo sumiu').toMatch(/\{abertura\[idioma\]\}/)
+  /**
+   * ⚠️ A ABERTURA É UMA UNIDADE, não um texto solto no topo. Como texto ela
+   * ficava fora de tudo: não abria, não marcava como lida, não tinha anterior
+   * nem próxima — e quem percorria a trilha pelo rodapé pulava as cinco sem
+   * nunca as ver.
+   */
+  it('a abertura do capítulo é uma unidade abrível', () => {
+    expect(ESTUDO, 'a abertura voltou a ser texto solto')
+      .toMatch(/aberturaDoAto\(ato\)/)
+    expect(ESTUDO, 'a abertura deixou de ser card').toMatch(/cardDe\(aberturaDoAto/)
+  })
+
+  /**
+   * ⚠️ "CONTINUE POR AQUI" PROMETIA AVANÇO ONDE HAVIA REVISITA. A lista de
+   * `verTambem` aponta para os lados e muitas vezes para trás — do signo de
+   * Áries para Marte, da casa 5 para o Sol. Quem continua é o rodapé.
+   */
+  it('a lista lateral se chama Relacionado, não Continue', () => {
+    expect(LICAO, 'a lista lateral voltou a prometer continuação')
+      .not.toMatch(/'Continue por aqui'/)
+    expect(LICAO, 'a lista lateral perdeu o título').toMatch(/'Relacionado'/)
   })
 
   /**
@@ -264,14 +286,15 @@ describe('a tela do Estudo', () => {
   })
 
   /**
-   * ⚠️ A TRILHA CONTINUA SEM VOLTAR À LISTA, mas só para LIÇÃO: a biblioteca
-   * não tem ordem, e um "próximo" no verbete prometeria um percurso que não
-   * existe.
+   * ⚠️ O RODAPÉ VALE PARA TODAS AS UNIDADES AGORA. Antes era só da trilha, e
+   * a biblioteca não tinha vizinha nenhuma: abrir um planeta pelo glossário
+   * deixava a pessoa sem saída a não ser fechar. A biblioteca ganhou ordem sem
+   * deixar de ser biblioteca — como um dicionário, que tem ordem alfabética e
+   * nem por isso se lê do A ao Z.
    */
-  it('o rodapé de anterior/próxima é só da trilha', () => {
-    expect(LICAO, 'a navegação da trilha sumiu do rodapé').toMatch(/vizinhas\?\.proxima/)
-    expect(ESTUDO, 'o verbete ganharia vizinhas que não existem')
-      .toMatch(/u\.tipo !== 'licao'\) return \{ anterior: null, proxima: null \}/)
+  it('o rodapé avisa quando a natureza do conteúdo muda', () => {
+    expect(LICAO, 'o botão não distingue lição de verbete')
+      .toMatch(/proxima\.tipo === 'verbete'/)
   })
 
   /**
