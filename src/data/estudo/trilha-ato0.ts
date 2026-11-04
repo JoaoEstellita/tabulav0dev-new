@@ -172,10 +172,10 @@ export const TRILHA_ATO0: Unidade[] = [
       {
         tipo: 'cuidado',
         texto: {
-          'pt-BR': 'Isso não é promessa de que a vontade anula a dificuldade. Um trânsito duro continua duro. É a recusa de ler o mapa como sentença — e nada além disso.',
-          'en-US': 'This is not a promise that willpower cancels the difficulty. A hard transit stays hard. It is the refusal to read the chart as a verdict, and nothing beyond that.',
-          'es-ES': 'Esto no es promesa de que la voluntad anule la dificultad. Un transito duro sigue duro. Es la negativa a leer la carta como sentencia, y nada mas.',
-          'it-IT': 'Questo non e una promessa che la volonta annulli la difficolta. Un transito duro resta duro. E il rifiuto di leggere la carta come sentenza, e nulla di piu.',
+          'pt-BR': 'Transmutar não poupa ninguém do peso. O trânsito duro continua duro, e quem atravessa sai cansado. O que muda é o que fica depois: matéria trabalhada, em vez de dano absorvido.',
+          'en-US': 'To transmute spares no one the weight. The hard transit stays hard, and whoever crosses comes out tired. What changes is what remains after: material worked, rather than damage absorbed.',
+          'es-ES': 'Transmutar no libra a nadie del peso. El transito duro sigue duro, y quien atraviesa sale cansado. Lo que cambia es lo que queda despues: materia trabajada, en vez de dano absorbido.',
+          'it-IT': 'Trasmutare non risparmia a nessuno il peso. Il transito duro resta duro, e chi attraversa ne esce stanco. Cio che cambia e cio che resta dopo: materia lavorata, invece che danno assorbito.',
         },
       },
     ],
@@ -228,10 +228,10 @@ export const TRILHA_ATO0: Unidade[] = [
       {
         tipo: 'paragrafo',
         texto: {
-          'pt-BR': 'Esta é a premissa que sustenta tudo o que vem adiante: somos espíritos atravessando uma experiência material, e os planetas são a topografia desse percurso, não a autoria dele. Levar em conta o relevo é sabedoria; confundi-lo com o caminhante é abrir mão da parte que de fato é sua.',
-          'en-US': 'This is the premise holding up everything that follows: we are spirits crossing a material experience, and the planets are the topography of that route, not its authorship. Taking the relief into account is wisdom; mistaking it for the walker is giving up the part that is actually yours.',
-          'es-ES': 'Esta es la premisa que sostiene todo lo que viene despues: somos espiritus atravesando una experiencia material, y los planetas son la topografia de ese recorrido, no su autoria. Tener en cuenta el relieve es sabiduria; confundirlo con el caminante es renunciar a la parte que de hecho es tuya.',
-          'it-IT': 'Questa e la premessa che regge tutto cio che segue: siamo spiriti che attraversano un esperienza materiale, e i pianeti sono la topografia di quel percorso, non la sua autoria. Tenere conto del rilievo e saggezza; confonderlo con chi cammina e rinunciare alla parte che e davvero tua.',
+          'pt-BR': 'Esta é a premissa que sustenta tudo o que vem adiante: somos espíritos atravessando uma experiência material, e os planetas são a topografia desse percurso — nunca a autoria dele. Ler o relevo é a sabedoria que a tradição guarda há milênios; confundi-lo com o caminhante é entregar a única parte que sempre coube a você.',
+          'en-US': 'This is the premise holding up everything that follows: we are spirits crossing a material experience, and the planets are the topography of that route — never its authorship. Reading the relief is the wisdom tradition has kept for millennia; mistaking it for the walker is handing over the one part that was always yours.',
+          'es-ES': 'Esta es la premisa que sostiene todo lo que viene despues: somos espiritus atravesando una experiencia material, y los planetas son la topografia de ese recorrido, nunca su autoria. Leer el relieve es la sabiduria que la tradicion guarda hace milenios; confundirlo con el caminante es entregar la unica parte que siempre fue tuya.',
+          'it-IT': 'Questa e la premessa che regge tutto cio che segue: siamo spiriti che attraversano un esperienza materiale, e i pianeti sono la topografia di quel percorso, mai la sua autoria. Leggere il rilievo e la saggezza che la tradizione custodisce da millenni; confonderlo con chi cammina e consegnare l unica parte che e sempre stata tua.',
         },
       },
       {

@@ -9,22 +9,7 @@ import {
   CATALOGO, LICOES, VERBETES, porId,
   type CategoriaVerbete, type IdiomaEstudo, type Unidade,
 } from '../../data/estudo'
-
-const ATOS: Array<{ ato: 0 | 1 | 2 | 3 | 4; nome: [string, string, string, string] }> = [
-  { ato: 0, nome: ['Por que o céu diz algo', 'Why the sky says anything', 'Por que el cielo dice algo', 'Perche il cielo dice qualcosa'] },
-  { ato: 1, nome: ['As perguntas de um mapa', 'The questions a chart answers', 'Las preguntas de una carta', 'Le domande di una carta'] },
-  { ato: 2, nome: ['O que liga', 'What connects', 'Lo que conecta', 'Cio che collega'] },
-  { ato: 3, nome: ['O tempo', 'Time', 'El tiempo', 'Il tempo'] },
-  { ato: 4, nome: ['Ler sozinho', 'Reading on your own', 'Leer por tu cuenta', 'Leggere da soli'] },
-]
-
-const CATEGORIAS: Array<{ chave: CategoriaVerbete; nome: [string, string, string, string] }> = [
-  { chave: 'planeta', nome: ['Planetas', 'Planets', 'Planetas', 'Pianeti'] },
-  { chave: 'signo', nome: ['Signos', 'Signs', 'Signos', 'Segni'] },
-  { chave: 'casa', nome: ['Casas', 'Houses', 'Casas', 'Case'] },
-  { chave: 'aspecto', nome: ['Aspectos', 'Aspects', 'Aspectos', 'Aspetti'] },
-  { chave: 'conceito', nome: ['Conceitos', 'Concepts', 'Conceptos', 'Concetti'] },
-]
+import { CAPITULOS, ESTANTES } from '../../data/estudo/capitulos'
 
 /**
  * O ESTUDO ASTROLÓGICO — trilha e biblioteca.
@@ -55,10 +40,19 @@ export default function EstudoScreen() {
    */
   const rolagem = useRef<ScrollView>(null)
   const posicaoDoAto = useRef<Record<number, number>>({})
-  const irParaAto = (ato: number) => {
-    const y = posicaoDoAto.current[ato]
+  /**
+   * ⚠️ A BIBLIOTECA ENTRA NO ÍNDICE TAMBÉM. Ele cobria só os cinco capítulos,
+   * e as cinco estantes — 41 verbetes, a maior parte do conteúdo — ficavam
+   * fora: para chegar a "Casas" era preciso rolar a trilha inteira. Índice que
+   * não alcança o conteúdo todo é um atalho que mente sobre o tamanho do que
+   * existe.
+   */
+  const posicaoDaEstante = useRef<Record<string, number>>({})
+  const rolarAte = (y: number | undefined) => {
     if (typeof y === 'number') rolagem.current?.scrollTo({ y: Math.max(0, y - 8), animated: true })
   }
+  const irParaAto = (ato: number) => rolarAte(posicaoDoAto.current[ato])
+  const irParaEstante = (chave: string) => rolarAte(posicaoDaEstante.current[chave])
 
   const proxima = proximaLicao()
 
@@ -86,17 +80,17 @@ export default function EstudoScreen() {
    */
   const contextoDe = (u: Unidade): string | null => {
     if (u.tipo === 'verbete') {
-      const cat = CATEGORIAS.find((c) => c.chave === u.categoria)
-      return cat ? cat.nome[i] : null
+      const cat = ESTANTES.find((c) => c.chave === u.categoria)
+      return cat ? cat.nome[idioma] : null
     }
-    const ato = ATOS.find((a) => a.ato === u.ato)
+    const ato = CAPITULOS.find((a) => a.ato === u.ato)
     const pos = tl(
       `Lição ${u.ordem} de ${LICOES.length}`,
       `Lesson ${u.ordem} of ${LICOES.length}`,
       `Leccion ${u.ordem} de ${LICOES.length}`,
       `Lezione ${u.ordem} di ${LICOES.length}`,
     )
-    return ato ? `${ato.nome[i]} · ${pos}` : pos
+    return ato ? `${ato.nome[idioma]} · ${pos}` : pos
   }
 
   /**
@@ -108,9 +102,18 @@ export default function EstudoScreen() {
   const vizinhasDe = (u: Unidade) => {
     if (u.tipo !== 'licao') return { anterior: null, proxima: null }
     const k = LICOES.findIndex((l) => l.id === u.id)
+    const ultima = k === LICOES.length - 1
     return {
       anterior: k > 0 ? LICOES[k - 1] : null,
-      proxima: k > -1 && k < LICOES.length - 1 ? LICOES[k + 1] : null,
+      // ⚠️ A TRILHA NÃO TERMINA NUM BECO. Na última lição o rodapé sumia
+      // inteiro e quem acabava de ler ficava sem saída a não ser fechar o
+      // modal — depois de doze lições, a pior hora para a tela parar de
+      // sugerir o que vem. A biblioteca é a continuação natural, e o primeiro
+      // planeta é a porta dela: a lição 12 manda abrir o próprio mapa, e o
+      // primeiro passo de ler um mapa é saber de quem é cada símbolo.
+      proxima: ultima
+        ? (VERBETES.find((v) => v.id === 'planeta-sol') ?? VERBETES[0] ?? null)
+        : (k > -1 ? LICOES[k + 1] : null),
     }
   }
   const rotuloMin = tl('min', 'min', 'min', 'min')
@@ -203,7 +206,7 @@ export default function EstudoScreen() {
           style={s.indice}
           contentContainerStyle={s.indiceConteudo}
         >
-          {ATOS.map(({ ato, nome }) => {
+          {CAPITULOS.map(({ ato, nome }) => {
             const { lidas, total } = lidasDoAto(ato)
             if (!total) return null
             const completo = lidas === total
@@ -212,13 +215,35 @@ export default function EstudoScreen() {
                 key={`ix-${ato}`}
                 onPress={() => irParaAto(ato)}
                 accessibilityRole="button"
-                accessibilityLabel={`${nome[i]}, ${lidas} de ${total}`}
+                accessibilityLabel={`${nome[idioma]}, ${lidas} de ${total}`}
                 style={({ pressed }) => [s.chip, completo && s.chipFeito, pressed && { opacity: 0.6 }]}
               >
                 <Text style={[s.chipTexto, completo && s.chipTextoFeito]} numberOfLines={1}>
-                  {nome[i]}
+                  {nome[idioma]}
                 </Text>
                 <Text style={[s.chipConta, completo && s.chipTextoFeito]}>{`${lidas}/${total}`}</Text>
+              </Pressable>
+            )
+          })}
+
+          {/* ⚠️ UM SEPARADOR, E NÃO OUTRA LINHA DE CHIPS. A biblioteca é outra
+              natureza de conteúdo — consulta, não percurso — mas vive na mesma
+              rolagem, então o índice dela tem de estar no mesmo lugar. */}
+          {VERBETES.length ? <View style={s.chipDivisor} /> : null}
+
+          {ESTANTES.map(({ chave, nome }) => {
+            const quantos = VERBETES.filter((v) => v.categoria === chave).length
+            if (!quantos) return null
+            return (
+              <Pressable
+                key={`ix-${chave}`}
+                onPress={() => irParaEstante(chave)}
+                accessibilityRole="button"
+                accessibilityLabel={`${nome[idioma]}, ${quantos}`}
+                style={({ pressed }) => [s.chip, s.chipEstante, pressed && { opacity: 0.6 }]}
+              >
+                <Text style={s.chipTexto} numberOfLines={1}>{nome[idioma]}</Text>
+                <Text style={s.chipConta}>{String(quantos)}</Text>
               </Pressable>
             )
           })}
@@ -244,7 +269,7 @@ export default function EstudoScreen() {
         ) : (
           <>
             {/* ── A trilha, por ato ────────────────────────────────── */}
-            {ATOS.map(({ ato, nome }) => {
+            {CAPITULOS.map(({ ato, nome, abertura }) => {
               const doAto = LICOES.filter((l) => l.ato === ato)
               if (!doAto.length) return null
               const { lidas, total } = lidasDoAto(ato)
@@ -260,7 +285,10 @@ export default function EstudoScreen() {
                     </Text>
                     <Text style={s.capituloConta}>{`${lidas}/${total}`}</Text>
                   </View>
-                  <Text style={s.secao}>{nome[i]}</Text>
+                  <Text style={s.secao}>{nome[idioma]}</Text>
+                  {/* ⚠️ A ABERTURA DIZ POR QUE O CAPÍTULO EXISTE, não o que
+                      ele contém: a lista logo abaixo já diz o conteúdo. */}
+                  <Text style={s.abertura}>{abertura[idioma]}</Text>
                   {doAto.map((l) => cardDe(l, l.id === proxima?.id))}
                 </View>
               )
@@ -268,16 +296,22 @@ export default function EstudoScreen() {
 
             {/* ── A biblioteca, por categoria ──────────────────────── */}
             {VERBETES.length ? (
-              <Text style={[s.secao, s.secaoBiblioteca]}>
-                {tl('Biblioteca', 'Library', 'Biblioteca', 'Biblioteca')}
-              </Text>
+              <View onLayout={(e) => { posicaoDaEstante.current.biblioteca = e.nativeEvent.layout.y }}>
+                <Text style={[s.secao, s.secaoBiblioteca]}>
+                  {tl('Biblioteca', 'Library', 'Biblioteca', 'Biblioteca')}
+                </Text>
+              </View>
             ) : null}
-            {CATEGORIAS.map(({ chave, nome }) => {
+            {ESTANTES.map(({ chave, nome }) => {
               const daCat = VERBETES.filter((v) => v.categoria === chave)
               if (!daCat.length) return null
               return (
-                <View key={`cat-${chave}`} style={s.grupo}>
-                  <Text style={s.subsecao}>{`${nome[i]} · ${daCat.length}`}</Text>
+                <View
+                  key={`cat-${chave}`}
+                  style={s.grupo}
+                  onLayout={(e) => { posicaoDaEstante.current[chave] = e.nativeEvent.layout.y }}
+                >
+                  <Text style={s.subsecao}>{`${nome[idioma]} · ${daCat.length}`}</Text>
                   {daCat.map((v) => cardDe(v))}
                 </View>
               )
@@ -327,6 +361,9 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)',
     maxWidth: 190,
   },
+  chipEstante: { backgroundColor: 'rgba(196,181,253,0.10)', borderColor: 'rgba(196,181,253,0.26)' },
+  chipDivisor: { width: 1, height: 18, backgroundColor: 'rgba(255,255,255,0.14)', alignSelf: 'center', marginHorizontal: 3 },
+  abertura: { color: '#9AA3BA', fontSize: 13.5, lineHeight: 20, marginBottom: 12, marginTop: -3 },
   chipFeito: { backgroundColor: 'rgba(78,205,196,0.12)', borderColor: 'rgba(78,205,196,0.35)' },
   chipTexto: { color: '#C7D2E8', fontSize: 12, fontWeight: '600', flexShrink: 1 },
   chipTextoFeito: { color: '#4ECDC4' },

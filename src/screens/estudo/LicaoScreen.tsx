@@ -160,9 +160,19 @@ export default function LicaoScreen({
                 accessibilityRole="button"
                 style={({ pressed }) => [s.passo, s.passoProxima, pressed && { opacity: 0.6 }]}
               >
-                <Text style={[s.passoTexto, s.passoTextoProxima]} numberOfLines={1}>
-                  {proxima.titulo[idioma]}
-                </Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  {/* ⚠️ AVISA QUANDO A NATUREZA MUDA. Depois da última lição a
+                      continuação é a BIBLIOTECA, e um botão que só dissesse
+                      "Sol" faria parecer que ainda há trilha pela frente. */}
+                  {proxima.tipo === 'verbete' ? (
+                    <Text style={s.passoRotulo}>
+                      {tl('A BIBLIOTECA', 'THE LIBRARY', 'LA BIBLIOTECA', 'LA BIBLIOTECA')}
+                    </Text>
+                  ) : null}
+                  <Text style={[s.passoTexto, s.passoTextoProxima]} numberOfLines={1}>
+                    {proxima.titulo[idioma]}
+                  </Text>
+                </View>
                 <Ionicons name="chevron-forward" size={15} color="#FFD700" />
               </Pressable>
             ) : <View style={{ flex: 1 }} />}
@@ -227,4 +237,8 @@ const s = StyleSheet.create({
   },
   passoTexto: { flex: 1, color: '#9AA3BA', fontSize: 12.5 },
   passoTextoProxima: { color: '#FFD700', fontWeight: '700', textAlign: 'right' },
+  passoRotulo: {
+    color: 'rgba(255,215,0,0.65)', fontSize: 8.5, fontWeight: '800',
+    letterSpacing: 1, textAlign: 'right', marginBottom: 3,
+  },
 })

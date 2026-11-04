@@ -157,6 +157,38 @@ describe('a tela do Estudo', () => {
   })
 
   /**
+   * ⚠️ O ÍNDICE TEM DE ALCANÇAR A BIBLIOTECA. Ele cobria só os cinco
+   * capítulos, e as cinco estantes — 41 verbetes, a maior parte do conteúdo —
+   * ficavam de fora: para chegar a "Casas" era preciso rolar a trilha inteira.
+   * Índice que não alcança o conteúdo todo é um atalho que mente sobre o
+   * tamanho do que existe.
+   */
+  it('o índice cobre os capítulos E as estantes', () => {
+    expect(ESTUDO, 'as estantes sumiram do índice').toMatch(/ESTANTES\.map/)
+    expect(ESTUDO, 'o chip da estante não rola para lugar nenhum')
+      .toMatch(/irParaEstante\(chave\)/)
+    expect(ESTUDO, 'a posição das estantes deixou de ser medida')
+      .toMatch(/posicaoDaEstante\.current\[chave\]/)
+  })
+
+  /**
+   * ⚠️ A TRILHA NÃO PODE TERMINAR NUM BECO. Na última lição o rodapé sumia
+   * inteiro, e quem acabava de ler doze lições ficava sem saída a não ser
+   * fechar o modal — a pior hora para a tela parar de sugerir o que vem.
+   */
+  it('a última lição continua na biblioteca', () => {
+    expect(ESTUDO, 'a trilha voltou a terminar sem continuação')
+      .toMatch(/ultima$[\s\S]*?planeta-sol/m)
+    expect(LICAO, 'o botão não avisa que a natureza do conteúdo mudou')
+      .toMatch(/proxima\.tipo === 'verbete'/)
+  })
+
+  /** A abertura diz por que o capítulo existe; a lista já diz o conteúdo. */
+  it('cada capítulo abre com um texto', () => {
+    expect(ESTUDO, 'a abertura do capítulo sumiu').toMatch(/\{abertura\[idioma\]\}/)
+  })
+
+  /**
    * ⚠️ O ÍNDICE SÓ APARECE FORA DA BUSCA. Durante uma busca a lista não está
    * agrupada por ato, e um índice que rola para lugar nenhum é pior que
    * índice nenhum.
