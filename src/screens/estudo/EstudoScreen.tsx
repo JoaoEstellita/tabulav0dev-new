@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import React, { useMemo, useRef, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useProgressoDoEstudo } from '../../hooks/useProgressoDoEstudo'
 import CardDaUnidade from '../../components/estudo/CardDaUnidade'
@@ -43,6 +44,21 @@ export default function EstudoScreen() {
   const { lidos, marcarLido, proximaLicao } = useProgressoDoEstudo()
   const [busca, setBusca] = useState('')
   const [aberta, setAberta] = useState<string | null>(null)
+
+  /**
+   * O ÍNDICE: onde cada ato começa na rolagem.
+   *
+   * ⚠️ MEDIDO POR `onLayout`, não calculado. A altura de um ato depende de
+   * quantas lições tem, de quantas linhas cada título ocupa no idioma e no
+   * tamanho de fonte do aparelho — estimar daria um salto sempre um pouco
+   * errado, e errado para baixo some com o cabeçalho do capítulo.
+   */
+  const rolagem = useRef<ScrollView>(null)
+  const posicaoDoAto = useRef<Record<number, number>>({})
+  const irParaAto = (ato: number) => {
+    const y = posicaoDoAto.current[ato]
+    if (typeof y === 'number') rolagem.current?.scrollTo({ y: Math.max(0, y - 8), animated: true })
+  }
 
   const proxima = proximaLicao()
 
@@ -99,6 +115,12 @@ export default function EstudoScreen() {
   }
   const rotuloMin = tl('min', 'min', 'min', 'min')
 
+  /** Quantas lições de um ato já foram lidas — o número do chip do índice. */
+  const lidasDoAto = (ato: number) => {
+    const doAto = LICOES.filter((l) => l.ato === ato)
+    return { lidas: doAto.filter((l) => lidos.includes(l.id)).length, total: doAto.length }
+  }
+
   const cardDe = (u: Unidade, recomendado = false) => (
     <CardDaUnidade
       key={u.id}
@@ -113,21 +135,39 @@ export default function EstudoScreen() {
 
   return (
     <View style={s.raiz}>
-      {/* ── Onde você está ─────────────────────────────────────────── */}
+      {/* ── Continuar de onde parou ────────────────────────────────────
+          ⚠️ UM CARTÃO TOCÁVEL, não uma linha de texto. A pergunta número um
+          de quem volta é "onde eu estava", e antes a resposta era uma frase
+          cinza que não levava a lugar nenhum: a pessoa tinha de procurar a
+          lição na lista. */}
       <View style={s.progresso}>
-        <Text style={s.progressoTexto}>
-          {LICOES.length === 0
-            ? tl('O curso está sendo escrito', 'The course is being written',
-              'El curso se esta escribiendo', 'Il corso e in scrittura')
-            : proxima
-              ? tl(
-                `Lição ${proxima.ordem} de ${LICOES.length}`,
-                `Lesson ${proxima.ordem} of ${LICOES.length}`,
-                `Leccion ${proxima.ordem} de ${LICOES.length}`,
-                `Lezione ${proxima.ordem} di ${LICOES.length}`,
-              )
-              : tl('Trilha concluída', 'Path complete', 'Camino completado', 'Percorso completato')}
-        </Text>
+        {LICOES.length === 0 ? (
+          <Text style={s.progressoTexto}>
+            {tl('O curso está sendo escrito', 'The course is being written',
+              'El curso se esta escribiendo', 'Il corso e in scrittura')}
+          </Text>
+        ) : proxima ? (
+          <Pressable
+            onPress={() => setAberta(proxima.id)}
+            accessibilityRole="button"
+            style={({ pressed }) => [s.continuar, pressed && { opacity: 0.75 }]}
+          >
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.continuarRotulo}>
+                {lidos.length === 0
+                  ? tl('COMEÇAR', 'START', 'EMPEZAR', 'INIZIARE')
+                  : tl('CONTINUAR', 'CONTINUE', 'CONTINUAR', 'CONTINUA')}
+                {`  ·  ${proxima.ordem}/${LICOES.length}`}
+              </Text>
+              <Text style={s.continuarTitulo} numberOfLines={2}>{proxima.titulo[idioma]}</Text>
+            </View>
+            <Ionicons name="play-circle" size={30} color="#FFD700" />
+          </Pressable>
+        ) : (
+          <Text style={s.progressoTexto}>
+            {tl('Trilha concluída', 'Path complete', 'Camino completado', 'Percorso completato')}
+          </Text>
+        )}
         <View style={s.barra}>
           <View
             style={[
@@ -148,8 +188,45 @@ export default function EstudoScreen() {
         accessibilityLabel={tl('Buscar no estudo', 'Search the study area', 'Buscar en el estudio', 'Cerca nello studio')}
       />
 
+      {/* ── Índice dos capítulos ───────────────────────────────────────
+          ⚠️ SÓ APARECE FORA DA BUSCA. Durante uma busca a lista já não está
+          agrupada por ato, e um índice que rola para lugar nenhum seria pior
+          que índice nenhum.
+
+          ⚠️ O NÚMERO NO CHIP É PROGRESSO, não quantidade. "2/3" diz o que
+          falta naquele capítulo — é a informação que faz o índice valer mais
+          que a rolagem. */}
+      {!achados && LICOES.length ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.indice}
+          contentContainerStyle={s.indiceConteudo}
+        >
+          {ATOS.map(({ ato, nome }) => {
+            const { lidas, total } = lidasDoAto(ato)
+            if (!total) return null
+            const completo = lidas === total
+            return (
+              <Pressable
+                key={`ix-${ato}`}
+                onPress={() => irParaAto(ato)}
+                accessibilityRole="button"
+                accessibilityLabel={`${nome[i]}, ${lidas} de ${total}`}
+                style={({ pressed }) => [s.chip, completo && s.chipFeito, pressed && { opacity: 0.6 }]}
+              >
+                <Text style={[s.chipTexto, completo && s.chipTextoFeito]} numberOfLines={1}>
+                  {nome[i]}
+                </Text>
+                <Text style={[s.chipConta, completo && s.chipTextoFeito]}>{`${lidas}/${total}`}</Text>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+      ) : null}
+
       {/* ⚠️ `flex: 1` no ScrollView: sem ele não rola no web. */}
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.corpo} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={rolagem} style={{ flex: 1 }} contentContainerStyle={s.corpo} showsVerticalScrollIndicator={false}>
         {achados ? (
           <>
             <Text style={s.secao}>
@@ -170,8 +247,19 @@ export default function EstudoScreen() {
             {ATOS.map(({ ato, nome }) => {
               const doAto = LICOES.filter((l) => l.ato === ato)
               if (!doAto.length) return null
+              const { lidas, total } = lidasDoAto(ato)
               return (
-                <View key={`ato-${ato}`} style={s.grupo}>
+                <View
+                  key={`ato-${ato}`}
+                  style={s.grupo}
+                  onLayout={(e) => { posicaoDoAto.current[ato] = e.nativeEvent.layout.y }}
+                >
+                  <View style={s.capitulo}>
+                    <Text style={s.capituloNumero}>
+                      {tl(`Capítulo ${ato + 1}`, `Chapter ${ato + 1}`, `Capitulo ${ato + 1}`, `Capitolo ${ato + 1}`)}
+                    </Text>
+                    <Text style={s.capituloConta}>{`${lidas}/${total}`}</Text>
+                  </View>
                   <Text style={s.secao}>{nome[i]}</Text>
                   {doAto.map((l) => cardDe(l, l.id === proxima?.id))}
                 </View>
@@ -218,6 +306,37 @@ const s = StyleSheet.create({
   // `minHeight: 0` na cadeia flex: sem ele a rolagem trava no PWA.
   raiz: { flex: 1, minHeight: 0 },
   progresso: { marginBottom: 12 },
+  continuar: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(255,215,0,0.09)',
+    borderWidth: 1, borderColor: 'rgba(255,215,0,0.32)',
+    borderRadius: 14, paddingVertical: 13, paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  continuarRotulo: {
+    color: '#FFD700', fontSize: 10.5, fontWeight: '800',
+    letterSpacing: 1, marginBottom: 4,
+  },
+  continuarTitulo: { color: '#F2F5FA', fontSize: 15, fontWeight: '700', lineHeight: 20 },
+  indice: { flexGrow: 0, marginBottom: 14 },
+  indiceConteudo: { gap: 7, paddingRight: 4 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)',
+    maxWidth: 190,
+  },
+  chipFeito: { backgroundColor: 'rgba(78,205,196,0.12)', borderColor: 'rgba(78,205,196,0.35)' },
+  chipTexto: { color: '#C7D2E8', fontSize: 12, fontWeight: '600', flexShrink: 1 },
+  chipTextoFeito: { color: '#4ECDC4' },
+  chipConta: { color: '#6B7490', fontSize: 10.5, fontWeight: '700' },
+  capitulo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
+  capituloNumero: {
+    flex: 1, color: '#6B7490', fontSize: 10.5, fontWeight: '800',
+    textTransform: 'uppercase', letterSpacing: 1,
+  },
+  capituloConta: { color: '#6B7490', fontSize: 10.5, fontWeight: '700' },
   progressoTexto: { color: '#C7D2E8', fontSize: 13, fontWeight: '600', marginBottom: 7 },
   barra: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.10)', overflow: 'hidden' },
   barraCheia: { height: 4, borderRadius: 2, backgroundColor: '#FFD700' },

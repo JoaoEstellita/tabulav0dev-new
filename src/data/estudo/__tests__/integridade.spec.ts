@@ -166,7 +166,7 @@ describe('integridade do catálogo de estudo', () => {
    * justamente a credibilidade que esta área existe para construir.
    */
   it('a leitura da sincronicidade não se declara demonstrada', () => {
-    const proibidas = /(prova|provam|comprova|comprovam|demonstra|demonstram|portanto|logo se v[êe])/i
+    const proibidas = /\b(prova|provam|comprova|comprovam|demonstra|demonstram|portanto|logo se v[êe])\b/i
     const infratores: string[] = []
     for (const u of CATALOGO) {
       for (const b of u.blocos) {

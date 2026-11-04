@@ -90,10 +90,33 @@ describe('o renderizador de blocos', () => {
 describe('as figuras do Estudo', () => {
   const FIGURA = limpar(join(__dirname, '..', '..', '..', 'components', 'estudo', 'FiguraDoEstudo.tsx'))
 
-  it('nao usa imagem raster nem rede', () => {
-    expect(FIGURA, 'virou <Image>, que pesa no OTA e borra em tela densa').not.toMatch(/<Image/)
-    expect(FIGURA, 'figura vindo de require() de asset').not.toMatch(/require\(.*\.(png|jpe?g|webp|gif)/i)
-    expect(FIGURA, 'figura vindo da rede: sem ela offline').not.toMatch(/https?:\/\//)
+  /**
+   * ⚠️ A REGRA MUDOU DE INTENCAO, e vale registrar por que. Antes era "nenhuma
+   * imagem"; agora as dez fotos de planeta que o projeto ja tinha em
+   * `public/planets` sao usadas — mas SOBRE o desenho, nunca no lugar dele.
+   * Elas somam 11,2 MB (Mercurio: 2,3 MB em 1024x1024): no bundle engordariam
+   * todo OTA, e como unica fonte deixariam a licao sem planeta offline.
+   *
+   * ⚠️ ESTE TESTE PASSOU UM TEMPO SEM TESTAR NADA. O `\b` do regex tinha sido
+   * gravado como o BYTE 0x08 por um script, entao `/<Image<0x08>/` nao casava
+   * com texto nenhum e o `.not.toMatch` passava sempre. Ver
+   * `utils/__tests__/caractereDeControle.spec.ts`, que agora guarda isso.
+   */
+  it('a foto do planeta e camada sobre o SVG, nunca a unica fonte', () => {
+    expect(FIGURA, 'o SVG deixou de ser desenhado: offline ficaria sem planeta')
+      .toMatch(/<Svg[\s\S]*?<Image/)
+    expect(FIGURA, 'sem onError, a foto que falha deixa um buraco no lugar do desenho')
+      .toMatch(/onError=\{\(\) => setSemFoto\(true\)\}/)
+    expect(FIGURA, 'a foto entrou no bundle: 11,2 MB em todo OTA')
+      .not.toMatch(/require\(.*planets.*\.(png|jpe?g|webp)/i)
+    expect(FIGURA, 'URL escrita a mao em vez de sair do config')
+      .not.toMatch(/https?:\/\//)
+  })
+
+  /** A foto e decorativa: quem le com leitor de tela ja recebe a `descricao`. */
+  it('a foto nao duplica o texto alternativo', () => {
+    expect(FIGURA, 'o leitor de tela anunciaria a figura duas vezes')
+      .toMatch(/accessible=\{false\}/)
   })
 
   it('uma chave sem desenho nao vira moldura vazia', () => {
@@ -121,9 +144,37 @@ describe('a tela do Estudo', () => {
     expect(ESTUDO, 'apareceu cadeado na trilha').not.toMatch(/lock-closed/)
   })
 
-  it('mostra onde a pessoa parou', () => {
+  /**
+   * ⚠️ UM CARTÃO TOCÁVEL, não uma linha de texto. A pergunta de quem volta é
+   * "onde eu estava", e a resposta era uma frase cinza que não levava a lugar
+   * nenhum: a pessoa tinha de caçar a lição na lista.
+   */
+  it('mostra onde a pessoa parou, e leva até lá', () => {
     expect(ESTUDO, 'o progresso sumiu do topo').toMatch(/proximaLicao\(\)/)
     expect(ESTUDO, 'a barra de progresso sumiu').toMatch(/barraCheia/)
+    expect(ESTUDO, 'o cartão de continuar deixou de abrir a lição')
+      .toMatch(/setAberta\(proxima\.id\)/)
+  })
+
+  /**
+   * ⚠️ O ÍNDICE SÓ APARECE FORA DA BUSCA. Durante uma busca a lista não está
+   * agrupada por ato, e um índice que rola para lugar nenhum é pior que
+   * índice nenhum.
+   */
+  it('o índice de capítulos some durante a busca', () => {
+    expect(ESTUDO, 'o índice ficaria visível com a lista de busca')
+      .toMatch(/\{!achados && LICOES\.length \?/)
+  })
+
+  /**
+   * ⚠️ A POSIÇÃO DE CADA ATO É MEDIDA, não estimada: a altura depende de
+   * quantas lições tem, de quantas linhas o título ocupa naquele idioma e do
+   * tamanho de fonte do aparelho.
+   */
+  it('o índice rola até o ato pela posição medida', () => {
+    expect(ESTUDO, 'a medição por onLayout sumiu')
+      .toMatch(/posicaoDoAto\.current\[ato\] = e\.nativeEvent\.layout\.y/)
+    expect(ESTUDO, 'o chip do índice deixou de rolar').toMatch(/irParaAto\(ato\)/)
   })
 
   it('a busca cobre lições E verbetes', () => {
@@ -189,6 +240,17 @@ describe('a tela do Estudo', () => {
     expect(LICAO, 'a navegação da trilha sumiu do rodapé').toMatch(/vizinhas\?\.proxima/)
     expect(ESTUDO, 'o verbete ganharia vizinhas que não existem')
       .toMatch(/u\.tipo !== 'licao'\) return \{ anterior: null, proxima: null \}/)
+  })
+
+  /**
+   * ⚠️ A PRÓXIMA LIÇÃO APARECIA DUAS VEZES. Toda lição declara a seguinte no
+   * `verTambem` — isso existia antes de haver rodapé — então ela era oferecida
+   * no meio do texto E embaixo, e no `verTambem` vinha misturada com verbetes,
+   * nem sempre primeiro. Era isso que fazia a trilha parecer embaralhada.
+   */
+  it('"Continue por aqui" não repete o que o rodapé já mostra', () => {
+    expect(LICAO, 'a próxima lição voltaria a aparecer duas vezes')
+      .toMatch(/jaNoRodape\.has\(u\.id\)/)
   })
 
   /** Tela cheia: ler uma lição é a tarefa inteira enquanto dura. */

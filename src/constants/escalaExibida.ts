@@ -122,6 +122,55 @@ export const ANCORAS_DO_DIA: number[] = [16, 18, 24, 34, 51, 63, 68]
  * Para remedir: `node scripts/medir-momento-media.js --mapas 15 --datas 60`
  */
 export const ANCORAS_DA_MEDIA: number[] = [29, 30, 35, 42, 50, 57, 59]
+
+/**
+ * ANEIS NATAIS — a distribuicao do TEMPERAMENTO, que nao e a do DIA.
+ *
+ * ⚠️ MEDIDO, E DIVERGE — no AFETO. O natal ja passa por `K_NATAL`, calibrado
+ * em 53 mapas justamente para alinha-lo ao dia, e alinhou quase tudo: seis
+ * dos oito aneis ficam a 5 pontos ou menos de distancia entre as duas
+ * medianas. O Afeto nao: 32 no dia contra 20 no natal, DOZE pontos. Calma fica
+ * a 7. Usar a curva do dia no natal deslocaria o Afeto natal para sempre.
+ *
+ * ⚠️ A PRIMEIRA MEDICAO DESTE DESVIO ESTAVA ERRADA, e vale registrar o erro:
+ * ela comparou o natal contra o ceu de UM dia, e uma data nao representa a
+ * distribuicao do dia nenhum. Dava "Estresse 13 pontos acima", que era o ceu
+ * daquela tarde, nao um vies de escala. A comparacao valida e ancora contra
+ * ancora, as duas de amostra ampla — e e a que esta acima.
+ *
+ * ⚠️ AS ANCORAS SAIRAM DE MAPAS SINTETICOS, e isso e valido AQUI: o anel
+ * natal depende so dos aspectos entre planetas natais, que dependem so do
+ * instante de nascimento — nao ha nada de pessoal na conta, e uma data
+ * sorteada produz uma configuracao tao real quanto a de qualquer pessoa.
+ * Com os ~60 usuarios da base, p99.8 saia COLADO em p99 nos oito aneis, e
+ * ancora colada achata o trecho inteiro da curva.
+ *
+ * A validacao cruzada fecha: das oito medianas sinteticas, seis batem com as
+ * dos 40 mapas reais dentro de 1 ponto (afeto 20/21, calma 29/29,
+ * sensibilidade 32/32, estresse 39/38).
+ *
+ * ⚠️ ISTO NAO VALERIA PARA AREAS DA VIDA, que dependem dos transitos de uma
+ * data sobre um mapa. Vale para o natal porque o natal e geometria de um
+ * instante, e so.
+ *
+ * ⚠️ O MODAL "HOJE x SEU MAPA" PASSA A COMPARAR PERCENTIS. Com duas curvas,
+ * "hoje acima do seu natal" quer dizer que hoje esta mais alto na
+ * distribuicao DO DIA do que o natal esta na distribuicao NATAL. E o que a
+ * comparacao sempre quis dizer; antes ela punha dois numeros crus de
+ * distribuicoes diferentes lado a lado, com 13 pontos de vies entre elas.
+ *
+ * Para remedir: `node scripts/calibrar-aneis-natais.js --mapas 400`
+ */
+export const ANCORAS_NATAIS_POR_ANEL: Record<string, number[]> = {
+  afeto: [3, 4, 10, 20, 32, 46, 49],
+  entusiasmo: [0, 7, 20, 40, 57, 72, 75],
+  calma: [0, 1, 11, 29, 47, 61, 66],
+  sensibilidade: [0, 1, 12, 32, 52, 66, 71],
+  estresse: [0, 3, 15, 39, 61, 72, 73],
+  desanimo: [2, 15, 32, 49, 69, 82, 87],
+  ansiedade: [0, 8, 28, 56, 79, 91, 95],
+  pressao: [0, 1, 16, 47, 73, 87, 89],
+}
 /** ⚠️ Hermes NAO suporta regex `\p{...}` — o gemeo usa o range direto. */
 export const chaveNormalizada = (x: unknown): string => String(x || '')
   .toLowerCase()
@@ -168,6 +217,11 @@ export function escalaDaArea(area: unknown, bruto: unknown): number | null {
 /** O valor exibido de um ANEL EMOCIONAL. */
 export function escalaDoAnel(anel: unknown, bruto: unknown): number | null {
   return aplicar(ANCORAS_POR_ANEL[chaveNormalizada(anel)], bruto)
+}
+
+/** O anel NATAL, na escala exibida. Curva propria — ver o bloco acima. */
+export function escalaDoAnelNatal(anel: unknown, bruto: unknown): number | null {
+  return aplicar(ANCORAS_NATAIS_POR_ANEL[chaveNormalizada(anel)], bruto)
 }
 
 /** O valor exibido do SCORE GERAL do dia. */

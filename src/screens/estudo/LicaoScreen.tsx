@@ -55,9 +55,27 @@ export default function LicaoScreen({
     setLido(rolavel <= 0 ? 1 : Math.max(0, Math.min(1, contentOffset.y / rolavel)))
   }
 
-  const ligados = unidade.verTambem.map(porId).filter((u): u is Unidade => !!u)
   const anterior = vizinhas?.anterior ?? null
   const proxima = vizinhas?.proxima ?? null
+
+  /**
+   * "Continue por aqui" é o aprofundamento LATERAL, e nada mais.
+   *
+   * ⚠️ A PRÓXIMA LIÇÃO APARECIA DUAS VEZES, e fora de ordem. Toda lição
+   * declara a seguinte no `verTambem` — isso existia antes de haver rodapé —
+   * então, com o rodapé de anterior/próxima, a mesma lição passou a ser
+   * oferecida no meio do texto E embaixo. Pior: no `verTambem` ela vinha
+   * misturada com verbetes e nem sempre primeiro (na lição 8 o verbete da
+   * orbe vinha ANTES da lição 9), o que fazia a trilha parecer embaralhada.
+   *
+   * Filtrar aqui, e não limpar os `verTambem`, é de propósito: o dado continua
+   * dizendo a verdade sobre o que se liga a quê — útil para busca e para
+   * qualquer tela futura — e é a APRESENTAÇÃO que decide não repetir.
+   */
+  const jaNoRodape = new Set([anterior?.id, proxima?.id].filter(Boolean))
+  const ligados = unidade.verTambem
+    .map(porId)
+    .filter((u): u is Unidade => !!u && !jaNoRodape.has(u.id))
 
   return (
     <Modal visible transparent={false} animationType="slide" onRequestClose={aoFechar} statusBarTranslucent>

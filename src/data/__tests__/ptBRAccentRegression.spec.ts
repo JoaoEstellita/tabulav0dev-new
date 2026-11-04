@@ -91,7 +91,7 @@ describe('acentuação do corpus curado pt-BR', () => {
     // "lá" existe em outro catálogo e o léxico propôs 'la' -> 'lá', que casaria
     // o pronome enclítico. Quem leva o acento é o verbo ("realizá-la").
     for (const rel of ARQUIVOS) {
-      expect(ler(rel)).not.toMatch(/-l[áó]s?/)
+      expect(ler(rel)).not.toMatch(/-l[áó]s?\b/)
     }
   })
 
@@ -108,6 +108,6 @@ describe('acentuação do corpus curado pt-BR', () => {
     // corre risco. A proteção por frase no script cobre o caso se um dia mudar.
     const texto = ler('src/data/transitCatalogOverridesPtBR.ts')
     expect(texto).toContain('na prática')
-    expect(texto).not.toMatch(/base pratica/)
+    expect(texto).not.toMatch(/\bbase pratica\b/)
   })
 })

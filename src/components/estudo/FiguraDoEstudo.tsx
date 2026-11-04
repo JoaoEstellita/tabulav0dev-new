@@ -1,5 +1,6 @@
-import React from 'react'
-import { StyleSheet, View } from 'react-native'
+import React, { useState } from 'react'
+import { Image, StyleSheet, View } from 'react-native'
+import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg'
 import type { ChaveDaFigura, IdiomaEstudo } from '../../data/estudo'
 
@@ -758,6 +759,8 @@ function OrdemDeLeitura({ tl }: { tl: Tl }) {
  * têm obrigações diferentes.
  */
 function RetratoDoPlaneta({ foco, tl }: { foco?: string; tl: Tl }) {
+  // A foto real, quando ela chega. Ver o bloco grande abaixo do `return`.
+  const [semFoto, setSemFoto] = useState(false)
   const cx = 150; const cy = 62; const r = 44
   const qual = String(foco || 'sol')
 
@@ -909,12 +912,51 @@ function RetratoDoPlaneta({ foco, tl }: { foco?: string; tl: Tl }) {
     }
   }
 
+  /**
+   * ⚠️ A FOTO VEM POR CIMA DO DESENHO, nunca no lugar dele.
+   *
+   * O projeto ja tinha as dez imagens em `public/planets` e um
+   * `planetImageSource` pronto que ninguem usava. Elas sao bonitas e sao o que
+   * o Joao quer ver — mas somam 11,2 MB (Mercurio sozinho tem 2,3 MB em
+   * 1024x1024, para um disco de ~90 px na tela). Entrar no bundle engordaria
+   * TODO OTA para sempre; ser a unica fonte deixaria a licao sem planeta
+   * justamente offline, que e quando se estuda.
+   *
+   * Entao as duas coisas: o SVG desenha na hora e sempre, e a foto se sobrepoe
+   * quando (e se) chegar. Sem rede, sem espera e sem buraco — o leitor ve um
+   * planeta de qualquer jeito.
+   *
+   * ⚠️ VALE OTIMIZAR AS IMAGENS. 1024 px e 2 MB para esse tamanho de tela e
+   * desperdicio de banda de quem le; 256 px em WebP dariam o mesmo resultado
+   * visual por uns 3% do peso. `PLANET_IMAGE_SIZE` e `PLANET_IMAGE_FORMAT` no
+   * config ja preveem isso — falta so gerar os arquivos.
+   */
+  const CHAVE: Record<string, PlanetKey> = {
+    sol: 'Sun', lua: 'Moon', mercurio: 'Mercury', venus: 'Venus', marte: 'Mars',
+    jupiter: 'Jupiter', saturno: 'Saturn', urano: 'Uranus', netuno: 'Neptune', plutao: 'Pluto',
+  }
+  const uri = CHAVE[qual] ? getPlanetImageUri(CHAVE[qual]) : undefined
+
   return (
-    <Svg width="100%" height={158} viewBox="0 0 300 158">
-      {corpo()}
-      <Rotulo x={cx} y={135} cor={CLARO} tam={12} peso="700">{nome}</Rotulo>
-      {marca ? <Rotulo x={cx} y={150} cor={FRACO} tam={9}>{marca}</Rotulo> : null}
-    </Svg>
+    <View>
+      <Svg width="100%" height={158} viewBox="0 0 300 158">
+        {corpo()}
+        <Rotulo x={cx} y={135} cor={CLARO} tam={12} peso="700">{nome}</Rotulo>
+        {marca ? <Rotulo x={cx} y={150} cor={FRACO} tam={9}>{marca}</Rotulo> : null}
+      </Svg>
+
+      {uri && !semFoto ? (
+        <Image
+          source={{ uri }}
+          // O desenho fica DEBAIXO: se a foto demora, o leitor nao espera; se
+          // falha, `onError` a remove e o que sobra e o planeta desenhado.
+          style={s.foto}
+          resizeMode="contain"
+          onError={() => setSemFoto(true)}
+          accessible={false}
+        />
+      ) : null}
+    </View>
   )
 }
 
@@ -978,6 +1020,8 @@ export default function FiguraDoEstudo({ chave, foco, descricao, idioma }: {
 }
 
 const s = StyleSheet.create({
+  // Cobre exatamente o disco desenhado, acima do rotulo.
+  foto: { position: 'absolute', left: 0, right: 0, top: 4, height: 116 },
   moldura: {
     backgroundColor: 'rgba(255,255,255,0.035)',
     borderRadius: 14,

@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { emocoesDoDia, EMOCOES } from '../emocoesDoDia'
-import { ANCORAS_POR_AREA, escalaDaArea, TIPICO, textoDoDesvio } from '../../constants/escalaExibida'
+import {
+  ANCORAS_POR_AREA, escalaDaArea, TIPICO, textoDoDesvio,
+  ANCORAS_NATAIS_POR_ANEL, escalaDoAnelNatal,
+} from '../../constants/escalaExibida'
 import { desvioDaReferencia } from '../emocoesDoDia'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 
@@ -212,5 +215,34 @@ describe('a escala exibida das áreas', () => {
     const aoPositivo = STATUS_THRESHOLDS.positiveAbove - TIPICO
     expect(Math.abs(aoCritico - aoPositivo), 'os dois extremos deixaram de ser simétricos')
       .toBeLessThanOrEqual(5)
+  })
+})
+
+
+/**
+ * ⚠️ O ANEL DA RODA PASSOU A SAIR NA ESCALA EXIBIDA. Antes so a ORDEM era
+ * remapeada e o numero continuava cru — Afeto tipico 32 ao lado de Ansiedade
+ * 52, em dois circulos desenhados LADO A LADO numa roda que convida a
+ * comparar.
+ */
+describe('o anel da roda, na escala exibida', () => {
+  it('a mediana de cada anel natal cai no tipico', () => {
+    for (const [anel, anc] of Object.entries(ANCORAS_NATAIS_POR_ANEL)) {
+      expect(escalaDoAnelNatal(anel, anc[3]), `${anel}: a mediana natal nao caiu no tipico`).toBe(TIPICO)
+    }
+  })
+
+  /**
+   * ⚠️ O VALOR E A MARCA DO NORMAL SAEM NA MESMA REGUA. Remapear um e deixar
+   * o outro cru poria a marca no lugar errado do circulo — pior do que nao
+   * ter marca nenhuma.
+   */
+  it('a tela remapeia o valor E a referencia', () => {
+    const LF = String.fromCharCode(10)
+    const fonte = readFileSync(join(__dirname, '..', '..', 'components', 'ClimaEmocional.tsx'), 'utf8')
+      .split(LF).filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join(LF)
+    expect(fonte, 'a roda voltou a desenhar o valor cru').toContain('emocoesExibidas.map')
+    expect(fonte, 'a marca do normal ficou na escala crua').toContain('refsExibidas?.[e.chave]')
+    expect(fonte, 'o natal perdeu a curva propria').toContain('escalaDoAnelNatal')
   })
 })

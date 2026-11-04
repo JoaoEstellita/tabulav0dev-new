@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { escalaDoAnel, escalaDoAnelNatal } from '../constants/escalaExibida'
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView, useWindowDimensions } from 'react-native'
 import Svg, { Circle, Defs, Line, LinearGradient, Stop } from 'react-native-svg'
 import { translatePlanet } from '../utils/astro/pt'
@@ -328,6 +329,59 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
     return comGravado.some((e) => e.valor > 0) ? comGravado : local
   }, [transitos, transitosDoBackend, valoresGravados, ehNatal, natal, aspectosNatais])
 
+  /**
+   * ⚠️ AQUI O ANEL ENTRA NA ESCALA EXIBIDA, e em um lugar só.
+   *
+   * Até agora só a ORDEM dos anéis era remapeada (em `leituraEmocional`, no
+   * backend): o número na tela continuava sendo o cru do motor, cujo típico
+   * não é 50 e nem é o mesmo de um anel para o outro — Afeto típico 32 contra
+   * Ansiedade 52, em dois círculos desenhados LADO A LADO numa roda que
+   * convida a comparar.
+   *
+   * ⚠️ DUAS CURVAS, E A MARCA DO NORMAL VAI JUNTO. O natal tem distribuição
+   * própria (ver `ANCORAS_NATAIS_POR_ANEL`), então o valor do dia usa a curva
+   * do dia e o do natal usa a do natal. A marca de referência precisa do
+   * MESMO tratamento do número que ela compara — remapear um e deixar o outro
+   * cru poria a marca no lugar errado do círculo, que é pior do que não ter
+   * marca nenhuma.
+   *
+   * ⚠️ O CRU FICA GUARDADO em `bruto`: é o que o backend gravou e o que o
+   * modal usa para explicar de onde vem o anel.
+   */
+  const naEscala = React.useCallback(
+    (chave: string, valor: number, natal: boolean) => {
+      const v = natal ? escalaDoAnelNatal(chave, valor) : escalaDoAnel(chave, valor)
+      // Anel sem âncora segue no cru — sumir da roda seria pior.
+      return v !== null ? v : valor
+    },
+    [],
+  )
+
+  const emocoesExibidas = useMemo(() => (emocoes || []).map((e) => ({
+    ...e,
+    bruto: e.valor,
+    valor: e.semMaterial ? e.valor : naEscala(e.chave, e.valor, ehNatal),
+  })), [emocoes, ehNatal, naEscala])
+
+  /**
+   * A marca do normal, na mesma régua do número que ela compara.
+   *
+   * ⚠️ A ORIGEM DECIDE A CURVA. `origemDaRef` já sabe se a referência veio do
+   * MAPA de quem lê (curva natal) ou de uma média de trânsito (curva do dia);
+   * usar a curva errada deslocaria a marca em até 12 pontos no Afeto.
+   */
+  const refsExibidas = useMemo(() => {
+    if (!refs) return null
+    const doNatal = origemDaRef === 'natal'
+    const out: Record<string, number> = {}
+    for (const [k, v] of Object.entries(refs)) {
+      const n = Number(v)
+      if (!Number.isFinite(n)) continue
+      out[k] = naEscala(k, n, doNatal)
+    }
+    return out
+  }, [refs, origemDaRef, naEscala])
+
   // ⚠️ `null` quando não há trânsito: a seção inteira some. Seis zeros
   // afirmariam "hoje você não sente nada", quando o certo é não dizer nada.
   if (!emocoes) return null
@@ -370,12 +424,12 @@ export default function ClimaEmocional({ transitos, transitosDoBackend, valoresG
           medida da pessoa, e sem nenhum enquadramento oito números de dois
           dígitos ao lado de "Ansiedade" e "Estresse" leem como diagnóstico. */}
       <View style={[s.grade, { width: largura }]}>
-        {emocoes.map((e) => {
+        {emocoesExibidas.map((e) => {
           const [escuro, claro] = COR[e.chave]
           const preenchido = (Math.max(0, Math.min(100, e.valor)) / 100) * perimetro
           // A marca do normal deste anel. `null` quando nao ha referencia — e
           // melhor nenhuma marca do que uma marca inventada.
-          const ref = Number(refs?.[e.chave])
+          const ref = Number(refsExibidas?.[e.chave])
           const temRef = Number.isFinite(ref) && ref > 0 && ref < 100
           const anguloRef = temRef ? (ref / 100) * 360 - 90 : 0
           return (
