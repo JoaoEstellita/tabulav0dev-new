@@ -6,7 +6,7 @@ import { useProgressoDoEstudo } from '../../hooks/useProgressoDoEstudo'
 import CardDaUnidade from '../../components/estudo/CardDaUnidade'
 import LicaoScreen from './LicaoScreen'
 import {
-  CATALOGO, LICOES, VERBETES, porId, vizinhasNaOrdem,
+  CATALOGO, LICOES, VERBETES, porId, vizinhasNaOrdem, proximaNaoLida,
   type CategoriaVerbete, type IdiomaEstudo, type Unidade,
 } from '../../data/estudo'
 import { ABERTURAS, CAPITULOS, ESTANTES } from '../../data/estudo/capitulos'
@@ -337,6 +337,7 @@ export default function EstudoScreen() {
           tl={tl}
           contexto={contextoDe(unidadeAberta)}
           vizinhas={vizinhasDe(unidadeAberta)}
+          naoLida={proximaNaoLida(lidos, unidadeAberta.id)}
         />
       ) : null}
     </View>

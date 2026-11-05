@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { CATALOGO, LICOES, ORDEM_DO_CURSO, vizinhasNaOrdem, posicaoNaOrdem } from '../index'
+import {
+  CATALOGO, LICOES, ORDEM_DO_CURSO, vizinhasNaOrdem, posicaoNaOrdem, proximaNaoLida,
+} from '../index'
 
 /**
  * A ORDEM DO CURSO — ninguém fica sem saída, e nada anda para trás.
@@ -107,5 +109,59 @@ describe('a ordem do curso', () => {
       ...CATALOGO.filter((u) => u.tipo === 'verbete').map((u) => posicaoNaOrdem(u.id)!),
     )
     expect(primeiroVerbete, 'verbete apareceu no meio da trilha').toBeGreaterThan(ultimaLicao)
+  })
+})
+
+/**
+ * RETOMAR O PROGRESSO — o atalho para o que ainda não foi lido.
+ *
+ * ⚠️ POR QUE O "PRÓXIMA" SOZINHO NÃO BASTA. Quem já leu até a lição 5 e reabre
+ * a 2 para consultar recebe, no rodapé, a lição 3 — que já leu. Seguir dali é
+ * recomeçar um trecho conhecido com a sensação de estar avançando, e o
+ * progresso fica parado.
+ */
+describe('a próxima não lida', () => {
+  const ids = ORDEM_DO_CURSO.map((u) => u.id)
+
+  it('sem nada lido, é a primeira do curso', () => {
+    expect(proximaNaoLida([])?.id).toBe(ids[0])
+  })
+
+  it('pula o que já foi lido e para na primeira pendente', () => {
+    const lidos = ids.slice(0, 5)
+    expect(proximaNaoLida(lidos)?.id, 'parou numa unidade já lida').toBe(ids[5])
+  })
+
+  /** ⚠️ O caso que originou o pedido: consultar uma antiga não perde o lugar. */
+  it('relendo uma antiga, aponta para o fim da leitura e não para a seguinte', () => {
+    const lidos = ids.slice(0, 6)
+    const relendo = ids[1]
+    const alvo = proximaNaoLida(lidos, relendo)
+    expect(alvo?.id, 'mandou de volta para o trecho já lido').toBe(ids[6])
+  })
+
+  /**
+   * ⚠️ BURACO ATRÁS CONTA. Quem pulou uma unidade e seguiu adiante tem de ser
+   * trazido de volta a ela — dar `null` com buraco aberto diria "acabou" sem
+   * ter acabado.
+   */
+  it('volta para um buraco deixado para trás', () => {
+    const lidos = ids.filter((id) => id !== ids[3])
+    expect(proximaNaoLida(lidos, ids[10])?.id, 'o buraco ficou esquecido').toBe(ids[3])
+  })
+
+  it('com tudo lido, não há para onde ir', () => {
+    expect(proximaNaoLida(ids), 'inventou destino com o curso inteiro lido').toBeNull()
+  })
+
+  /**
+   * ⚠️ O ATALHO SÓ APARECE QUANDO LEVA A OUTRO LUGAR. Lendo em ordem, a não
+   * lida É a próxima, e um segundo botão para o mesmo destino seria ruído em
+   * todo passo do caminho.
+   */
+  it('lendo em ordem, a não lida coincide com a próxima', () => {
+    const lidos = ids.slice(0, 4)
+    const atual = ids[3]
+    expect(proximaNaoLida(lidos, atual)?.id).toBe(vizinhasNaOrdem(atual).proxima?.id)
   })
 })

@@ -110,3 +110,28 @@ export function posicaoNaOrdem(id: string): number | null {
   const i = POSICAO.get(id)
   return i === undefined ? null : i
 }
+
+/**
+ * A PRIMEIRA UNIDADE NÃO LIDA a partir de um ponto da ordem.
+ *
+ * ⚠️ POR QUE O "PRÓXIMA" SOZINHO NÃO BASTA. Quem já leu até a lição 5 e
+ * reabre a 2 para consultar recebe, no rodapé, a lição 3 — que já leu. Seguir
+ * dali é recomeçar um trecho conhecido, e o progresso fica parado enquanto a
+ * pessoa acha que está avançando.
+ *
+ * ⚠️ PROCURA A PARTIR DO PONTO, E DEPOIS DO COMEÇO. Se tudo adiante já foi
+ * lido mas ficou um buraco atrás — alguém que pulou a lição 4 e seguiu —
+ * voltar para ele é o que mantém o progresso honesto. Dar `null` com buraco
+ * aberto diria "acabou" sem ter acabado.
+ */
+export function proximaNaoLida(lidos: string[], depoisDe?: string): Unidade | null {
+  const vistos = new Set(lidos)
+  const inicio = depoisDe ? (POSICAO.get(depoisDe) ?? -1) + 1 : 0
+  for (let i = inicio; i < ORDEM_DO_CURSO.length; i++) {
+    if (!vistos.has(ORDEM_DO_CURSO[i].id)) return ORDEM_DO_CURSO[i]
+  }
+  for (let i = 0; i < inicio && i < ORDEM_DO_CURSO.length; i++) {
+    if (!vistos.has(ORDEM_DO_CURSO[i].id)) return ORDEM_DO_CURSO[i]
+  }
+  return null
+}

@@ -308,6 +308,26 @@ describe('a tela do Estudo', () => {
       .toMatch(/jaNoRodape\.has\(u\.id\)/)
   })
 
+  /**
+   * ⚠️ O ATALHO DE RETOMAR SÓ APARECE QUANDO LEVA A OUTRO LUGAR. Lendo em
+   * ordem, a não lida É a próxima do rodapé — um segundo botão para o mesmo
+   * destino seria ruído em todo passo do caminho. Ele serve a quem saiu da
+   * ordem, e só aparece quando ela foi de fato quebrada.
+   */
+  it('o atalho de retomar some quando é igual à próxima', () => {
+    expect(LICAO, 'o atalho apareceria em toda lição lida em ordem')
+      .toMatch(/naoLida\.id !== proxima\?\.id/)
+    expect(LICAO, 'o atalho apontaria para a própria unidade aberta')
+      .toMatch(/naoLida\.id !== unidade\.id/)
+  })
+
+  /** ⚠️ Fora do rodapé: o rodapé é a sequência, e isto é um salto para fora. */
+  it('o atalho fica acima do rodapé, não dentro', () => {
+    const corpo = LICAO.slice(LICAO.indexOf('{saltar ?'))
+    expect(corpo.indexOf('s.rodape'), 'o atalho entrou na linha do rodapé')
+      .toBeGreaterThan(corpo.indexOf('s.retomar'))
+  })
+
   /** Tela cheia: ler uma lição é a tarefa inteira enquanto dura. */
   it('a lição abre em tela cheia', () => {
     expect(LICAO, 'voltou a ser folha parcial sobre a tela anterior')

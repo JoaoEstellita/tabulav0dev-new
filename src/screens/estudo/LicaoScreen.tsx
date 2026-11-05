@@ -25,7 +25,7 @@ import { porId, type IdiomaEstudo, type Unidade } from '../../data/estudo'
  * não pode virar, em nenhuma hipótese, a condição de marcar como lido.
  */
 export default function LicaoScreen({
-  unidade, idioma, aoFechar, aoAbrirOutra, marcarLido, tl, contexto, vizinhas,
+  unidade, idioma, aoFechar, aoAbrirOutra, marcarLido, tl, contexto, vizinhas, naoLida,
 }: {
   unidade: Unidade
   idioma: IdiomaEstudo
@@ -35,8 +35,16 @@ export default function LicaoScreen({
   tl: (pt: string, en: string, es: string, it: string) => string
   /** "Ato 1 · Lição 4 de 12", já traduzido. Verbete recebe a categoria. */
   contexto?: string | null
-  /** Lição anterior e seguinte da trilha. Verbete não tem nenhuma. */
+  /** O que vem antes e depois na ordem do curso. */
   vizinhas?: { anterior: Unidade | null; proxima: Unidade | null }
+  /**
+   * A primeira unidade ainda NÃO LIDA adiante.
+   *
+   * ⚠️ NÃO É A MESMA COISA QUE `proxima`. Quem já leu até a lição 5 e reabre
+   * a 2 para consultar recebe a 3 no rodapé — que já leu. Seguir dali é
+   * recomeçar um trecho conhecido com a sensação de estar avançando.
+   */
+  naoLida?: Unidade | null
 }) {
   const insets = useSafeAreaInsets()
   const [lido, setLido] = useState(0)
@@ -57,6 +65,18 @@ export default function LicaoScreen({
 
   const anterior = vizinhas?.anterior ?? null
   const proxima = vizinhas?.proxima ?? null
+
+  /**
+   * O salto para o não lido só aparece quando LEVA A OUTRO LUGAR.
+   *
+   * ⚠️ IGUAL À PRÓXIMA = NÃO MOSTRA. Quem está lendo em ordem já tem o botão
+   * de que precisa; um segundo botão para o mesmo destino seria ruído em todo
+   * passo do caminho. Ele é um atalho para quem saiu da ordem, e só aparece
+   * quando ela de fato foi quebrada.
+   */
+  const saltar = naoLida && naoLida.id !== proxima?.id && naoLida.id !== unidade.id
+    ? naoLida
+    : null
 
   /**
    * "Continue por aqui" é o aprofundamento LATERAL, e nada mais.
@@ -147,6 +167,29 @@ export default function LicaoScreen({
             ⚠️ SÓ PARA LIÇÃO. Verbete não tem anterior nem seguinte: a
             biblioteca não tem ordem, e inventar uma no rodapé prometeria um
             percurso que não existe. */}
+        {/* ── Retomar o progresso ──────────────────────────────────────
+            ⚠️ ACIMA DO RODAPÉ, e não dentro dele: o rodapé é a sequência, e
+            isto é um salto para fora dela. Misturar os dois na mesma linha
+            faria três botões competindo, e nenhum deles leria como o passo
+            natural. */}
+        {saltar ? (
+          <Pressable
+            onPress={() => aoAbrirOutra(saltar.id)}
+            accessibilityRole="button"
+            style={({ pressed }) => [s.retomar, pressed && { opacity: 0.65 }]}
+          >
+            <Ionicons name="bookmark-outline" size={14} color="#4ECDC4" />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.retomarRotulo}>
+                {tl('RETOMAR DE ONDE PAROU', 'PICK UP WHERE YOU LEFT OFF',
+                  'RETOMAR DONDE LO DEJASTE', 'RIPRENDI DA DOVE ERI')}
+              </Text>
+              <Text style={s.retomarTitulo} numberOfLines={1}>{saltar.titulo[idioma]}</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={15} color="#4ECDC4" />
+          </Pressable>
+        ) : null}
+
         {anterior || proxima ? (
           <View style={[s.rodape, { paddingBottom: 10 + insets.bottom }]}>
             {anterior ? (
@@ -225,6 +268,18 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, marginBottom: 8,
   },
   ligadoTexto: { flex: 1, color: '#D7DCE8', fontSize: 14 },
+  retomar: {
+    flexDirection: 'row', alignItems: 'center', gap: 9,
+    marginHorizontal: 14, marginBottom: 2,
+    paddingVertical: 9, paddingHorizontal: 12, borderRadius: 11,
+    backgroundColor: 'rgba(78,205,196,0.10)',
+    borderWidth: 1, borderColor: 'rgba(78,205,196,0.28)',
+  },
+  retomarRotulo: {
+    color: 'rgba(78,205,196,0.8)', fontSize: 8.5, fontWeight: '800',
+    letterSpacing: 0.9, marginBottom: 2,
+  },
+  retomarTitulo: { color: '#CFEDEA', fontSize: 12.5, fontWeight: '600' },
   rodape: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingTop: 10, paddingHorizontal: 14,
