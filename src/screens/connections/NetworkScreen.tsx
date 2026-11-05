@@ -140,6 +140,30 @@ export default function NetworkScreen() {
     [{ text: tl('Cancelar', 'Cancel', 'Cancelar', 'Annulla'), style: 'cancel' },
      { text: tl('Desfazer', 'Remove', 'Quitar', 'Rimuovi'), style: 'destructive', onPress: () => run(`r:${c.id}`, () => removeConnection(c.other)) }],
   )
+  /**
+   * Cancelar um pedido que VOCÊ enviou e que ainda não foi respondido.
+   *
+   * ⚠️ FALTAVA, e era o único estado sem saída. Recusar um pedido recebido já
+   * existia (`decline`) e desfazer uma conexão aceita também (`doRemove`) —
+   * mas o pedido enviado só mostrava um relógio. Quem se arrependia ficava
+   * aguardando para sempre uma resposta que não queria mais.
+   *
+   * ⚠️ USA `removeConnection`, que APAGA o vínculo. Não é `respond` com
+   * recusa: recusar é ato de quem RECEBEU, e marcaria `declined` como se a
+   * outra pessoa tivesse dito não.
+   */
+  const cancelarEnviado = (c: Connection) => Alert.alert(
+    tl('Cancelar pedido', 'Cancel request', 'Cancelar solicitud', 'Annulla richiesta'),
+    tl(
+      'Cancelar o pedido enviado? A pessoa deixa de ver a sua solicitação.',
+      'Cancel the sent request? They will no longer see your request.',
+      'Cancelar la solicitud enviada? La persona deja de ver tu peticion.',
+      'Annullare la richiesta inviata? La persona non vedra piu la tua richiesta.',
+    ),
+    [{ text: tl('Voltar', 'Back', 'Volver', 'Indietro'), style: 'cancel' },
+     { text: tl('Cancelar pedido', 'Cancel request', 'Cancelar solicitud', 'Annulla richiesta'), style: 'destructive', onPress: () => run(`x:${c.id}`, () => removeConnection(c.other)) }],
+  )
+
   const connMenu = (c: Connection) => Alert.alert(
     c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione'),
     undefined,
@@ -503,6 +527,20 @@ export default function NetworkScreen() {
                   <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
                   <View style={{ flex: 1, minWidth: 0 }}><Text style={st.personName} numberOfLines={1}>{c.otherName || '—'}</Text><Text style={st.city}>{tl('Aguardando aceite', 'Awaiting acceptance', 'Esperando', 'In attesa')}</Text></View>
                   <Ionicons name="time-outline" size={18} color={C.faint} />
+                  {/* ⚠️ O ÚNICO ESTADO QUE NÃO TINHA SAÍDA. Recusar recebido e
+                      desfazer aceito já existiam; o pedido enviado só mostrava
+                      o relógio, e quem se arrependia ficava aguardando para
+                      sempre uma resposta que não queria mais. */}
+                  <TouchableOpacity
+                    onPress={() => cancelarEnviado(c)}
+                    disabled={busy === `x:${c.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={tl('Cancelar pedido', 'Cancel request', 'Cancelar solicitud', 'Annulla richiesta')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={{ paddingLeft: 10, opacity: busy === `x:${c.id}` ? 0.4 : 1 }}
+                  >
+                    <Ionicons name="close-circle-outline" size={20} color={C.faint} />
+                  </TouchableOpacity>
                 </View>
               ))}
             </>

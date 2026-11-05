@@ -41,3 +41,45 @@ describe('o consentimento do Match', () => {
       .toMatch(/setMatchActive\(null\)/)
   })
 })
+
+/**
+ * TODA CONEXÃO TEM SAÍDA — inclusive o pedido que você enviou.
+ *
+ * ⚠️ ERA O ÚNICO ESTADO SEM AÇÃO. Recusar um pedido recebido já existia
+ * (`respondConnection(..., false)`) e desfazer uma conexão aceita também
+ * (`removeConnection`) — mas o pedido ENVIADO só mostrava um relógio. Quem se
+ * arrependia ficava aguardando para sempre uma resposta que não queria mais, e
+ * a única saída era pedir para alguém apagar no banco.
+ */
+describe('sair de uma conexão', () => {
+  it('o pedido enviado pode ser cancelado', () => {
+    expect(FONTE, 'o pedido enviado voltou a ser um beco')
+      .toMatch(/const cancelarEnviado = /)
+    expect(FONTE, 'o botão de cancelar sumiu da lista de enviados')
+      .toMatch(/onPress=\{\(\) => cancelarEnviado\(c\)\}/)
+  })
+
+  /**
+   * ⚠️ CANCELAR É `remove`, NÃO `respond` com recusa. Recusar é ato de quem
+   * RECEBEU: marcaria `declined` como se a outra pessoa tivesse dito não.
+   */
+  it('cancelar apaga o vínculo, não marca recusa', () => {
+    const i = FONTE.indexOf('const cancelarEnviado')
+    const corpo = FONTE.slice(i, FONTE.indexOf('const connMenu', i))
+    expect(corpo, 'cancelar passou a registrar recusa da outra pessoa')
+      .not.toMatch(/respondConnection/)
+    expect(corpo, 'cancelar deixou de apagar o vínculo').toMatch(/removeConnection\(c\.other\)/)
+  })
+
+  /** ⚠️ Pede confirmação: a outra pessoa já recebeu o pedido. */
+  it('cancelar pergunta antes', () => {
+    const i = FONTE.indexOf('const cancelarEnviado')
+    expect(FONTE.slice(i, i + 200), 'cancelou sem confirmar').toMatch(/Alert\.alert/)
+  })
+
+  /** As três saídas que a tela tem de oferecer, uma por estado. */
+  it('recusar o recebido e desfazer o aceito continuam existindo', () => {
+    expect(FONTE, 'recusar pedido recebido sumiu').toMatch(/respondConnection\(c\.other, false/)
+    expect(FONTE, 'desfazer conexão aceita sumiu').toMatch(/const doRemove = /)
+  })
+})
