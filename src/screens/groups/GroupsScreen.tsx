@@ -1954,6 +1954,17 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
    * no primeiro ajuste, e a divergência seria invisível: as duas abririam a
    * mesma tela com dados montados de jeitos diferentes.
    */
+  /**
+   * As longitudes natais por planeta, em minúscula.
+   *
+   * ⚠️ EXTRAÍDO para servir aos DOIS usos — o modal e a combinação embutida no
+   * card. Era uma função interna de `abrirCombinacao`, e a segunda cópia dela
+   * no card divergiria no primeiro ajuste de formato.
+   */
+  const grausDoMapa = (c?: NatalChart) => (c
+    ? Object.fromEntries((c.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude]))
+    : null)
+
   const abrirCombinacao = (
     aspects: SynastryAspect[],
     chartA: NatalChart | undefined,
@@ -1962,10 +1973,13 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
     bName?: string,
   ) => {
     if (!chartA || !chartB) return
-    const graus = (c: NatalChart) => Object.fromEntries(
-      (c.planets || []).map((p: any) => [String(p.name).toLowerCase(), p.longitude]),
-    )
-    setCombinacao({ aspects, grausA: graus(chartA), grausB: graus(chartB), nomeA: aName, nomeB: bName })
+    setCombinacao({
+      aspects,
+      grausA: grausDoMapa(chartA)!,
+      grausB: grausDoMapa(chartB)!,
+      nomeA: aName,
+      nomeB: bName,
+    })
   }
 
   /** Dá para abrir a combinação deste par? Precisa dos dois mapas e de aspecto. */
@@ -2133,6 +2147,20 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
   // silhuetas de relance; oito fichas por membro viram uma parede de números.
   // Na Home vale o contrário, e por isso as duas chaves não se misturam.
   const { visao: visaoDoGrupo, alternar: alternarVisaoDoGrupo } = useVisaoDeStatus('grupo')
+
+  /**
+   * Qual membro está mostrando a COMBINAÇÃO no lugar do status.
+   *
+   * ⚠️ ESTADO PRÓPRIO, e não uma terceira face de `useVisaoDeStatus`. Aquele
+   * hook é compartilhado com a Home, onde combinação não existe — o status é
+   * seu, não de um par. Pôr 'combinacao' no tipo dele deixaria a Home capaz de
+   * entrar num estado que ela não sabe desenhar.
+   *
+   * ⚠️ E É POR MEMBRO, ao contrário de roda/fichas, que vale para todos. Ali a
+   * escolha é de formato e serve para comparar; aqui é "quero ver a MINHA
+   * combinação com ESTA pessoa", que é uma pergunta sobre um par específico.
+   */
+  const [combinacaoNoCard, setCombinacaoNoCard] = useState<string | null>(null)
 
   const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
   // Summary must reflect the whole group state (including current user when status is visible).
@@ -2383,6 +2411,26 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                               <Text style={styles.managedBadgeText}>{tr('groups.managed.badge', 'gerenciado')}</Text>
                             </View>
                           ) : null}
+                          {/* ⚠️ A COMBINAÇÃO NO RESUMO, ao lado do nome.
+                              Antes o número só existia depois de abrir a tela
+                              de cada um — e comparar "com quem eu combino
+                              mais" exigia abrir e fechar membro por membro,
+                              guardando os números de cabeça.
+
+                              ⚠️ MESMAS GUARDAS DO BOTÃO: não é você, a pessoa
+                              compartilha a sinastria, e há os dois mapas. Um
+                              número aqui para quem desligou o
+                              compartilhamento vazaria o que ela fechou. */}
+                          {member.userId !== user?.uid
+                            && (member as any).shareSynastry !== false
+                            && temCombinacao(member.userId) ? (
+                            <View style={styles.combinacaoSelo}>
+                              <Ionicons name="sparkles" size={9} color="#FFD700" />
+                              <Text style={styles.combinacaoSeloTexto}>
+                                {`${synastryScore(synastryByMember[member.userId] || [])}%`}
+                              </Text>
+                            </View>
+                          ) : null}
                         </View>
                         <Text style={styles.memberRowUpdate} numberOfLines={1}>
                           {member.subscriptionActive === false
@@ -2439,23 +2487,28 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                       {/* ⚠️ A COMBINAÇÃO é outra leitura, não um detalhe da
                           sinastria: lá está o quanto os dois combinam NO
                           TOTAL; aqui, o vínculo ÁREA POR ÁREA e o que o céu
-                          ativa nele nos próximos 45 dias. Por isso tem botão
-                          próprio, ao lado dos outros que abrem tela. */}
+                          ativa nele nos próximos 45 dias.
+
+                          ⚠️ ABRE NO PRÓPRIO CARD, e não mais em tela cheia.
+                          Sair da aba para ver a combinação de UM membro
+                          custava o contexto do grupo inteiro — e era isso que
+                          tornava a tela difícil de alcançar. A tela cheia
+                          continua a um toque, dentro da vista. */}
                       {member.userId !== user?.uid && (member as any).shareSynastry !== false && temCombinacao(member.userId) ? (
                         <TouchableOpacity
                           style={styles.memberChartBtn}
                           activeOpacity={0.8}
                           accessibilityRole="button"
                           accessibilityLabel={tr('groups.synastry.combination', 'Ver a combinação de vocês')}
-                          onPress={() => abrirCombinacao(
-                            synastryByMember[member.userId] || [],
-                            chartByMember[user?.uid || ''],
-                            chartByMember[member.userId],
-                            tr('groups.synastry.you', 'Você'),
-                            member.displayName,
+                          onPress={() => setCombinacaoNoCard(
+                            combinacaoNoCard === member.userId ? null : member.userId,
                           )}
                         >
-                          <Ionicons name="sparkles-outline" size={14} color="#FFD700" />
+                          <Ionicons
+                            name={combinacaoNoCard === member.userId ? 'chevron-up' : 'sparkles-outline'}
+                            size={14}
+                            color="#FFD700"
+                          />
                           <Text style={styles.memberChartBtnText} numberOfLines={1}>
                             {tr('groups.synastry.combinationShort', 'Combinação')}
                           </Text>
@@ -2514,10 +2567,45 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                               : tr('groups.view.wheelShort', 'Roda')}
                           </Text>
                         </TouchableOpacity>
+
                       </View>
                     ) : null}
 
-                    {hasStatus && entries.length > 0 && visaoDoGrupo === 'roda' ? (
+                    {/* ⚠️ A COMBINAÇÃO OCUPA O LUGAR DO STATUS, não soma a
+                        ele: empilhar as duas faria o card de cada membro
+                        crescer tanto que comparar membros — que é o ponto da
+                        aba — exigiria rolar página por pessoa. */}
+                    {combinacaoNoCard === member.userId ? (
+                      <>
+                      <TouchableOpacity
+                        onPress={() => abrirCombinacao(
+                          synastryByMember[member.userId] || [],
+                          chartByMember[user?.uid || ''],
+                          chartByMember[member.userId],
+                          tr('groups.synastry.you', 'Você'),
+                          member.displayName,
+                        )}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        style={styles.combinacaoExpandir}
+                      >
+                        <Text style={styles.combinacaoExpandirTexto}>
+                          {tr('groups.synastry.combinationFull', 'Abrir em tela cheia')}
+                        </Text>
+                        <Ionicons name="expand-outline" size={13} color="#FFD700" />
+                      </TouchableOpacity>
+                      <CombinacaoDoCasal
+                        embutido
+                        aspectos={synastryByMember[member.userId] || []}
+                        grausMeus={grausDoMapa(chartByMember[user?.uid || ''])}
+                        grausDoOutro={grausDoMapa(chartByMember[member.userId])}
+                        idioma={language}
+                        aoFechar={() => setCombinacaoNoCard(null)}
+                      />
+                      </>
+                    ) : null}
+
+                    {combinacaoNoCard !== member.userId && hasStatus && entries.length > 0 && visaoDoGrupo === 'roda' ? (
                       <RodaDeStatus
                         eixos={buildMemberEixos(member)}
                         larguraMaxima={320}
@@ -2529,7 +2617,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                       />
                     ) : null}
 
-                    {hasStatus && entries.length > 0 && visaoDoGrupo === 'fichas' ? (
+                    {combinacaoNoCard !== member.userId && hasStatus && entries.length > 0 && visaoDoGrupo === 'fichas' ? (
                       <View style={styles.memberStatusGridCompact}>
                         {entries.map((entry) => {
                           const percentage =
@@ -2618,7 +2706,7 @@ export default function GroupsScreen({ hasFullAccess = true }: { hasFullAccess?:
                         backend) e DEDUPLICA — o mesmo trânsito aparece em
                         várias áreas, e sem deduplicar ele pesaria uma vez por
                         área, inflando os números sem erro nenhum. */}
-                    {hasStatus ? (
+                    {combinacaoNoCard !== member.userId && hasStatus ? (
                       <ClimaEmocional
                         transitos={transitosDoMembro(member as any) as any}
                         idioma={language}
@@ -4153,6 +4241,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(18,22,44,0.72)',
   },
   memberVisaoTexto: { fontSize: 14, fontWeight: '600', color: '#C7D2E8' },
+  combinacaoSelo: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingVertical: 2, paddingHorizontal: 6, borderRadius: 999,
+    backgroundColor: 'rgba(255,215,0,0.12)',
+    borderWidth: 1, borderColor: 'rgba(255,215,0,0.28)',
+  },
+  combinacaoSeloTexto: { color: '#FFD700', fontSize: 10, fontWeight: '800' },
+  combinacaoExpandir: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5,
+    paddingVertical: 6, paddingHorizontal: 2, marginTop: 2,
+  },
+  combinacaoExpandirTexto: { color: '#FFD700', fontSize: 11.5, fontWeight: '600' },
+  memberVisaoBtnAtivo: { borderColor: 'rgba(255,215,0,0.45)', backgroundColor: 'rgba(255,215,0,0.09)' },
+  memberVisaoTextoAtivo: { color: '#FFD700', fontWeight: '700' },
   memberStatusGridCompact: {
     flexDirection: "row",
     flexWrap: "wrap",

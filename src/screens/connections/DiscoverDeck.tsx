@@ -13,6 +13,9 @@ import LocationField, { type PickedLocation } from '../../components/LocationFie
 import SynastryWheel from '../../components/SynastryWheel'
 import AspectGrid from '../../components/AspectGrid'
 import MatchSynastryLenses from './MatchSynastryLenses'
+import CombinacaoDoCasal from '../../components/CombinacaoDoCasal'
+import { synastryToneOf } from '../../astro/synastryReading'
+import type { SynastryAspect } from '../../astro/synastry'
 import { getKinDisplayName, sealOf, SEALS, COLOR_LABELS, getTzolkinMatchByKins, kinOfDate } from '../../astro/tzolkin'
 import { SvgCss } from 'react-native-svg/css'
 import { SEAL_SVG } from '../../assets/tzolkin/sealGlyphs'
@@ -50,6 +53,37 @@ const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', ma
 // planetEn (minúsculo) → nome capitalizado que o AspectGrid espera.
 const CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto', lilith: 'Lilith', northnode: 'NorthNode', southnode: 'SouthNode' }
 const toGridPlanets = (pos?: WheelPos[]) => (pos || []).map((p) => ({ name: CAP[p.planetEn] || p.planetEn, longitude: p.longitude }))
+
+/**
+ * `GridAspect` do Match -> `SynastryAspect`, que é o que a Combinação lê.
+ *
+ * ⚠️ OS DOIS FORMATOS SÃO QUASE IGUAIS e faltam dois campos: `tone` e
+ * `symbol`. O tom sai de `synastryToneOf`, a MESMA função que o resto do app
+ * usa para classificar aspecto — derivar aqui com uma tabela própria faria
+ * esta tela chamar de tenso o que as outras chamam de neutro, e os aspectos
+ * menores duros já morderam este projeto exatamente assim.
+ *
+ * ⚠️ `symbol` VAI VAZIO de propósito: a Combinação não desenha o glifo, lê o
+ * nome do aspecto. Inventar um símbolo aqui seria dado falso guardado para um
+ * uso que não existe.
+ */
+const paraSinastria = (grid?: Array<{ mine: string; theirs: string; aspect?: string; labelPt?: string; orb?: number }>): SynastryAspect[] =>
+  (grid || []).map((g) => {
+    const nome = g.aspect || g.labelPt || ''
+    return {
+      mine: g.mine,
+      theirs: g.theirs,
+      aspect: nome,
+      symbol: '',
+      tone: synastryToneOf(nome),
+      orb: Number(g.orb) || 0,
+    }
+  })
+
+/** As longitudes por planeta, em minúscula — o formato que a Combinação pede. */
+const grausDe = (pos?: WheelPos[]) => Object.fromEntries(
+  (pos || []).map((p) => [String(p.planetEn).toLowerCase(), p.longitude]),
+)
 
 export type DeckHandle = { pass: () => void; like: () => void; friend: () => void }
 type DeckState = { hasCard: boolean; busy: boolean; pct: number | null; name: string | null }
@@ -430,6 +464,26 @@ const DiscoverDeck = forwardRef<DeckHandle, { onOpenList?: () => void; onGoProfi
                     <>
                       <Text style={s.detailHead}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
                       <SynastryWheel outer={detail.myPositions} inner={detail.positions} aspects={detail.grid || []} size={300} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={current.displayName} />
+                      {/* ⚠️ A COMBINAÇÃO, LOGO DEPOIS DA RODA. O Match já
+                          dava um número de afinidade; ela mostra DE ONDE ele
+                          vem — área por área — e o que o céu ativa nisso nos
+                          próximos 45 dias. É o mesmo componente dos Grupos,
+                          embutido: duas telas para a mesma combinação
+                          divergiriam no primeiro ajuste. */}
+                      {detail.grid?.length ? (
+                        <View style={{ marginTop: 14 }}>
+                          <Text style={s.detailHead}>{tl('A combinação de vocês', 'Your combination', 'La combinacion de ustedes', 'La vostra combinazione')}</Text>
+                          <CombinacaoDoCasal
+                            embutido
+                            aspectos={paraSinastria(detail.grid)}
+                            grausMeus={grausDe(detail.myPositions)}
+                            grausDoOutro={grausDe(detail.positions)}
+                            idioma={language}
+                            aoFechar={() => { /* embutido: não fecha */ }}
+                          />
+                        </View>
+                      ) : null}
+
                       {detail.grid?.length ? (
                         <View style={{ marginTop: 12 }}>
                           <Text style={s.detailHead}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>

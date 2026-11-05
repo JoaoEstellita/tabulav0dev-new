@@ -38,6 +38,15 @@ type Props = {
   nomeB?: string
   idioma?: string
   aoFechar: () => void
+  /**
+   * Renderiza SEM a folha modal, para caber dentro de um card.
+   *
+   * ⚠️ UMA PROP, E NÃO UM SEGUNDO COMPONENTE. A roda, o cálculo do vínculo, a
+   * curva diária e os textos por área são o conteúdo inteiro desta tela —
+   * copiá-los para uma versão "embutida" criaria duas telas que mostram a
+   * mesma combinação e divergem no primeiro ajuste.
+   */
+  embutido?: boolean
 }
 
 const ROTULO: Record<AreaSinastria, [string, string, string, string]> = {
@@ -95,7 +104,7 @@ const TINTA_FRACA = '#8D96AC'
 const TRILHO = 'rgba(255,255,255,0.10)'
 
 export default function CombinacaoDoCasal({
-  aspectos, grausMeus, grausDoOutro, nomeA, nomeB, idioma, aoFechar,
+  aspectos, grausMeus, grausDoOutro, nomeA, nomeB, idioma, aoFechar, embutido,
 }: Props) {
   const { width } = useWindowDimensions()
   const [aberta, setAberta] = useState<AreaSinastria | null>(null)
@@ -151,12 +160,36 @@ export default function CombinacaoDoCasal({
 
   const larguraUtil = Math.min(width - 40, 420)
 
-  return (
-    <Modal visible transparent animationType="slide" onRequestClose={aoFechar}>
-      <View style={s.fundo}>
-        <View style={s.folha}>
-          <View style={s.puxador} />
+  /**
+   * ⚠️ O INVÓLUCRO MUDA, O CONTEÚDO NÃO. Embutido, saem a folha modal, o
+   * puxador, o título e a rolagem — quem fecha é o alternador do card que o
+   * mostrou, e o card já diz de quem é a combinação. O miolo abaixo é
+   * exatamente o mesmo nos dois casos, que é o ponto de ser uma prop e não um
+   * segundo componente.
+   *
+   * ⚠️ E A ROLAGEM SOME NO EMBUTIDO: duas rolagens verticais aninhadas travam
+   * uma à outra no Android, e aqui ele vive dentro da rolagem do card.
+   */
+  const Folha = embutido
+    ? ({ children }: { children: React.ReactNode }) => <View style={s.embutido}>{children}</View>
+    : ({ children }: { children: React.ReactNode }) => (
+      <Modal visible transparent animationType="slide" onRequestClose={aoFechar}>
+        <View style={s.fundo}><View style={s.folha}>{children}</View></View>
+      </Modal>
+    )
+  const Rolagem = embutido
+    ? ({ children }: { children: React.ReactNode }) => <>{children}</>
+    : ({ children }: { children: React.ReactNode }) => (
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
+        {children}
+      </ScrollView>
+    )
 
+  return (
+    <Folha>
+          {embutido ? null : <View style={s.puxador} />}
+
+          {embutido ? null : (
           <View style={s.cabecalho}>
             <View style={{ flex: 1 }}>
               <Text style={s.titulo}>
@@ -171,8 +204,9 @@ export default function CombinacaoDoCasal({
               <Text style={s.fecharX}>✕</Text>
             </Pressable>
           </View>
+          )}
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
+          <Rolagem>
             {!temVinculo ? (
               <Text style={s.vazio}>
                 {tl(
@@ -259,7 +293,7 @@ export default function CombinacaoDoCasal({
                 ) : null}
               </>
             )}
-          </ScrollView>
+          </Rolagem>
 
           {/* ⚠️ A ressalva fica na folha, não só no detalhe: é o enquadramento
               da tela inteira, e quem fecha antes de tocar numa área também
@@ -272,8 +306,6 @@ export default function CombinacaoDoCasal({
               'Lettura delle due carte, non previsione della relazione.',
             )}
           </Text>
-        </View>
-      </View>
 
       {aberta && vinculo?.[aberta] ? (
         <DetalheDaArea
@@ -287,7 +319,7 @@ export default function CombinacaoDoCasal({
           aoFechar={() => setAberta(null)}
         />
       ) : null}
-    </Modal>
+    </Folha>
   )
 }
 
@@ -731,6 +763,7 @@ function DetalheDaArea({
 }
 
 const s = StyleSheet.create({
+  embutido: { paddingTop: 2 },
   fundo: { flex: 1, backgroundColor: 'rgba(5,7,18,0.72)', justifyContent: 'flex-end' },
   folha: {
     backgroundColor: '#11162A', borderTopLeftRadius: 26, borderTopRightRadius: 26,
