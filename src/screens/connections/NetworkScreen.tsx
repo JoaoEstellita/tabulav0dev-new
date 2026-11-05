@@ -37,11 +37,17 @@ export default function NetworkScreen() {
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
-  const { isAdmin, subscription } = useSubscriptionCheck()
+  const { isAdmin, subscription, loading: carregandoAssinatura } = useSubscriptionCheck()
   // Match = recurso PAGO (Essential+): participar do Descobrir e dar Match exige
   // assinatura. NÃO liberado no trial de 3 dias. Grátis/trial veem o carrossel de
   // venda no paywall. Admin sempre tem acesso.
-  const gated = !(isAdmin || subscription?.active === true)
+  //
+  // ⚠️ "AINDA NÃO SEI" NÃO É "NÃO TEM ACESSO". `isAdmin` nasce `false` e a
+  // assinatura chega por rede: sem esperar o `loading`, o primeiro render
+  // dava `gated = true` para TODO MUNDO — inclusive para quem já ativou o
+  // Match — e a tela de consentimento aparecia a cada entrada. Era o que o
+  // João via na própria conta, que é admin.
+  const gated = !carregandoAssinatura && !(isAdmin || subscription?.active === true)
   const [showTour, setShowTour] = useState(false)
   // Tour holofote da aba Match (só assinante; grátis vê o carrossel de venda no paywall)
   const aMenu = useTourAnchor('match.menu')
@@ -58,9 +64,18 @@ export default function NetworkScreen() {
   const [deckState, setDeckState] = useState<{ hasCard: boolean; busy: boolean; pct: number | null; name: string | null }>({ hasCard: false, busy: false, pct: null, name: null })
   const [showActivateModal, setShowActivateModal] = useState(false)
   useEffect(() => {
+    // Enquanto a assinatura não respondeu, `matchActive` fica em `null` — que
+    // é o estado de CARREGANDO da tela, e não o de "não ativou".
+    if (carregandoAssinatura) return
     if (gated) { setMatchActive(false); return }
-    getMyProfile().then((r) => setMatchActive(r.gated ? false : !!r.matchActive)).catch(() => setMatchActive(false))
-  }, [gated])
+    getMyProfile()
+      .then((r) => setMatchActive(r.gated ? false : !!r.matchActive))
+      // ⚠️ FALHA DE REDE NÃO É "NÃO ATIVOU". Antes o catch punha `false` e a
+      // tela pedia consentimento de novo a quem já tinha dado — e o pedido
+      // reescreveria um perfil que já existe. Em caso de falha fica em
+      // carregando: não afirma nem nega o que não deu para saber.
+      .catch(() => setMatchActive(null))
+  }, [gated, carregandoAssinatura])
   const doActivate = async () => {
     setActivating(true)
     try {
